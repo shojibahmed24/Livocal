@@ -21,46 +21,56 @@ class ContactsRepository {
   }
 
   Future<Contact?> getContactByPhone(String phoneNumber) async {
-    if (!await Permission.contacts.isGranted) return null;
+    try {
+      final hasPermission =
+          await FlutterContacts.requestPermission(readonly: true);
+      if (!hasPermission) return null;
 
-    final contacts = await FlutterContacts.getContacts(withProperties: true);
+      final contacts = await FlutterContacts.getContacts(withProperties: true);
 
-    for (var contact in contacts) {
-      for (var phone in contact.phones) {
-        String phoneNumberWithoutFormatting = phone.number
-            .replaceAll(' ', '')
-            .replaceAll('-', '')
-            .replaceAll('(', '')
-            .replaceAll(')', '');
+      for (var contact in contacts) {
+        for (var phone in contact.phones) {
+          String phoneNumberWithoutFormatting = phone.number
+              .replaceAll(' ', '')
+              .replaceAll('-', '')
+              .replaceAll('(', '')
+              .replaceAll(')', '');
 
-        if (phoneNumberWithoutFormatting.contains(phoneNumber)) {
-          return Contact(
-            contactId: contact.id,
-            displayName: contact.displayName,
-            phoneNumber: phoneNumber,
-          );
+          if (phoneNumberWithoutFormatting.contains(phoneNumber)) {
+            return Contact(
+              contactId: contact.id,
+              displayName: contact.displayName,
+              phoneNumber: phoneNumber,
+            );
+          }
         }
       }
-    }
+    } catch (_) {}
 
     return null;
   }
 
   Future<List<Contact>> getContacts({required User self}) async {
     final result = <Contact>[];
-    final contacts = await FlutterContacts.getContacts(withProperties: true);
+    try {
+      final hasPermission =
+          await FlutterContacts.requestPermission(readonly: true);
+      if (!hasPermission) return result;
 
-    for (var contact in contacts) {
-      for (var phone in contact.phones) {
-        result.add(
-          Contact(
-            contactId: contact.id,
-            displayName: contact.displayName,
-            phoneNumber: phone.number,
-          ),
-        );
+      final contacts = await FlutterContacts.getContacts(withProperties: true);
+
+      for (var contact in contacts) {
+        for (var phone in contact.phones) {
+          result.add(
+            Contact(
+              contactId: contact.id,
+              displayName: contact.displayName,
+              phoneNumber: phone.number,
+            ),
+          );
+        }
       }
-    }
+    } catch (_) {}
 
     return result;
   }

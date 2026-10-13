@@ -50,7 +50,7 @@ class AuthController {
     File? avatar,
   ) async {
     String uid =
-        authRepository.auth.currentUser?.uid ?? 'dev_${phone.number}';
+        authRepository.auth.currentUser?.uid ?? 'user_${phone.number}';
     String avatarUrl =
         'https://en.gravatar.com/userimage/238463648/8cc16f6f5423605920569a634fd097eb.jpeg?size=256';
 
