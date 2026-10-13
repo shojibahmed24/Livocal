@@ -42,13 +42,12 @@ class WelcomePage extends StatelessWidget {
           children: [
             Image.asset(
               'assets/images/landing_img.png',
-              color: colorTheme.greenColor,
               width: MediaQuery.of(context).size.width * 0.70,
-              height: MediaQuery.of(context).size.height * 0.4,
+              height: MediaQuery.of(context).size.height * 0.35,
             ),
             const SizedBox(height: 32),
             Text(
-              'Welcome to WhatsApp',
+              'Welcome to Livocal',
               style: TextStyle(
                 fontSize: 25,
                 fontWeight: FontWeight.w600,

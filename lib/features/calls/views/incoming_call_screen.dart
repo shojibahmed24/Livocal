@@ -114,7 +114,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
                     ),
                     SizedBox(width: 6),
                     Text(
-                      'WhatsUp AI Translated Voice Call',
+                      'Livocal AI Translated Voice Call',
                       style: TextStyle(
                         color: Color(0xFF00E5B0),
                         fontSize: 12,

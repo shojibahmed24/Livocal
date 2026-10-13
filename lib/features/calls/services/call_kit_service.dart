@@ -53,12 +53,12 @@ class CallKitService {
     required String callerName,
     required String callerPhone,
     String? callerAvatar,
-    String subtitle = 'WhatsUp Voice Call • AI Interpreter Active',
+    String subtitle = 'Livocal Voice Call • AI Interpreter Active',
   }) async {
     final CallKitParams callKitParams = CallKitParams(
       id: callId,
       nameCaller: callerName,
-      appName: 'WhatsUp',
+      appName: 'Livocal',
       avatar: callerAvatar ?? 'https://i.pravatar.cc/150?u=$callId',
       handle: callerPhone,
       type: 0, // 0: Audio Call, 1: Video Call
@@ -76,7 +76,7 @@ class CallKitService {
         'callerName': callerName,
         'callerPhone': callerPhone,
       },
-      headers: <String, dynamic>{'apiKey': 'WhatsUpCall'},
+      headers: <String, dynamic>{'apiKey': 'LivocalCall'},
       android: const AndroidParams(
         isCustomNotification: true,
         isShowLogo: false,

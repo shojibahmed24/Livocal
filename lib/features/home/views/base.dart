@@ -242,7 +242,7 @@ class _HomePageState extends ConsumerState<HomePage>
       child: Scaffold(
         appBar: AppBar(
           title: Text(
-            'WhatsApp',
+            'Livocal',
             style: textTheme.titleLarge.copyWith(color: colorTheme.iconColor),
           ),
           actions: [
@@ -440,16 +440,16 @@ class HomePageContactsList extends StatelessWidget {
         if (userCount > 3) {
           descriptionList[0] = users.getRange(0, 3).join(', ');
           descriptionList[1] =
-              ' and ${userCount - 3} more of your contacts\n are on WhatsApp';
+              ' and ${userCount - 3} more of your contacts\n are on Livocal';
         } else if (userCount > 2) {
           descriptionList[0] = users.getRange(0, 2).join(', ');
-          descriptionList[1] = ' and ${users[2]} are on WhatsApp';
+          descriptionList[1] = ' and ${users[2]} are on Livocal';
         } else if (userCount > 1) {
           descriptionList[0] = users.join(' and ');
-          descriptionList[1] = ' are on WhatsApp';
+          descriptionList[1] = ' are on Livocal';
         } else {
           descriptionList[0] = '${users.first}';
-          descriptionList[1] = ' is one WhatsApp.';
+          descriptionList[1] = ' is on Livocal.';
         }
 
         return Column(

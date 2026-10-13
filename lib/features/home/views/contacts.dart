@@ -335,7 +335,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
           horizontal: 16.0,
         ),
         child: Text(
-          'Contacts on WhatsApp',
+          'Contacts on Livocal',
           style: Theme.of(context).custom.textTheme.caption,
         ),
       ),
@@ -358,7 +358,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
           horizontal: 16.0,
         ),
         child: Text(
-          'Invite to WhatsApp',
+          'Invite to Livocal',
           style: Theme.of(context).custom.textTheme.caption,
         ),
       ),
@@ -482,7 +482,7 @@ class WhatsAppContactsList extends StatelessWidget {
                         width: 4.0,
                       ),
                       Text(
-                        'Hey there! I\'m using WhatsApp.',
+                        'Hey there! I\'m using Livocal.',
                         style: Theme.of(context).custom.textTheme.caption,
                       ),
                     ],

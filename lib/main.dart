@@ -47,18 +47,18 @@ void main() async {
   ErrorWidget.builder = (details) => CustomErrorWidget(details: details);
   return runApp(
     const ProviderScope(
-      child: WhatsApp(),
+      child: Livocal(),
     ),
   );
 }
 
-class WhatsApp extends ConsumerWidget {
-  const WhatsApp({super.key});
+class Livocal extends ConsumerWidget {
+  const Livocal({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
-      title: "WhatsUp",
+      title: "Livocal",
       initialRoute: '/',
       theme: ref.read(lightThemeProvider),
       darkTheme: ref.read(darkThemeProvider),

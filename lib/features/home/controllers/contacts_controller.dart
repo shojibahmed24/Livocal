@@ -25,7 +25,7 @@ final contactPickerControllerProvider =
 );
 
 const shareMsg =
-    'Let\'s chat on WhatsApp! It\'s a fast, simple, and secure app we can use to message and call each other for free. Get it at https://github.com/Tauseef-Hilal/whatsapp-clone/releases/';
+    'Let\'s connect on Livocal! It\'s a fast, simple, and secure app with real-time AI voice translation to call and message each other for free. Get it at https://github.com/shojibahmed24/Livocal';
 
 class ContactPickerController extends StateNotifier<List<Contact>> {
   late List<Contact> _contacts;
@@ -88,7 +88,7 @@ class ContactPickerController extends StateNotifier<List<Contact>> {
   void shareInviteLink(RenderBox? box) {
     Share.share(
       shareMsg,
-      subject: 'WhatsApp Messenger: Android + iPhone',
+      subject: 'Livocal: Real-Time AI Live Translation & Chat',
       sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
     );
   }
