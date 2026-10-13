@@ -180,23 +180,6 @@ class CallsTab extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  IconButton(
-                    tooltip: 'Gemini Live API Settings',
-                    onPressed: () {
-                      showGeminiLiveSettingsSheet(
-                        context,
-                        onSaved: () {
-                          ref
-                              .read(callControllerProvider.notifier)
-                              .refreshSettings();
-                        },
-                      );
-                    },
-                    icon: const Icon(
-                      Icons.tune_rounded,
-                      color: Colors.white70,
-                    ),
-                  ),
                 ],
               ),
               const SizedBox(height: 14),
@@ -358,73 +341,6 @@ class CallsTab extends ConsumerWidget {
                               ],
                             ),
                           ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // Quick Action Buttons: Start Live AI Call & Simulate Incoming Call
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF00A884),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 11),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      onPressed: () {
-                        _startCallToPeer(
-                          context,
-                          ref,
-                          peerId: 'demo_${peerLang.code}_partner',
-                          peerName:
-                              '${peerLang.englishName} Partner ${peerLang.flagEmoji}',
-                          peerAvatar:
-                              'https://i.pravatar.cc/150?u=partner_${peerLang.code}',
-                          peerPhone: '+1 800-555-LIVE',
-                          myLangCode: myLang.code,
-                          peerLangCode: peerLang.code,
-                          isSimulatedDemo: true,
-                        );
-                      },
-                      icon: const Icon(Icons.record_voice_over_rounded,
-                          size: 17),
-                      label: const Text(
-                        'Start Live AI Call',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF00E5B0),
-                        side: BorderSide(
-                          color: const Color(0xFF00E5B0).withOpacity(0.5),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 11),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      onPressed: () =>
-                          _simulateIncomingCall(context, ref, callState),
-                      icon: const Icon(Icons.ring_volume_rounded, size: 16),
-                      label: const Text(
-                        'Test Incoming Call',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12.5,
                         ),
                       ),
                     ),

@@ -290,81 +290,12 @@ class IsarDb {
   }
 
   static List<User> getDemoUsers() {
-    return [
-      User(
-        id: 'demo_en_john',
-        name: 'John Smith 🇺🇸 (English)',
-        avatarUrl: 'https://i.pravatar.cc/150?img=11',
-        phone: Phone(
-          code: '+1',
-          number: '5550101',
-          formattedNumber: '+1 555-0101',
-        ),
-        activityStatus: UserActivityStatus.online,
-      ),
-      User(
-        id: 'demo_es_carlos',
-        name: 'Carlos Rivera 🇪🇸 (Español)',
-        avatarUrl: 'https://i.pravatar.cc/150?img=12',
-        phone: Phone(
-          code: '+34',
-          number: '6000202',
-          formattedNumber: '+34 600-0202',
-        ),
-        activityStatus: UserActivityStatus.online,
-      ),
-      User(
-        id: 'demo_ar_ahmed',
-        name: 'Ahmed Al-Mansoor 🇸🇦 (العربية)',
-        avatarUrl: 'https://i.pravatar.cc/150?img=13',
-        phone: Phone(
-          code: '+966',
-          number: '500303',
-          formattedNumber: '+966 50-0303',
-        ),
-        activityStatus: UserActivityStatus.online,
-      ),
-      User(
-        id: 'demo_ja_yuki',
-        name: 'Yuki Tanaka 🇯🇵 (日本語)',
-        avatarUrl: 'https://i.pravatar.cc/150?img=47',
-        phone: Phone(
-          code: '+81',
-          number: '900404',
-          formattedNumber: '+81 90-0404',
-        ),
-        activityStatus: UserActivityStatus.online,
-      ),
-      User(
-        id: 'demo_bn_tanvir',
-        name: 'তানভীর আহমেদ 🇧🇩 (বাংলা)',
-        avatarUrl: 'https://i.pravatar.cc/150?img=33',
-        phone: Phone(
-          code: '+880',
-          number: '17110505',
-          formattedNumber: '+880 1711-0505',
-        ),
-        activityStatus: UserActivityStatus.online,
-      ),
-    ];
+    return const [];
   }
 
   static Future<void> addContacts() async {
     final providerContainer = ProviderContainer();
     final self = getCurrentUser();
-
-    final demoUsers = getDemoUsers();
-    final demoContacts = demoUsers
-        .map(
-          (u) => Contact(
-            userId: u.id,
-            avatarUrl: u.avatarUrl,
-            contactId: u.id,
-            displayName: u.name,
-            phoneNumber: u.phone.getFormattedNumber(),
-          ),
-        )
-        .toList();
 
     List<Contact> localContacts = [];
     if (self != null) {
@@ -372,16 +303,12 @@ class IsarDb {
         localContacts = await providerContainer
             .read(contactsRepositoryProvider)
             .getContacts(self: self)
-            .timeout(const Duration(seconds: 3));
+            .timeout(const Duration(seconds: 5));
       } catch (_) {}
     }
 
-    final allContacts = <Contact>[...demoContacts, ...localContacts];
-    final allUsers = <User>[...demoUsers];
-
     await isar.writeTxn(() async {
-      await isar.contacts.putAll(allContacts);
-      await isar.users.putAll(allUsers);
+      await isar.contacts.putAll(localContacts);
     });
   }
 
@@ -411,12 +338,7 @@ class IsarDb {
   }
 
   static Future<User?> getUserById(String id) async {
-    final found = await isar.users.filter().idEqualTo(id).findFirst();
-    if (found != null) return found;
-    for (final demo in getDemoUsers()) {
-      if (demo.id == id) return demo;
-    }
-    return null;
+    return await isar.users.filter().idEqualTo(id).findFirst();
   }
 
   static Future<List<Contact>> getWhatsAppContacts() async {

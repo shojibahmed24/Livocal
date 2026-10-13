@@ -156,16 +156,14 @@ class CallRepository {
   List<CallHistoryRecord> getCallHistory() {
     final rawList = SharedPref.instance.getStringList(prefCallHistory);
     if (rawList == null || rawList.isEmpty) {
-      final seeded = _defaultSeededHistory();
-      saveCallHistoryList(seeded);
-      return seeded;
+      return [];
     }
     try {
       return rawList
           .map((item) => CallHistoryRecord.fromJson(item))
           .toList();
     } catch (_) {
-      return _defaultSeededHistory();
+      return [];
     }
   }
 
@@ -191,50 +189,6 @@ class CallRepository {
   }
 
   List<CallHistoryRecord> _defaultSeededHistory() {
-    final now = DateTime.now();
-    return [
-      CallHistoryRecord(
-        callId: 'seed_call_1',
-        peerId: 'demo_en_john',
-        peerName: 'John Smith 🇺🇸 (English)',
-        peerAvatar: 'https://i.pravatar.cc/150?img=11',
-        peerPhone: '+1 555-0101',
-        timestamp: now.subtract(const Duration(minutes: 25)),
-        durationSeconds: 184,
-        isIncoming: false,
-        isMissed: false,
-        translationEnabled: true,
-        myLangCode: 'bn',
-        peerLangCode: 'en',
-      ),
-      CallHistoryRecord(
-        callId: 'seed_call_2',
-        peerId: 'demo_es_carlos',
-        peerName: 'Carlos Rivera 🇪🇸 (Español)',
-        peerAvatar: 'https://i.pravatar.cc/150?img=12',
-        peerPhone: '+34 600-0202',
-        timestamp: now.subtract(const Duration(hours: 2)),
-        durationSeconds: 95,
-        isIncoming: true,
-        isMissed: false,
-        translationEnabled: true,
-        myLangCode: 'bn',
-        peerLangCode: 'es',
-      ),
-      CallHistoryRecord(
-        callId: 'seed_call_3',
-        peerId: 'demo_ar_ahmed',
-        peerName: 'Ahmed Al-Mansoor 🇸🇦 (العربية)',
-        peerAvatar: 'https://i.pravatar.cc/150?img=13',
-        peerPhone: '+966 50-0303',
-        timestamp: now.subtract(const Duration(hours: 5)),
-        durationSeconds: 142,
-        isIncoming: false,
-        isMissed: false,
-        translationEnabled: true,
-        myLangCode: 'en',
-        peerLangCode: 'ar',
-      ),
-    ];
+    return const [];
   }
 }
