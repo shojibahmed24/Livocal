@@ -70,7 +70,7 @@ final lightThemeProvider = Provider((ref) => _theme);
 final _customTheme = CustomThemeData(isDarkTheme: false);
 final _theme = ThemeData(
   brightness: Brightness.light,
-  dialogTheme: DialogTheme(
+  dialogTheme: DialogThemeData(
     shape: RoundedRectangleBorder(
       side: const BorderSide(color: Colors.transparent),
       borderRadius: BorderRadius.circular(4.0),
@@ -111,7 +111,7 @@ final _theme = ThemeData(
     color: AppColorsLight.greyColor,
     thickness: 0.1,
   ),
-  tabBarTheme: const TabBarTheme(
+  tabBarTheme: const TabBarThemeData(
     indicatorColor: AppColorsLight.indicatorColor,
     indicatorSize: TabBarIndicatorSize.tab,
     labelColor: AppColorsLight.selectedLabelColor,
@@ -124,7 +124,7 @@ final _theme = ThemeData(
 final _customDarkTheme = CustomThemeData(isDarkTheme: true);
 final _darkTheme = ThemeData(
   brightness: Brightness.dark,
-  dialogTheme: DialogTheme(
+  dialogTheme: DialogThemeData(
     shape: RoundedRectangleBorder(
       side: const BorderSide(color: Colors.transparent),
       borderRadius: BorderRadius.circular(4.0),
@@ -165,7 +165,7 @@ final _darkTheme = ThemeData(
     color: AppColorsDark.greyColor,
     thickness: 0.1,
   ),
-  tabBarTheme: const TabBarTheme(
+  tabBarTheme: const TabBarThemeData(
     indicatorColor: AppColorsDark.indicatorColor,
     indicatorSize: TabBarIndicatorSize.tab,
     labelColor: AppColorsDark.selectedLabelColor,

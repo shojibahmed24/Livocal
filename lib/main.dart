@@ -18,13 +18,31 @@ import 'package:whatsapp_clone/theme/theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e, st) {
+    debugPrint("Firebase init error: $e\n$st");
+  }
 
-  await SharedPref.init();
-  await IsarDb.init();
-  await DeviceStorage.init();
+  try {
+    await SharedPref.init();
+  } catch (e, st) {
+    debugPrint("SharedPref init error: $e\n$st");
+  }
+
+  try {
+    await IsarDb.init();
+  } catch (e, st) {
+    debugPrint("IsarDb init error: $e\n$st");
+  }
+
+  try {
+    await DeviceStorage.init();
+  } catch (e, st) {
+    debugPrint("DeviceStorage init error: $e\n$st");
+  }
 
   ErrorWidget.builder = (details) => CustomErrorWidget(details: details);
   return runApp(
@@ -49,16 +67,11 @@ class WhatsApp extends ConsumerWidget {
       home: StreamBuilder<auth.User?>(
         stream: ref.read(authRepositoryProvider).auth.authStateChanges(),
         builder: (BuildContext context, snapshot) {
-          if (!snapshot.hasData) {
-            return const WelcomePage();
-          }
-
           final user = getCurrentUser();
-          if (user == null) {
-            return const WelcomePage();
+          if (user != null) {
+            return HomePage(user: user);
           }
-
-          return HomePage(user: user);
+          return const WelcomePage();
         },
       ),
     );

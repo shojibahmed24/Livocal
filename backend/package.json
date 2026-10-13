@@ -1,0 +1,27 @@
+{
+  "name": "whatsup-gemini-live-relay",
+  "version": "1.0.0",
+  "description": "Zero-Trust Gemini Multimodal Live API Bidirectional Audio Relay Server for WhatsUp",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "gemini",
+    "webrtc",
+    "voice-translation",
+    "websocket",
+    "zero-trust"
+  ],
+  "author": "WhatsUp AI Calling Team",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "firebase-admin": "^14.5.0",
+    "ws": "^8.18.0"
+  }
+}

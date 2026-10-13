@@ -1,49 +1,63 @@
 {
   "project_info": {
-    "project_number": "1007219918966",
-    "project_id": "whatsapp-clone-7a78c",
-    "storage_bucket": "whatsapp-clone-7a78c.appspot.com"
+    "project_number": "729373303752",
+    "project_id": "livocal24",
+    "storage_bucket": "livocal24.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1007219918966:android:63ec23733f6dc2216bf757",
+        "mobilesdk_app_id": "1:729373303752:android:11ce0d04ae5a01089856fd",
         "android_client_info": {
-          "package_name": "com.tauseef.whatsappclone"
+          "package_name": "com.livocal.app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1007219918966-145gl46mpbq8r4ungm86h6a4273vddjj.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.tauseef.whatsappclone",
-            "certificate_hash": "073b72c79cd529c51c172fab9eccb9da86305983"
-          }
-        },
-        {
-          "client_id": "1007219918966-mstqrofdrsd6cmv3noq9gfg776fgrlr3.apps.googleusercontent.com",
+          "client_id": "729373303752-r3tf78aach112bislj8735ev4pfrk09e.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyD6JqaDaJI-xUwFShAjTOwd63rpNE3AJjM"
+          "current_key": "AIzaSyCwlQsJhaQF30xjFV6xgm84k34kOz0Rj_0"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "1007219918966-mstqrofdrsd6cmv3noq9gfg776fgrlr3.apps.googleusercontent.com",
+              "client_id": "729373303752-r3tf78aach112bislj8735ev4pfrk09e.apps.googleusercontent.com",
               "client_type": 3
-            },
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:729373303752:android:26471128ca42c3a19856fd",
+        "android_client_info": {
+          "package_name": "com.livocal.vocal"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "729373303752-r3tf78aach112bislj8735ev4pfrk09e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCwlQsJhaQF30xjFV6xgm84k34kOz0Rj_0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
             {
-              "client_id": "1007219918966-hehgpqvc4tftlbue47ncamqe6epkcgae.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.tauseef.whatsapp.whatsappClone"
-              }
+              "client_id": "729373303752-r3tf78aach112bislj8735ev4pfrk09e.apps.googleusercontent.com",
+              "client_type": 3
             }
           ]
         }

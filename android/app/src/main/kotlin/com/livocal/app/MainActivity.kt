@@ -1,4 +1,4 @@
-package com.tauseef.whatsapp.whatsapp_clone
+package com.livocal.app
 
 import io.flutter.embedding.android.FlutterActivity
 

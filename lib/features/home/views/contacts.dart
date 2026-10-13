@@ -49,13 +49,21 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
-          ref.read(contactsProvider).isLoading
+          ref.watch(contactsProvider).isLoading
               ? Center(
-                  child: CircularProgressIndicator(
-                    color: colorTheme.greenColor,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: colorTheme.greenColor,
+                      ),
+                    ),
                   ),
                 )
-              : const Text(''),
+              : const SizedBox.shrink(),
           PopupMenuButton(
             onSelected: (value) {},
             color: colorTheme.appBarColor,

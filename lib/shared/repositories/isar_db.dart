@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
@@ -19,14 +20,45 @@ import '../../features/chat/models/message.dart';
 final isarProvider = Provider((ref) => IsarDb());
 
 class IsarDb {
-  static late final Isar isar;
+  static Isar? _instance;
+  static Isar get isar {
+    if (_instance != null) return _instance!;
+    final openInstance = Isar.getInstance();
+    if (openInstance != null) {
+      _instance = openInstance;
+      return _instance!;
+    }
+    throw StateError('Isar is not opened');
+  }
 
   static Future<void> init() async {
+    final existing = Isar.getInstance();
+    if (existing != null) {
+      _instance = existing;
+      return;
+    }
     final dir = await getApplicationDocumentsDirectory();
-    isar = await Isar.open(
-      [StoredMessageSchema, ContactSchema, UserSchema],
-      directory: dir.path,
-    );
+    try {
+      _instance = await Isar.open(
+        [StoredMessageSchema, ContactSchema, UserSchema],
+        directory: dir.path,
+        inspector: false,
+      );
+    } catch (e) {
+      debugPrint('Isar open error: $e, checking existing instance...');
+      final fallback = Isar.getInstance();
+      if (fallback != null) {
+        _instance = fallback;
+      } else {
+        await Future.delayed(const Duration(milliseconds: 300));
+        _instance = Isar.getInstance() ??
+            await Isar.open(
+              [StoredMessageSchema, ContactSchema, UserSchema],
+              directory: dir.path,
+              inspector: false,
+            );
+      }
+    }
   }
 
   static Future<void> addMessage(Message message) async {
@@ -166,11 +198,18 @@ class IsarDb {
   }
 
   static Stream<List<RecentChat>> getRecentChatStream(WidgetRef ref) {
-    final currentUser = User.fromMap(
-      jsonDecode(SharedPref.instance.getString('user')!),
-    );
+    final rawUser = SharedPref.instance.getString('user');
+    if (rawUser == null) {
+      return Stream.value(<RecentChat>[]);
+    }
+    final currentUser = User.fromMap(jsonDecode(rawUser));
 
-    return isar.storedMessages
+    final isarInstance = _instance ?? Isar.getInstance();
+    if (isarInstance == null) {
+      return Stream.value(<RecentChat>[]);
+    }
+
+    return isarInstance.storedMessages
         .where()
         .sortByTimestampDesc()
         .watch(fireImmediately: true)
@@ -250,69 +289,142 @@ class IsarDb {
     });
   }
 
+  static List<User> getDemoUsers() {
+    return [
+      User(
+        id: 'demo_en_john',
+        name: 'John Smith 🇺🇸 (English)',
+        avatarUrl: 'https://i.pravatar.cc/150?img=11',
+        phone: Phone(
+          code: '+1',
+          number: '5550101',
+          formattedNumber: '+1 555-0101',
+        ),
+        activityStatus: UserActivityStatus.online,
+      ),
+      User(
+        id: 'demo_es_carlos',
+        name: 'Carlos Rivera 🇪🇸 (Español)',
+        avatarUrl: 'https://i.pravatar.cc/150?img=12',
+        phone: Phone(
+          code: '+34',
+          number: '6000202',
+          formattedNumber: '+34 600-0202',
+        ),
+        activityStatus: UserActivityStatus.online,
+      ),
+      User(
+        id: 'demo_ar_ahmed',
+        name: 'Ahmed Al-Mansoor 🇸🇦 (العربية)',
+        avatarUrl: 'https://i.pravatar.cc/150?img=13',
+        phone: Phone(
+          code: '+966',
+          number: '500303',
+          formattedNumber: '+966 50-0303',
+        ),
+        activityStatus: UserActivityStatus.online,
+      ),
+      User(
+        id: 'demo_ja_yuki',
+        name: 'Yuki Tanaka 🇯🇵 (日本語)',
+        avatarUrl: 'https://i.pravatar.cc/150?img=47',
+        phone: Phone(
+          code: '+81',
+          number: '900404',
+          formattedNumber: '+81 90-0404',
+        ),
+        activityStatus: UserActivityStatus.online,
+      ),
+      User(
+        id: 'demo_bn_tanvir',
+        name: 'তানভীর আহমেদ 🇧🇩 (বাংলা)',
+        avatarUrl: 'https://i.pravatar.cc/150?img=33',
+        phone: Phone(
+          code: '+880',
+          number: '17110505',
+          formattedNumber: '+880 1711-0505',
+        ),
+        activityStatus: UserActivityStatus.online,
+      ),
+    ];
+  }
+
   static Future<void> addContacts() async {
     final providerContainer = ProviderContainer();
-    final self = getCurrentUser()!;
+    final self = getCurrentUser();
 
-    var contacts = await providerContainer
-        .read(contactsRepositoryProvider)
-        .getContacts(self: self);
+    final demoUsers = getDemoUsers();
+    final demoContacts = demoUsers
+        .map(
+          (u) => Contact(
+            userId: u.id,
+            avatarUrl: u.avatarUrl,
+            contactId: u.id,
+            displayName: u.name,
+            phoneNumber: u.phone.getFormattedNumber(),
+          ),
+        )
+        .toList();
 
-    final users = await Future.wait(
-      contacts.map(
-        (e) => providerContainer
-            .read(firebaseFirestoreRepositoryProvider)
-            .getUserByPhone(e.phoneNumber),
-      ),
-    );
-
-    for (var i = 0; i < contacts.length; i++) {
-      final user = users[i];
-      var contact = contacts[i];
-
-      if (user != null && user.id != self.id) {
-        contact = Contact(
-          userId: user.id,
-          avatarUrl: user.avatarUrl,
-          contactId: contact.contactId,
-          displayName: contact.displayName,
-          phoneNumber: contact.phoneNumber,
-        );
-      } else {
-        contact = Contact(
-          contactId: contact.contactId,
-          displayName: contact.displayName,
-          phoneNumber: contact.phoneNumber,
-        );
-      }
-
-      contacts[i] = contact;
+    List<Contact> localContacts = [];
+    if (self != null) {
+      try {
+        localContacts = await providerContainer
+            .read(contactsRepositoryProvider)
+            .getContacts(self: self)
+            .timeout(const Duration(seconds: 3));
+      } catch (_) {}
     }
 
+    final allContacts = <Contact>[...demoContacts, ...localContacts];
+    final allUsers = <User>[...demoUsers];
+
     await isar.writeTxn(() async {
-      await isar.contacts.putAll(contacts);
-      await isar.users.putAll(users.nonNulls.toList());
+      await isar.contacts.putAll(allContacts);
+      await isar.users.putAll(allUsers);
     });
   }
 
   static Future<void> refreshContacts() async {
-    await isar.writeTxn(() async {
-      await isar.contacts.clear();
-      await isar.users.clear();
-    });
-
-    await IsarDb.addContacts();
+    try {
+      await isar.writeTxn(() async {
+        await isar.contacts.clear();
+        await isar.users.clear();
+      });
+      await IsarDb.addContacts();
+    } catch (_) {}
   }
 
   static Future<List<Contact>> getContacts() async {
-    return isar.contacts.where().findAll();
+    if (_instance == null && Isar.getInstance() == null) {
+      await init();
+    }
+    final isarInstance = _instance ?? Isar.getInstance();
+    if (isarInstance == null) return [];
+
+    final existing = await isarInstance.contacts.where().findAll();
+    if (existing.isEmpty) {
+      await addContacts();
+      return isarInstance.contacts.where().findAll();
+    }
+    return existing;
   }
 
   static Future<User?> getUserById(String id) async {
-    return await isar.users.filter().idEqualTo(id).findFirst();
+    final found = await isar.users.filter().idEqualTo(id).findFirst();
+    if (found != null) return found;
+    for (final demo in getDemoUsers()) {
+      if (demo.id == id) return demo;
+    }
+    return null;
   }
 
   static Future<List<Contact>> getWhatsAppContacts() async {
-    return await isar.contacts.filter().userIdIsNotNull().findAll();
+    final list = await isar.contacts.filter().userIdIsNotNull().findAll();
+    if (list.isEmpty) {
+      await addContacts();
+      return await isar.contacts.filter().userIdIsNotNull().findAll();
+    }
+    return list;
   }
 }

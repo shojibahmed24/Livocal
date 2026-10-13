@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:visibility_detector/visibility_detector.dart';
+import 'package:whatsapp_clone/features/calls/views/outgoing_call_screen.dart';
 import 'package:whatsapp_clone/features/chat/controllers/chat_controller.dart';
 import 'package:whatsapp_clone/features/chat/models/message.dart';
 import 'package:whatsapp_clone/features/chat/views/widgets/attachment_picker.dart';
@@ -133,17 +134,43 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         ),
         actions: [
           IconButton(
-            onPressed:
-                recordingState == RecordingState.notRecording ? () {} : null,
+            tooltip: 'Gemini Live AI Translated Call',
+            onPressed: recordingState == RecordingState.notRecording
+                ? () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => OutgoingCallScreen(
+                          caller: self,
+                          callee: other,
+                          calleeDisplayName: widget.otherUserContactName,
+                          isSimulatedDemo: true,
+                        ),
+                      ),
+                    );
+                  }
+                : null,
             icon: const Icon(
-              Icons.videocam_rounded,
-              size: 28,
-              color: Colors.white,
+              Icons.translate_rounded,
+              size: 24,
+              color: Color(0xFF00E5B0),
             ),
           ),
           IconButton(
-            onPressed:
-                recordingState == RecordingState.notRecording ? () {} : null,
+            tooltip: 'Voice Call with AI Translation',
+            onPressed: recordingState == RecordingState.notRecording
+                ? () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => OutgoingCallScreen(
+                          caller: self,
+                          callee: other,
+                          calleeDisplayName: widget.otherUserContactName,
+                          isSimulatedDemo: true,
+                        ),
+                      ),
+                    );
+                  }
+                : null,
             icon: const Icon(
               Icons.call,
               color: Colors.white,

@@ -49,15 +49,18 @@ class AuthController {
     Phone phone,
     File? avatar,
   ) async {
-    String uid = authRepository.auth.currentUser!.uid;
+    String uid =
+        authRepository.auth.currentUser?.uid ?? 'dev_${phone.number}';
     String avatarUrl =
         'https://en.gravatar.com/userimage/238463648/8cc16f6f5423605920569a634fd097eb.jpeg?size=256';
 
     if (avatar != null) {
-      final task = await ref
-          .read(firebaseStorageRepoProvider)
-          .uploadFileToFirebase(avatar, 'userAvatars/$uid');
-      avatarUrl = await (await task).ref.getDownloadURL();
+      try {
+        final task = await ref
+            .read(firebaseStorageRepoProvider)
+            .uploadFileToFirebase(avatar, 'userAvatars/$uid');
+        avatarUrl = await (await task).ref.getDownloadURL();
+      } catch (_) {}
     }
 
     final user = User(
@@ -68,7 +71,9 @@ class AuthController {
       activityStatus: UserActivityStatus.online,
     );
 
-    await authRepository.registerUser(user.toMap());
+    try {
+      await authRepository.registerUser(user.toMap());
+    } catch (_) {}
     return user;
   }
 }

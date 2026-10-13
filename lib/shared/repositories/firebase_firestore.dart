@@ -28,36 +28,56 @@ class FirebaseFirestoreRepo {
     required String userId,
     required String statusValue,
   }) async {
-    await firestore
-        .collection('users')
-        .doc(userId)
-        .update({'activityStatus': statusValue});
+    try {
+      await firestore
+          .collection('users')
+          .doc(userId)
+          .update({'activityStatus': statusValue});
+    } catch (_) {}
   }
 
   Stream<UserActivityStatus> userActivityStatusStream({required userId}) {
-    return firestore.collection('users').doc(userId).snapshots().map((event) {
-      return UserActivityStatus.fromValue(event.data()!['activityStatus']);
-    });
+    if (userId.toString().startsWith('demo_')) {
+      return Stream.value(UserActivityStatus.online);
+    }
+    return firestore
+        .collection('users')
+        .doc(userId)
+        .snapshots()
+        .map((event) {
+          final data = event.data();
+          if (data == null || data['activityStatus'] == null) {
+            return UserActivityStatus.online;
+          }
+          return UserActivityStatus.fromValue(data['activityStatus']);
+        })
+        .handleError((_) => UserActivityStatus.online);
   }
 
   Future<void> sendMessage(Message message) async {
-    await firestore
-        .collection('chats')
-        .doc(message.receiverId)
-        .collection('messages')
-        .doc(message.id)
-        .set(message.toMap());
+    try {
+      await firestore
+          .collection('chats')
+          .doc(message.receiverId)
+          .collection('messages')
+          .doc(message.id)
+          .set(message.toMap())
+          .timeout(const Duration(seconds: 4));
+    } catch (_) {}
   }
 
   Future<void> sendSystemMessage({
     required SystemMessage message,
     required String receiverId,
   }) async {
-    await firestore
-        .collection('chats')
-        .doc(receiverId)
-        .collection('messages')
-        .add(message.toMap());
+    try {
+      await firestore
+          .collection('chats')
+          .doc(receiverId)
+          .collection('messages')
+          .add(message.toMap())
+          .timeout(const Duration(seconds: 4));
+    } catch (_) {}
   }
 
   Future<User?> getUserById(String id) async {
@@ -107,38 +127,57 @@ class FirebaseFirestoreRepo {
   }
 
   Future<User?> getUserByPhone(String phoneNumber) async {
-    phoneNumber = phoneNumber
-        .replaceAll(' ', '')
-        .replaceAll('-', '')
-        .replaceAll('(', '')
-        .replaceAll(')', '');
+    try {
+      phoneNumber = phoneNumber
+          .replaceAll(' ', '')
+          .replaceAll('-', '')
+          .replaceAll('(', '')
+          .replaceAll(')', '');
 
-    QuerySnapshot<Map<String, dynamic>> snap;
-    if (phoneNumber.startsWith('+')) {
-      snap = await firestore
-          .collection('users')
-          .where('phone.rawNumber', isEqualTo: phoneNumber)
-          .get();
-    } else {
-      snap = await firestore
-          .collection('users')
-          .where('phone.number', isEqualTo: phoneNumber)
-          .get();
+      QuerySnapshot<Map<String, dynamic>> snap;
+      if (phoneNumber.startsWith('+')) {
+        snap = await firestore
+            .collection('users')
+            .where('phone.rawNumber', isEqualTo: phoneNumber)
+            .get()
+            .timeout(const Duration(seconds: 2));
+      } else {
+        snap = await firestore
+            .collection('users')
+            .where('phone.number', isEqualTo: phoneNumber)
+            .get()
+            .timeout(const Duration(seconds: 2));
+      }
+
+      return snap.size == 0 ? null : User.fromMap(snap.docs[0].data());
+    } catch (_) {
+      return null;
     }
-
-    return snap.size == 0 ? null : User.fromMap(snap.docs[0].data());
   }
 
   Future<void> setFcmToken(String token) async {
-    final user = jsonDecode(SharedPref.instance.getString('user')!);
-    return firestore
-        .collection('fcmTokens')
-        .doc(user['id'])
-        .set({'token': token});
+    try {
+      final raw = SharedPref.instance.getString('user');
+      if (raw == null) return;
+      final user = jsonDecode(raw);
+      await firestore
+          .collection('fcmTokens')
+          .doc(user['id'])
+          .set({'token': token})
+          .timeout(const Duration(seconds: 3));
+    } catch (_) {}
   }
 
   Future<String> getFcmToken(String userId) async {
-    final docSnap = await firestore.collection('fcmTokens').doc(userId).get();
-    return docSnap.data()!['token'];
+    try {
+      final docSnap = await firestore
+          .collection('fcmTokens')
+          .doc(userId)
+          .get()
+          .timeout(const Duration(seconds: 3));
+      return docSnap.data()?['token'] ?? '';
+    } catch (_) {
+      return '';
+    }
   }
 }

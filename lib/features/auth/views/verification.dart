@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatsapp_clone/features/auth/domain/auth_service.dart';
 import 'package:whatsapp_clone/features/auth/controllers/verification_controller.dart';
 import 'package:whatsapp_clone/features/auth/views/login.dart';
+import 'package:whatsapp_clone/features/auth/views/user_details.dart';
 
 import 'package:whatsapp_clone/shared/utils/abc.dart';
 import 'package:whatsapp_clone/shared/utils/snackbars.dart';
@@ -176,6 +177,27 @@ class _VerificationPageState extends ConsumerState<VerificationPage> {
                   ? 'You may request a new code in ${timeFromSeconds(resendTime, true)}'
                   : '',
               style: TextStyle(color: colorTheme.greyColor),
+            ),
+            const SizedBox(height: 24),
+            OutlinedButton.icon(
+              icon: Icon(Icons.developer_mode, color: colorTheme.greenColor),
+              label: Text(
+                'Developer Test Mode (Bypass OTP)',
+                style: TextStyle(
+                  color: colorTheme.greenColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (context) => UserProfileCreationPage(
+                      phone: widget.phone,
+                    ),
+                  ),
+                  (route) => false,
+                );
+              },
             ),
           ],
         ),

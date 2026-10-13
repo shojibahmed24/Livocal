@@ -45,7 +45,14 @@ app.*.map.json
 
 
 # Firebase
-lib/firebase_options.dart
+# lib/firebase_options.dart
+
+# Node & Backend
+backend/node_modules/
+backend/.env
+backend/serviceAccountKey.json
+cookies.txt
+releases/
 
 #
 ios/build

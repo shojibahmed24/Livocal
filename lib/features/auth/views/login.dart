@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:whatsapp_clone/features/auth/controllers/login_controller.dart';
-
+import 'package:whatsapp_clone/features/home/views/base.dart';
+import 'package:whatsapp_clone/shared/models/user.dart';
 import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
 import 'package:whatsapp_clone/shared/widgets/buttons.dart';
 import 'package:whatsapp_clone/theme/theme.dart';
@@ -210,6 +212,44 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   .read(loginControllerProvider.notifier)
                   .onNextBtnPressed(context),
               text: 'Next',
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 24),
+            child: TextButton.icon(
+              icon: Icon(Icons.developer_mode, color: colorTheme.greenColor),
+              label: Text(
+                'Developer Quick Login (Bypass)',
+                style: TextStyle(
+                  color: colorTheme.greenColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onPressed: () async {
+                final devUser = User(
+                  id: 'dev_user_01',
+                  name: 'Developer',
+                  avatarUrl:
+                      'https://en.gravatar.com/userimage/238463648/8cc16f6f5423605920569a634fd097eb.jpeg?size=256',
+                  phone: Phone(
+                    code: '+880',
+                    number: '1700000000',
+                    formattedNumber: '+880 1700000000',
+                  ),
+                  activityStatus: UserActivityStatus.online,
+                );
+                await SharedPref.instance.setString(
+                  'user',
+                  jsonEncode(devUser.toMap()),
+                );
+                if (!context.mounted) return;
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (context) => HomePage(user: devUser),
+                  ),
+                  (route) => false,
+                );
+              },
             ),
           ),
         ],

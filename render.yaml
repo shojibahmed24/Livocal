@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: livocal-relay
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_LIVE_MODEL
+        value: models/gemini-2.0-flash-live-001
+      - key: DEFAULT_VOICE
+        value: Aoede
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false

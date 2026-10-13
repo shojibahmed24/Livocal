@@ -5,6 +5,11 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:whatsapp_clone/features/calls/controllers/call_controller.dart';
+import 'package:whatsapp_clone/features/calls/models/call_model.dart';
+import 'package:whatsapp_clone/features/calls/repositories/call_repository.dart';
+import 'package:whatsapp_clone/features/calls/views/calls_tab.dart';
+import 'package:whatsapp_clone/features/calls/views/incoming_call_screen.dart';
 import 'package:whatsapp_clone/features/chat/models/attachement.dart';
 import 'package:whatsapp_clone/features/chat/models/message.dart';
 import 'package:whatsapp_clone/features/chat/models/recent_chat.dart';
@@ -20,6 +25,8 @@ import 'package:whatsapp_clone/shared/utils/abc.dart';
 import 'package:whatsapp_clone/theme/theme.dart';
 import '../../../shared/utils/storage_paths.dart';
 import '../../../theme/color_theme.dart';
+import '../../auth/views/welcome.dart';
+import '../../../shared/utils/shared_pref.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   final User user;
@@ -32,6 +39,7 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   late final StreamSubscription<List<Message>> messageListener;
+  StreamSubscription<CallSession?>? _incomingCallSub;
   late TabController _tabController;
   late List<Widget> _floatingButtons;
 
@@ -88,6 +96,9 @@ class _HomePageState extends ConsumerState<HomePage>
 
         IsarDb.addMessages(messages);
       },
+      onError: (err) {
+        debugPrint('Firestore chat stream error: $err');
+      },
     );
 
     ref.read(pushNotificationsRepoProvider).init(
@@ -141,10 +152,45 @@ class _HomePageState extends ConsumerState<HomePage>
         ],
       ),
       FloatingActionButton(
-        onPressed: () {},
+        onPressed: () async {
+          if (!await hasPermission(Permission.contacts)) return;
+          if (!mounted) return;
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => ContactsPage(
+                user: widget.user,
+              ),
+            ),
+          );
+        },
         child: const Icon(Icons.add_call),
       )
     ];
+
+    _incomingCallSub = ref
+        .read(callRepositoryProvider)
+        .watchIncomingCalls(widget.user.id)
+        .listen((incomingSession) {
+      if (incomingSession == null || !mounted) return;
+      final currentSession = ref.read(callControllerProvider).activeSession;
+      if (currentSession != null) return;
+      ref.read(callControllerProvider.notifier).receiveIncomingCall(
+            self: widget.user,
+            callerId: incomingSession.callerId,
+            callerName: incomingSession.callerName,
+            callerAvatar: incomingSession.callerAvatar,
+            callerPhone: incomingSession.callerPhone,
+            callerLangCode: incomingSession.callerLangCode,
+            callId: incomingSession.callId,
+            isSimulated: false,
+          );
+      if (!mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => const IncomingCallScreen(),
+        ),
+      );
+    });
 
     super.initState();
   }
@@ -154,6 +200,7 @@ class _HomePageState extends ConsumerState<HomePage>
     _tabController.removeListener(handleTabIndexChange);
     _tabController.dispose();
     messageListener.cancel();
+    _incomingCallSub?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -211,11 +258,24 @@ class _HomePageState extends ConsumerState<HomePage>
                 Icons.search,
               ),
             ),
-            IconButton(
-              onPressed: () {},
-              icon: const Icon(
-                Icons.more_vert,
-              ),
+            PopupMenuButton(
+              icon: const Icon(Icons.more_vert),
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'logout',
+                  child: const Text('Log out (Reset App)'),
+                  onTap: () async {
+                    await SharedPref.instance.remove('user');
+                    if (!context.mounted) return;
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (context) => const WelcomePage(),
+                      ),
+                      (route) => false,
+                    );
+                  },
+                ),
+              ],
             ),
           ],
           bottom: TabBar(
@@ -244,9 +304,7 @@ class _HomePageState extends ConsumerState<HomePage>
             const Center(
               child: Text('Coming soon'),
             ),
-            const Center(
-              child: Text('Coming soon'),
-            )
+            CallsTab(user: widget.user),
           ],
         ),
         floatingActionButton: _floatingButtons[_tabController.index],
@@ -270,6 +328,9 @@ class RecentChatsBody extends ConsumerWidget {
     return StreamBuilder<List<RecentChat>>(
       stream: IsarDb.getRecentChatStream(ref),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const HomePageContactsList();
+        }
         if (!snapshot.hasData) {
           return Container();
         }
