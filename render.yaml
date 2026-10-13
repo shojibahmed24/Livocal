@@ -13,7 +13,7 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       - key: GEMINI_LIVE_MODEL
-        value: models/gemini-2.0-flash-live-001
+        value: models/gemini-3.5-live-translate-preview
       - key: DEFAULT_VOICE
         value: Aoede
       - key: FIREBASE_SERVICE_ACCOUNT

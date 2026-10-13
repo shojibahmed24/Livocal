@@ -28,24 +28,10 @@ class GeminiLiveTranslator {
 
   static const List<GeminiModelPreset> modelPresets = [
     GeminiModelPreset(
-      id: 'models/gemini-3.5-flash-live-preview',
-      title: 'Gemini 3.5 Live Translation Preview (Default)',
-      subtitle: 'Next-gen ultra-low latency universal N×N live interpreter',
-    ),
-    GeminiModelPreset(
-      id: 'models/gemini-2.0-flash-live-001',
-      title: 'Gemini Live Flash 001 (Stable)',
-      subtitle: 'Low-latency BidiGenerateContent native audio & translation',
-    ),
-    GeminiModelPreset(
-      id: 'models/gemini-2.5-flash-native-audio-preview-12-2025',
-      title: 'Gemini 2.5 Native Audio Dialog Preview',
-      subtitle: 'High emotional prosody & multilingual voice translation',
-    ),
-    GeminiModelPreset(
-      id: 'models/gemini-2.0-flash-exp',
-      title: 'Gemini 2.0 Flash Experimental',
-      subtitle: 'Broad compatibility experimental multimodal live endpoint',
+      id: 'models/gemini-3.5-live-translate-preview',
+      title: 'Gemini 3.5 Live Translate',
+      subtitle:
+          'Low-latency, real-time speech-to-speech translation between 70+ languages',
     ),
   ];
 

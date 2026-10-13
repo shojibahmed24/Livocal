@@ -54,7 +54,7 @@ if (serviceAccount) {
 const PORT = parseInt(process.env.PORT || '8080', 10);
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY?.trim() || '';
 const DEFAULT_MODEL =
-    process.env.GEMINI_LIVE_MODEL?.trim() || 'models/gemini-3.5-flash-live-preview';
+    process.env.GEMINI_LIVE_MODEL?.trim() || 'models/gemini-3.5-live-translate-preview';
 const DEFAULT_VOICE = process.env.DEFAULT_VOICE?.trim() || 'Aoede';
 
 const app = express();
