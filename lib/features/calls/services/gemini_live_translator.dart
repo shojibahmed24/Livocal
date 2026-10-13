@@ -152,7 +152,8 @@ CRITICAL OPERATING RULES:
   }
 
   static const String prefRelayUrl = 'gemini_live_relay_url';
-  static const String defaultRelayUrl = 'ws://127.0.0.1:8080/ws/live-call';
+  static const String defaultRelayUrl =
+      'wss://livocal-relay.onrender.com/ws/live-call';
 
   static String getSavedRelayUrl() =>
       SharedPref.instance.getString(prefRelayUrl)?.trim() ?? defaultRelayUrl;
