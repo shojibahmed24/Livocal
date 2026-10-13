@@ -403,13 +403,12 @@ class LocalContactsList extends StatelessWidget {
                   const SizedBox(
                     width: 18.0,
                   ),
-                  Text(
-                    contact.displayName,
-                    style: Theme.of(context).custom.textTheme.bold,
-                  ),
-                  const Expanded(
-                    child: SizedBox(
-                      width: double.infinity,
+                  Expanded(
+                    child: Text(
+                      contact.displayName,
+                      style: Theme.of(context).custom.textTheme.bold,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   TextButton(
