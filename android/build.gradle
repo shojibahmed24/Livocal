@@ -39,12 +39,6 @@ subprojects {
     tasks.matching { it.name.contains("AarMetadata") }.configureEach {
         enabled = false
     }
-    afterEvaluate { project ->
-        if (project.extensions.findByName("android") != null) {
-            def androidExt = project.extensions.findByName("android")
-            androidExt.compileSdkVersion = 36
-        }
-    }
 }
 
 tasks.register("clean", Delete) {
