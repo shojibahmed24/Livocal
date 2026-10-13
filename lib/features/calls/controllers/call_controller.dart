@@ -206,12 +206,26 @@ class CallController extends StateNotifier<CallControllerState> {
       );
     }
 
-    if (GeminiLiveTranslator.getSavedApiKey().isNotEmpty) {
-      await _geminiTranslator.updateLanguagePair(
-        newLangA: langA,
-        newLangB: langB,
-        bidirectional: state.isBidirectionalSingleDevice,
-      );
+    if (langA.code == langB.code) {
+      // Both users speak the same language: disconnect Gemini, switch to original voice!
+      await _geminiTranslator.disconnect();
+      setAudioMode(CallAudioMode.originalOnly);
+      _webrtcClient.setRemoteAudioVolume(1.0);
+    } else if (state.translationEnabled) {
+      if (!_geminiTranslator.isConnected) {
+        await _geminiTranslator.connect(
+          langA: langA,
+          langB: langB,
+          bidirectional: state.isBidirectionalSingleDevice,
+        );
+      } else {
+        await _geminiTranslator.updateLanguagePair(
+          newLangA: langA,
+          newLangB: langB,
+          bidirectional: state.isBidirectionalSingleDevice,
+        );
+      }
+      setAudioMode(CallAudioMode.translatedOnly);
     }
   }
 
@@ -446,6 +460,38 @@ class CallController extends StateNotifier<CallControllerState> {
       repo.sendTranscriptToCall(connectedSession.callId, entry);
     });
 
+    final isSameLanguage = myLang.code == peerLang.code;
+    final shouldTranslate = state.translationEnabled && !isSameLanguage;
+
+    if (!shouldTranslate) {
+      // 100% Direct P2P Audio Call - No Gemini WebSocket Needed!
+      _webrtcClient.setRemoteAudioVolume(1.0);
+
+      final directBubble = LiveTranscriptEntry(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        speakerId: 'system',
+        speakerName: isSameLanguage ? 'Direct Voice Call' : 'Direct Call (Translation Off)',
+        isSelf: false,
+        sourceLangCode: myLang.code,
+        targetLangCode: peerLang.code,
+        originalText: isSameLanguage
+            ? '📞 Direct Voice Call Active: Both participants speak ${myLang.nativeName} (${myLang.englishName}). WebRTC audio streaming directly with zero AI translation.'
+            : '📞 Direct Voice Call Active: AI translation is turned off. Direct WebRTC audio active.',
+        translatedText: isSameLanguage
+            ? 'উভয় ব্যবহারকারীর ভাষা একই (${myLang.nativeName})। সরাসরি আসল কণ্ঠে কোনো ট্রান্সলেশন ছাড়াই কথা বলুন।'
+            : 'সরাসরি ভয়েস কল সক্রিয় রয়েছে।',
+        timestamp: DateTime.now(),
+      );
+
+      state = state.copyWith(
+        geminiState: GeminiLiveState.ready,
+        audioMode: CallAudioMode.originalOnly,
+        transcripts: [directBubble],
+        hasApiKey: GeminiLiveTranslator.getSavedApiKey().isNotEmpty,
+      );
+      return;
+    }
+
     final connectedWs = await _geminiTranslator.connect(
       langA: myLang,
       langB: peerLang,
@@ -466,7 +512,7 @@ class CallController extends StateNotifier<CallControllerState> {
       targetLangCode: peerLang.code,
       originalText: connectedWs
           ? '🟢 Live Neural Audio Interpreter Active: Speak in ${myLang.nativeName} (${myLang.englishName}) or ${peerLang.nativeName} (${peerLang.englishName}).'
-          : '⚡ Live Interpreter Ready (${myLang.shortBadge} ⇄ ${peerLang.shortBadge}). Speak into mic or tap quick test phrases below, or set your Gemini API Key in Calls Settings for live neural voice synthesis.',
+          : '⚡ Live Interpreter Ready (${myLang.shortBadge} ⇄ ${peerLang.shortBadge}). Speak into mic or tap quick test phrases below.',
       translatedText:
           '${myLang.flagEmoji} ${myLang.nativeName} ⇄ ${peerLang.flagEmoji} ${peerLang.nativeName} রিয়েল-টাইম ভয়েস ট্রান্সলেশন চালু হয়েছে। যেকোনো ভাষায় কথা বলুন!',
       timestamp: DateTime.now(),
@@ -620,12 +666,24 @@ class CallController extends StateNotifier<CallControllerState> {
     state = state.copyWith(audioMode: mode);
   }
 
-  void toggleTranslationEnabled(bool enabled) {
+  void toggleTranslationEnabled(bool enabled) async {
     state = state.copyWith(translationEnabled: enabled);
     if (!enabled) {
       setAudioMode(CallAudioMode.originalOnly);
-    } else if (state.audioMode == CallAudioMode.originalOnly) {
-      setAudioMode(CallAudioMode.translatedOnly);
+      await _geminiTranslator.disconnect();
+    } else {
+      if (state.myLangCode != state.peerLangCode) {
+        setAudioMode(CallAudioMode.translatedOnly);
+        if (!_geminiTranslator.isConnected) {
+          await _geminiTranslator.connect(
+            langA: state.myLanguage,
+            langB: state.peerLanguage,
+            bidirectional: state.isBidirectionalSingleDevice,
+          );
+        }
+      } else {
+        setAudioMode(CallAudioMode.originalOnly);
+      }
     }
   }
 
