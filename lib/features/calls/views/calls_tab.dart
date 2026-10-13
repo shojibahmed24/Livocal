@@ -481,7 +481,7 @@ class CallsTab extends ConsumerWidget {
                   peerPhone: record.peerPhone,
                   myLangCode: record.myLangCode,
                   peerLangCode: record.peerLangCode,
-                  isSimulatedDemo: true,
+                  isSimulatedDemo: record.peerId.startsWith('demo_'),
                 );
               },
               leading: CircleAvatar(
@@ -572,7 +572,7 @@ class CallsTab extends ConsumerWidget {
                     peerPhone: record.peerPhone,
                     myLangCode: record.myLangCode,
                     peerLangCode: record.peerLangCode,
-                    isSimulatedDemo: true,
+                    isSimulatedDemo: record.peerId.startsWith('demo_'),
                   );
                 },
               ),
