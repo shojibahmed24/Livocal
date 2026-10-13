@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
+
+import 'package:http/http.dart' as http;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -282,6 +285,7 @@ class CallController extends StateNotifier<CallControllerState> {
 
     if (!session.isSimulatedTest) {
       _webrtcClient.startOutgoingCall(session.callId);
+      _notifyRemoteCallee(session);
     }
 
     // Transition from Dialing -> Ringing after 900ms
@@ -321,6 +325,25 @@ class CallController extends StateNotifier<CallControllerState> {
     }
 
     return session;
+  }
+
+  Future<void> _notifyRemoteCallee(CallSession session) async {
+    try {
+      final url = Uri.parse(
+          'https://livocal-relay.onrender.com/api/call/notify-incoming');
+      await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'calleeId': session.calleeId,
+          'callerName': session.callerName,
+          'callerNumber': session.callerPhone,
+          'callId': session.callId,
+        }),
+      );
+    } catch (e) {
+      debugPrint('Failed to send incoming call push notification: $e');
+    }
   }
 
   /// Creates an incoming call session (from Firestore or Simulated Incoming Call button)

@@ -9,6 +9,7 @@ import 'package:whatsapp_clone/shared/utils/abc.dart';
 import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
 
 import '../../features/chat/models/message.dart';
+import '../../features/calls/services/call_kit_service.dart';
 
 final pushNotificationsRepoProvider = Provider(
   (ref) => PushNotificationsRepo(FirebaseMessaging.instance, ref),
@@ -34,7 +35,7 @@ class PushNotificationsRepo {
         .getFcmToken(message.receiverId);
 
     const String url =
-        'https://wa_notifications-1-q2097095.deta.app/new_message';
+        'https://livocal-relay.onrender.com/api/notify/chat-message';
     final Map<String, String> headers = {"Content-Type": "application/json"};
 
     String messageContent = message.content;
@@ -42,10 +43,13 @@ class PushNotificationsRepo {
       messageContent = "Sent an attachment";
     }
 
-    final user = getCurrentUser()!;
+    final user = getCurrentUser();
+    if (user == null) return;
+
     final String messageJson = jsonEncode(
       {
         'token': token,
+        'receiverId': message.receiverId,
         'messageId': message.id,
         'messageContent': messageContent,
         'authorId': user.id,
@@ -53,11 +57,13 @@ class PushNotificationsRepo {
       },
     );
 
-    await post(
-      Uri.parse(url),
-      headers: headers,
-      body: messageJson,
-    );
+    try {
+      await post(
+        Uri.parse(url),
+        headers: headers,
+        body: messageJson,
+      );
+    } catch (_) {}
   }
 }
 
@@ -65,16 +71,32 @@ Future<void> _handleBackgroundMessage(RemoteMessage message) async {
   await Firebase.initializeApp();
   final data = message.data;
 
-  await ProviderContainer()
-      .read(firebaseFirestoreRepositoryProvider)
-      .sendSystemMessage(
-        message: SystemMessage(
-          targetId: data['messageId'],
-          action: MessageAction.statusUpdate,
-          update: MessageStatus.delivered.value,
-        ),
-        receiverId: data['authorId'],
-      );
+  // 1. Wake up phone for Incoming Voice Call
+  if (data['type'] == 'INCOMING_CALL') {
+    final callId = data['callId'] ?? '';
+    final callerName = data['callerName'] ?? 'Incoming Call';
+    final callerNumber = data['callerNumber'] ?? '';
+    await CallKitService().showIncomingCall(
+      callId: callId,
+      callerName: callerName,
+      callerPhone: callerNumber,
+    );
+    return;
+  }
+
+  // 2. Chat message delivered status update
+  if (data['messageId'] != null) {
+    await ProviderContainer()
+        .read(firebaseFirestoreRepositoryProvider)
+        .sendSystemMessage(
+          message: SystemMessage(
+            targetId: data['messageId'],
+            action: MessageAction.statusUpdate,
+            update: MessageStatus.delivered.value,
+          ),
+          receiverId: data['authorId'],
+        );
+  }
 }
 
 void handleTokenRefresh(String newToken, ProviderRef ref) {

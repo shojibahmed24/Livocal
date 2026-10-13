@@ -135,6 +135,50 @@ app.post('/api/call/notify-incoming', async (req, res) => {
   }
 });
 
+// Send Chat Message Push via FCM
+app.post('/api/notify/chat-message', async (req, res) => {
+  if (!firebaseApp || !messagingService) {
+    return res.status(503).json({ error: 'Firebase Admin not initialized on server' });
+  }
+
+  const { token, receiverId, messageContent, authorName, messageId } = req.body;
+  try {
+    let targetToken = token;
+    if (!targetToken && receiverId && firestoreDb) {
+      const doc = await firestoreDb.collection('fcmTokens').doc(receiverId).get();
+      if (doc.exists) {
+        targetToken = doc.data().token;
+      }
+    }
+
+    if (!targetToken) {
+      return res.status(404).json({ error: 'FCM token not found' });
+    }
+
+    const payload = {
+      token: targetToken,
+      notification: {
+        title: authorName || 'New Message',
+        body: messageContent || 'Sent a message',
+      },
+      data: {
+        type: 'CHAT_MESSAGE',
+        messageId: String(messageId || ''),
+        authorName: String(authorName || ''),
+      },
+      android: {
+        priority: 'high',
+      },
+    };
+
+    const result = await messagingService.send(payload);
+    res.json({ success: true, messageId: result });
+  } catch (err) {
+    console.error('Chat FCM Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws/live-call' });
 
