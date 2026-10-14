@@ -393,7 +393,8 @@ class WebRtcCallClient {
   void setRemoteAudioVolume(double volume) {
     if (_remoteStream != null) {
       for (final audioTrack in _remoteStream!.getAudioTracks()) {
-        audioTrack.enabled = volume > 0.01;
+        audioTrack.enabled = volume > 0.001;
+        Helper.setVolume(volume, audioTrack);
       }
     }
   }

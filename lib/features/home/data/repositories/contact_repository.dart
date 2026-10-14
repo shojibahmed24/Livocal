@@ -1,9 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_contacts/flutter_contacts.dart' show FlutterContacts;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 import 'package:livocal/shared/models/contact.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/repositories/isar_db.dart';
 
 final contactsRepositoryProvider = Provider((ref) => ContactsRepository(ref));
 
@@ -94,54 +97,98 @@ class ContactsRepository {
         }
       }
 
-      // 2. Query all registered Livocal users from Firestore
-      // We fetch all users and match locally (efficient for small-medium user bases)
+      // 2. Query registered Livocal users via secure backend endpoint /api/contacts/match
+      // Protects privacy by matching only contact numbers without dumping the /users collection
       final Map<String, _FirestoreUser> registeredByPhone = {};
       try {
-        final usersSnap = await FirebaseFirestore.instance
-            .collection('users')
-            .get()
-            .timeout(const Duration(seconds: 8));
+        final idToken = await auth.FirebaseAuth.instance.currentUser?.getIdToken();
+        if (idToken != null && allNormalized.isNotEmpty) {
+          final response = await http.post(
+            Uri.parse('https://livocal-relay.onrender.com/api/contacts/match'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $idToken',
+            },
+            body: jsonEncode({
+              'phoneNumbers': allNormalized.toList(),
+            }),
+          ).timeout(const Duration(seconds: 10));
 
-        for (final doc in usersSnap.docs) {
-          final data = doc.data();
-          final userId = data['id'] as String?;
-          if (userId == null) continue;
+          if (response.statusCode == 200) {
+            final data = jsonDecode(response.body);
+            final matches = data['matches'] as List<dynamic>? ?? [];
+            for (final m in matches) {
+              final map = m as Map<String, dynamic>;
+              final userId = map['id'] as String?;
+              if (userId == null) continue;
+              final phoneData = map['phone'] as Map<String, dynamic>?;
+              final rawNumber = phoneData?['rawNumber'] as String? ?? '';
+              final code = phoneData?['code'] as String? ?? '';
+              final number = phoneData?['number'] as String? ?? '';
+              final avatarUrl = map['avatarUrl'] as String? ?? '';
+              final name = map['name'] as String? ?? '';
 
-          final phoneData = data['phone'] as Map<String, dynamic>?;
-          if (phoneData == null) continue;
+              final entry = _FirestoreUser(
+                userId: userId,
+                avatarUrl: avatarUrl,
+                name: name,
+              );
 
-          final rawNumber = phoneData['rawNumber'] as String? ?? '';
-          final code = phoneData['code'] as String? ?? '';
-          final number = phoneData['number'] as String? ?? '';
-          final avatarUrl = data['avatarUrl'] as String? ?? '';
-          final name = data['name'] as String? ?? '';
+              // Cache user in local Isar database so we have it for chats/calls
+              await IsarDb.saveUser(User(
+                id: userId,
+                name: name,
+                avatarUrl: avatarUrl,
+                phone: Phone(
+                  code: code,
+                  number: number,
+                  formattedNumber: rawNumber.isNotEmpty ? rawNumber : '$code$number',
+                ),
+                activityStatus: UserActivityStatus.online,
+              ));
 
-          final normalizedRaw = _normalize(rawNumber);
-          final normalizedCodeNum = _normalize('$code$number');
+              final normalizedRaw = _normalize(rawNumber);
+              final normalizedCodeNum = _normalize('$code$number');
 
-          final entry = _FirestoreUser(
-            userId: userId,
-            avatarUrl: avatarUrl,
-            name: name,
-          );
-
-          // Register multiple lookup keys for robust matching
-          if (normalizedRaw.isNotEmpty) {
-            registeredByPhone[normalizedRaw] = entry;
-            if (normalizedRaw.startsWith('+')) {
-              registeredByPhone[normalizedRaw.substring(1)] = entry;
+              if (normalizedRaw.isNotEmpty) {
+                registeredByPhone[normalizedRaw] = entry;
+                if (normalizedRaw.startsWith('+')) {
+                  registeredByPhone[normalizedRaw.substring(1)] = entry;
+                }
+              }
+              if (normalizedCodeNum.isNotEmpty && normalizedCodeNum != normalizedRaw) {
+                registeredByPhone[normalizedCodeNum] = entry;
+                if (normalizedCodeNum.startsWith('+')) {
+                  registeredByPhone[normalizedCodeNum.substring(1)] = entry;
+                }
+              }
             }
-          }
-          if (normalizedCodeNum.isNotEmpty && normalizedCodeNum != normalizedRaw) {
-            registeredByPhone[normalizedCodeNum] = entry;
-            if (normalizedCodeNum.startsWith('+')) {
-              registeredByPhone[normalizedCodeNum.substring(1)] = entry;
-            }
+          } else {
+            debugPrint('[ContactsRepository] /api/contacts/match returned status: ${response.statusCode}');
           }
         }
       } catch (e) {
-        debugPrint('ContactsRepository: Firestore users fetch error: $e');
+        debugPrint('[ContactsRepository] backend /api/contacts/match error: $e');
+      }
+
+      // Offline fallback: cross-reference with users already cached in local Isar database
+      if (registeredByPhone.isEmpty) {
+        try {
+          final cachedUsers = await IsarDb.getUsers();
+          for (final u in cachedUsers) {
+            final entry = _FirestoreUser(
+              userId: u.id,
+              avatarUrl: u.avatarUrl,
+              name: u.name,
+            );
+            final normRaw = _normalize(u.phone.rawNumber);
+            final normCode = _normalize('${u.phone.code}${u.phone.number}');
+            if (normRaw.isNotEmpty) registeredByPhone[normRaw] = entry;
+            if (normCode.isNotEmpty) registeredByPhone[normCode] = entry;
+          }
+        } catch (e) {
+          debugPrint('[ContactsRepository] local cache fallback error: $e');
+        }
       }
 
       // 3. Match each device contact against registered users (deduplicated by contactId)

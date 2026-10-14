@@ -4,9 +4,6 @@ import { WebSocketServer, WebSocket } from 'ws';
 import dotenv from 'dotenv';
 import cors from 'cors';
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { initializeApp, cert } from 'firebase-admin/app';
@@ -15,9 +12,6 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 let firebaseApp = null;
 let messagingService = null;

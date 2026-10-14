@@ -391,8 +391,10 @@ class IsarDb {
     });
   }
 
-  static List<User> getDemoUsers() {
-    return const [];
+  static Future<List<User>> getUsers() async {
+    final isarInstance = _instance ?? Isar.getInstance();
+    if (isarInstance == null) return [];
+    return isarInstance.users.where().findAll();
   }
 
   static Future<void> addContacts() async {
@@ -405,23 +407,23 @@ class IsarDb {
         localContacts = await providerContainer
             .read(contactsRepositoryProvider)
             .getContacts(self: self)
-            .timeout(const Duration(seconds: 5));
+            .timeout(const Duration(seconds: 12));
       } catch (e) {
         debugPrint('[IsarDb] addContacts error: $e');
       }
     }
 
-    await isar.writeTxn(() async {
-      await isar.contacts.putAll(localContacts);
-    });
+    // Only update cache if new contacts were successfully loaded, never destroy offline cache
+    if (localContacts.isNotEmpty) {
+      await isar.writeTxn(() async {
+        await isar.contacts.clear();
+        await isar.contacts.putAll(localContacts);
+      });
+    }
   }
 
   static Future<void> refreshContacts() async {
     try {
-      await isar.writeTxn(() async {
-        await isar.contacts.clear();
-        await isar.users.clear();
-      });
       await IsarDb.addContacts();
     } catch (e) {
       debugPrint('[IsarDb] refreshContacts error: $e');
