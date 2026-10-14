@@ -28,21 +28,9 @@ class GeminiLiveTranslator {
   static const List<GeminiModelPreset> modelPresets = [
     GeminiModelPreset(
       id: 'models/gemini-3.5-live-translate-preview',
-      title: 'Gemini 3.5 Live Translate (Enterprise)',
+      title: 'Gemini 3.5 Live Translate',
       subtitle:
-          'Google Cloud Agent Platform: Low-latency, real-time speech-to-speech translation',
-    ),
-    GeminiModelPreset(
-      id: 'models/gemini-2.0-flash-exp',
-      title: 'Gemini 2.0 Flash Live (AI Studio)',
-      subtitle:
-          'Ultra low-latency, real-time multimodal speech streaming for developer API keys',
-    ),
-    GeminiModelPreset(
-      id: 'models/gemini-2.5-flash-preview',
-      title: 'Gemini 2.5 Flash Live',
-      subtitle:
-          'High precision real-time voice translation & dialogue',
+          'Low-latency, real-time speech-to-speech translation between 70+ languages',
     ),
   ];
 
