@@ -143,12 +143,20 @@ Future<Contact?> pickContact() async {
 }
 
 Future<bool> hasPermission(Permission permission) async {
+  if (Platform.isAndroid && permission == Permission.storage) {
+    final photoStatus = await Permission.photos.status;
+    if (photoStatus.isGranted || photoStatus.isLimited) return true;
+  }
+
   final status = await permission.request();
-  if (status.isGranted) {
+  if (status.isGranted || status.isLimited) {
     return true;
   }
 
   if (status.isPermanentlyDenied) {
+    if (Platform.isAndroid && permission == Permission.storage) {
+      return false;
+    }
     await openAppSettings();
   }
 

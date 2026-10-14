@@ -40,11 +40,20 @@ Future<File?> capturePhoto() async {
 Future<List<File>?> pickFiles({
   required FileType type,
 }) async {
-  FilePickerResult? result = await FilePicker.platform.pickFiles(
-    type: type,
-    allowCompression: false,
-    allowMultiple: true,
-  );
+  try {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: type,
+      allowCompression: false,
+      allowMultiple: true,
+    );
 
-  return result?.files.map((e) => File(e.path!)).toList();
+    if (result == null) return null;
+    final validFiles = result.files
+        .where((f) => f.path != null && f.path!.isNotEmpty && File(f.path!).existsSync())
+        .map((f) => File(f.path!))
+        .toList();
+    return validFiles.isNotEmpty ? validFiles : null;
+  } catch (e) {
+    return null;
+  }
 }

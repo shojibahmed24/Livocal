@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
 import 'package:whatsapp_clone/theme/color_theme.dart';
 import 'package:whatsapp_clone/theme/text_theme.dart';
 
@@ -183,5 +184,35 @@ extension CustomTheme on ThemeData {
     final path =
         brightness == Brightness.dark ? 'assets/images/dark' : 'assets/images';
     return AssetImage('$path/$name');
+  }
+}
+
+final themeModeProvider =
+    StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
+  return ThemeModeNotifier();
+});
+
+class ThemeModeNotifier extends StateNotifier<ThemeMode> {
+  ThemeModeNotifier() : super(_getInitialTheme());
+
+  static ThemeMode _getInitialTheme() {
+    try {
+      final saved = SharedPref.instance.getString('app_theme_mode');
+      if (saved == 'light') return ThemeMode.light;
+      if (saved == 'dark') return ThemeMode.dark;
+    } catch (_) {}
+    return ThemeMode.system;
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    state = mode;
+    try {
+      final str = mode == ThemeMode.light
+          ? 'light'
+          : mode == ThemeMode.dark
+              ? 'dark'
+              : 'system';
+      await SharedPref.instance.setString('app_theme_mode', str);
+    } catch (_) {}
   }
 }

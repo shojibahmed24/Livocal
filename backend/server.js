@@ -57,28 +57,37 @@ const DEFAULT_MODEL =
     process.env.GEMINI_LIVE_MODEL?.trim() || 'models/gemini-3.5-live-translate-preview';
 const DEFAULT_VOICE = process.env.DEFAULT_VOICE?.trim() || 'Aoede';
 
+const RELAY_SECRET = process.env.RELAY_API_SECRET?.trim() || '';
+
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Health & Status endpoint
+function authenticateRequest(req, res, next) {
+  if (RELAY_SECRET) {
+    const provided =
+      req.headers['x-api-secret'] ||
+      req.headers['authorization']?.replace('Bearer ', '');
+    if (provided !== RELAY_SECRET) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  }
+  next();
+}
+
+// Health & Status endpoint (Sanitized)
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
-    uptime: process.uptime(),
-    activeSessions: activeSessionsCount,
-    hasApiKey: Boolean(GEMINI_API_KEY),
-    firebaseAdmin: Boolean(firebaseApp),
-    firebaseProject: firebaseApp ? 'livocal24' : null,
-    defaultModel: DEFAULT_MODEL,
-    defaultVoice: DEFAULT_VOICE,
+    service: 'Livocal Live Relay Gateway',
+    uptime: Math.round(process.uptime()),
     timestamp: new Date().toISOString(),
   });
 });
 
 app.get('/', (req, res) => {
   res.json({
-    service: 'WhatsUp Gemini Live Relay Gateway',
+    service: 'Livocal Gemini Live Relay Gateway',
     version: '1.0.0',
     description: 'Zero-Trust Secure Audio Relay for Gemini Multimodal Live API',
     endpoints: {
@@ -92,7 +101,7 @@ app.get('/', (req, res) => {
 });
 
 // Send Full-Screen Incoming Call Wakeup Push via FCM
-app.post('/api/call/notify-incoming', async (req, res) => {
+app.post('/api/call/notify-incoming', authenticateRequest, async (req, res) => {
   if (!firebaseApp || !messagingService) {
     return res.status(503).json({ error: 'Firebase Admin not initialized on server' });
   }
@@ -141,7 +150,7 @@ app.post('/api/notify/chat-message', async (req, res) => {
     return res.status(503).json({ error: 'Firebase Admin not initialized on server' });
   }
 
-  const { token, receiverId, messageContent, authorName, messageId } = req.body;
+  const { token, receiverId, messageContent, authorName, authorId, authorAvatar, messageId } = req.body;
   try {
     let targetToken = token;
     if (!targetToken && receiverId && firestoreDb) {
@@ -160,11 +169,14 @@ app.post('/api/notify/chat-message', async (req, res) => {
       notification: {
         title: authorName || 'New Message',
         body: messageContent || 'Sent a message',
+        imageUrl: authorAvatar || undefined,
       },
       data: {
         type: 'CHAT_MESSAGE',
         messageId: String(messageId || ''),
         authorName: String(authorName || ''),
+        authorId: String(authorId || ''),
+        authorAvatar: String(authorAvatar || ''),
       },
       android: {
         priority: 'high',

@@ -149,7 +149,11 @@ class ContactPickerController extends StateNotifier<List<Contact>> {
     query = query.toLowerCase().trim();
 
     state = _contacts.where((contact) {
-      return contact.displayName.toLowerCase().startsWith(query);
+      final nameMatches = contact.displayName.toLowerCase().contains(query);
+      final cleanQuery = query.replaceAll(RegExp(r'\s+'), '');
+      final cleanPhone = contact.phoneNumber.replaceAll(RegExp(r'\s+'), '');
+      final phoneMatches = cleanPhone.contains(cleanQuery);
+      return nameMatches || phoneMatches;
     }).toList();
   }
 }

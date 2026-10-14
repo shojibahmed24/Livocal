@@ -295,19 +295,17 @@ class _AttachedVoiceViewerState extends ConsumerState<AttachedVoiceViewer> {
   }
 
   void _updateProgress(
-    BuildContext context,
-    double tapPosition, [
+    double tapPosition,
+    double totalWidth, [
     bool resume = true,
   ]) async {
-    RenderBox box = context.findRenderObject() as RenderBox;
-    double width = box.size.width;
-    final relativePos = tapPosition / width;
-    progressNotifier.value = relativePos < 0 ? 0 : relativePos;
+    if (totalWidth <= 0) return;
+    final relativePos = (tapPosition / totalWidth).clamp(0.0, 1.0);
+    progressNotifier.value = relativePos;
+    final duration = await durationFuture;
     player.seek(
       Duration(
-        milliseconds:
-            (tapPosition / width * (await durationFuture).inMilliseconds)
-                .toInt(),
+        milliseconds: (relativePos * duration.inMilliseconds).toInt(),
       ),
     );
 
@@ -424,7 +422,9 @@ class _AttachedVoiceViewerState extends ConsumerState<AttachedVoiceViewer> {
                 CircleAvatar(
                   radius: 20,
                   backgroundColor: Colors.black,
-                  backgroundImage: CachedNetworkImageProvider(avatarUrl),
+                  backgroundImage: avatarUrl.isNotEmpty
+                      ? CachedNetworkImageProvider(avatarUrl)
+                      : const AssetImage('assets/images/avatar.png') as ImageProvider,
                 ),
                 Positioned(
                   bottom: 0,
@@ -468,15 +468,15 @@ class _AttachedVoiceViewerState extends ConsumerState<AttachedVoiceViewer> {
                           return GestureDetector(
                             onHorizontalDragUpdate: (details) {
                               _updateProgress(
-                                context,
                                 details.localPosition.dx,
+                                constraints.maxWidth,
                                 false,
                               );
                             },
                             onTapUp: (details) {
                               _updateProgress(
-                                context,
                                 details.localPosition.dx,
+                                constraints.maxWidth,
                               );
                             },
                             child: ValueListenableBuilder(
@@ -1277,8 +1277,13 @@ class _DownloadingAttachmentState extends ConsumerState<DownloadingAttachment> {
       },
     );
 
-    downloadStream = DownloadService.getDownloadStream(widget.message.id)!;
-    setState(() => isDownloading = true);
+    final stream = DownloadService.getDownloadStream(widget.message.id);
+    if (stream != null) {
+      downloadStream = stream;
+      setState(() => isDownloading = true);
+    } else {
+      setState(() => isDownloading = false);
+    }
   }
 
   Future<void> cancel() async {
@@ -1434,8 +1439,13 @@ class _UploadingAttachmentState extends ConsumerState<UploadingAttachment> {
         .read(chatControllerProvider.notifier)
         .uploadAttachment(widget.message);
 
-    uploadStream = UploadService.getUploadStream(widget.message.id)!;
-    setState(() => isUploading = true);
+    final stream = UploadService.getUploadStream(widget.message.id);
+    if (stream != null) {
+      uploadStream = stream;
+      setState(() => isUploading = true);
+    } else {
+      setState(() => isUploading = false);
+    }
   }
 
   Future<void> stopUpload() async {

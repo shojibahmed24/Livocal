@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:whatsapp_clone/features/auth/domain/auth_service.dart';
 import 'package:whatsapp_clone/features/calls/services/gemini_live_translator.dart';
+import 'package:whatsapp_clone/features/home/views/profile_edit_screen.dart';
 import 'package:whatsapp_clone/shared/models/user.dart';
+import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
 import 'package:whatsapp_clone/shared/utils/snackbars.dart';
 import 'package:whatsapp_clone/theme/theme.dart';
 
@@ -17,6 +19,72 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  late User _currentUser;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentUser = widget.user;
+  }
+
+  void _showThemeSelectionDialog() {
+    final currentTheme = ref.read(themeModeProvider);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1F2C34)
+            : Colors.white,
+        title: const Text('Choose Theme'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RadioListTile<ThemeMode>(
+              title: const Text('System default'),
+              value: ThemeMode.system,
+              groupValue: currentTheme,
+              onChanged: (mode) {
+                if (mode != null) {
+                  ref.read(themeModeProvider.notifier).setThemeMode(mode);
+                  Navigator.pop(ctx);
+                }
+              },
+            ),
+            RadioListTile<ThemeMode>(
+              title: const Text('Light'),
+              value: ThemeMode.light,
+              groupValue: currentTheme,
+              onChanged: (mode) {
+                if (mode != null) {
+                  ref.read(themeModeProvider.notifier).setThemeMode(mode);
+                  Navigator.pop(ctx);
+                }
+              },
+            ),
+            RadioListTile<ThemeMode>(
+              title: const Text('Dark'),
+              value: ThemeMode.dark,
+              groupValue: currentTheme,
+              onChanged: (mode) {
+                if (mode != null) {
+                  ref.read(themeModeProvider.notifier).setThemeMode(mode);
+                  Navigator.pop(ctx);
+                }
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('CANCEL'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showLogoutDialog() {
     showDialog(
       context: context,
@@ -201,12 +269,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         children: [
           // User Profile Header Tile
           InkWell(
-            onTap: () {
-              showSnackBar(
-                context: context,
-                content: 'Profile details for ${widget.user.name}',
-                type: SnacBarType.info,
+            onTap: () async {
+              final updated = await Navigator.push<User>(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ProfileEditScreen(user: _currentUser),
+                ),
               );
+              if (updated != null && mounted) {
+                setState(() => _currentUser = updated);
+              }
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -215,13 +287,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   CircleAvatar(
                     radius: 32,
                     backgroundColor: Colors.grey[700],
-                    backgroundImage: widget.user.avatarUrl.isNotEmpty
-                        ? CachedNetworkImageProvider(widget.user.avatarUrl)
+                    backgroundImage: _currentUser.avatarUrl.isNotEmpty
+                        ? CachedNetworkImageProvider(_currentUser.avatarUrl)
                         : null,
-                    child: widget.user.avatarUrl.isEmpty
+                    child: _currentUser.avatarUrl.isEmpty
                         ? Text(
-                            widget.user.name.isNotEmpty
-                                ? widget.user.name[0].toUpperCase()
+                            _currentUser.name.isNotEmpty
+                                ? _currentUser.name[0].toUpperCase()
                                 : '?',
                             style: const TextStyle(
                               fontSize: 24,
@@ -237,7 +309,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.user.name,
+                          _currentUser.name,
                           style: textTheme.titleLarge.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -246,15 +318,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          widget.user.phone.getFormattedNumber(),
+                          _currentUser.phone.getFormattedNumber(),
                           style: textTheme.caption.copyWith(
                             color: Colors.grey,
                           ),
                         ),
                         const SizedBox(height: 2),
-                        const Text(
-                          'Hey there! I am using Livocal.',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        Text(
+                          SharedPref.instance.getString('user_about') ??
+                              'Hey there! I am using Livocal.',
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -304,18 +377,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
           ),
 
-          // Chats
+          // Chats & Theme
           ListTile(
             leading: const Icon(Icons.chat_outlined),
             title: const Text('Chats'),
-            subtitle: const Text('Theme, wallpapers, chat history'),
-            onTap: () {
-              showSnackBar(
-                context: context,
-                content: 'Chat theme is synchronized with system theme',
-                type: SnacBarType.info,
-              );
-            },
+            subtitle: Text(
+              'Theme: ${ref.watch(themeModeProvider).name.toUpperCase()}, wallpapers, chat history',
+            ),
+            onTap: _showThemeSelectionDialog,
           ),
 
           // Notifications

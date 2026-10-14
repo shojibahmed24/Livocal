@@ -57,12 +57,13 @@ class Livocal extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
     return MaterialApp(
       title: "Livocal",
       initialRoute: '/',
       theme: ref.read(lightThemeProvider),
       darkTheme: ref.read(darkThemeProvider),
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       debugShowCheckedModeBanner: false,
       home: StreamBuilder<auth.User?>(
         stream: ref.read(authRepositoryProvider).auth.authStateChanges(),

@@ -7,6 +7,7 @@ import 'package:whatsapp_clone/features/calls/views/outgoing_call_screen.dart';
 import 'package:whatsapp_clone/features/chat/views/chat.dart';
 import 'package:whatsapp_clone/shared/models/user.dart';
 import 'package:whatsapp_clone/shared/repositories/firebase_firestore.dart';
+import 'package:whatsapp_clone/shared/repositories/isar_db.dart';
 import 'package:whatsapp_clone/shared/utils/snackbars.dart';
 
 Future<void> showDirectDialSheet(
@@ -107,14 +108,20 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
       return;
     }
 
+    final cleanPhone = phone.replaceAll(RegExp(r"[^\d+]"), "");
+    final String phoneCode = cleanPhone.startsWith('+') ? '' : '+880';
+    final String phoneNumber = cleanPhone.startsWith('+')
+        ? cleanPhone
+        : (cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone);
+
     final targetUser = _foundUser ??
         User(
-          id: 'phone_${phone.replaceAll(RegExp(r"[^\d+]"), "")}',
+          id: 'phone_$cleanPhone',
           name: phone,
           avatarUrl: '',
           phone: Phone(
-            code: phone.startsWith('+') ? '' : '+880',
-            number: phone,
+            code: phoneCode,
+            number: phoneNumber,
             formattedNumber: phone,
           ),
           activityStatus: UserActivityStatus.online,
@@ -145,18 +152,26 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
       return;
     }
 
+    final cleanPhone = phone.replaceAll(RegExp(r"[^\d+]"), "");
+    final String phoneCode = cleanPhone.startsWith('+') ? '' : '+880';
+    final String phoneNumber = cleanPhone.startsWith('+')
+        ? cleanPhone
+        : (cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone);
+
     final targetUser = _foundUser ??
         User(
-          id: 'phone_${phone.replaceAll(RegExp(r"[^\d+]"), "")}',
+          id: 'phone_$cleanPhone',
           name: phone,
           avatarUrl: '',
           phone: Phone(
-            code: phone.startsWith('+') ? '' : '+880',
-            number: phone,
+            code: phoneCode,
+            number: phoneNumber,
             formattedNumber: phone,
           ),
           activityStatus: UserActivityStatus.online,
         );
+
+    IsarDb.saveUser(targetUser);
 
     Navigator.of(context).pop();
 
@@ -329,12 +344,15 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                         children: [
                           Row(
                             children: [
-                              Text(
-                                _foundUser!.name,
-                                style: TextStyle(
-                                  color: textColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
+                              Flexible(
+                                child: Text(
+                                  _foundUser!.name,
+                                  style: TextStyle(
+                                    color: textColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               const SizedBox(width: 6),

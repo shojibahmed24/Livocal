@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatsapp_clone/features/calls/controllers/call_controller.dart';
 import 'package:whatsapp_clone/features/calls/models/call_model.dart';
@@ -32,6 +34,7 @@ class OutgoingCallScreen extends ConsumerStatefulWidget {
 class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ringController;
+  Timer? _ringbackTimer;
   bool _navigated = false;
 
   @override
@@ -41,6 +44,10 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
       vsync: this,
       duration: const Duration(milliseconds: 2200),
     )..repeat();
+
+    _ringbackTimer = Timer.periodic(const Duration(milliseconds: 2000), (_) {
+      HapticFeedback.lightImpact();
+    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -57,6 +64,7 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
 
   @override
   void dispose() {
+    _ringbackTimer?.cancel();
     _ringController.dispose();
     super.dispose();
   }

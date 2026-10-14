@@ -26,8 +26,10 @@ class _RecordingVisualiserState extends ConsumerState<RecordingVisualiser> {
         : Colors.black54;
 
     final data = ref.watch(chatControllerProvider).recordingSamples;
-    final duration = data.last.duration;
-    samples.add(data.last.decibels ?? 0);
+    final duration = data.isNotEmpty ? data.last.duration : Duration.zero;
+    if (data.isNotEmpty) {
+      samples.add(data.last.decibels ?? 0);
+    }
 
     return Row(
       mainAxisSize: MainAxisSize.min,

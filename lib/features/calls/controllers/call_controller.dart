@@ -10,6 +10,7 @@ import 'package:whatsapp_clone/features/calls/models/call_language.dart';
 import 'package:whatsapp_clone/features/calls/models/call_model.dart';
 import 'package:whatsapp_clone/features/calls/repositories/call_repository.dart';
 import 'package:whatsapp_clone/features/calls/services/call_audio_pipeline.dart';
+import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:whatsapp_clone/features/calls/services/call_kit_service.dart';
 import 'package:whatsapp_clone/features/calls/services/gemini_live_translator.dart';
 import 'package:whatsapp_clone/features/calls/services/webrtc_call_client.dart';
@@ -103,6 +104,7 @@ class CallController extends StateNotifier<CallControllerState> {
 
   Timer? _callDurationTimer;
   Timer? _ringingAutoAnswerTimer;
+  Timer? _callTimeoutTimer;
   StreamSubscription<Uint8List>? _micStreamSub;
   StreamSubscription<double>? _micRmsSub;
   StreamSubscription<Uint8List>? _geminiAudioSub;
@@ -110,6 +112,7 @@ class CallController extends StateNotifier<CallControllerState> {
   StreamSubscription<LiveTranscriptEntry>? _geminiTranscriptSub;
   StreamSubscription<bool>? _geminiInterruptedSub;
   StreamSubscription<CallSession?>? _firestoreCallSub;
+  StreamSubscription<Uint8List>? _webrtcRemoteTranslatedAudioSub;
 
   CallController({required this.repo})
       : super(
@@ -128,6 +131,15 @@ class CallController extends StateNotifier<CallControllerState> {
         endCall();
       },
     );
+    FlutterCallkitIncoming.activeCalls().then((calls) {
+      if (calls is List && calls.isNotEmpty) {
+        final activeCall = calls.first;
+        final callId = activeCall['id'] as String?;
+        if (callId != null && callId.isNotEmpty) {
+          acceptAndConnectCall(callId: callId);
+        }
+      }
+    }).catchError((_) {});
   }
 
   CallLanguage get myLang => state.myLanguage;
@@ -301,6 +313,16 @@ class CallController extends StateNotifier<CallControllerState> {
       }
     });
 
+    // 30-second unanswered call timeout
+    _callTimeoutTimer?.cancel();
+    _callTimeoutTimer = Timer(const Duration(seconds: 30), () {
+      if (state.activeSession?.callId == session.callId &&
+          state.activeSession?.status != CallStateStatus.connected) {
+        debugPrint('Outgoing call timed out after 30s with no answer');
+        endCall(recordAsMissed: true);
+      }
+    });
+
     // If calling a Demo Contact or AI Test Call, auto-answer after 2.4s so user can test immediately!
     if (session.isSimulatedTest) {
       _ringingAutoAnswerTimer = Timer(const Duration(milliseconds: 2400), () {
@@ -320,8 +342,9 @@ class CallController extends StateNotifier<CallControllerState> {
           acceptAndConnectCall();
         } else if (remote.status == CallStateStatus.rejected ||
             remote.status == CallStateStatus.ended ||
-            remote.status == CallStateStatus.busy) {
-          endCall(recordAsMissed: false);
+            remote.status == CallStateStatus.busy ||
+            remote.status == CallStateStatus.missed) {
+          endCall(recordAsMissed: remote.status == CallStateStatus.missed);
         }
       });
     }
@@ -337,6 +360,7 @@ class CallController extends StateNotifier<CallControllerState> {
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
+          'targetUserId': session.calleeId,
           'calleeId': session.calleeId,
           'callerName': session.callerName,
           'callerNumber': session.callerPhone,
@@ -517,7 +541,17 @@ class CallController extends StateNotifier<CallControllerState> {
         _geminiTranslator.translatedAudioStream.listen((pcm24kBytes) {
       if (state.isBidirectionalSingleDevice || connectedSession.isSimulatedTest) {
         _audioPipeline.feedTranslatedAiPcm(pcm24kBytes);
+      } else {
+        // Real P2P call: stream translated 24kHz PCM to remote peer via WebRTC DataChannel
+        _webrtcClient.sendTranslatedAudio(pcm24kBytes);
       }
+    });
+
+    // Wire WebRTC remote translated audio stream to local audio pipeline for playback
+    _webrtcRemoteTranslatedAudioSub?.cancel();
+    _webrtcRemoteTranslatedAudioSub =
+        _webrtcClient.remoteTranslatedAudioStream.listen((pcm24kBytes) {
+      _audioPipeline.feedTranslatedAiPcm(pcm24kBytes);
     });
 
     _geminiInterruptedSub =
@@ -683,7 +717,12 @@ class CallController extends StateNotifier<CallControllerState> {
   void toggleMute() {
     final nextMute = !state.isMuted;
     _audioPipeline.setMuted(nextMute);
-    _webrtcClient.setMicrophoneMute(nextMute);
+    if (!state.translationEnabled) {
+      _webrtcClient.setMicrophoneMute(nextMute);
+    } else {
+      // When live AI translation is enabled, raw mic must remain muted in WebRTC
+      _webrtcClient.setMicrophoneMute(true);
+    }
     if (nextMute) {
       _geminiTranslator.sendAudioStreamEnd();
     }
@@ -693,6 +732,7 @@ class CallController extends StateNotifier<CallControllerState> {
   Future<void> toggleSpeakerphone() async {
     final nextSpeaker = !state.isSpeakerphoneOn;
     await _audioPipeline.setSpeakerphone(nextSpeaker);
+    _webrtcClient.setSpeakerphone(nextSpeaker);
     state = state.copyWith(isSpeakerphoneOn: nextSpeaker);
   }
 
@@ -774,6 +814,8 @@ class CallController extends StateNotifier<CallControllerState> {
     _callDurationTimer = null;
     _ringingAutoAnswerTimer?.cancel();
     _ringingAutoAnswerTimer = null;
+    _callTimeoutTimer?.cancel();
+    _callTimeoutTimer = null;
 
     await _micStreamSub?.cancel();
     await _micRmsSub?.cancel();
@@ -782,6 +824,8 @@ class CallController extends StateNotifier<CallControllerState> {
     await _geminiTranscriptSub?.cancel();
     await _geminiInterruptedSub?.cancel();
     await _firestoreCallSub?.cancel();
+    await _webrtcRemoteTranslatedAudioSub?.cancel();
+    _webrtcRemoteTranslatedAudioSub = null;
 
     await _webrtcClient.endCall();
     await _geminiTranslator.disconnect();

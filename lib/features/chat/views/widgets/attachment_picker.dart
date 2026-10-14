@@ -39,6 +39,7 @@ class _AttachmentPickerState extends ConsumerState<AttachmentPicker> {
           children: [
             LabelledButton(
               onTap: () async {
+                Navigator.pop(context);
                 ref
                     .read(chatControllerProvider.notifier)
                     .pickDocuments(context);
@@ -53,6 +54,7 @@ class _AttachmentPickerState extends ConsumerState<AttachmentPicker> {
             ),
             LabelledButton(
               onTap: () async {
+                Navigator.pop(context);
                 ref
                     .read(chatControllerProvider.notifier)
                     .navigateToCameraView(context);
@@ -67,6 +69,7 @@ class _AttachmentPickerState extends ConsumerState<AttachmentPicker> {
             ),
             LabelledButton(
               onTap: () async {
+                Navigator.pop(context);
                 ref
                     .read(chatControllerProvider.notifier)
                     .pickAttachmentsFromGallery(context);
@@ -82,6 +85,7 @@ class _AttachmentPickerState extends ConsumerState<AttachmentPicker> {
             if (Platform.isAndroid) ...[
               LabelledButton(
                 onTap: () async {
+                  Navigator.pop(context);
                   ref
                       .read(chatControllerProvider.notifier)
                       .pickAudioFiles(context);
@@ -117,7 +121,7 @@ class _AttachmentPickerState extends ConsumerState<AttachmentPicker> {
                 Navigator.pop(context);
                 showSnackBar(
                   context: context,
-                  content: 'In-app peer-to-peer payment is coming soon',
+                  content: 'Tap the \$ icon in the message bar to send USD payments',
                   type: SnacBarType.info,
                 );
               },
@@ -127,7 +131,7 @@ class _AttachmentPickerState extends ConsumerState<AttachmentPicker> {
                 radius: 14,
                 backgroundColor: Colors.white,
                 child: Icon(
-                  Icons.payment_rounded,
+                  Icons.attach_money_rounded,
                   size: 18,
                   color: Colors.teal,
                 ),

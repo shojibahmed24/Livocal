@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatsapp_clone/features/calls/controllers/call_controller.dart';
 import 'package:whatsapp_clone/features/calls/models/call_model.dart';
@@ -17,6 +19,7 @@ class IncomingCallScreen extends ConsumerStatefulWidget {
 class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulseController;
+  Timer? _vibrateTimer;
   bool _answerWithTranslation = true;
   bool _navigated = false;
 
@@ -27,10 +30,15 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1600),
     )..repeat(reverse: true);
+
+    _vibrateTimer = Timer.periodic(const Duration(milliseconds: 1400), (_) {
+      HapticFeedback.vibrate();
+    });
   }
 
   @override
   void dispose() {
+    _vibrateTimer?.cancel();
     _pulseController.dispose();
     super.dispose();
   }

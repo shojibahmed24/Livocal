@@ -18,6 +18,7 @@ import 'package:whatsapp_clone/features/chat/views/chat.dart';
 import 'package:whatsapp_clone/features/home/data/repositories/contact_repository.dart';
 import 'package:whatsapp_clone/shared/repositories/download_service.dart';
 import 'package:whatsapp_clone/shared/repositories/firebase_firestore.dart';
+import 'package:whatsapp_clone/shared/models/contact.dart';
 import 'package:whatsapp_clone/features/home/views/contacts.dart';
 import 'package:whatsapp_clone/shared/models/user.dart';
 import 'package:whatsapp_clone/shared/repositories/isar_db.dart';
@@ -245,25 +246,43 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 
   Future<void> handleNotificationClick(RemoteMessage message) async {
-    final author = await ref
-        .read(firebaseFirestoreRepositoryProvider)
-        .getUserById(message.data['authorId']);
+    final authorId = message.data['authorId'] as String?;
+    if (authorId == null || authorId.isEmpty) return;
 
-    final contact = await ref
-        .read(contactsRepositoryProvider)
-        .getContactByPhone(author!.phone.number!);
+    var author = await ref
+        .read(firebaseFirestoreRepositoryProvider)
+        .getUserById(authorId);
+
+    if (author == null) {
+      final authorName = message.data['authorName'] as String? ?? 'Contact';
+      author = User(
+        id: authorId,
+        name: authorName,
+        avatarUrl: message.data['authorAvatar'] as String? ?? '',
+        phone: Phone(code: '+880', number: '', formattedNumber: ''),
+        activityStatus: UserActivityStatus.offline,
+      );
+    }
+
+    Contact? contact;
+    if (author.phone.number != null && author.phone.number!.isNotEmpty) {
+      try {
+        contact = await ref
+            .read(contactsRepositoryProvider)
+            .getContactByPhone(author.phone.number!);
+      } catch (_) {}
+    }
 
     if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
+    Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => ChatPage(
           self: widget.user,
-          other: author,
+          other: author!,
           otherUserContactName:
-              contact?.displayName ?? author.phone.getFormattedNumber(),
+              contact?.displayName ?? (author!.name.isNotEmpty ? author!.name : author!.phone.getFormattedNumber()),
         ),
       ),
-      (route) => route.settings.name == "/",
     );
   }
 
@@ -555,7 +574,7 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 }
 
-class RecentChatsBody extends ConsumerWidget {
+class RecentChatsBody extends ConsumerStatefulWidget {
   const RecentChatsBody({
     super.key,
     required this.user,
@@ -566,8 +585,19 @@ class RecentChatsBody extends ConsumerWidget {
   final String searchQuery;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<RecentChatsBody> createState() => _RecentChatsBodyState();
+}
+
+class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
     final colorTheme = Theme.of(context).custom.colorTheme;
+    final searchQuery = widget.searchQuery;
 
     return StreamBuilder<List<RecentChat>>(
       stream: IsarDb.getRecentChatStream(ref),
@@ -614,11 +644,11 @@ class RecentChatsBody extends ConsumerWidget {
                   String msgContent = chat.message.content;
                   String msgStatus = '';
 
-                  if (msg.senderId == user.id) {
+                  if (msg.senderId == widget.user.id) {
                     msgStatus = msg.status.value;
                   }
                   return RecentChatWidget(
-                    user: user,
+                    user: widget.user,
                     chat: chat,
                     colorTheme: colorTheme,
                     title: chat.user.name,
@@ -833,9 +863,9 @@ class RecentChatWidget extends StatelessWidget {
       },
       leading: CircleAvatar(
         radius: 28.0,
-        backgroundImage: CachedNetworkImageProvider(
-          chat.user.avatarUrl,
-        ),
+        backgroundImage: chat.user.avatarUrl.isNotEmpty
+            ? CachedNetworkImageProvider(chat.user.avatarUrl)
+            : const AssetImage('assets/images/avatar.png') as ImageProvider,
       ),
       title: Text(
         title,
@@ -901,7 +931,7 @@ class RecentChatWidget extends StatelessWidget {
               msgContent.length > 30
                   ? '${msgContent.substring(0, 30)}...'
                   : msgContent == "\u00A0" || msgContent.isEmpty
-                      ? chat.message.attachment!.type.value
+                      ? (chat.message.attachment?.type.value ?? '')
                       : msgContent,
               style: Theme.of(context).custom.textTheme.subtitle2)
         ],

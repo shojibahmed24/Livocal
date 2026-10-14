@@ -2,8 +2,10 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_emoji/flutter_emoji.dart';
 import 'package:whatsapp_clone/features/chat/models/message.dart';
+import 'package:whatsapp_clone/shared/repositories/isar_db.dart';
 import 'package:whatsapp_clone/shared/utils/abc.dart';
 import 'package:whatsapp_clone/theme/theme.dart';
 
@@ -31,6 +33,101 @@ class _MessageCardState extends State<MessageCard>
   bool shouldHaveBiggerFont(String text) {
     final x = EmojiParser().parseEmojis(text);
     return text.runes.length == x.length;
+  }
+
+  void _showMessageActionSheet(BuildContext context, bool isSender) {
+    final colorTheme = Theme.of(context).custom.colorTheme;
+    final isDeleted = widget.message.content == '🚫 This message was deleted';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1F2C34)
+          : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                if (!isDeleted && widget.message.content.isNotEmpty)
+                  ListTile(
+                    leading: Icon(Icons.copy_rounded, color: colorTheme.iconColor),
+                    title: const Text('Copy Text'),
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: widget.message.content));
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Message copied to clipboard'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                  ),
+                ListTile(
+                  leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                  title: const Text('Delete for me'),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    await IsarDb.deleteMessage(widget.message.id);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Message deleted for you'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                ),
+                if (isSender && !isDeleted)
+                  ListTile(
+                    leading: const Icon(Icons.delete_forever, color: Colors.red),
+                    title: const Text(
+                      'Delete for everyone',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                    onTap: () async {
+                      Navigator.pop(ctx);
+                      final chatId = getChatId(
+                        widget.message.senderId,
+                        widget.message.receiverId,
+                      );
+                      await IsarDb.deleteMessageForEveryone(widget.message.id);
+                      await IsarDb.deleteMessageForEveryoneOnFirestore(
+                        widget.message.id,
+                        chatId,
+                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Message deleted for everyone'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -85,9 +182,11 @@ class _MessageCardState extends State<MessageCard>
       height = width / aspectRatio;
     }
 
-    return Align(
-      alignment:
-          isSentMessageCard ? Alignment.centerRight : Alignment.centerLeft,
+    return GestureDetector(
+      onLongPress: () => _showMessageActionSheet(context, isSentMessageCard),
+      child: Align(
+        alignment:
+            isSentMessageCard ? Alignment.centerRight : Alignment.centerLeft,
       child: ClipPath(
         clipper: widget.special
             ? TriangleClipper(isSender: isSentMessageCard)
@@ -300,6 +399,7 @@ class _MessageCardState extends State<MessageCard>
           ),
         ),
       ),
+    ),
     );
   }
 }

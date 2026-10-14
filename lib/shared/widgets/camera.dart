@@ -172,6 +172,31 @@ class CameraViewState extends ConsumerState<CameraView>
                     return Container();
                   }
 
+                  if (snapshot.hasError || !_controller.value.isInitialized) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.camera_alt_outlined,
+                            size: 48,
+                            color: Colors.white54,
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Camera access denied or unavailable',
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                          const SizedBox(height: 12),
+                          ElevatedButton(
+                            onPressed: Navigator.of(context).pop,
+                            child: const Text('Go Back'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
                   return CameraPreview(_controller);
                 },
               ),
@@ -383,12 +408,21 @@ class CameraViewState extends ConsumerState<CameraView>
                         ),
                         child: IconButton(
                           onPressed: () {
-                            _controller.setDescription(
-                              widget.cameras
+                            if (widget.cameras.length <= 1) return;
+                            try {
+                              final otherCameras = widget.cameras
                                   .where((element) =>
                                       element != _controller.description)
-                                  .first,
-                            );
+                                  .toList();
+                              if (otherCameras.isNotEmpty) {
+                                setState(() {
+                                  _initializeControllerFuture =
+                                      _controller.setDescription(otherCameras.first);
+                                });
+                              }
+                            } catch (e) {
+                              debugPrint('Error switching camera: $e');
+                            }
                           },
                           icon: const Icon(Icons.loop),
                         ),

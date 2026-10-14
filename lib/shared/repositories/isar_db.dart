@@ -162,6 +162,49 @@ class IsarDb {
     });
   }
 
+  static Future<void> deleteMessage(String messageId) async {
+    await isar.writeTxn(() async {
+      await isar.storedMessages
+          .filter()
+          .messageIdEqualTo(messageId)
+          .deleteAll();
+    });
+  }
+
+  static Future<void> deleteMessageForEveryone(String messageId) async {
+    await isar.writeTxn(() async {
+      StoredMessage? msg = await isar.storedMessages
+          .filter()
+          .messageIdEqualTo(messageId)
+          .build()
+          .findFirst();
+
+      if (msg == null) return;
+      msg.content = '🚫 This message was deleted';
+      msg.attachment = null;
+      await isar.storedMessages.put(msg);
+    });
+  }
+
+  static Future<void> deleteMessageForEveryoneOnFirestore(
+    String messageId,
+    String chatId,
+  ) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('chats')
+          .doc(chatId)
+          .collection('messages')
+          .doc(messageId)
+          .update({
+        'content': '🚫 This message was deleted',
+        'attachment': null,
+      });
+    } catch (e) {
+      debugPrint('Firestore deleteMessage error: $e');
+    }
+  }
+
   static Stream<List<Message>> getChatStream(String chatId) {
     return isar.storedMessages
         .filter()
@@ -227,25 +270,50 @@ class IsarDb {
           continue;
         }
 
-        var sender = await IsarDb.getUserById(
-          clientIsSender ? msg.receiverId : msg.senderId,
-        );
+        final peerId = clientIsSender ? msg.receiverId : msg.senderId;
+
+        var sender = await IsarDb.getUserById(peerId);
 
         Contact? contact;
-        if (sender != null) {
-          contact = await ref
-              .read(contactsRepositoryProvider)
-              .getContactByPhone(sender.phone.number!);
+        if (sender != null && sender.phone.number != null && sender.phone.number!.isNotEmpty) {
+          try {
+            contact = await ref
+                .read(contactsRepositoryProvider)
+                .getContactByPhone(sender.phone.number!);
+          } catch (_) {}
         }
 
-        sender ??= await ref
-            .read(firebaseFirestoreRepositoryProvider)
-            .getUserById(
-              msg.senderId == currentUser.id ? msg.receiverId : msg.senderId,
-            );
+        if (sender == null) {
+          try {
+            sender = await ref
+                .read(firebaseFirestoreRepositoryProvider)
+                .getUserById(peerId);
+          } catch (_) {}
+        }
 
-        final senderName =
-            contact?.displayName ?? sender!.phone.formattedNumber;
+        // Safe fallback user if not yet registered in Firestore
+        if (sender == null) {
+          String displayPhone = peerId;
+          if (displayPhone.startsWith('phone_')) {
+            displayPhone = displayPhone.replaceFirst('phone_', '');
+          }
+          sender = User(
+            id: peerId,
+            name: displayPhone,
+            avatarUrl: '',
+            phone: Phone(
+              code: '',
+              number: displayPhone,
+              formattedNumber: displayPhone,
+            ),
+            activityStatus: UserActivityStatus.offline,
+          );
+        }
+
+        final senderName = contact?.displayName ??
+            (sender.name.isNotEmpty
+                ? sender.name
+                : (sender.phone.formattedNumber ?? sender.phone.number ?? peerId));
 
         recentChats.add(
           RecentChat(
@@ -258,20 +326,25 @@ class IsarDb {
               status: msg.status,
               attachment: msg.attachment != null
                   ? Attachment(
-                      fileName: msg.attachment!.fileName!,
-                      fileExtension: msg.attachment!.fileExtension!,
-                      fileSize: msg.attachment!.fileSize!,
+                      fileName: msg.attachment!.fileName ?? 'file',
+                      fileExtension: msg.attachment!.fileExtension ?? '',
+                      fileSize: msg.attachment!.fileSize ?? 0,
                       width: msg.attachment!.width,
                       height: msg.attachment!.height,
-                      uploadStatus: msg.attachment!.uploadStatus!,
+                      uploadStatus: msg.attachment!.uploadStatus ?? UploadStatus.uploaded,
                       autoDownload: msg.attachment!.autoDownload ?? false,
-                      url: msg.attachment!.url!,
-                      type: msg.attachment!.type!,
+                      url: msg.attachment!.url ?? '',
+                      type: msg.attachment!.type ?? AttachmentType.document,
+                      samples: msg.attachment!.samples,
                     )
                   : null,
             ),
-            user: User.fromMap(
-              sender!.toMap()..addAll({'name': senderName}),
+            user: User(
+              id: sender.id,
+              name: senderName,
+              avatarUrl: sender.avatarUrl,
+              phone: sender.phone,
+              activityStatus: sender.activityStatus,
             ),
           ),
         );
@@ -335,6 +408,22 @@ class IsarDb {
       return isarInstance.contacts.where().findAll();
     }
     return existing;
+  }
+
+  static Future<void> saveUser(User user) async {
+    try {
+      final isarInstance = _instance ?? Isar.getInstance();
+      if (isarInstance == null) return;
+      await isarInstance.writeTxn(() async {
+        final existing = await isarInstance.users.filter().idEqualTo(user.id).findFirst();
+        if (existing != null) {
+          user.isarId = existing.isarId;
+        }
+        await isarInstance.users.put(user);
+      });
+    } catch (e) {
+      debugPrint('IsarDb saveUser error: $e');
+    }
   }
 
   static Future<User?> getUserById(String id) async {

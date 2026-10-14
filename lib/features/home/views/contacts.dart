@@ -184,18 +184,22 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                           const SizedBox(
                             width: 18.0,
                           ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Dial Phone Number (সরাসরি কল/চ্যাট)',
-                                style: Theme.of(context).custom.textTheme.bold,
-                              ),
-                              Text(
-                                'Enter number to call or chat directly',
-                                style: Theme.of(context).custom.textTheme.caption,
-                              ),
-                            ],
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Dial Phone Number (সরাসরি কল/চ্যাট)',
+                                  style: Theme.of(context).custom.textTheme.bold,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  'Enter number to call or chat directly',
+                                  style: Theme.of(context).custom.textTheme.caption,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),

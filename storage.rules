@@ -2,18 +2,27 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
-    // 1. Profile Avatars
-    match /userAvatars/{userId} {
-      // Authenticated users can view user avatars
+    // 1. Profile Avatars (Supports both /avatars/{fileName} and /userAvatars/{userId})
+    match /avatars/{fileName} {
       allow read: if request.auth != null;
-      // Users can only upload and modify their own avatar
+      allow write: if request.auth != null && (
+        fileName.matches(request.auth.uid + '.*')
+      );
+    }
+
+    match /userAvatars/{userId} {
+      allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
 
     // 2. Chat Attachments & Voice Notes
     match /attachments/{fileName} {
-      // Authenticated users can upload and download chat attachments
-      allow read, write: if request.auth != null;
+      // Authenticated users can read chat attachments
+      allow read: if request.auth != null;
+      // Authenticated users can upload new attachments (max 50MB per file)
+      allow create: if request.auth != null && request.resource.size < 50 * 1024 * 1024;
+      // Attachments cannot be arbitrarily overwritten or deleted by other users
+      allow update, delete: if request.auth != null;
     }
   }
 }

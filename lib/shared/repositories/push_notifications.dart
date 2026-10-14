@@ -24,6 +24,18 @@ class PushNotificationsRepo {
   Future<void> init({
     required Future<void> Function(RemoteMessage) onMessageOpenedApp,
   }) async {
+    try {
+      await instance.requestPermission(
+        alert: true,
+        announcement: false,
+        badge: true,
+        carPlay: false,
+        criticalAlert: false,
+        provisional: false,
+        sound: true,
+      );
+    } catch (_) {}
+
     FirebaseMessaging.onBackgroundMessage(_handleBackgroundMessage);
     FirebaseMessaging.onMessageOpenedApp.listen(onMessageOpenedApp);
     instance.onTokenRefresh.listen((token) => handleTokenRefresh(token, ref));
@@ -61,6 +73,7 @@ class PushNotificationsRepo {
         'messageContent': messageContent,
         'authorId': user.id,
         'authorName': user.name,
+        'authorAvatar': user.avatarUrl,
       },
     );
 

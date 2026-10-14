@@ -27,6 +27,12 @@ class WebRtcCallClient {
   final StreamController<MediaStream> _remoteStreamController =
       StreamController<MediaStream>.broadcast();
 
+  RTCDataChannel? _dataChannel;
+  final StreamController<Uint8List> _remoteTranslatedAudioController =
+      StreamController<Uint8List>.broadcast();
+  Stream<Uint8List> get remoteTranslatedAudioStream =>
+      _remoteTranslatedAudioController.stream;
+
   Stream<WebRtcCallState> get stateStream => _stateController.stream;
   Stream<MediaStream> get remoteStream => _remoteStreamController.stream;
 
@@ -327,6 +333,52 @@ class WebRtcCallClient {
         debugPrint('Received remote WebRTC audio track!');
       }
     };
+
+    // Setup DataChannel for live translated PCM audio stream
+    if (_isCaller) {
+      final dcInit = RTCDataChannelInit()
+        ..ordered = false
+        ..maxRetransmits = 0;
+      _dataChannel =
+          await _peerConnection!.createDataChannel('liveTranslateAudio', dcInit);
+      if (_dataChannel != null) {
+        _setupDataChannel(_dataChannel!);
+      }
+    }
+
+    _peerConnection!.onDataChannel = (RTCDataChannel channel) {
+      _dataChannel = channel;
+      _setupDataChannel(channel);
+    };
+  }
+
+  void _setupDataChannel(RTCDataChannel channel) {
+    channel.onMessage = (RTCDataChannelMessage msg) {
+      if (msg.isBinary) {
+        _remoteTranslatedAudioController.add(msg.binary);
+      }
+    };
+  }
+
+  /// Sends 24kHz PCM translated audio chunk to remote peer over WebRTC DataChannel
+  void sendTranslatedAudio(Uint8List pcmBytes) {
+    if (_dataChannel != null &&
+        _dataChannel!.state == RTCDataChannelState.RTCDataChannelOpen) {
+      try {
+        _dataChannel!.send(RTCDataChannelMessage.fromBinary(pcmBytes));
+      } catch (e) {
+        debugPrint('Error sending translated audio over DataChannel: $e');
+      }
+    }
+  }
+
+  /// Switch audio routing between Loudspeaker and Earpiece on Android
+  void setSpeakerphone(bool enabled) {
+    try {
+      Helper.setSpeakerphoneOn(enabled);
+    } catch (e) {
+      debugPrint('Error setting speakerphone: $e');
+    }
   }
 
   /// Sets remote audio track volume (e.g. 1.0 for normal, 0.15 for UN interpreter ducking, 0.0 for mute)

@@ -12,6 +12,7 @@ import 'package:flutter_sound/flutter_sound.dart';
 import 'package:logger/logger.dart';
 import 'package:mime/mime.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:photo_manager/photo_manager.dart';
 import 'package:uuid/uuid.dart';
 import 'package:whatsapp_clone/features/chat/models/message.dart';
 import 'package:whatsapp_clone/shared/models/user.dart';
@@ -142,6 +143,8 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
     _self = self;
     _other = other;
     _otherUserContactName = otherUserContactName;
+    IsarDb.saveUser(self);
+    IsarDb.saveUser(other);
   }
 
   Future<void> initRecorder() async {
@@ -327,21 +330,26 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
   }
 
   Future<void> sendMessageNoAttachments(Message message) async {
+    if (_other != null) await IsarDb.saveUser(_other!);
     await IsarDb.addMessage(message);
 
     // Delay for smooth animation
     Future.delayed(const Duration(milliseconds: 300), () {
       ref
           .read(firebaseFirestoreRepositoryProvider)
-          .sendMessage(message..status = MessageStatus.sent)
+          .sendMessage(message.copyWith(status: MessageStatus.sent))
           .then((_) {
-        IsarDb.updateMessage(message.id, status: message.status);
+        IsarDb.updateMessage(message.id, status: MessageStatus.sent);
         ref.read(pushNotificationsRepoProvider).sendPushNotification(message);
+      }).catchError((e) {
+        debugPrint('Message saved locally; sending offline (status pending): $e');
+        IsarDb.updateMessage(message.id, status: MessageStatus.pending);
       });
     });
   }
 
   void sendMessageWithAttachments(Message message) async {
+    if (_other != null) await IsarDb.saveUser(_other!);
     if ({
       AttachmentType.document,
       AttachmentType.audio,
@@ -395,13 +403,16 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
         .then((_) async {
       await IsarDb.updateMessage(
         message.id,
-        status: message.status,
+        status: MessageStatus.sent,
         attachment: message.attachment!
           ..url = url
           ..uploadStatus = UploadStatus.uploaded,
       );
 
       ref.read(pushNotificationsRepoProvider).sendPushNotification(message);
+    }).catchError((e) {
+      debugPrint('Media message upload complete but firestore send failed: $e');
+      IsarDb.updateMessage(message.id, status: MessageStatus.pending);
     });
   }
 
@@ -480,61 +491,78 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
     BuildContext context, {
     bool returnAttachments = false,
   }) async {
-    if (Platform.isAndroid &&
-        (!await hasPermission(Permission.storage)) &&
-        (!await hasPermission(Permission.photos))) {
-      return null;
+    bool hasAccess = false;
+    try {
+      if (Platform.isAndroid) {
+        final ps = await PhotoManager.requestPermissionExtend();
+        hasAccess = ps.isAuth || ps.hasAccess;
+      } else {
+        hasAccess = await hasPermission(Permission.photos);
+      }
+    } catch (_) {
+      hasAccess = true;
     }
 
     if (!context.mounted) return null;
 
-    if (Platform.isAndroid) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => Gallery(
-            title: 'Send to $otherUserContactName',
+    if (hasAccess && Platform.isAndroid) {
+      try {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => Gallery(
+              title: 'Send to $otherUserContactName',
+            ),
           ),
-        ),
-      );
-      return null;
+        );
+        return null;
+      } catch (e) {
+        debugPrint('Gallery opening failed, falling back to picker: $e');
+      }
     }
 
+    // Seamless fallback to system image picker
     final key = showLoading(context);
+    try {
+      List<File>? files = await pickMultimedia();
+      if (files == null || files.isEmpty) return null;
 
-    List<File>? files = await pickMultimedia();
-    if (files == null) {
-      Navigator.pop(key.currentContext!);
+      final attachments = createAttachmentsFromFiles(files);
+      if (returnAttachments) {
+        return attachments;
+      }
+
+      if (!mounted || !context.mounted) return null;
+      navigateToAttachmentSender(context, attachments);
       return null;
+    } catch (e) {
+      debugPrint('Error in pickAttachmentsFromGallery: $e');
+      return null;
+    } finally {
+      if (context.mounted && key.currentContext != null) {
+        Navigator.pop(key.currentContext!);
+      }
     }
-
-    final attachments = createAttachmentsFromFiles(files);
-    if (returnAttachments) {
-      Navigator.pop(key.currentContext!);
-      return attachments;
-    }
-
-    if (!mounted) return null;
-    Navigator.pop(key.currentContext!);
-    navigateToAttachmentSender(context, attachments);
-    return null;
   }
 
   Future<void> pickAudioFiles(
     BuildContext context,
   ) async {
     final key = showLoading(context);
+    try {
+      List<File>? files = await pickFiles(type: FileType.audio);
+      if (files == null || files.isEmpty) return;
 
-    List<File>? files = await pickFiles(type: FileType.audio);
-    if (files == null) {
-      Navigator.pop(key.currentContext!);
-      return;
+      final attachments = createAttachmentsFromFiles(files);
+
+      if (!mounted || !context.mounted) return;
+      navigateToAttachmentSender(context, attachments);
+    } catch (e) {
+      debugPrint('Error in pickAudioFiles: $e');
+    } finally {
+      if (context.mounted && key.currentContext != null) {
+        Navigator.pop(key.currentContext!);
+      }
     }
-
-    final attachments = createAttachmentsFromFiles(files);
-
-    if (!mounted) return;
-    Navigator.pop(key.currentContext!);
-    navigateToAttachmentSender(context, attachments);
   }
 
   Future<List<Attachment>?> pickDocuments(
@@ -542,27 +570,30 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
     bool returnAttachments = false,
   }) async {
     final key = showLoading(context);
+    try {
+      List<File>? files = await pickFiles(type: FileType.any);
+      if (files == null || files.isEmpty) return null;
 
-    List<File>? files = await pickFiles(type: FileType.any);
-    if (files == null) {
-      Navigator.pop(key.currentContext!);
+      final attachments = createAttachmentsFromFiles(
+        files,
+        areDocuments: true,
+      );
+
+      if (returnAttachments) {
+        return attachments;
+      }
+
+      if (!mounted || !context.mounted) return null;
+      navigateToAttachmentSender(context, attachments);
       return null;
+    } catch (e) {
+      debugPrint('Error in pickDocuments: $e');
+      return null;
+    } finally {
+      if (context.mounted && key.currentContext != null) {
+        Navigator.pop(key.currentContext!);
+      }
     }
-
-    final attachments = createAttachmentsFromFiles(
-      files,
-      areDocuments: true,
-    );
-
-    if (returnAttachments) {
-      Navigator.pop(key.currentContext!);
-      return attachments;
-    }
-
-    if (!mounted) return null;
-    Navigator.pop(key.currentContext!);
-    navigateToAttachmentSender(context, attachments);
-    return null;
   }
 
   GlobalKey showLoading(context) {
@@ -635,7 +666,7 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
     BuildContext context,
     Future<List<Attachment>> attachments,
   ) {
-    Navigator.of(context).pushReplacement(
+    Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => AttachmentMessageSender(
           attachmentsFuture: attachments,

@@ -11,13 +11,22 @@ import 'package:whatsapp_clone/features/home/views/contacts.dart';
 import 'package:whatsapp_clone/shared/models/user.dart';
 import 'package:whatsapp_clone/theme/theme.dart';
 
-class CallsTab extends ConsumerWidget {
+class CallsTab extends ConsumerStatefulWidget {
   final User user;
 
   const CallsTab({
     super.key,
     required this.user,
   });
+
+  @override
+  ConsumerState<CallsTab> createState() => _CallsTabState();
+}
+
+class _CallsTabState extends ConsumerState<CallsTab>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
 
   String _formatCallTime(DateTime time) {
     final now = DateTime.now();
@@ -69,7 +78,7 @@ class CallsTab extends ConsumerWidget {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => OutgoingCallScreen(
-          caller: user,
+          caller: widget.user,
           callee: callee,
           calleeDisplayName: peerName,
           overrideMyLangCode: myLangCode,
@@ -81,7 +90,8 @@ class CallsTab extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    super.build(context);
     final callState = ref.watch(callControllerProvider);
     final customTheme = Theme.of(context).custom;
     final colorTheme = customTheme.colorTheme;
@@ -355,7 +365,7 @@ class CallsTab extends ConsumerWidget {
                   ),
                   onPressed: () => showDirectDialSheet(
                     context,
-                    currentUser: user,
+                    currentUser: widget.user,
                   ),
                 ),
               ),
@@ -381,7 +391,7 @@ class CallsTab extends ConsumerWidget {
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => ContactsPage(user: user),
+                        builder: (_) => ContactsPage(user: widget.user),
                       ),
                     );
                   },

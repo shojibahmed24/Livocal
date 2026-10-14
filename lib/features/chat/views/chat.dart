@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:uuid/uuid.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:visibility_detector/visibility_detector.dart';
@@ -28,6 +30,9 @@ import 'package:whatsapp_clone/theme/theme.dart';
 import 'package:whatsapp_clone/shared/utils/snackbars.dart';
 
 import '../../../shared/widgets/emoji_picker.dart';
+import 'contact_profile_screen.dart';
+import 'widgets/chat_translation_sheet.dart';
+import 'widgets/send_payment_sheet.dart';
 import 'widgets/unread_banner.dart';
 
 class ChatPage extends ConsumerStatefulWidget {
@@ -87,42 +92,65 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
         titleSpacing: 0.0,
-        title: Row(
-          children: [
-            CircleAvatar(
-              maxRadius: 18,
-              backgroundImage: CachedNetworkImageProvider(other.avatarUrl),
-            ),
-            const SizedBox(
-              width: 8.0,
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.otherUserContactName,
-                  style: Theme.of(context).custom.textTheme.titleMedium,
+        title: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => ContactProfileScreen(
+                  self: self,
+                  other: other,
+                  contactName: widget.otherUserContactName,
                 ),
-                StreamBuilder<UserActivityStatus>(
-                  stream: ref
-                      .read(firebaseFirestoreRepositoryProvider)
-                      .userActivityStatusStream(userId: other.id),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return Container();
-                    }
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 2.0),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  maxRadius: 18,
+                  backgroundImage: other.avatarUrl.isNotEmpty
+                      ? CachedNetworkImageProvider(other.avatarUrl)
+                      : const AssetImage('assets/images/avatar.png') as ImageProvider,
+                ),
+                const SizedBox(
+                  width: 8.0,
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.otherUserContactName,
+                        style: Theme.of(context).custom.textTheme.titleMedium,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      StreamBuilder<UserActivityStatus>(
+                        stream: ref
+                            .read(firebaseFirestoreRepositoryProvider)
+                            .userActivityStatusStream(userId: other.id),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) {
+                            return Container();
+                          }
 
-                    return snapshot.data!.value == 'Online'
-                        ? Text(
-                            'Online',
-                            style: Theme.of(context).custom.textTheme.caption,
-                          )
-                        : Container();
-                  },
+                          return snapshot.data!.value == 'Online'
+                              ? Text(
+                                  'Online',
+                                  style: Theme.of(context).custom.textTheme.caption,
+                                )
+                              : Container();
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-          ],
+          ),
         ),
         leadingWidth: 36.0,
         leading: IconButton(
@@ -135,21 +163,13 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Gemini Live AI Translated Call',
-            onPressed: recordingState == RecordingState.notRecording
-                ? () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => OutgoingCallScreen(
-                          caller: self,
-                          callee: other,
-                          calleeDisplayName: widget.otherUserContactName,
-                          isSimulatedDemo: other.id.startsWith('demo_'),
-                        ),
-                      ),
-                    );
-                  }
-                : null,
+            tooltip: 'In-Chat Live Translation Settings',
+            onPressed: () {
+              showInChatTranslationSheet(
+                context: context,
+                peerName: widget.otherUserContactName,
+              );
+            },
             icon: const Icon(
               Icons.translate_rounded,
               size: 24,
@@ -187,37 +207,13 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             onSelected: (value) async {
               switch (value) {
                 case 'view_contact':
-                  showDialog(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      backgroundColor: Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFF1F2C34)
-                          : Colors.white,
-                      title: Text(widget.otherUserContactName),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Center(
-                            child: CircleAvatar(
-                              radius: 40,
-                              backgroundImage: other.avatarUrl.isNotEmpty
-                                  ? CachedNetworkImageProvider(other.avatarUrl)
-                                  : const AssetImage('assets/images/avatar.png') as ImageProvider,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text('Phone: ${other.phone.getFormattedNumber()}'),
-                          const SizedBox(height: 8),
-                          Text('Status: ${other.activityStatus.value}'),
-                        ],
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ContactProfileScreen(
+                        self: self,
+                        other: other,
+                        contactName: widget.otherUserContactName,
                       ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          child: const Text('CLOSE'),
-                        ),
-                      ],
                     ),
                   );
                   break;
@@ -320,6 +316,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             ChatInputContainer(
               self: self,
               other: other,
+              otherUserContactName: widget.otherUserContactName,
             ),
           ],
         ),
@@ -333,10 +330,12 @@ class ChatInputContainer extends ConsumerStatefulWidget {
     super.key,
     required this.self,
     required this.other,
+    required this.otherUserContactName,
   });
 
   final User self;
   final User other;
+  final String otherUserContactName;
 
   @override
   ConsumerState<ChatInputContainer> createState() => _ChatInputContainerState();
@@ -344,7 +343,8 @@ class ChatInputContainer extends ConsumerStatefulWidget {
 
 class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
     with WidgetsBindingObserver {
-  double keyboardHeight = SharedPref.instance.getDouble('keyboardHeight')!;
+  double keyboardHeight =
+      SharedPref.instance.getDouble('keyboardHeight') ?? 300.0;
   bool isKeyboardVisible = false;
   late final StreamSubscription<bool> _keyboardSubscription;
 
@@ -400,6 +400,13 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
       chatControllerProvider.select((s) => s.showEmojiPicker),
     );
 
+    final systemBottomPadding = MediaQuery.of(context).padding.bottom;
+    final dynamicBottomPadding = isKeyboardVisible
+        ? 0.0
+        : (systemBottomPadding > 0
+            ? systemBottomPadding + 4.0
+            : (Platform.isAndroid ? 8.0 : 24.0));
+
     return Theme(
       data: Theme.of(context).copyWith(
         iconTheme: IconThemeData(
@@ -408,7 +415,7 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
                 : colorTheme.iconColor),
       ),
       child: AvoidBottomInset(
-        padding: EdgeInsets.only(bottom: Platform.isAndroid ? 4.0 : 24.0),
+        padding: EdgeInsets.only(bottom: dynamicBottomPadding),
         conditions: [showEmojiPicker],
         offstage: Offstage(
           offstage: !showEmojiPicker,
@@ -507,10 +514,30 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
           ),
           if (!hideElements) ...[
             InkWell(
-              onTap: () {},
+              onTap: () {
+                showSendPaymentSheet(
+                  context: context,
+                  self: widget.self,
+                  other: widget.other,
+                  contactName: widget.otherUserContactName,
+                  onPaymentConfirmed: (amount, note) {
+                    final paymentMsg = '💰 Payment sent: \$$amount${note.isNotEmpty ? " ($note)" : ""}';
+                    ref.read(chatControllerProvider.notifier).sendMessageNoAttachments(
+                      Message(
+                        id: const Uuid().v4(),
+                        content: paymentMsg,
+                        status: MessageStatus.pending,
+                        senderId: widget.self.id,
+                        receiverId: widget.other.id,
+                        timestamp: Timestamp.now(),
+                      ),
+                    );
+                  },
+                );
+              },
               child: Container(
-                width: 21,
-                height: 21,
+                width: 22,
+                height: 22,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Theme.of(context).brightness == Brightness.light
@@ -519,11 +546,11 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
                 ),
                 child: Center(
                   child: Text(
-                    '₹',
+                    '\$',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
                       color: Theme.of(context).brightness == Brightness.light
                           ? colorTheme.backgroundColor
                           : colorTheme.appBarColor,

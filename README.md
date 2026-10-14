@@ -1,70 +1,139 @@
-# WhatsUp: The Ultimate Chat App
+# Livocal 🎙️🌐
 
-This project brings you the **closest** experience to WhatsApp, crafted with the power of Flutter and Firebase. With features like real-time conversations, efficient media transmission, voice messaging, and robust security, we've recreated the essence of WhatsApp while adding our unique touch. Discover the familiarity you love, paired with exciting enhancements, all in one package.
+> **Real-Time AI Voice Translation Calling & End-to-End Encrypted Messaging**  
+> Built with Flutter, WebRTC, Firebase, Node.js Gateway, and the Gemini Multimodal Live API.
 
-[🚀 **Try the latest release now!**](https://github.com/Tauseef-Hilal/WhatsUp/releases/tag/v0.1.1)
+---
 
-## Watch The Video
+## 🌟 Overview
 
-https://github.com/Tauseef-Hilal/WhatsUp/assets/67793598/3fd21809-5f38-4bd8-ab03-487556c4e915
+**Livocal** is an AI-powered voice calling and real-time messaging application designed to break down language barriers across the globe. By combining WebRTC peer-to-peer VoIP with Google's low-latency Gemini Live API, Livocal translates conversational voice between 70+ languages in real time while preserving natural conversation flow.
 
-> **Note**: If the video is unplayable here, you can [**watch it on youtube**](https://youtu.be/SYPK5g2zr-A?si=W4MT1vmJ_uJS1LNA).
+### Key Highlights
+- **🗣️ Real-Time P2P Voice Translation:** Speak in Bengali, English, Spanish, Arabic, Hindi, Japanese, or 70+ other languages — the recipient hears fluent, low-latency translated audio in their own language.
+- **⚡ WebRTC Full-Duplex Audio:** Hardware Acoustic Echo Cancellation (AEC), noise suppression, and automatic gain control with 24kHz PCM peer-to-peer audio streaming over WebRTC DataChannel.
+- **💬 Real-Time Messaging:** WhatsApp-style instant messaging with message receipts (pending, sent, delivered, read), voice notes, media attachments, and message actions (Copy, Delete for me, Delete for everyone).
+- **🔔 Background Wakeup & CallKit:** Native full-screen incoming call UI on Android and iOS via `flutter_callkit_incoming` and high-priority FCM push notifications.
+- **👤 Profile & Appearance:** Profile personalization (custom avatar, display name, About status presets) with dynamic Light, Dark, and System Default themes.
 
-## Screenshots
+---
 
-Take a closer look to get to know about some of the app features
+## 🏗️ Architecture
 
-<section>
-    <img src='screenshots/emoji.png?raw=true' alt='Emoji Picker' width='250px' />
-    <img src='screenshots/home.png?raw=true' alt='Home Page' width='250px' />
-    <img src='screenshots/chat.png?raw=true' alt='Chat Page' width='250px' />
-    <img src='screenshots/document.png?raw=true' alt='Document Upload' width='250px' />
-    <img src='screenshots/voice.png?raw=true' alt='Voice Chat' width='250px' />
-    <img src='screenshots/gallery.png?raw=true' alt='Gallery' width='250px' />
-</section>
-<br>
+```
+                                  ┌───────────────────────────────┐
+                                  │      Firebase Services        │
+                                  │  • Auth (Phone OTP)           │
+                                  │  • Firestore (Signaling & DB) │
+                                  │  • FCM (Wakeup & Calls)       │
+                                  │  • Storage (Media Attachments)│
+                                  └───────────────┬───────────────┘
+                                                  │
+                 ┌────────────────────────────────┴──────────────────────────────┐
+                 ▼                                                               ▼
+        ┌──────────────────┐                                            ┌──────────────────┐
+        │  Livocal Caller  │ ◄══════ WebRTC Audio & DataChannel ══════► │  Livocal Callee  │
+        │  (Flutter App)   │                                            │  (Flutter App)   │
+        └────────┬─────────┘                                            └────────┬─────────┘
+                 │                                                               │
+                 │ 16kHz PCM Mic Stream                                          │
+                 ▼                                                               ▼
+        ┌──────────────────────────────────────────────────────────────────────────────────┐
+        │                        Livocal Live Relay Gateway (Node.js)                      │
+        │                  Proxy & Authentication to Gemini Live API                      │
+        └────────────────────────────────────────┬─────────────────────────────────────────┘
+                                                 │ WebSocket (Audio in / Translated PCM out)
+                                                 ▼
+                                ┌──────────────────────────────────┐
+                                │   Google Gemini Live API         │
+                                │   (Live Audio Interpretation)    │
+                                └──────────────────────────────────┘
+```
 
-> **Note**: If screenshots are not visible, you might need a VPN or a different WIFI
+---
 
-## Features That Shine
+## 🚀 Getting Started
 
-- **Real-time Conversations:** Experience real-time messaging, just like you would on your favorite chat apps like WhatsApp.
-- **Message Attachments:** Share and receive images, music, videos, and documents with ease. Our **compression** technology optimizes storage and bandwidth consumption.
-- **Voice Chat:** Capture the essence of your thoughts with voice messages, adding a personal and dynamic touch to your conversations.
-- **Slick Interface:** Navigate smoothly through our beautifully designed interface, crafted with Flutter to ensure a delightful user experience.
-- **Stay Updated:** Never miss a beat with push notifications that keep you informed even when the app is in the background. Notification work only on Android because APNs requires a paid subscription.
-- **Offline Access:** Access your chats seamlessly, whether you're online or offline.
-- [There's more to come! Stay tuned](#the-future-is-exciting)
+### Prerequisites
+1. **Flutter SDK:** 3.19.0 or higher (`flutter doctor`)
+2. **Dart SDK:** 3.3.0 or higher
+3. **Node.js:** v18+ (for the relay backend)
+4. **Firebase Account:** Blaze / Pay-As-You-Go plan recommended for FCM and Cloud Storage
+5. **Google AI Studio Key:** Gemini API Key
 
-## Fortified by Firebase Firestore 🌐
+---
 
-At the heart of WhatsUp is the mighty Firebase Firestore. We rely on Firestore to securely save user data and facilitate seamless message transmission. Each message sent by a user is immediately whisked away to Firestore, ensuring efficient and reliable delivery. Notably, messages sent are promptly removed from Firestore as soon as they are received by the recipient's device, enhancing privacy and security.
+### 1. Flutter Client Setup
 
-## Your Privacy, Our Priority 🛡️
+```bash
+# Clone the repository
+git clone https://github.com/your-org/livocal.git
+cd livocal
 
-In WhatsUp, messages within a chat are stored exclusively on the phones of the communicating individuals. This design ensures that your conversations remain private and inaccessible to unauthorized parties. Your messages are your own, and we're committed to keeping it that way.
+# Install dependencies
+flutter pub get
 
-## Known Issues
+# Generate local database models
+dart run build_runner build --delete-conflicting-outputs
 
-- Sometimes attachments that were received while in the chat page are not playable
-- Seen feature not working sometimes
-- Performance issues in app camera (especially on Android)
+# Run the app
+flutter run
+```
 
-## Contribute and Elevate 🤝
+---
 
-We heartily welcome contributions from the community to elevate the project. Share your insights, submit those bug reports, request features, and send those pull requests to make WhatsUp shine even brighter.
+### 2. Backend Relay Gateway Setup
 
-## The Future is Exciting
+The backend serves as a zero-trust proxy for Gemini Live WebSockets and high-priority FCM call wakeup messages:
 
-Exciting enhancements await us on the horizon, including:
+```bash
+cd backend
+npm install
 
-- **Voice & Video Calling** Connect face-to-face or chat with your voice using our intuitive video and voice calling features.
-- **Group Chats:** Coming soon, group chat functionality to engage with multiple contacts at once.
-- **Status Updates** Share your current mood or updates with your friends using status messages.
-- **Backups** Safeguard your chats and memories with easy-to-use backup and restore functionality.
-- **Enhanced Notifications** Stay in the loop with detailed notifications, even when the app is in the background.
-- **Message Management** Forward, delete, or reply to messages effortlessly to keep conversations organized.
-- **Encrypted Secrets:** Adding end-to-end encryption for messages, attachments, and voice messages to keep your conversations yours.
-- **Your Way, Your Look:** Customization options to make your WhatsUp experience uniquely yours.
+# Configure environment variables (.env)
+cp .env.example .env
+```
 
-Stay tuned for these fantastic updates!
+**Example `.env` configuration:**
+```env
+PORT=8080
+GEMINI_API_KEY=AIzaSy...
+GEMINI_LIVE_MODEL=models/gemini-3.5-live-translate-preview
+DEFAULT_VOICE=Aoede
+RELAY_API_SECRET=your_super_secret_key_here
+FIREBASE_SERVICE_ACCOUNT={"type":"service_account",...}
+```
+
+Start the backend:
+```bash
+npm start
+```
+
+---
+
+### 3. Firebase Security Rules Deployment
+
+Deploy the hardened Firestore and Storage security rules:
+
+```bash
+# Deploy Firestore rules (including WebRTC ICE candidate subcollections)
+firebase deploy --only firestore:rules
+
+# Deploy Storage rules (with avatar ownership & file size limits)
+firebase deploy --only storage:rules
+```
+
+---
+
+## 🔒 Security Best Practices
+
+1. **WebRTC Signaling:** ICE candidate exchanges (`callerCandidates`, `calleeCandidates`) and call sessions are restricted to authenticated participants only.
+2. **Live Transcripts:** Real-time call transcripts are isolated strictly to the active caller and callee.
+3. **Attachments:** Cloud Storage attachments enforce authenticated access and a 50MB file size ceiling.
+4. **Relay Gateway:** The Node.js backend can enforce `RELAY_API_SECRET` to prevent unauthorized consumption of Gemini Live API quotas.
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).

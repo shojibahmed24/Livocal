@@ -191,7 +191,7 @@ class VerificationController {
       barrierDismissible: false,
       context: context,
       builder: (context) {
-        return FutureBuilder<void>(
+        return FutureBuilder<bool>(
             future: authController.verifyOtp(
               _verificationCode.isNotEmpty
                   ? _verificationCode
@@ -202,7 +202,7 @@ class VerificationController {
               String? text;
               Widget? widget;
 
-              if (snapshot.hasData) {
+              if (snapshot.hasData && snapshot.data == true) {
                 text = 'Verification complete';
                 widget = Icon(
                   Icons.check_circle,
@@ -223,10 +223,10 @@ class VerificationController {
                       ),
                       (route) => false);
                 });
-              } else if (snapshot.hasError) {
-                text = 'Oops! an error occured';
+              } else if (snapshot.hasError || (snapshot.hasData && snapshot.data == false)) {
+                text = 'Invalid OTP! Please try again.';
 
-                if (snapshot.error.runtimeType == FirebaseAuthException) {
+                if (snapshot.hasError && snapshot.error.runtimeType == FirebaseAuthException) {
                   final FirebaseAuthException error =
                       snapshot.error as FirebaseAuthException;
 

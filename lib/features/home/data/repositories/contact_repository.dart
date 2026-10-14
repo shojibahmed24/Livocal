@@ -142,72 +142,96 @@ class ContactsRepository {
         debugPrint('ContactsRepository: Firestore users fetch error: $e');
       }
 
-      // 3. Match each device contact against registered users
+      // 3. Match each device contact against registered users (deduplicated by contactId)
       final selfNormalized = _normalize(self.phone.rawNumber);
       final seenUserIds = <String>{};
 
+      // Group raw phone entries by contactId so multi-number contacts appear once
+      final Map<String, List<_RawContactEntry>> groupedByContact = {};
       for (final entry in rawEntries) {
-        // Skip self
-        if (entry.normalizedPhone == selfNormalized ||
-            (selfNormalized.isNotEmpty &&
-                entry.normalizedPhone.endsWith(selfNormalized)) ||
-            (entry.normalizedPhone.isNotEmpty &&
-                selfNormalized.endsWith(entry.normalizedPhone))) {
-          continue;
-        }
+        groupedByContact.putIfAbsent(entry.contactId, () => []).add(entry);
+      }
 
-        // Try to match this contact to a registered Livocal user
-        _FirestoreUser? match;
+      for (final entries in groupedByContact.values) {
+        _RawContactEntry? matchedEntry;
+        _FirestoreUser? matchedUser;
 
-        // Direct match
-        match = registeredByPhone[entry.normalizedPhone];
-
-        // Try without leading + 
-        if (match == null && entry.normalizedPhone.startsWith('+')) {
-          match = registeredByPhone[entry.normalizedPhone.substring(1)];
-        }
-
-        // Try with common country codes if no + prefix
-        if (match == null && !entry.normalizedPhone.startsWith('+')) {
-          // Try +880 (Bangladesh)
-          match = registeredByPhone['+880${entry.normalizedPhone}'];
-          match ??= registeredByPhone['880${entry.normalizedPhone}'];
-          // Try stripping leading 0 and adding +880
-          if (match == null && entry.normalizedPhone.startsWith('0')) {
-            final withoutZero = entry.normalizedPhone.substring(1);
-            match = registeredByPhone['+880$withoutZero'];
-            match ??= registeredByPhone['880$withoutZero'];
+        for (final entry in entries) {
+          // Skip self
+          if (entry.normalizedPhone == selfNormalized ||
+              (selfNormalized.isNotEmpty &&
+                  entry.normalizedPhone.endsWith(selfNormalized)) ||
+              (entry.normalizedPhone.isNotEmpty &&
+                  selfNormalized.endsWith(entry.normalizedPhone))) {
+            continue;
           }
-        }
 
-        // Try suffix matching (last 10 digits)
-        if (match == null && entry.normalizedPhone.length >= 10) {
-          final suffix = entry.normalizedPhone.substring(
-              entry.normalizedPhone.length - 10);
-          for (final key in registeredByPhone.keys) {
-            if (key.length >= 10 && key.endsWith(suffix)) {
-              match = registeredByPhone[key];
-              break;
+          // Direct match
+          _FirestoreUser? match = registeredByPhone[entry.normalizedPhone];
+
+          // Try without leading +
+          if (match == null && entry.normalizedPhone.startsWith('+')) {
+            match = registeredByPhone[entry.normalizedPhone.substring(1)];
+          }
+
+          // Try with common country codes if no + prefix
+          if (match == null && !entry.normalizedPhone.startsWith('+')) {
+            match = registeredByPhone['+880${entry.normalizedPhone}'];
+            match ??= registeredByPhone['880${entry.normalizedPhone}'];
+            if (match == null && entry.normalizedPhone.startsWith('0')) {
+              final withoutZero = entry.normalizedPhone.substring(1);
+              match = registeredByPhone['+880$withoutZero'];
+              match ??= registeredByPhone['880$withoutZero'];
             }
           }
+
+          // Try suffix matching (last 10 digits)
+          if (match == null && entry.normalizedPhone.length >= 10) {
+            final suffix = entry.normalizedPhone.substring(
+                entry.normalizedPhone.length - 10);
+            for (final key in registeredByPhone.keys) {
+              if (key.length >= 10 && key.endsWith(suffix)) {
+                match = registeredByPhone[key];
+                break;
+              }
+            }
+          }
+
+          if (match != null && !seenUserIds.contains(match.userId)) {
+            matchedEntry = entry;
+            matchedUser = match;
+            break;
+          }
         }
 
-        // Avoid duplicate entries for the same Livocal user
-        if (match != null && seenUserIds.contains(match.userId)) continue;
-
-        final contact = Contact(
-          contactId: entry.contactId,
-          displayName: entry.displayName,
-          phoneNumber: entry.rawPhoneNumber,
-          userId: match?.userId,
-          avatarUrl: match?.avatarUrl,
-        );
-
-        if (match != null) {
-          seenUserIds.add(match.userId);
+        if (matchedUser != null && matchedEntry != null) {
+          seenUserIds.add(matchedUser.userId);
+          result.add(Contact(
+            contactId: matchedEntry.contactId,
+            displayName: matchedEntry.displayName,
+            phoneNumber: matchedEntry.rawPhoneNumber,
+            userId: matchedUser.userId,
+            avatarUrl: matchedUser.avatarUrl,
+          ));
+        } else if (entries.isNotEmpty) {
+          // Unregistered contact: pick the first valid non-self number
+          final primary = entries.firstWhere(
+            (e) =>
+                e.normalizedPhone != selfNormalized &&
+                (!selfNormalized.isNotEmpty ||
+                    !e.normalizedPhone.endsWith(selfNormalized)),
+            orElse: () => entries.first,
+          );
+          if (primary.normalizedPhone != selfNormalized &&
+              (!selfNormalized.isNotEmpty ||
+                  !primary.normalizedPhone.endsWith(selfNormalized))) {
+            result.add(Contact(
+              contactId: primary.contactId,
+              displayName: primary.displayName,
+              phoneNumber: primary.rawPhoneNumber,
+            ));
+          }
         }
-
-        result.add(contact);
       }
     } catch (e) {
       debugPrint('ContactsRepository.getContacts error: $e');

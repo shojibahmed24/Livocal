@@ -5,12 +5,22 @@ import 'package:whatsapp_clone/shared/models/user.dart';
 import 'package:whatsapp_clone/shared/utils/snackbars.dart';
 import 'package:whatsapp_clone/theme/theme.dart';
 
-class StatusTab extends ConsumerWidget {
+class StatusTab extends ConsumerStatefulWidget {
   final User user;
   const StatusTab({super.key, required this.user});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<StatusTab> createState() => _StatusTabState();
+}
+
+class _StatusTabState extends ConsumerState<StatusTab>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
     final textTheme = Theme.of(context).custom.textTheme;
 
     return ListView(
@@ -23,12 +33,14 @@ class StatusTab extends ConsumerWidget {
               CircleAvatar(
                 radius: 27,
                 backgroundColor: Colors.grey[700],
-                backgroundImage: user.avatarUrl.isNotEmpty
-                    ? CachedNetworkImageProvider(user.avatarUrl)
+                backgroundImage: widget.user.avatarUrl.isNotEmpty
+                    ? CachedNetworkImageProvider(widget.user.avatarUrl)
                     : null,
-                child: user.avatarUrl.isEmpty
+                child: widget.user.avatarUrl.isEmpty
                     ? Text(
-                        user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                        widget.user.name.isNotEmpty
+                            ? widget.user.name[0].toUpperCase()
+                            : '?',
                         style: const TextStyle(
                           fontSize: 22,
                           color: Colors.white,

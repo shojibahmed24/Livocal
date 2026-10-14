@@ -38,8 +38,8 @@ class CallRepository {
     if (lowerId.contains('_en_') || lowerName.contains('english')) return 'en';
     if (lowerId.contains('_es_') || lowerName.contains('español') || lowerName.contains('spanish')) return 'es';
     if (lowerId.contains('_ar_') || lowerName.contains('العربية') || lowerName.contains('arabic')) return 'ar';
-    if (lowerId.contains('_ja_') || lowerName.contains('日本語') || lowerName.contains('japanese')) return 'ja';
-    if (lowerId.contains('_bn_') || lowerName.contains('বাংলা') || lowerName.contains('bangla')) return 'bn';
+    final hasBengaliChars = RegExp(r'[\u0980-\u09FF]').hasMatch(peerName);
+    if (lowerId.contains('_bn_') || lowerName.contains('বাংলা') || lowerName.contains('bangla') || hasBengaliChars) return 'bn';
     if (lowerId.contains('_hi_') || lowerName.contains('हिन्दी') || lowerName.contains('hindi')) return 'hi';
     if (lowerId.contains('_fr_') || lowerName.contains('français') || lowerName.contains('french')) return 'fr';
     return getPeerLanguageCode();
