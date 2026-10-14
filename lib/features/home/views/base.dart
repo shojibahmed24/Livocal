@@ -27,6 +27,7 @@ import '../../../shared/utils/storage_paths.dart';
 import '../../../theme/color_theme.dart';
 import 'package:whatsapp_clone/features/auth/domain/auth_service.dart';
 import 'package:whatsapp_clone/features/home/views/settings_screen.dart';
+import 'package:whatsapp_clone/features/home/views/status_tab.dart';
 import 'package:whatsapp_clone/shared/utils/snackbars.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -456,9 +457,7 @@ class _HomePageState extends ConsumerState<HomePage>
           ),
           children: [
             RecentChatsBody(user: widget.user),
-            const Center(
-              child: Text('Coming soon'),
-            ),
+            StatusTab(user: widget.user),
             CallsTab(user: widget.user),
           ],
         ),

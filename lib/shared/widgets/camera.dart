@@ -58,8 +58,11 @@ class CameraViewState extends ConsumerState<CameraView>
       enableAudio: true,
     )..prepareForVideoRecording();
 
-    _controller.setFlashMode(FlashMode.off);
-    _initializeControllerFuture = _controller.initialize();
+    _initializeControllerFuture = _controller.initialize().then((_) async {
+      try {
+        await _controller.setFlashMode(FlashMode.off);
+      } catch (_) {}
+    });
     _animationController = AnimationController(
       value: 1,
       vsync: this,

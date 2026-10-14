@@ -1,8 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
-
 import 'package:http/http.dart' as http;
+import 'package:whatsapp_clone/shared/utils/abc.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -123,7 +122,7 @@ class CallController extends StateNotifier<CallControllerState> {
         ) {
     CallKitService().init(
       onAccept: (callId) {
-        acceptAndConnectCall();
+        acceptAndConnectCall(callId: callId);
       },
       onDecline: (callId) {
         endCall();
@@ -397,9 +396,21 @@ class CallController extends StateNotifier<CallControllerState> {
   }
 
   /// Connects the call, starts Full-Duplex Audio + Hardware AEC + Gemini Live WebSocket
-  Future<void> acceptAndConnectCall({bool? withTranslation}) async {
+  Future<void> acceptAndConnectCall({bool? withTranslation, String? callId}) async {
     _ringingAutoAnswerTimer?.cancel();
-    final current = state.activeSession;
+    var current = state.activeSession;
+    if (current == null && callId != null && callId.isNotEmpty) {
+      try {
+        final doc = await repo.firestore.collection('calls').doc(callId).get();
+        if (doc.exists && doc.data() != null) {
+          final ownUser = getCurrentUser();
+          current = CallSession.fromMap(doc.data()!, ownId: ownUser?.id ?? '');
+          state = state.copyWith(activeSession: current);
+        }
+      } catch (e) {
+        debugPrint('Failed to restore CallSession from Firestore for $callId: $e');
+      }
+    }
     if (current == null) return;
 
     await CallKitService().endCall(current.callId);
@@ -466,7 +477,9 @@ class CallController extends StateNotifier<CallControllerState> {
 
     _geminiAudioSub =
         _geminiTranslator.translatedAudioStream.listen((pcm24kBytes) {
-      _audioPipeline.feedTranslatedAiPcm(pcm24kBytes);
+      if (state.isBidirectionalSingleDevice || connectedSession.isSimulatedTest) {
+        _audioPipeline.feedTranslatedAiPcm(pcm24kBytes);
+      }
     });
 
     _geminiInterruptedSub =
