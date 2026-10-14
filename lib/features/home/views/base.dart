@@ -10,6 +10,7 @@ import 'package:whatsapp_clone/features/calls/models/call_model.dart';
 import 'package:whatsapp_clone/features/calls/repositories/call_repository.dart';
 import 'package:whatsapp_clone/features/calls/views/calls_tab.dart';
 import 'package:whatsapp_clone/features/calls/views/incoming_call_screen.dart';
+import 'package:whatsapp_clone/features/calls/services/call_kit_service.dart';
 import 'package:whatsapp_clone/features/chat/models/attachement.dart';
 import 'package:whatsapp_clone/features/chat/models/message.dart';
 import 'package:whatsapp_clone/features/chat/models/recent_chat.dart';
@@ -343,6 +344,7 @@ class _HomePageState extends ConsumerState<HomePage>
                   Icons.search,
                 ),
               ),
+            ],
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert),
               onSelected: (value) async {

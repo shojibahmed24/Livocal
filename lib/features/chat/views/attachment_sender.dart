@@ -10,6 +10,7 @@ import 'package:whatsapp_clone/features/chat/views/widgets/attachment_renderers.
 import 'package:whatsapp_clone/features/chat/views/widgets/chat_field.dart';
 import 'package:whatsapp_clone/shared/widgets/bottom_inset.dart';
 import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:whatsapp_clone/shared/utils/snackbars.dart';
 
 import '../../../shared/models/user.dart';
 import '../../../shared/utils/storage_paths.dart';
@@ -110,6 +111,17 @@ class _AttachmentMessageSenderState
   }
 
   Future<void> sendAttachments() async {
+    if (other.id.isEmpty) {
+      if (mounted) {
+        showSnackBar(
+          context: context,
+          content: 'Open a chat or select a contact to send attachments',
+          type: SnacBarType.info,
+        );
+      }
+      return;
+    }
+
     for (var i = 0; i < controllers.length; i++) {
       final attachment = attachments[i];
 
@@ -139,8 +151,13 @@ class _AttachmentMessageSenderState
     }
 
     if (!mounted) return;
-    // Navigator.pop(context);
-    Navigator.of(context).popUntil((route) => route.settings.name == 'chat');
+    try {
+      Navigator.of(context).popUntil((route) => route.settings.name == 'chat');
+    } catch (_) {
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+    }
   }
 
   void removeSelectedAttachment() {

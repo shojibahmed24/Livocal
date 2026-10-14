@@ -352,6 +352,19 @@ class IsarDb {
 
   static Future<List<Contact>> getWhatsAppContacts() => getLivocalContacts();
 
+  static Future<void> deleteChat(String chatId) async {
+    try {
+      final isarInstance = _instance ?? Isar.getInstance();
+      if (isarInstance != null) {
+        await isarInstance.writeTxn(() async {
+          await isarInstance.storedMessages.filter().chatIdEqualTo(chatId).deleteAll();
+        });
+      }
+    } catch (e) {
+      debugPrint('IsarDb deleteChat error: $e');
+    }
+  }
+
   static Future<void> clearAll() async {
     try {
       final isarInstance = _instance ?? Isar.getInstance();

@@ -25,6 +25,7 @@ import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
 import 'package:whatsapp_clone/shared/widgets/bottom_inset.dart';
 import 'package:whatsapp_clone/theme/color_theme.dart';
 import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:whatsapp_clone/shared/utils/snackbars.dart';
 
 import '../../../shared/widgets/emoji_picker.dart';
 import 'widgets/unread_banner.dart';
@@ -208,7 +209,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                           const SizedBox(height: 16),
                           Text('Phone: ${other.phone.getFormattedNumber()}'),
                           const SizedBox(height: 8),
-                          Text('Status: ${other.about.isNotEmpty ? other.about : "Hey there! I am using Livocal."}'),
+                          Text('Status: ${other.activityStatus.value}'),
                         ],
                       ),
                       actions: [

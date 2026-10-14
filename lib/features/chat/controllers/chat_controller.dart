@@ -106,15 +106,42 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
         );
 
   final AutoDisposeStateNotifierProviderRef ref;
-  late User self;
-  late User other;
-  late String otherUserContactName;
+  User? _self;
+  User? _other;
+  String? _otherUserContactName;
+
+  User get self =>
+      _self ??
+      getCurrentUser() ??
+      User(
+        id: '',
+        name: 'Me',
+        avatarUrl: '',
+        phone: Phone(rawNumber: '', countryCode: '', formattedNumber: ''),
+        activityStatus: UserActivityStatus.offline,
+      );
+  set self(User val) => _self = val;
+
+  User get other =>
+      _other ??
+      User(
+        id: '',
+        name: 'Status',
+        avatarUrl: '',
+        phone: Phone(rawNumber: '', countryCode: '', formattedNumber: ''),
+        activityStatus: UserActivityStatus.offline,
+      );
+  set other(User val) => _other = val;
+
+  String get otherUserContactName => _otherUserContactName ?? other.name;
+  set otherUserContactName(String val) => _otherUserContactName = val;
+
   StreamSubscription<RecordingDisposition>? recordingStream;
 
   void initUsers(User self, User other, String otherUserContactName) {
-    this.self = self;
-    this.other = other;
-    this.otherUserContactName = otherUserContactName;
+    _self = self;
+    _other = other;
+    _otherUserContactName = otherUserContactName;
   }
 
   Future<void> initRecorder() async {
