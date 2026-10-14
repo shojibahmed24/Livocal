@@ -27,7 +27,9 @@ import '../../../shared/utils/storage_paths.dart';
 import '../../../theme/color_theme.dart';
 import 'package:whatsapp_clone/features/auth/domain/auth_service.dart';
 import 'package:whatsapp_clone/features/home/views/settings_screen.dart';
+import 'package:camera/camera.dart';
 import 'package:whatsapp_clone/features/home/views/status_tab.dart';
+import 'package:whatsapp_clone/shared/widgets/camera.dart';
 import 'package:whatsapp_clone/shared/utils/snackbars.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -141,14 +143,33 @@ class _HomePageState extends ConsumerState<HomePage>
         children: [
           FloatingActionButton(
             backgroundColor: AppColorsDark.appBarColor,
-            onPressed: () {},
+            onPressed: () {
+              showSnackBar(
+                context: context,
+                content: 'Text status update coming soon',
+                type: SnacBarType.info,
+              );
+            },
             child: const Icon(Icons.edit),
           ),
           const SizedBox(
             height: 16.0,
           ),
           FloatingActionButton(
-            onPressed: () {},
+            onPressed: () async {
+              try {
+                final cameras = await availableCameras();
+                if (cameras.isNotEmpty && context.mounted) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => CameraView(cameras: cameras),
+                    ),
+                  );
+                }
+              } catch (e) {
+                debugPrint('Camera open error: $e');
+              }
+            },
             child: const Icon(Icons.camera_alt_rounded),
           ),
         ],
@@ -249,7 +270,20 @@ class _HomePageState extends ConsumerState<HomePage>
           ),
           actions: [
             IconButton(
-              onPressed: () {},
+              onPressed: () async {
+                try {
+                  final cameras = await availableCameras();
+                  if (cameras.isNotEmpty && context.mounted) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => CameraView(cameras: cameras),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  debugPrint('AppBar Camera open error: $e');
+                }
+              },
               icon: const Icon(
                 Icons.camera_alt_outlined,
               ),
