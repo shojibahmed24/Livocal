@@ -206,33 +206,6 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                     ),
                   ),
                   InkWell(
-                    onTap: () {},
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8.0,
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: colorTheme.greenColor,
-                            child: const Icon(
-                              Icons.people,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 18.0,
-                          ),
-                          Text(
-                            'New group',
-                            style: Theme.of(context).custom.textTheme.bold,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  InkWell(
                     onTap: ref
                         .read(contactPickerControllerProvider.notifier)
                         .createNewContact,

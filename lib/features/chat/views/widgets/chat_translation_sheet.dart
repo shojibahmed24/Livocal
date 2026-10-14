@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:livocal/features/calls/models/call_language.dart';
+import 'package:livocal/shared/services/translation_service.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 
 void showInChatTranslationSheet({
@@ -40,25 +41,37 @@ class _ChatTranslationSheetContentState
   String _translatedPreview = '';
   bool _isTranslating = false;
 
-  void _runQuickTest() {
+  void _runQuickTest() async {
     final text = _testController.text.trim();
     if (text.isEmpty) return;
 
     setState(() {
       _isTranslating = true;
+      _translatedPreview = '';
     });
 
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (!mounted) return;
-      setState(() {
-        _isTranslating = false;
-        if (_myLanguage.code == 'bn') {
-          _translatedPreview = 'AI Translated: "$text" → "Hello, how are you?"';
-        } else {
-          _translatedPreview = 'AI Translated: "$text" → "হ্যালো, আপনি কেমন আছেন?"';
-        }
-      });
-    });
+    try {
+      final translated = await TranslationService.translateText(
+        text: text,
+        targetLangName: _peerLanguage.englishName,
+        sourceLangName: _myLanguage.englishName,
+      );
+      if (mounted) {
+        setState(() {
+          _isTranslating = false;
+          _translatedPreview =
+              'AI Translated (${_peerLanguage.nativeName}): "$translated"';
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isTranslating = false;
+          _translatedPreview =
+              'Translation error: ${e.toString().replaceAll('Exception: ', '')}';
+        });
+      }
+    }
   }
 
   @override

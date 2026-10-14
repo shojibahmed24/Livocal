@@ -9,6 +9,12 @@ import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/theme.dart';
+import 'package:livocal/features/settings/views/account_settings_screen.dart';
+import 'package:livocal/features/settings/views/privacy_settings_screen.dart';
+import 'package:livocal/features/settings/views/notifications_settings_screen.dart';
+import 'package:livocal/features/settings/views/storage_settings_screen.dart';
+import 'package:livocal/features/settings/views/app_language_screen.dart';
+import 'package:livocal/features/settings/views/help_settings_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   final User user;
@@ -355,10 +361,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: const Text('Account'),
             subtitle: const Text('Security notifications, change number'),
             onTap: () {
-              showSnackBar(
-                context: context,
-                content: 'Account security is managed securely via Firebase',
-                type: SnacBarType.info,
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AccountSettingsScreen(user: _currentUser),
+                ),
               );
             },
           ),
@@ -369,10 +376,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: const Text('Privacy'),
             subtitle: const Text('Block contacts, disappearing messages'),
             onTap: () {
-              showSnackBar(
-                context: context,
-                content: 'Privacy and end-to-end security are active',
-                type: SnacBarType.info,
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const PrivacySettingsScreen(),
+                ),
               );
             },
           ),
@@ -393,10 +401,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: const Text('Notifications'),
             subtitle: const Text('Message, group & call tones'),
             onTap: () {
-              showSnackBar(
-                context: context,
-                content: 'Notifications are active via Firebase Cloud Messaging',
-                type: SnacBarType.info,
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const NotificationsSettingsScreen(),
+                ),
               );
             },
           ),
@@ -407,10 +416,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: const Text('Storage and data'),
             subtitle: const Text('Network usage, local Isar cache'),
             onTap: () {
-              showSnackBar(
-                context: context,
-                content: 'Local database is running on Isar DB engine',
-                type: SnacBarType.info,
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const StorageSettingsScreen(),
+                ),
               );
             },
           ),
@@ -421,10 +431,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: const Text('App language'),
             subtitle: const Text('English (device language) / বাংলা'),
             onTap: () {
-              showSnackBar(
-                context: context,
-                content: 'Livocal supports English & Bengali seamlessly',
-                type: SnacBarType.info,
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const AppLanguageScreen(),
+                ),
               );
             },
           ),
@@ -435,10 +446,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: const Text('Help'),
             subtitle: const Text('Help centre, contact us, privacy policy'),
             onTap: () {
-              showSnackBar(
-                context: context,
-                content: 'Livocal Help Centre - Version 1.0.0 Production',
-                type: SnacBarType.info,
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const HelpSettingsScreen(),
+                ),
               );
             },
           ),

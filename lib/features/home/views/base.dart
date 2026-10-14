@@ -33,6 +33,10 @@ import 'package:camera/camera.dart';
 import 'package:livocal/features/home/views/status_tab.dart';
 import 'package:livocal/shared/widgets/camera.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
+import 'package:livocal/features/home/views/linked_devices_screen.dart';
+import 'package:livocal/features/home/views/starred_messages_screen.dart';
+import 'package:livocal/features/status/views/text_status_composer_screen.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   final User user;
@@ -152,10 +156,10 @@ class _HomePageState extends ConsumerState<HomePage>
           FloatingActionButton(
             backgroundColor: AppColorsDark.appBarColor,
             onPressed: () {
-              showSnackBar(
-                context: context,
-                content: 'Text status update coming soon',
-                type: SnacBarType.info,
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => TextStatusComposerScreen(user: widget.user),
+                ),
               );
             },
             child: const Icon(Icons.edit),
@@ -369,32 +373,19 @@ class _HomePageState extends ConsumerState<HomePage>
               icon: const Icon(Icons.more_vert),
               onSelected: (value) async {
                 switch (value) {
-                  case 'new_group':
-                    showSnackBar(
-                      context: context,
-                      content: 'Group creation will be available in the next release',
-                      type: SnacBarType.info,
-                    );
-                    break;
-                  case 'new_broadcast':
-                    showSnackBar(
-                      context: context,
-                      content: 'Broadcast lists will be available in the next release',
-                      type: SnacBarType.info,
-                    );
-                    break;
                   case 'linked_devices':
-                    showSnackBar(
-                      context: context,
-                      content: 'Linked devices feature coming soon',
-                      type: SnacBarType.info,
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            LinkedDevicesScreen(user: widget.user),
+                      ),
                     );
                     break;
                   case 'starred_messages':
-                    showSnackBar(
-                      context: context,
-                      content: 'No starred messages found',
-                      type: SnacBarType.info,
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const StarredMessagesScreen(),
+                      ),
                     );
                     break;
                   case 'clear_call_log':
@@ -409,10 +400,72 @@ class _HomePageState extends ConsumerState<HomePage>
                     }
                     break;
                   case 'status_privacy':
-                    showSnackBar(
+                    showDialog(
                       context: context,
-                      content: 'Status privacy settings are active',
-                      type: SnacBarType.info,
+                      builder: (ctx) {
+                        String privacy = SharedPref.instance.getString('status_privacy') ?? 'contacts';
+                        return StatefulBuilder(
+                          builder: (ctx, setDlgState) => AlertDialog(
+                            backgroundColor: Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFF1F2C34)
+                                : Colors.white,
+                            title: const Text('Status privacy', style: TextStyle(fontWeight: FontWeight.bold)),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Who can see my status updates:', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                                const SizedBox(height: 8),
+                                RadioListTile<String>(
+                                  title: const Text('My contacts'),
+                                  subtitle: const Text('Share with all contacts in phonebook'),
+                                  value: 'contacts',
+                                  groupValue: privacy,
+                                  activeColor: const Color(0xFF00A884),
+                                  onChanged: (val) {
+                                    if (val != null) {
+                                      setDlgState(() => privacy = val);
+                                      SharedPref.instance.setString('status_privacy', val);
+                                    }
+                                  },
+                                ),
+                                RadioListTile<String>(
+                                  title: const Text('My contacts except...'),
+                                  subtitle: const Text('Hide status from selected contacts'),
+                                  value: 'except',
+                                  groupValue: privacy,
+                                  activeColor: const Color(0xFF00A884),
+                                  onChanged: (val) {
+                                    if (val != null) {
+                                      setDlgState(() => privacy = val);
+                                      SharedPref.instance.setString('status_privacy', val);
+                                    }
+                                  },
+                                ),
+                                RadioListTile<String>(
+                                  title: const Text('Only share with...'),
+                                  subtitle: const Text('Share only with chosen friends'),
+                                  value: 'only',
+                                  groupValue: privacy,
+                                  activeColor: const Color(0xFF00A884),
+                                  onChanged: (val) {
+                                    if (val != null) {
+                                      setDlgState(() => privacy = val);
+                                      SharedPref.instance.setString('status_privacy', val);
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text('DONE', style: TextStyle(color: Color(0xFF00A884))),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     );
                     break;
                   case 'settings':
@@ -507,14 +560,6 @@ class _HomePageState extends ConsumerState<HomePage>
 
                 // CHATS tab (default)
                 return const [
-                  PopupMenuItem(
-                    value: 'new_group',
-                    child: Text('New group'),
-                  ),
-                  PopupMenuItem(
-                    value: 'new_broadcast',
-                    child: Text('New broadcast'),
-                  ),
                   PopupMenuItem(
                     value: 'linked_devices',
                     child: Text('Linked devices'),

@@ -356,6 +356,54 @@ app.post('/api/contacts/match', apiLimiter, authenticateRequest, async (req, res
   }
 });
 
+/**
+ * POST /api/translate
+ * Real-time text translation using Gemini REST API.
+ */
+app.post('/api/translate', apiLimiter, authenticateRequest, async (req, res) => {
+  const { text, sourceLang, targetLang } = req.body;
+  if (!text || !targetLang) {
+    return res.status(400).json({ error: 'text and targetLang are required' });
+  }
+
+  if (!GEMINI_API_KEY) {
+    return res.status(503).json({ error: 'Gemini API key is not configured on the relay server' });
+  }
+
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    const prompt = `Translate the following text from ${sourceLang || 'auto'} to ${targetLang}. Output strictly the direct translated text only, without quotes, notes, or preamble:\n\n${text}`;
+
+    const apiRes = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [{ text: prompt }]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 500,
+        }
+      })
+    });
+
+    if (!apiRes.ok) {
+      const errText = await apiRes.text();
+      return res.status(apiRes.status).json({ error: `Gemini API error: ${errText}` });
+    }
+
+    const data = await apiRes.json();
+    const candidate = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+    res.json({ translatedText: candidate });
+  } catch (err) {
+    console.error('[Translate] API error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws/live-call' });
 

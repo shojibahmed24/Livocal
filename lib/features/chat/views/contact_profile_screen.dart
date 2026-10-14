@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 import 'package:livocal/features/calls/views/outgoing_call_screen.dart';
+import 'package:livocal/features/chat/views/chat_media_viewer_screen.dart';
 import 'package:livocal/shared/models/messages.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
@@ -195,27 +196,6 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     },
                   ),
                   _buildActionButton(
-                    icon: Icons.videocam,
-                    label: 'Video',
-                    color: const Color(0xFF00A884),
-                    onTap: () {
-                      showSnackBar(
-                        context: context,
-                        content: 'Video calling connecting to ${widget.contactName}...',
-                        type: SnacBarType.info,
-                      );
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => OutgoingCallScreen(
-                            caller: widget.self,
-                            callee: widget.other,
-                            calleeDisplayName: widget.contactName,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildActionButton(
                     icon: Icons.translate_rounded,
                     label: 'AI Translate',
                     color: const Color(0xFF00E5B0),
@@ -342,10 +322,14 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                   ],
                 ),
                 onTap: () {
-                  showSnackBar(
-                    context: context,
-                    content: 'Total shared media files: $_mediaCount',
-                    type: SnacBarType.info,
+                  final chatId = getChatId(widget.self.id, widget.other.id);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ChatMediaViewerScreen(
+                        chatId: chatId,
+                        contactName: widget.contactName,
+                      ),
+                    ),
                   );
                 },
               ),

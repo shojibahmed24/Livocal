@@ -31,6 +31,8 @@ class IsarDb {
     throw StateError('Isar is not opened');
   }
 
+  static Isar? get instance => _instance ?? Isar.getInstance();
+
   static Future<void> init() async {
     final existing = Isar.getInstance();
     if (existing != null) {
@@ -520,6 +522,38 @@ class IsarDb {
       }
     } catch (e) {
       debugPrint('IsarDb clearAll error: $e');
+    }
+  }
+
+  static Future<List<StoredMessage>> getStarredMessagesByIds(List<String> messageIds) async {
+    try {
+      final isarInstance = _instance ?? Isar.getInstance();
+      if (isarInstance == null) return [];
+      final List<StoredMessage> results = [];
+      for (final id in messageIds) {
+        final msg = await isarInstance.storedMessages.filter().messageIdEqualTo(id).findFirst();
+        if (msg != null) results.add(msg);
+      }
+      return results;
+    } catch (e) {
+      debugPrint('IsarDb getStarredMessagesByIds error: $e');
+      return [];
+    }
+  }
+
+  static Future<List<StoredMessage>> getChatMediaMessages(String chatId) async {
+    try {
+      final isarInstance = _instance ?? Isar.getInstance();
+      if (isarInstance == null) return [];
+      return await isarInstance.storedMessages
+          .filter()
+          .chatIdEqualTo(chatId)
+          .attachmentIsNotNull()
+          .sortByTimestampDesc()
+          .findAll();
+    } catch (e) {
+      debugPrint('IsarDb getChatMediaMessages error: $e');
+      return [];
     }
   }
 }

@@ -104,23 +104,6 @@ class _AttachmentPickerState extends ConsumerState<AttachmentPicker> {
                 Navigator.pop(context);
                 showSnackBar(
                   context: context,
-                  content: 'Live location sharing will be available in the upcoming update',
-                  type: SnacBarType.info,
-                );
-              },
-              label: 'Location',
-              backgroundColor: Colors.green[600],
-              child: const Icon(
-                Icons.location_on,
-                size: 28,
-                color: Colors.white,
-              ),
-            ),
-            LabelledButton(
-              onTap: () {
-                Navigator.pop(context);
-                showSnackBar(
-                  context: context,
                   content: 'Tap the \$ icon in the message bar to send USD payments',
                   type: SnacBarType.info,
                 );
