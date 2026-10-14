@@ -3,8 +3,8 @@ import 'package:flutter/foundation.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatsapp_clone/features/calls/models/call_model.dart';
-import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
+import 'package:livocal/features/calls/models/call_model.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
 
 final callRepositoryProvider = Provider<CallRepository>((ref) {
   return CallRepository(firestore: FirebaseFirestore.instance);

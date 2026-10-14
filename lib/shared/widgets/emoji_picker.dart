@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatsapp_clone/features/chat/controllers/chat_controller.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/features/chat/controllers/chat_controller.dart';
+import 'package:livocal/theme/theme.dart';
 
 class EmojiWrapper {
   const EmojiWrapper({

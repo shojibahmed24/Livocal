@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatsapp_clone/features/chat/views/widgets/recording_visualiser.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/features/chat/views/widgets/recording_visualiser.dart';
+import 'package:livocal/theme/theme.dart';
 
 import '../../../../shared/utils/abc.dart';
 import '../../../../theme/color_theme.dart';

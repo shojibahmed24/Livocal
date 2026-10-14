@@ -1,4 +1,4 @@
-name: whatsapp_clone
+name: livocal
 description: Livocal - Real-Time AI Live Translation Voice Calling & Messaging App
 publish_to: "none"
 version: 0.1.1
@@ -14,6 +14,7 @@ dependencies:
   firebase_auth: ^4.4.0
   flutter_riverpod: ^2.3.2
   firebase_core: ^2.9.0
+  firebase_crashlytics: ^3.3.4
   cloud_firestore: ^4.5.0
   file_picker: ^8.1.4
   image_picker: ^1.0.0

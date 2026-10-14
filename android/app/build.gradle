@@ -51,13 +51,15 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
-            shrinkResources false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             if (keystorePropertiesFile.exists()) {
                 signingConfig signingConfigs.release
             } else {
-                signingConfig signingConfigs.debug
+                // Production safeguard: do not silently sign production release builds with debug keys.
+                // Create android/key.properties with keyAlias, keyPassword, storeFile, and storePassword to sign release builds.
+                signingConfig null
             }
         }
     }

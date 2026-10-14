@@ -3,10 +3,10 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatsapp_clone/shared/models/user.dart';
-import 'package:whatsapp_clone/features/home/views/base.dart';
-import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/features/home/views/base.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
+import 'package:livocal/theme/theme.dart';
 
 class AuthCompletePage extends ConsumerStatefulWidget {
   final User user;

@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:whatsapp_clone/features/calls/models/call_language.dart';
+import 'package:livocal/features/calls/models/call_language.dart';
 
 enum CallStateStatus {
   idle('idle'),

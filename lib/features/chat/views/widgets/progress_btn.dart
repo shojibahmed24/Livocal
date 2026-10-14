@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/theme/theme.dart';
 
 import 'custom_progress.dart';
 

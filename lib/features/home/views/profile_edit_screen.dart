@@ -6,12 +6,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatsapp_clone/shared/models/user.dart';
-import 'package:whatsapp_clone/shared/repositories/isar_db.dart';
-import 'package:whatsapp_clone/shared/utils/attachment_utils.dart';
-import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
-import 'package:whatsapp_clone/shared/utils/snackbars.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/utils/attachment_utils.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
+import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/theme/theme.dart';
 
 class ProfileEditScreen extends ConsumerStatefulWidget {
   final User user;

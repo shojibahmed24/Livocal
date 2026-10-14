@@ -6,9 +6,9 @@ import 'dart:math' as math;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:whatsapp_clone/features/calls/models/call_language.dart';
-import 'package:whatsapp_clone/features/calls/models/call_model.dart';
-import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
+import 'package:livocal/features/calls/models/call_language.dart';
+import 'package:livocal/features/calls/models/call_model.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
 
 class GeminiModelPreset {
   final String id;

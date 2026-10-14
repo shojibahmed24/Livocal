@@ -4,10 +4,10 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatsapp_clone/features/chat/models/message.dart';
-import 'package:whatsapp_clone/shared/models/user.dart';
-import 'package:whatsapp_clone/shared/repositories/isar_db.dart';
-import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
+import 'package:livocal/features/chat/models/message.dart';
+import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
 
 final firebaseFirestoreRepositoryProvider = Provider(
   (ref) => FirebaseFirestoreRepo(
@@ -116,10 +116,11 @@ class FirebaseFirestoreRepo {
 
           final docData = docChange.doc.data();
           if (docData == null) continue;
-          docChange.doc.reference.delete();
 
           final isSystemMessage = docData['action'] != null;
           if (isSystemMessage) {
+            // Ephemeral delivery receipt signals are cleaned up after updating local state
+            docChange.doc.reference.delete();
             final msg = SystemMessage.fromMap(docData);
             switch (msg.action) {
               case MessageAction.statusUpdate:
@@ -132,6 +133,7 @@ class FirebaseFirestoreRepo {
             continue;
           }
 
+          // Real messages are preserved so multi-device sync and message history never get lost
           messages.add(Message.fromMap(docData));
         }
 
@@ -179,25 +181,6 @@ class FirebaseFirestoreRepo {
             .timeout(const Duration(seconds: 3));
         if (snapNum.docs.isNotEmpty) {
           return User.fromMap(snapNum.docs.first.data());
-        }
-      }
-
-      // Suffix fallback (match last 8-10 digits)
-      final allSnap = await firestore
-          .collection('users')
-          .get()
-          .timeout(const Duration(seconds: 5));
-      final coreDigits = clean.length >= 8 ? clean.substring(clean.length - 8) : clean;
-      for (final doc in allSnap.docs) {
-        final data = doc.data();
-        final phoneMap = data['phone'] as Map<String, dynamic>?;
-        if (phoneMap != null) {
-          final raw = (phoneMap['rawNumber'] ?? '').toString().replaceAll(RegExp(r'[\s\-\(\)\+]'), '');
-          final num = (phoneMap['number'] ?? '').toString().replaceAll(RegExp(r'[\s\-\(\)\+]'), '');
-          if ((raw.isNotEmpty && raw.endsWith(coreDigits)) ||
-              (num.isNotEmpty && num.endsWith(coreDigits))) {
-            return User.fromMap(data);
-          }
         }
       }
 

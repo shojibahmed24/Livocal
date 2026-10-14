@@ -1,20 +1,20 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:whatsapp_clone/shared/utils/abc.dart';
+import 'package:livocal/shared/utils/abc.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
-import 'package:whatsapp_clone/features/calls/models/call_language.dart';
-import 'package:whatsapp_clone/features/calls/models/call_model.dart';
-import 'package:whatsapp_clone/features/calls/repositories/call_repository.dart';
-import 'package:whatsapp_clone/features/calls/services/call_audio_pipeline.dart';
+import 'package:livocal/features/calls/models/call_language.dart';
+import 'package:livocal/features/calls/models/call_model.dart';
+import 'package:livocal/features/calls/repositories/call_repository.dart';
+import 'package:livocal/features/calls/services/call_audio_pipeline.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
-import 'package:whatsapp_clone/features/calls/services/call_kit_service.dart';
-import 'package:whatsapp_clone/features/calls/services/gemini_live_translator.dart';
-import 'package:whatsapp_clone/features/calls/services/webrtc_call_client.dart';
-import 'package:whatsapp_clone/shared/models/user.dart';
+import 'package:livocal/features/calls/services/call_kit_service.dart';
+import 'package:livocal/features/calls/services/gemini_live_translator.dart';
+import 'package:livocal/features/calls/services/webrtc_call_client.dart';
+import 'package:livocal/shared/models/user.dart';
 
 final callControllerProvider =
     StateNotifierProvider<CallController, CallControllerState>((ref) {

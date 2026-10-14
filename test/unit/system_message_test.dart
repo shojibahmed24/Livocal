@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:whatsapp_clone/features/chat/models/message.dart';
+import 'package:livocal/features/chat/models/message.dart';
 
 void main() {
   group('SystemMessage Serialization & Delivery Receipts', () {

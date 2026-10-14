@@ -1,14 +1,14 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatsapp_clone/features/calls/views/widgets/direct_dial_sheet.dart';
-import 'package:whatsapp_clone/features/calls/views/outgoing_call_screen.dart';
-import 'package:whatsapp_clone/features/home/controllers/contacts_controller.dart';
-import 'package:whatsapp_clone/shared/models/contact.dart';
-import 'package:whatsapp_clone/shared/models/user.dart';
-import 'package:whatsapp_clone/shared/repositories/isar_db.dart';
-import 'package:whatsapp_clone/shared/widgets/search.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/features/calls/views/widgets/direct_dial_sheet.dart';
+import 'package:livocal/features/calls/views/outgoing_call_screen.dart';
+import 'package:livocal/features/home/controllers/contacts_controller.dart';
+import 'package:livocal/shared/models/contact.dart';
+import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/widgets/search.dart';
+import 'package:livocal/theme/theme.dart';
 
 class ContactsPage extends ConsumerStatefulWidget {
   final User user;

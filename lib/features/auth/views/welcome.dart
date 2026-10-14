@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:whatsapp_clone/features/auth/views/login.dart';
-import 'package:whatsapp_clone/shared/widgets/buttons.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/features/auth/views/login.dart';
+import 'package:livocal/shared/widgets/buttons.dart';
+import 'package:livocal/theme/theme.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});

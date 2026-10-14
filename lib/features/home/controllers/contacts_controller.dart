@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:whatsapp_clone/features/home/data/repositories/contact_repository.dart';
-import 'package:whatsapp_clone/shared/models/contact.dart';
-import 'package:whatsapp_clone/features/chat/views/chat.dart';
-import 'package:whatsapp_clone/shared/models/user.dart';
-import 'package:whatsapp_clone/shared/repositories/isar_db.dart';
-import 'package:whatsapp_clone/shared/utils/abc.dart';
+import 'package:livocal/features/home/data/repositories/contact_repository.dart';
+import 'package:livocal/shared/models/contact.dart';
+import 'package:livocal/features/chat/views/chat.dart';
+import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/utils/abc.dart';
 
 final contactsProvider = FutureProvider<List<Contact>>((ref) async {
   if (await isConnected()) {

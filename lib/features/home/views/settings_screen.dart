@@ -2,13 +2,13 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:whatsapp_clone/features/auth/domain/auth_service.dart';
-import 'package:whatsapp_clone/features/calls/services/gemini_live_translator.dart';
-import 'package:whatsapp_clone/features/home/views/profile_edit_screen.dart';
-import 'package:whatsapp_clone/shared/models/user.dart';
-import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
-import 'package:whatsapp_clone/shared/utils/snackbars.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/features/auth/domain/auth_service.dart';
+import 'package:livocal/features/calls/services/gemini_live_translator.dart';
+import 'package:livocal/features/home/views/profile_edit_screen.dart';
+import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
+import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/theme/theme.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   final User user;

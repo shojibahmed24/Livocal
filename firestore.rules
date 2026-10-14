@@ -17,13 +17,16 @@ service cloud.firestore {
 
     // 1. User Profiles & Realtime Presence
     match /users/{userId} {
-      // Authenticated users can view registered contacts & online/offline presence
-      allow read: if isAuthenticated();
-      // Users can only create or update their own profile document
-      allow write: if isAuthenticated() && (
-        request.auth.uid == userId ||
-        request.resource.data.id == request.auth.uid
-      );
+      // Security: Allow get (single doc lookup by UID for profile, chat, or call)
+      // Disallow list: authenticated users CANNOT dump the entire /users collection to harvest phone numbers
+      allow get: if isAuthenticated();
+      allow list: if false;
+
+      // Doc squatting defense: Users can ONLY create, update, or delete their own profile document,
+      // and internal data.id MUST strictly match request.auth.uid and document ID.
+      allow create: if isAuthenticated() && request.auth.uid == userId && request.resource.data.id == request.auth.uid;
+      allow update: if isAuthenticated() && request.auth.uid == userId && request.resource.data.id == resource.data.id;
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
     }
 
     // 2. Chat Inboxes & Realtime Message Queue

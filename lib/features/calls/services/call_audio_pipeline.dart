@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:logger/logger.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:whatsapp_clone/features/calls/models/call_model.dart';
+import 'package:livocal/features/calls/models/call_model.dart';
 
 class CallAudioPipeline {
   static const int inputSampleRate = 16000; // 16kHz PCM16 mono for Gemini Live input

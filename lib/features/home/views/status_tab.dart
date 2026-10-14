@@ -1,9 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatsapp_clone/shared/models/user.dart';
-import 'package:whatsapp_clone/shared/utils/snackbars.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/theme/theme.dart';
 
 class StatusTab extends ConsumerStatefulWidget {
   final User user;

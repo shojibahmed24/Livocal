@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
-import 'package:whatsapp_clone/theme/color_theme.dart';
-import 'package:whatsapp_clone/theme/text_theme.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
+import 'package:livocal/theme/color_theme.dart';
+import 'package:livocal/theme/text_theme.dart';
 
 class CustomThemeData {
   final textTheme = CustomTextTheme();

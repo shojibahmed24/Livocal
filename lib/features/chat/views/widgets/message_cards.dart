@@ -4,10 +4,10 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_emoji/flutter_emoji.dart';
-import 'package:whatsapp_clone/features/chat/models/message.dart';
-import 'package:whatsapp_clone/shared/repositories/isar_db.dart';
-import 'package:whatsapp_clone/shared/utils/abc.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/features/chat/models/message.dart';
+import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/theme/theme.dart';
 
 import '../../models/attachement.dart';
 import '../attachment_viewer.dart';

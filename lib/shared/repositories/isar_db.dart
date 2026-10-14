@@ -5,15 +5,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:whatsapp_clone/features/chat/models/attachement.dart';
-import 'package:whatsapp_clone/features/chat/models/recent_chat.dart';
-import 'package:whatsapp_clone/features/home/data/repositories/contact_repository.dart';
-import 'package:whatsapp_clone/shared/models/contact.dart';
-import 'package:whatsapp_clone/shared/models/messages.dart';
-import 'package:whatsapp_clone/shared/models/user.dart';
-import 'package:whatsapp_clone/shared/repositories/firebase_firestore.dart';
-import 'package:whatsapp_clone/shared/utils/abc.dart';
-import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
+import 'package:livocal/features/chat/models/attachement.dart';
+import 'package:livocal/features/chat/models/recent_chat.dart';
+import 'package:livocal/features/home/data/repositories/contact_repository.dart';
+import 'package:livocal/shared/models/contact.dart';
+import 'package:livocal/shared/models/messages.dart';
+import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/repositories/firebase_firestore.dart';
+import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
 
 import '../../features/chat/models/message.dart';
 
@@ -87,14 +87,41 @@ class IsarDb {
     );
 
     await isar.writeTxn(() async {
-      await isar.storedMessages.put(storedMsg);
+      final existing = await isar.storedMessages
+          .filter()
+          .messageIdEqualTo(message.id)
+          .findFirst();
+      if (existing != null) {
+        existing.status = message.status;
+        if (message.content.isNotEmpty) existing.content = message.content;
+        if (message.attachment != null && existing.attachment != null) {
+          existing.attachment!.url = message.attachment!.url;
+          existing.attachment!.uploadStatus = message.attachment!.uploadStatus;
+        }
+        await isar.storedMessages.put(existing);
+      } else {
+        await isar.storedMessages.put(storedMsg);
+      }
     });
   }
 
   static Future<void> addMessages(List<Message> messages) async {
-    final storedMessages = messages
-        .map(
-          (message) => StoredMessage(
+    await isar.writeTxn(() async {
+      for (final message in messages) {
+        final existing = await isar.storedMessages
+            .filter()
+            .messageIdEqualTo(message.id)
+            .findFirst();
+        if (existing != null) {
+          existing.status = message.status;
+          if (message.content.isNotEmpty) existing.content = message.content;
+          if (message.attachment != null && existing.attachment != null) {
+            existing.attachment!.url = message.attachment!.url;
+            existing.attachment!.uploadStatus = message.attachment!.uploadStatus;
+          }
+          await isar.storedMessages.put(existing);
+        } else {
+          final storedMsg = StoredMessage(
             messageId: message.id,
             chatId: getChatId(message.senderId, message.receiverId),
             content: message.content,
@@ -116,12 +143,10 @@ class IsarDb {
                     samples: message.attachment!.samples,
                   )
                 : null,
-          ),
-        )
-        .toList();
-
-    await isar.writeTxn(() async {
-      await isar.storedMessages.putAll(storedMessages);
+          );
+          await isar.storedMessages.put(storedMsg);
+        }
+      }
     });
   }
 

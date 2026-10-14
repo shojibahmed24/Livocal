@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatsapp_clone/features/auth/domain/repositories/auth_repository.dart';
-import 'package:whatsapp_clone/shared/utils/snackbars.dart';
+import 'package:livocal/features/auth/domain/repositories/auth_repository.dart';
+import 'package:livocal/shared/utils/snackbars.dart';
 
 final authRepositoryProvider = Provider((ref) {
   return FirebaseAuthRepository(

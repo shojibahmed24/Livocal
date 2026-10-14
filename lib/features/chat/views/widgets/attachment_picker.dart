@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/theme/theme.dart';
 
 import '../../controllers/chat_controller.dart';
-import 'package:whatsapp_clone/shared/utils/snackbars.dart';
+import 'package:livocal/shared/utils/snackbars.dart';
 import 'buttons.dart';
 
 class AttachmentPicker extends ConsumerStatefulWidget {

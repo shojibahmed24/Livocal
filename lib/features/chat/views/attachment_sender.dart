@@ -6,11 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
-import 'package:whatsapp_clone/features/chat/views/widgets/attachment_renderers.dart';
-import 'package:whatsapp_clone/features/chat/views/widgets/chat_field.dart';
-import 'package:whatsapp_clone/shared/widgets/bottom_inset.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
-import 'package:whatsapp_clone/shared/utils/snackbars.dart';
+import 'package:livocal/features/chat/views/widgets/attachment_renderers.dart';
+import 'package:livocal/features/chat/views/widgets/chat_field.dart';
+import 'package:livocal/shared/widgets/bottom_inset.dart';
+import 'package:livocal/theme/theme.dart';
+import 'package:livocal/shared/utils/snackbars.dart';
 
 import '../../../shared/models/user.dart';
 import '../../../shared/utils/storage_paths.dart';

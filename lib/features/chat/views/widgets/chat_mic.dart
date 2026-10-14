@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/theme/theme.dart';
 
 import '../../controllers/chat_controller.dart';
 

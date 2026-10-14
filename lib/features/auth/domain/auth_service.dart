@@ -3,13 +3,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide User;
-import 'package:whatsapp_clone/features/auth/data/repositories/auth_repository.dart';
-import 'package:whatsapp_clone/features/auth/views/welcome.dart';
-import 'package:whatsapp_clone/shared/models/user.dart';
-import 'package:whatsapp_clone/shared/repositories/firebase_firestore.dart';
-import 'package:whatsapp_clone/shared/repositories/firebase_storage.dart';
-import 'package:whatsapp_clone/shared/repositories/isar_db.dart';
-import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
+import 'package:livocal/features/auth/data/repositories/auth_repository.dart';
+import 'package:livocal/features/auth/views/welcome.dart';
+import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/repositories/firebase_firestore.dart';
+import 'package:livocal/shared/repositories/firebase_storage.dart';
+import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
 
 final authControllerProvider = Provider((ref) {
   return AuthController(ref: ref);

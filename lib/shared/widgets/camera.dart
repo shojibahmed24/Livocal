@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatsapp_clone/features/chat/controllers/chat_controller.dart';
-import 'package:whatsapp_clone/shared/utils/abc.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/features/chat/controllers/chat_controller.dart';
+import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/theme/theme.dart';
 
 import '../../features/chat/models/attachement.dart';
 import '../../features/chat/views/attachment_sender.dart';

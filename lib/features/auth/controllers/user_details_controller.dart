@@ -4,15 +4,15 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatsapp_clone/features/auth/domain/auth_service.dart';
-import 'package:whatsapp_clone/features/auth/views/auth_complete.dart';
+import 'package:livocal/features/auth/domain/auth_service.dart';
+import 'package:livocal/features/auth/views/auth_complete.dart';
 
-import 'package:whatsapp_clone/shared/models/user.dart';
-import 'package:whatsapp_clone/shared/utils/abc.dart';
-import 'package:whatsapp_clone/shared/utils/attachment_utils.dart';
-// import 'package:whatsapp_clone/shared/widgets/emoji_picker.dart';
-import 'package:whatsapp_clone/shared/widgets/gallery.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/shared/utils/attachment_utils.dart';
+// import 'package:livocal/shared/widgets/emoji_picker.dart';
+import 'package:livocal/shared/widgets/gallery.dart';
+import 'package:livocal/theme/theme.dart';
 
 import '../../../shared/repositories/compression_service.dart';
 

@@ -1,11 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatsapp_clone/features/calls/controllers/call_controller.dart';
-import 'package:whatsapp_clone/features/calls/models/call_model.dart';
-import 'package:whatsapp_clone/features/calls/views/widgets/language_picker_sheet.dart';
-import 'package:whatsapp_clone/shared/utils/abc.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/features/calls/controllers/call_controller.dart';
+import 'package:livocal/features/calls/models/call_model.dart';
+import 'package:livocal/features/calls/views/widgets/language_picker_sheet.dart';
+import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/theme/theme.dart';
 
 class ActiveCallScreen extends ConsumerStatefulWidget {
   const ActiveCallScreen({super.key});

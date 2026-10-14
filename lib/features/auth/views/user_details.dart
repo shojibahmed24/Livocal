@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatsapp_clone/features/auth/controllers/user_details_controller.dart';
-import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
-import 'package:whatsapp_clone/shared/widgets/bottom_inset.dart';
+import 'package:livocal/features/auth/controllers/user_details_controller.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
+import 'package:livocal/shared/widgets/bottom_inset.dart';
 
-import 'package:whatsapp_clone/shared/widgets/buttons.dart';
-import 'package:whatsapp_clone/shared/widgets/emoji_picker.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/shared/widgets/buttons.dart';
+import 'package:livocal/shared/widgets/emoji_picker.dart';
+import 'package:livocal/theme/theme.dart';
 
 import '../../../shared/models/user.dart';
 

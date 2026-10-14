@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:whatsapp_clone/features/calls/models/call_language.dart';
-import 'package:whatsapp_clone/features/calls/repositories/call_repository.dart';
-import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
+import 'package:livocal/features/calls/models/call_language.dart';
+import 'package:livocal/features/calls/repositories/call_repository.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
 
 void main() {
   setUpAll(() async {

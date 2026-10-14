@@ -5,8 +5,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:open_file_plus/open_file_plus.dart';
 import 'package:video_player/video_player.dart';
-import 'package:whatsapp_clone/shared/utils/abc.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/theme/theme.dart';
 
 import '../../models/attachement.dart';
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:whatsapp_clone/shared/models/user.dart';
-import 'package:whatsapp_clone/shared/utils/snackbars.dart';
+import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/utils/snackbars.dart';
 
 void showSendPaymentSheet({
   required BuildContext context,

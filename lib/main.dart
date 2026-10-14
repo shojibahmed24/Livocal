@@ -1,20 +1,22 @@
+import 'dart:ui';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:whatsapp_clone/features/auth/data/repositories/auth_repository.dart';
-import 'package:whatsapp_clone/shared/repositories/isar_db.dart';
-import 'package:whatsapp_clone/shared/utils/abc.dart';
-import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
-import 'package:whatsapp_clone/shared/utils/storage_paths.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:livocal/features/auth/data/repositories/auth_repository.dart';
+import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
+import 'package:livocal/shared/utils/storage_paths.dart';
 import 'features/auth/views/welcome.dart';
 
 import 'features/home/views/base.dart';
 import 'firebase_options.dart';
 
-import 'package:whatsapp_clone/features/calls/services/gemini_live_translator.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/features/calls/services/gemini_live_translator.dart';
+import 'package:livocal/theme/theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +25,17 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+
+    // Pass all uncaught "fatal" errors from the framework to Crashlytics
+    FlutterError.onError = (errorDetails) {
+      FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+    };
+
+    // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
   } catch (e, st) {
     debugPrint("Firebase init error: $e\n$st");
   }

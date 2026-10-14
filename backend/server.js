@@ -25,7 +25,6 @@ let firestoreDb = null;
 let authService = null;
 
 let serviceAccount = null;
-const serviceAccountPath = path.join(__dirname, 'serviceAccountKey.json');
 
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
   try {
@@ -33,13 +32,15 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
   } catch (e) {
     console.error('[Firebase Admin] Error parsing FIREBASE_SERVICE_ACCOUNT env:', e.message);
   }
-} else if (fs.existsSync(serviceAccountPath)) {
-  try {
-    serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
-  } catch (e) {
-    console.error('[Firebase Admin] Error reading serviceAccountKey.json:', e.message);
-  }
+} else {
+  console.warn('[Firebase Admin] Warning: FIREBASE_SERVICE_ACCOUNT environment variable is not set. Disk key fallbacks are disabled for production security.');
 }
+
+// Whitelist of valid Gemini 3.5 Live Translation voices
+const ALLOWED_VOICES = new Set(['Puck', 'Charon', 'Kore', 'Fenrir', 'Aoede']);
+
+// Concurrent WebSocket session tracking per user UID (Rate Limiting)
+const activeUserSessions = new Map();
 
 if (serviceAccount) {
   try {
@@ -308,6 +309,59 @@ app.get('/api/webrtc/ice-servers', authenticateRequest, (req, res) => {
   res.json({ iceServers });
 });
 
+/**
+ * POST /api/contacts/match
+ * Securely matches user's local phonebook against registered users in Firestore.
+ * Prevents client-side scraping of /users collection while enabling instant contact discovery.
+ */
+app.post('/api/contacts/match', apiLimiter, authenticateRequest, async (req, res) => {
+  try {
+    const { phoneNumbers } = req.body;
+    if (!Array.isArray(phoneNumbers) || phoneNumbers.length === 0) {
+      return res.status(400).json({ error: 'phoneNumbers must be a non-empty array' });
+    }
+
+    if (!firestoreDb) {
+      return res.status(503).json({ error: 'Firestore database service is currently unavailable' });
+    }
+
+    const sanitizedNumbers = phoneNumbers
+      .slice(0, 500)
+      .map((p) => String(p).trim().replace(/[\s\-\(\)\+]/g, ''))
+      .filter((n) => n.length >= 6);
+
+    const lookupSet = new Set(sanitizedNumbers);
+    const snap = await firestoreDb.collection('users').get();
+    const matches = [];
+
+    snap.forEach((doc) => {
+      const data = doc.data();
+      const phone = data.phone;
+      if (!phone) return;
+
+      const raw = (phone.rawNumber || '').replace(/[\s\-\(\)\+]/g, '');
+      const num = (phone.number || '').replace(/[\s\-\(\)\+]/g, '');
+      const code = (phone.code || '').replace(/[\s\-\(\)\+]/g, '');
+      const codeNum = code + num;
+
+      if (lookupSet.has(raw) || lookupSet.has(num) || lookupSet.has(codeNum)) {
+        matches.push({
+          id: data.id || doc.id,
+          name: data.name || '',
+          avatarUrl: data.avatarUrl || '',
+          phone: data.phone,
+          activityStatus: data.activityStatus || 'offline',
+        });
+      }
+    });
+
+    res.json({ matches });
+  } catch (err) {
+    console.error('[Contacts] Error matching contacts:', err);
+    res.status(500).json({ error: 'Internal error matching contacts' });
+  }
+});
+
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws/live-call' });
 
@@ -366,10 +420,39 @@ wss.on('connection', (clientWs, req) => {
     }
   }, 20000);
 
+  let authenticatedUid = null;
+  let audioChunkCount = 0;
+  let lastAudioSecond = Date.now();
+  const MAX_AUDIO_CHUNKS_PER_SEC = 50;
+
+  // Maximum call session duration limit: 60 minutes
+  const sessionLimitTimer = setTimeout(() => {
+    console.log(`[${clientId}] Session reached maximum 60 minute duration. Closing.`);
+    if (clientWs.readyState === WebSocket.OPEN) {
+      clientWs.send(
+        JSON.stringify({
+          type: 'error',
+          code: 'SESSION_TIMEOUT',
+          message: 'Live translation session reached maximum 60 minute duration limit.',
+        })
+      );
+      clientWs.close(4408, 'Duration limit reached');
+    }
+  }, 60 * 60 * 1000);
+
   function cleanup() {
     if (isClosing) return;
     isClosing = true;
     clearInterval(heartbeatInterval);
+    clearTimeout(sessionLimitTimer);
+
+    if (authenticatedUid && activeUserSessions.has(authenticatedUid)) {
+      const userSessions = activeUserSessions.get(authenticatedUid);
+      userSessions.delete(clientWs);
+      if (userSessions.size === 0) {
+        activeUserSessions.delete(authenticatedUid);
+      }
+    }
 
     if (geminiWs && geminiWs.readyState === WebSocket.OPEN) {
       console.log(`[${clientId}] Closing upstream Gemini session`);
@@ -395,6 +478,17 @@ wss.on('connection', (clientWs, req) => {
     try {
       // 1. Binary Audio Chunks (Raw 16kHz PCM16 Mono from phone microphone)
       if (isBinary) {
+        // Audio chunk rate limiter
+        const now = Date.now();
+        if (now - lastAudioSecond > 1000) {
+          audioChunkCount = 0;
+          lastAudioSecond = now;
+        }
+        audioChunkCount++;
+        if (audioChunkCount > MAX_AUDIO_CHUNKS_PER_SEC) {
+          return; // Drop excessive audio chunks to protect quota
+        }
+
         if (geminiWs && geminiWs.readyState === WebSocket.OPEN && isGeminiReady) {
           const base64Audio = Buffer.from(data).toString('base64');
           const realtimeFrame = {
@@ -473,6 +567,24 @@ wss.on('connection', (clientWs, req) => {
           return;
         }
 
+        // Rate Limiter: Max 2 concurrent sessions per authenticated user
+        authenticatedUid = decodedUser.uid;
+        const userSessions = activeUserSessions.get(authenticatedUid) || new Set();
+        if (userSessions.size >= 2) {
+          console.warn(`[${clientId}] Rate limit: User ${authenticatedUid} reached max concurrent sessions (${userSessions.size}).`);
+          clientWs.send(
+            JSON.stringify({
+              type: 'error',
+              code: 'CONCURRENT_LIMIT_EXCEEDED',
+              message: 'Maximum concurrent live translation sessions reached (limit: 2).',
+            })
+          );
+          clientWs.close(4429, 'Rate limit: Too many concurrent sessions');
+          return;
+        }
+        userSessions.add(clientWs);
+        activeUserSessions.set(authenticatedUid, userSessions);
+
         if (!GEMINI_API_KEY) {
           console.warn(`[${clientId}] GEMINI_API_KEY is not set in backend .env!`);
           clientWs.send(
@@ -486,16 +598,33 @@ wss.on('connection', (clientWs, req) => {
           return;
         }
 
+        // Security: Lock model to DEFAULT_MODEL on server. Client CANNOT override model.
+        // Validate voice against Gemini Live whitelist.
+        const validVoice = (msg.voice && ALLOWED_VOICES.has(msg.voice))
+          ? msg.voice
+          : (sessionConfig.voice || DEFAULT_VOICE);
+
         sessionConfig = {
           langA: msg.langA || sessionConfig.langA,
           langB: msg.langB || sessionConfig.langB,
-          voice: msg.voice || sessionConfig.voice,
-          model: msg.model || sessionConfig.model,
+          voice: validVoice,
+          model: DEFAULT_MODEL, // Strictly locked to server DEFAULT_MODEL
           autoDetect: msg.autoDetect !== false,
         };
 
         await initGeminiSession();
       } else if (msg.type === 'audio_base64') {
+        // Base64 audio rate limiter
+        const now = Date.now();
+        if (now - lastAudioSecond > 1000) {
+          audioChunkCount = 0;
+          lastAudioSecond = now;
+        }
+        audioChunkCount++;
+        if (audioChunkCount > MAX_AUDIO_CHUNKS_PER_SEC) {
+          return; // Drop excessive audio chunks
+        }
+
         if (geminiWs && geminiWs.readyState === WebSocket.OPEN && isGeminiReady && msg.data) {
           const realtimeFrame = {
             realtimeInput: {

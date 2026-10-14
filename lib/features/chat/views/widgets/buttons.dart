@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/theme/theme.dart';
 
 class LabelledButton extends StatelessWidget {
   const LabelledButton({

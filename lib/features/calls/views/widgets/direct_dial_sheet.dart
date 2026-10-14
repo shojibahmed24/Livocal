@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatsapp_clone/features/calls/views/outgoing_call_screen.dart';
-import 'package:whatsapp_clone/features/chat/views/chat.dart';
-import 'package:whatsapp_clone/shared/models/user.dart';
-import 'package:whatsapp_clone/shared/repositories/firebase_firestore.dart';
-import 'package:whatsapp_clone/shared/repositories/isar_db.dart';
-import 'package:whatsapp_clone/shared/utils/snackbars.dart';
+import 'package:livocal/features/calls/views/outgoing_call_screen.dart';
+import 'package:livocal/features/chat/views/chat.dart';
+import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/repositories/firebase_firestore.dart';
+import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/utils/snackbars.dart';
 
 Future<void> showDirectDialSheet(
   BuildContext context, {

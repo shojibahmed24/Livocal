@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:whatsapp_clone/features/auth/controllers/login_controller.dart';
-import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
-import 'package:whatsapp_clone/shared/widgets/buttons.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/features/auth/controllers/login_controller.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
+import 'package:livocal/shared/widgets/buttons.dart';
+import 'package:livocal/theme/theme.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});

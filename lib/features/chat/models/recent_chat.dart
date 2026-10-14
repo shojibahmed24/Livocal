@@ -1,5 +1,5 @@
-import 'package:whatsapp_clone/features/chat/models/message.dart';
-import 'package:whatsapp_clone/shared/models/user.dart';
+import 'package:livocal/features/chat/models/message.dart';
+import 'package:livocal/shared/models/user.dart';
 
 class RecentChat {
   final Message message;

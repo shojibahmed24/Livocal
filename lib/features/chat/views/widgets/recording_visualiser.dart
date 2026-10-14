@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatsapp_clone/features/chat/views/widgets/painters.dart';
+import 'package:livocal/features/chat/views/widgets/painters.dart';
 
 import '../../../../shared/utils/abc.dart';
 import '../../controllers/chat_controller.dart';

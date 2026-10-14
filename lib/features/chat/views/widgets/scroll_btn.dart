@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatsapp_clone/features/chat/controllers/chat_controller.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/features/chat/controllers/chat_controller.dart';
+import 'package:livocal/theme/theme.dart';
 
 class ScrollButton extends ConsumerStatefulWidget {
   const ScrollButton({super.key, required this.scrollController});

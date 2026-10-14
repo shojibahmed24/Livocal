@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:whatsapp_clone/features/calls/models/call_language.dart';
-import 'package:whatsapp_clone/features/calls/services/gemini_live_translator.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/features/calls/models/call_language.dart';
+import 'package:livocal/features/calls/services/gemini_live_translator.dart';
+import 'package:livocal/theme/theme.dart';
 
 Future<CallLanguage?> showUniversalLanguagePicker(
   BuildContext context, {

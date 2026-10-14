@@ -5,9 +5,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart';
-import 'package:whatsapp_clone/shared/repositories/firebase_firestore.dart';
-import 'package:whatsapp_clone/shared/utils/abc.dart';
-import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
+import 'package:livocal/shared/repositories/firebase_firestore.dart';
+import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
 
 import '../../features/chat/models/message.dart';
 import '../../features/calls/services/call_kit_service.dart';

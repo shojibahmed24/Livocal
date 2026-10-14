@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:country_picker/country_picker.dart';
-import 'package:whatsapp_clone/features/auth/controllers/login_controller.dart';
+import 'package:livocal/features/auth/controllers/login_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatsapp_clone/shared/widgets/search.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/shared/widgets/search.dart';
+import 'package:livocal/theme/theme.dart';
 
 class CountryPage extends ConsumerStatefulWidget {
   const CountryPage({super.key});

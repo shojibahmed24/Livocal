@@ -2,10 +2,10 @@ import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phone_number/phone_number.dart';
-import 'package:whatsapp_clone/features/auth/views/countries.dart';
-import 'package:whatsapp_clone/shared/utils/abc.dart';
-import 'package:whatsapp_clone/shared/widgets/dialogs.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
+import 'package:livocal/features/auth/views/countries.dart';
+import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/shared/widgets/dialogs.dart';
+import 'package:livocal/theme/theme.dart';
 
 import '../../../shared/models/user.dart';
 import '../views/verification.dart';

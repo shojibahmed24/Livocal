@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:whatsapp_clone/shared/models/user.dart';
+import 'package:livocal/shared/models/user.dart';
 
 void main() {
   group('User Model Tests', () {

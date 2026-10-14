@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:whatsapp_clone/features/calls/models/call_language.dart';
-import 'package:whatsapp_clone/shared/utils/snackbars.dart';
+import 'package:livocal/features/calls/models/call_language.dart';
+import 'package:livocal/shared/utils/snackbars.dart';
 
 void showInChatTranslationSheet({
   required BuildContext context,

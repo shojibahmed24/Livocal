@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_contacts/flutter_contacts.dart' show FlutterContacts;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatsapp_clone/shared/models/contact.dart';
-import 'package:whatsapp_clone/shared/models/user.dart';
+import 'package:livocal/shared/models/contact.dart';
+import 'package:livocal/shared/models/user.dart';
 
 final contactsRepositoryProvider = Provider((ref) => ContactsRepository(ref));
 

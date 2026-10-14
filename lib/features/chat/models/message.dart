@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:whatsapp_clone/features/chat/models/attachement.dart';
+import 'package:livocal/features/chat/models/attachement.dart';
 
 enum MessageStatus {
   pending('PENDING'),
