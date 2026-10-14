@@ -341,7 +341,7 @@ class IsarDb {
     return await isar.users.filter().idEqualTo(id).findFirst();
   }
 
-  static Future<List<Contact>> getWhatsAppContacts() async {
+  static Future<List<Contact>> getLivocalContacts() async {
     final list = await isar.contacts.filter().userIdIsNotNull().findAll();
     if (list.isEmpty) {
       await addContacts();
@@ -349,6 +349,8 @@ class IsarDb {
     }
     return list;
   }
+
+  static Future<List<Contact>> getWhatsAppContacts() => getLivocalContacts();
 
   static Future<void> clearAll() async {
     try {

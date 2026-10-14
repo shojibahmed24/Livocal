@@ -1,9 +1,6 @@
 import 'dart:io';
 
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'firebase_storage.dart';
 
 class UploadService {
   final Map<String, UploadTask> _uploadTasks = {};
@@ -16,18 +13,25 @@ class UploadService {
     required void Function(TaskSnapshot) onUploadDone,
     required void Function() onUploadError,
   }) async {
-    final uploadTask = await ProviderContainer()
-        .read(firebaseStorageRepoProvider)
-        .uploadFileToFirebase(file, path);
+    try {
+      final uploadTask =
+          FirebaseStorage.instance.ref().child(path).putFile(file);
 
-    instance._uploadTasks[taskId] = uploadTask;
-    uploadTask.then<void>(
-      (snapshot) {
-        onUploadDone(snapshot);
-        instance._uploadTasks.remove(taskId);
-      },
-      onError: (_) => onUploadError(),
-    );
+      instance._uploadTasks[taskId] = uploadTask;
+      uploadTask.then<void>(
+        (snapshot) {
+          onUploadDone(snapshot);
+          instance._uploadTasks.remove(taskId);
+        },
+        onError: (_) {
+          instance._uploadTasks.remove(taskId);
+          onUploadError();
+        },
+      );
+    } catch (_) {
+      instance._uploadTasks.remove(taskId);
+      onUploadError();
+    }
   }
 
   static Future<void> cancelUpload(String taskId) async {

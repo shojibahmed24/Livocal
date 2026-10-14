@@ -1,7 +1,5 @@
+import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'firebase_storage.dart';
 
 class DownloadService {
   final Map<String, DownloadTask> _downloadTasks = {};
@@ -14,18 +12,25 @@ class DownloadService {
     required void Function(TaskSnapshot) onDownloadComplete,
     required void Function() onDownloadError,
   }) async {
-    final downloadTask = await ProviderContainer()
-        .read(firebaseStorageRepoProvider)
-        .downloadFileFromFirebase(url, path);
+    try {
+      final downloadTask =
+          FirebaseStorage.instance.refFromURL(url).writeToFile(File(path));
 
-    instance._downloadTasks[taskId] = downloadTask;
-    downloadTask.then<void>(
-      (snapshot) {
-        onDownloadComplete(snapshot);
-        instance._downloadTasks.remove(taskId);
-      },
-      onError: (_) => onDownloadError(),
-    );
+      instance._downloadTasks[taskId] = downloadTask;
+      downloadTask.then<void>(
+        (snapshot) {
+          onDownloadComplete(snapshot);
+          instance._downloadTasks.remove(taskId);
+        },
+        onError: (_) {
+          instance._downloadTasks.remove(taskId);
+          onDownloadError();
+        },
+      );
+    } catch (_) {
+      instance._downloadTasks.remove(taskId);
+      onDownloadError();
+    }
   }
 
   static Future<void> cancelDownload(String taskId) async {
