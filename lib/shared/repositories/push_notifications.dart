@@ -27,6 +27,13 @@ class PushNotificationsRepo {
     FirebaseMessaging.onBackgroundMessage(_handleBackgroundMessage);
     FirebaseMessaging.onMessageOpenedApp.listen(onMessageOpenedApp);
     instance.onTokenRefresh.listen((token) => handleTokenRefresh(token, ref));
+
+    try {
+      final initialToken = await instance.getToken();
+      if (initialToken != null && initialToken.isNotEmpty) {
+        handleTokenRefresh(initialToken, ref);
+      }
+    } catch (_) {}
   }
 
   Future<void> sendPushNotification(Message message) async {

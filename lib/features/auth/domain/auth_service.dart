@@ -105,6 +105,8 @@ class AuthController {
     try {
       await SharedPref.instance.remove('user');
       await SharedPref.instance.remove('fcm_token_registered');
+      await SharedPref.instance.remove('fcmToken');
+      await SharedPref.instance.remove('call_history_records_v1');
     } catch (e) {
       debugPrint('Logout SharedPref clear error: $e');
     }

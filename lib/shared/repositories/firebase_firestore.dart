@@ -160,11 +160,19 @@ class FirebaseFirestoreRepo {
       final raw = SharedPref.instance.getString('user');
       if (raw == null) return;
       final user = jsonDecode(raw);
-      await firestore
-          .collection('fcmTokens')
-          .doc(user['id'])
-          .set({'token': token})
-          .timeout(const Duration(seconds: 3));
+      final userId = user['id'];
+      await Future.wait([
+        firestore
+            .collection('fcmTokens')
+            .doc(userId)
+            .set({'token': token, 'updatedAt': FieldValue.serverTimestamp()}, SetOptions(merge: true))
+            .timeout(const Duration(seconds: 4)),
+        firestore
+            .collection('users')
+            .doc(userId)
+            .set({'fcmToken': token}, SetOptions(merge: true))
+            .timeout(const Duration(seconds: 4)),
+      ]);
     } catch (_) {}
   }
 
