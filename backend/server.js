@@ -7,9 +7,12 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 
 dotenv.config();
 
@@ -19,6 +22,7 @@ const __dirname = path.dirname(__filename);
 let firebaseApp = null;
 let messagingService = null;
 let firestoreDb = null;
+let authService = null;
 
 let serviceAccount = null;
 const serviceAccountPath = path.join(__dirname, 'serviceAccountKey.json');
@@ -45,6 +49,7 @@ if (serviceAccount) {
     });
     messagingService = getMessaging(firebaseApp);
     firestoreDb = getFirestore(firebaseApp);
+    authService = getAuth(firebaseApp);
     console.log('[Firebase Admin] Successfully initialized with project:', serviceAccount.project_id);
   } catch (err) {
     console.error('[Firebase Admin] Error initializing:', err.message);
@@ -57,22 +62,50 @@ const DEFAULT_MODEL =
     process.env.GEMINI_LIVE_MODEL?.trim() || 'models/gemini-3.5-live-translate-preview';
 const DEFAULT_VOICE = process.env.DEFAULT_VOICE?.trim() || 'Aoede';
 
-const RELAY_SECRET = process.env.RELAY_API_SECRET?.trim() || 'livocal_relay_secure_v1_2026';
+const RELAY_SECRET = process.env.RELAY_API_SECRET?.trim() || '';
 
 const app = express();
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
-function authenticateRequest(req, res, next) {
-  if (RELAY_SECRET) {
-    const provided =
-      req.headers['x-api-secret'] ||
-      req.headers['authorization']?.replace('Bearer ', '');
-    if (provided !== RELAY_SECRET) {
-      return res.status(401).json({ error: 'Unauthorized' });
+// Rate limit: 300 requests per 15 min per IP on API endpoints
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests from this IP, please try again later.' },
+});
+app.use('/api/', apiLimiter);
+
+async function authenticateRequest(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.startsWith('Bearer ')
+      ? authHeader.substring(7)
+      : req.headers['x-api-secret'];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Missing authentication credentials (Bearer ID token required)' });
+  }
+
+  // 1. Primary: Verify Firebase ID Token
+  if (authService) {
+    try {
+      const decoded = await authService.verifyIdToken(token);
+      req.user = decoded;
+      return next();
+    } catch (err) {
+      console.warn('[Auth] Firebase ID Token invalid:', err.message);
     }
   }
-  next();
+
+  // 2. Fallback: Check RELAY_API_SECRET only if explicitly configured in environment
+  if (RELAY_SECRET && token === RELAY_SECRET) {
+    return next();
+  }
+
+  return res.status(401).json({ error: 'Unauthorized: Invalid or expired Firebase ID token' });
 }
 
 // Health & Status endpoint (Sanitized)
@@ -319,25 +352,51 @@ wss.on('connection', (clientWs, req) => {
       if (msg.type === 'setup') {
         console.log(`[${clientId}] Received setup handshake:`, msg);
 
-        if (RELAY_SECRET) {
-          const clientSecret =
-            req.headers['x-api-secret'] ||
+        // Authenticate via Firebase ID Token (Bearer or msg.token)
+        const clientToken = msg.token ||
             req.headers['authorization']?.replace('Bearer ', '') ||
-            new URL(req.url, 'http://localhost').searchParams.get('secret') ||
+            req.headers['x-api-secret'] ||
             msg.secret;
 
-          if (clientSecret !== RELAY_SECRET) {
-            console.warn(`[${clientId}] Unauthorized WebSocket client. Closing.`);
-            clientWs.send(
-              JSON.stringify({
-                type: 'error',
-                code: 'UNAUTHORIZED',
-                message: 'Invalid or missing relay secret.',
-              })
-            );
-            clientWs.close(4401, 'Unauthorized');
-            return;
+        if (!clientToken) {
+          console.warn(`[${clientId}] Unauthorized WebSocket client: No token provided.`);
+          clientWs.send(
+            JSON.stringify({
+              type: 'error',
+              code: 'UNAUTHORIZED',
+              message: 'Authentication required. Please provide a valid Firebase ID token.',
+            })
+          );
+          clientWs.close(4401, 'Unauthorized');
+          return;
+        }
+
+        let isAuthorized = false;
+        if (authService) {
+          try {
+            const decoded = await authService.verifyIdToken(clientToken);
+            console.log(`[${clientId}] Authenticated Firebase user: ${decoded.uid}`);
+            isAuthorized = true;
+          } catch (tokenErr) {
+            console.warn(`[${clientId}] Token verification failed: ${tokenErr.message}`);
           }
+        }
+
+        if (!isAuthorized && RELAY_SECRET && clientToken === RELAY_SECRET) {
+          isAuthorized = true;
+        }
+
+        if (!isAuthorized) {
+          console.warn(`[${clientId}] Unauthorized WebSocket client. Closing.`);
+          clientWs.send(
+            JSON.stringify({
+              type: 'error',
+              code: 'UNAUTHORIZED',
+              message: 'Invalid or expired authentication credentials.',
+            })
+          );
+          clientWs.close(4401, 'Unauthorized');
+          return;
         }
 
         if (!GEMINI_API_KEY) {

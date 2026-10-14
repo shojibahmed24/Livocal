@@ -29,8 +29,7 @@ service cloud.firestore {
     // 2. Chat Inboxes & Realtime Message Queue
     match /chats/{receiverId} {
       // Only the inbox owner can read or manage their inbox document
-      allow read: if isAuthenticated() && request.auth.uid == receiverId;
-      allow write: if isAuthenticated();
+      allow read, write: if isAuthenticated() && request.auth.uid == receiverId;
 
       match /messages/{messageId} {
         // Authenticated sender can deliver a message or status update receipt to recipient's inbox
@@ -91,10 +90,9 @@ service cloud.firestore {
       }
     }
 
-    // 4. FCM Push Notification Registration Tokens
+    // 4. FCM Push Notification Registration Tokens (Owner only, server accesses via Admin SDK)
     match /fcmTokens/{userId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && request.auth.uid == userId;
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
     }
   }
 }

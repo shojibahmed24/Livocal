@@ -60,10 +60,11 @@ class WebRtcCallClient {
   /// Dynamically updates ICE configuration from secure backend relay
   static Future<void> refreshIceServers() async {
     try {
+      final idToken = await GeminiLiveTranslator.getAuthToken();
       final res = await http.get(
         Uri.parse('https://livocal-relay.onrender.com/api/webrtc/ice-servers'),
         headers: {
-          'x-api-secret': GeminiLiveTranslator.defaultRelaySecret,
+          if (idToken != null) 'Authorization': 'Bearer $idToken',
         },
       ).timeout(const Duration(seconds: 3));
       if (res.statusCode == 200) {
@@ -437,7 +438,10 @@ class WebRtcCallClient {
 
   void dispose() {
     endCall();
-    _stateController.close();
-    _remoteStreamController.close();
+    if (!_stateController.isClosed) _stateController.close();
+    if (!_remoteStreamController.isClosed) _remoteStreamController.close();
+    if (!_remoteTranslatedAudioController.isClosed) {
+      _remoteTranslatedAudioController.close();
+    }
   }
 }

@@ -9,7 +9,6 @@ import 'package:whatsapp_clone/shared/repositories/isar_db.dart';
 import 'package:whatsapp_clone/shared/utils/abc.dart';
 import 'package:whatsapp_clone/shared/utils/snackbars.dart';
 import 'package:whatsapp_clone/theme/color_theme.dart';
-import 'package:whatsapp_clone/theme/theme.dart';
 
 class ContactProfileScreen extends ConsumerStatefulWidget {
   const ContactProfileScreen({

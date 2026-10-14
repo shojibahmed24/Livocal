@@ -353,13 +353,14 @@ class CallController extends StateNotifier<CallControllerState> {
 
   Future<void> _notifyRemoteCallee(CallSession session) async {
     try {
+      final idToken = await GeminiLiveTranslator.getAuthToken();
       final url = Uri.parse(
           'https://livocal-relay.onrender.com/api/call/notify-incoming');
       await http.post(
         url,
         headers: {
           'Content-Type': 'application/json',
-          'x-api-secret': GeminiLiveTranslator.defaultRelaySecret,
+          if (idToken != null) 'Authorization': 'Bearer $idToken',
         },
         body: jsonEncode({
           'targetUserId': session.calleeId,

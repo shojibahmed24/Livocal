@@ -21,8 +21,8 @@ service firebase.storage {
       allow read: if request.auth != null;
       // Authenticated users can upload new attachments (max 50MB per file)
       allow create: if request.auth != null && request.resource.size < 50 * 1024 * 1024;
-      // Attachments cannot be arbitrarily overwritten or deleted by other users
-      allow update, delete: if request.auth != null;
+      // Chat attachments are immutable once uploaded (cannot be overwritten or deleted by third parties)
+      allow update, delete: if false;
     }
   }
 }

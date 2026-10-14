@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -56,9 +57,10 @@ class PushNotificationsRepo {
 
     const String url =
         'https://livocal-relay.onrender.com/api/notify/chat-message';
+    final idToken = await GeminiLiveTranslator.getAuthToken();
     final Map<String, String> headers = {
       "Content-Type": "application/json",
-      "x-api-secret": GeminiLiveTranslator.defaultRelaySecret,
+      if (idToken != null) "Authorization": "Bearer $idToken",
     };
 
     String messageContent = message.content;

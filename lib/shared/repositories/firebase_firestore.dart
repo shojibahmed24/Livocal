@@ -209,11 +209,12 @@ class FirebaseFirestoreRepo {
   }
 
   Future<void> setFcmToken(String token) async {
+    String? userId;
     try {
       final raw = SharedPref.instance.getString('user');
       if (raw == null) return;
       final user = jsonDecode(raw);
-      final userId = user['id'];
+      userId = user['id'];
       await Future.wait([
         firestore
             .collection('fcmTokens')
@@ -227,7 +228,7 @@ class FirebaseFirestoreRepo {
             .timeout(const Duration(seconds: 4)),
       ]);
     } catch (e) {
-      debugPrint('[FirebaseFirestoreRepo] saveFcmToken error for $userId: $e');
+      debugPrint('[FirebaseFirestoreRepo] saveFcmToken error for ${userId ?? "unknown"}: $e');
     }
   }
 

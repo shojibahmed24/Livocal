@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:whatsapp_clone/features/calls/models/call_language.dart';
 import 'package:whatsapp_clone/features/calls/models/call_model.dart';
@@ -143,8 +144,6 @@ CRITICAL OPERATING RULES:
   static const String prefRelayUrl = 'gemini_live_relay_url';
   static const String defaultRelayUrl =
       'wss://livocal-relay.onrender.com/ws/live-call';
-  static const String prefRelaySecret = 'gemini_live_relay_secret';
-  static const String defaultRelaySecret = 'livocal_relay_secure_v1_2026';
 
   static String getSavedRelayUrl() =>
       SharedPref.instance.getString(prefRelayUrl)?.trim() ?? defaultRelayUrl;
@@ -152,16 +151,15 @@ CRITICAL OPERATING RULES:
   static Future<void> saveRelayUrl(String url) async =>
       await SharedPref.instance.setString(prefRelayUrl, url.trim());
 
-  static String getSavedRelaySecret() {
-    final saved = SharedPref.instance.getString(prefRelaySecret)?.trim();
-    if (saved == null || saved.isEmpty) {
-      return defaultRelaySecret;
+  /// Retrieves the current Firebase user ID token for zero-trust relay auth
+  static Future<String?> getAuthToken() async {
+    try {
+      return await FirebaseAuth.instance.currentUser?.getIdToken();
+    } catch (e) {
+      debugPrint('[GeminiLiveTranslator] getIdToken error: $e');
+      return null;
     }
-    return saved;
   }
-
-  static Future<void> saveRelaySecret(String secret) async =>
-      await SharedPref.instance.setString(prefRelaySecret, secret.trim());
 
   bool _isUsingRelay = false;
 
@@ -181,15 +179,15 @@ CRITICAL OPERATING RULES:
     final modelId = getSavedModelId();
     final voiceName = getSavedVoiceName();
     final relayUrl = getSavedRelayUrl();
-    final relaySecret = getSavedRelaySecret();
     final apiKey = getSavedApiKey();
 
     // 1. Try Backend Relay Server first (Zero-Trust Architecture)
     if (relayUrl.isNotEmpty) {
       try {
         debugPrint('Connecting to Gemini Live Backend Relay: $relayUrl');
+        final idToken = await getAuthToken();
         final headers = <String, dynamic>{
-          if (relaySecret.isNotEmpty) 'x-api-secret': relaySecret,
+          if (idToken != null) 'Authorization': 'Bearer $idToken',
         };
         _ws = await WebSocket.connect(
           relayUrl,
@@ -218,10 +216,10 @@ CRITICAL OPERATING RULES:
           },
         );
 
-        // Send setup handshake to Backend Relay
+        // Send setup handshake to Backend Relay with verified user token
         final setupPayload = {
           'type': 'setup',
-          'secret': relaySecret,
+          if (idToken != null) 'token': idToken,
           'model': modelId,
           'voice': voiceName,
           'autoDetect': true,

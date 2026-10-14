@@ -208,8 +208,4 @@ class CallRepository {
       list.map((e) => e.toJson()).toList(),
     );
   }
-
-  List<CallHistoryRecord> _defaultSeededHistory() {
-    return const [];
-  }
 }

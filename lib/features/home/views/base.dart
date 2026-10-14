@@ -249,20 +249,16 @@ class _HomePageState extends ConsumerState<HomePage>
     final authorId = message.data['authorId'] as String?;
     if (authorId == null || authorId.isEmpty) return;
 
-    var author = await ref
-        .read(firebaseFirestoreRepositoryProvider)
-        .getUserById(authorId);
-
-    if (author == null) {
-      final authorName = message.data['authorName'] as String? ?? 'Contact';
-      author = User(
-        id: authorId,
-        name: authorName,
-        avatarUrl: message.data['authorAvatar'] as String? ?? '',
-        phone: Phone(code: '+880', number: '', formattedNumber: ''),
-        activityStatus: UserActivityStatus.offline,
-      );
-    }
+    final User author = (await ref
+            .read(firebaseFirestoreRepositoryProvider)
+            .getUserById(authorId)) ??
+        User(
+          id: authorId,
+          name: message.data['authorName'] as String? ?? 'Contact',
+          avatarUrl: message.data['authorAvatar'] as String? ?? '',
+          phone: Phone(code: '+880', number: '', formattedNumber: ''),
+          activityStatus: UserActivityStatus.offline,
+        );
 
     Contact? contact;
     if (author.phone.number != null && author.phone.number!.isNotEmpty) {
@@ -278,9 +274,9 @@ class _HomePageState extends ConsumerState<HomePage>
       MaterialPageRoute(
         builder: (context) => ChatPage(
           self: widget.user,
-          other: author!,
+          other: author,
           otherUserContactName:
-              contact?.displayName ?? (author!.name.isNotEmpty ? author!.name : author!.phone.getFormattedNumber()),
+              contact?.displayName ?? (author.name.isNotEmpty ? author.name : author.phone.getFormattedNumber()),
         ),
       ),
     );

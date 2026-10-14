@@ -526,13 +526,13 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
       List<File>? files = await pickMultimedia();
       if (files == null || files.isEmpty) return null;
 
-      final attachments = createAttachmentsFromFiles(files);
+      final attachmentsFuture = createAttachmentsFromFiles(files);
       if (returnAttachments) {
-        return attachments;
+        return await attachmentsFuture;
       }
 
       if (!mounted || !context.mounted) return null;
-      navigateToAttachmentSender(context, attachments);
+      navigateToAttachmentSender(context, attachmentsFuture);
       return null;
     } catch (e) {
       debugPrint('Error in pickAttachmentsFromGallery: $e');
@@ -552,10 +552,10 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
       List<File>? files = await pickFiles(type: FileType.audio);
       if (files == null || files.isEmpty) return;
 
-      final attachments = createAttachmentsFromFiles(files);
+      final attachmentsFuture = createAttachmentsFromFiles(files);
 
       if (!mounted || !context.mounted) return;
-      navigateToAttachmentSender(context, attachments);
+      navigateToAttachmentSender(context, attachmentsFuture);
     } catch (e) {
       debugPrint('Error in pickAudioFiles: $e');
     } finally {
@@ -574,17 +574,17 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
       List<File>? files = await pickFiles(type: FileType.any);
       if (files == null || files.isEmpty) return null;
 
-      final attachments = createAttachmentsFromFiles(
+      final attachmentsFuture = createAttachmentsFromFiles(
         files,
         areDocuments: true,
       );
 
       if (returnAttachments) {
-        return attachments;
+        return await attachmentsFuture;
       }
 
       if (!mounted || !context.mounted) return null;
-      navigateToAttachmentSender(context, attachments);
+      navigateToAttachmentSender(context, attachmentsFuture);
       return null;
     } catch (e) {
       debugPrint('Error in pickDocuments: $e');

@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatsapp_clone/features/auth/domain/auth_service.dart';
 import 'package:whatsapp_clone/features/auth/controllers/verification_controller.dart';
 import 'package:whatsapp_clone/features/auth/views/login.dart';
-import 'package:whatsapp_clone/features/auth/views/user_details.dart';
 
 import 'package:whatsapp_clone/shared/utils/abc.dart';
 import 'package:whatsapp_clone/shared/utils/snackbars.dart';
