@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class DownloadService {
@@ -22,12 +23,14 @@ class DownloadService {
           onDownloadComplete(snapshot);
           instance._downloadTasks.remove(taskId);
         },
-        onError: (_) {
+        onError: (err) {
+          debugPrint('[DownloadService] download task failed for $taskId: $err');
           instance._downloadTasks.remove(taskId);
           onDownloadError();
         },
       );
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[DownloadService] writeToFile failed for $taskId: $e');
       instance._downloadTasks.remove(taskId);
       onDownloadError();
     }

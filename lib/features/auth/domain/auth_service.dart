@@ -65,7 +65,9 @@ class AuthController {
             .read(firebaseStorageRepoProvider)
             .uploadFileToFirebase(avatar, 'userAvatars/$uid');
         avatarUrl = await (await task).ref.getDownloadURL();
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[AuthService] Avatar upload error for $uid: $e');
+      }
     }
 
     final user = User(
@@ -78,7 +80,10 @@ class AuthController {
 
     try {
       await authRepository.registerUser(user.toMap());
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[AuthService] registerUser failed in Firestore: $e');
+      rethrow;
+    }
     return user;
   }
 

@@ -53,7 +53,9 @@ class CallRepository {
           .doc(session.callId)
           .set(session.toMap())
           .timeout(const Duration(seconds: 3));
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[CallRepository] createCall failed for ${session.callId}: $e');
+    }
   }
 
   Future<void> updateCallStatus(String callId, CallStateStatus status) async {
@@ -69,7 +71,9 @@ class CallRepository {
           .doc(callId)
           .update(updates)
           .timeout(const Duration(seconds: 3));
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[CallRepository] updateCallStatus failed for $callId ($status): $e');
+    }
   }
 
   Future<void> updateCallLanguages(
@@ -86,7 +90,9 @@ class CallRepository {
             'calleeLangCode': calleeLangCode,
           })
           .timeout(const Duration(seconds: 3));
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[CallRepository] updateCallLanguages failed for $callId: $e');
+    }
   }
 
   Future<void> sendTranscriptToCall(
@@ -101,7 +107,9 @@ class CallRepository {
           .doc(entry.id)
           .set(entry.toMap())
           .timeout(const Duration(seconds: 3));
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[CallRepository] sendTranscriptToCall failed for $callId: $e');
+    }
   }
 
   Stream<CallSession?> watchCallSession(String callId, String ownId) {
@@ -113,7 +121,10 @@ class CallRepository {
           if (!snap.exists || snap.data() == null) return null;
           return CallSession.fromMap(snap.data()!, ownId: ownId);
         })
-        .handleError((_) => null);
+        .handleError((err) {
+          debugPrint('[CallRepository] watchCallSession error for $callId: $err');
+          return null;
+        });
   }
 
   Stream<CallSession?> watchIncomingCalls(String ownId) {

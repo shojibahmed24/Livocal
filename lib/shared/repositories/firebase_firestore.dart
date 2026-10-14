@@ -35,7 +35,9 @@ class FirebaseFirestoreRepo {
           .collection('users')
           .doc(userId)
           .update({'activityStatus': statusValue});
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[FirebaseFirestoreRepo] setActivityStatus failed for $userId: $e');
+    }
   }
 
   Stream<UserActivityStatus> userActivityStatusStream({required userId}) {
@@ -50,7 +52,10 @@ class FirebaseFirestoreRepo {
           }
           return UserActivityStatus.fromValue(data['activityStatus']);
         })
-        .handleError((_) => UserActivityStatus.online);
+        .handleError((err) {
+          debugPrint('[FirebaseFirestoreRepo] userActivityStatusStream error for $userId: $err');
+          return UserActivityStatus.online;
+        });
   }
 
   Future<void> sendMessage(Message message) async {
@@ -62,7 +67,9 @@ class FirebaseFirestoreRepo {
           .doc(message.id)
           .set(message.toMap())
           .timeout(const Duration(seconds: 4));
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[FirebaseFirestoreRepo] sendMessage failed for ${message.id}: $e');
+    }
   }
 
   Future<void> sendSystemMessage({
@@ -81,7 +88,9 @@ class FirebaseFirestoreRepo {
           .collection('messages')
           .add(payload)
           .timeout(const Duration(seconds: 4));
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[FirebaseFirestoreRepo] sendSystemMessage failed for ${message.targetId}: $e');
+    }
   }
 
   Future<User?> getUserById(String id) async {
@@ -217,7 +226,9 @@ class FirebaseFirestoreRepo {
             .set({'fcmToken': token}, SetOptions(merge: true))
             .timeout(const Duration(seconds: 4)),
       ]);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[FirebaseFirestoreRepo] saveFcmToken error for $userId: $e');
+    }
   }
 
   Future<String> getFcmToken(String userId) async {
@@ -228,7 +239,8 @@ class FirebaseFirestoreRepo {
           .get()
           .timeout(const Duration(seconds: 3));
       return docSnap.data()?['token'] ?? '';
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[FirebaseFirestoreRepo] getFcmToken error for $userId: $e');
       return '';
     }
   }

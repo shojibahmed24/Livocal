@@ -82,12 +82,17 @@ class PushNotificationsRepo {
     );
 
     try {
-      await post(
+      final res = await post(
         Uri.parse(url),
         headers: headers,
         body: messageJson,
       );
-    } catch (_) {}
+      if (res.statusCode != 200) {
+        debugPrint('[PushNotificationsRepo] push notification returned status ${res.statusCode}: ${res.body}');
+      }
+    } catch (e) {
+      debugPrint('[PushNotificationsRepo] sendPushNotification failed for msg ${message.id}: $e');
+    }
   }
 }
 

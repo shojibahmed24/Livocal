@@ -377,7 +377,9 @@ class IsarDb {
             .read(contactsRepositoryProvider)
             .getContacts(self: self)
             .timeout(const Duration(seconds: 5));
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[IsarDb] addContacts error: $e');
+      }
     }
 
     await isar.writeTxn(() async {
@@ -392,7 +394,9 @@ class IsarDb {
         await isar.users.clear();
       });
       await IsarDb.addContacts();
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[IsarDb] refreshContacts error: $e');
+    }
   }
 
   static Future<List<Contact>> getContacts() async {
@@ -438,7 +442,9 @@ class IsarDb {
           await isar.writeTxn(() async {
             await isar.users.put(user);
           });
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('[IsarDb] user cache put error: $e');
+        }
         return user;
       }
     } catch (e) {

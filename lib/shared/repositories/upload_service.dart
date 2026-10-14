@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 import 'package:firebase_storage/firebase_storage.dart';
 
@@ -23,12 +24,14 @@ class UploadService {
           onUploadDone(snapshot);
           instance._uploadTasks.remove(taskId);
         },
-        onError: (_) {
+        onError: (err) {
+          debugPrint('[UploadService] upload task failed for $taskId: $err');
           instance._uploadTasks.remove(taskId);
           onUploadError();
         },
       );
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[UploadService] putFile failed for $taskId: $e');
       instance._uploadTasks.remove(taskId);
       onUploadError();
     }
