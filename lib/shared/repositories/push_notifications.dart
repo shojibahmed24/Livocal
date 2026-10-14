@@ -36,7 +36,9 @@ class PushNotificationsRepo {
         provisional: false,
         sound: true,
       );
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('[PushNotificationsRepo] requestPermission error: $e\n$st');
+    }
 
     FirebaseMessaging.onBackgroundMessage(_handleBackgroundMessage);
     FirebaseMessaging.onMessageOpenedApp.listen(onMessageOpenedApp);
@@ -47,14 +49,12 @@ class PushNotificationsRepo {
       if (initialToken != null && initialToken.isNotEmpty) {
         handleTokenRefresh(initialToken, ref);
       }
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('[PushNotificationsRepo] getToken error: $e\n$st');
+    }
   }
 
   Future<void> sendPushNotification(Message message) async {
-    final token = await ref
-        .read(firebaseFirestoreRepositoryProvider)
-        .getFcmToken(message.receiverId);
-
     const String url =
         'https://livocal-relay.onrender.com/api/notify/chat-message';
     final idToken = await GeminiLiveTranslator.getAuthToken();
@@ -71,15 +71,14 @@ class PushNotificationsRepo {
     final user = getCurrentUser();
     if (user == null) return;
 
+    // Security: Only pass recipient ID and message details.
+    // The backend uses Admin SDK to lookup recipient's private FCM token and verifies author identity.
     final String messageJson = jsonEncode(
       {
-        'token': token,
         'receiverId': message.receiverId,
         'messageId': message.id,
         'messageContent': messageContent,
         'authorId': user.id,
-        'authorName': user.name,
-        'authorAvatar': user.avatarUrl,
       },
     );
 

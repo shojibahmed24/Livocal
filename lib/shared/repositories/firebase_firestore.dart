@@ -215,18 +215,13 @@ class FirebaseFirestoreRepo {
       if (raw == null) return;
       final user = jsonDecode(raw);
       userId = user['id'];
-      await Future.wait([
-        firestore
-            .collection('fcmTokens')
-            .doc(userId)
-            .set({'token': token, 'updatedAt': FieldValue.serverTimestamp()}, SetOptions(merge: true))
-            .timeout(const Duration(seconds: 4)),
-        firestore
-            .collection('users')
-            .doc(userId)
-            .set({'fcmToken': token}, SetOptions(merge: true))
-            .timeout(const Duration(seconds: 4)),
-      ]);
+      // Security: Store push token ONLY in private /fcmTokens/{userId} collection.
+      // Do NOT store in public /users collection to prevent harvesting leaks.
+      await firestore
+          .collection('fcmTokens')
+          .doc(userId)
+          .set({'token': token, 'updatedAt': FieldValue.serverTimestamp()}, SetOptions(merge: true))
+          .timeout(const Duration(seconds: 4));
     } catch (e) {
       debugPrint('[FirebaseFirestoreRepo] saveFcmToken error for ${userId ?? "unknown"}: $e');
     }

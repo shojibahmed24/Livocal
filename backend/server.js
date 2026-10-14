@@ -62,8 +62,6 @@ const DEFAULT_MODEL =
     process.env.GEMINI_LIVE_MODEL?.trim() || 'models/gemini-3.5-live-translate-preview';
 const DEFAULT_VOICE = process.env.DEFAULT_VOICE?.trim() || 'Aoede';
 
-const RELAY_SECRET = process.env.RELAY_API_SECRET?.trim() || '';
-
 const app = express();
 app.use(helmet());
 app.use(cors());
@@ -79,33 +77,36 @@ const apiLimiter = rateLimit({
 });
 app.use('/api/', apiLimiter);
 
+/**
+ * Strict Zero-Trust Firebase ID Token Authentication Middleware.
+ * No hardcoded secrets, no x-api-secret fallback, no environment bypass.
+ */
 async function authenticateRequest(req, res, next) {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.startsWith('Bearer ')
-      ? authHeader.substring(7)
-      : req.headers['x-api-secret'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({
+      error: 'Missing or malformed Authorization header. Bearer Firebase ID token is required.',
+    });
+  }
 
+  const token = authHeader.substring(7).trim();
   if (!token) {
-    return res.status(401).json({ error: 'Missing authentication credentials (Bearer ID token required)' });
+    return res.status(401).json({ error: 'Empty Bearer token provided.' });
   }
 
-  // 1. Primary: Verify Firebase ID Token
-  if (authService) {
-    try {
-      const decoded = await authService.verifyIdToken(token);
-      req.user = decoded;
-      return next();
-    } catch (err) {
-      console.warn('[Auth] Firebase ID Token invalid:', err.message);
-    }
+  if (!authService) {
+    console.error('[Auth] Cannot verify ID token: Firebase Auth service is not initialized.');
+    return res.status(503).json({ error: 'Firebase Auth service is unavailable on the server.' });
   }
 
-  // 2. Fallback: Check RELAY_API_SECRET only if explicitly configured in environment
-  if (RELAY_SECRET && token === RELAY_SECRET) {
+  try {
+    const decoded = await authService.verifyIdToken(token);
+    req.user = decoded; // { uid: string, phone_number?: string, email?: string, ... }
     return next();
+  } catch (err) {
+    console.warn('[Auth] Firebase ID Token invalid or expired:', err.message);
+    return res.status(401).json({ error: 'Unauthorized: Invalid or expired Firebase ID token.' });
   }
-
-  return res.status(401).json({ error: 'Unauthorized: Invalid or expired Firebase ID token' });
 }
 
 // Health & Status endpoint (Sanitized)
@@ -134,16 +135,49 @@ app.get('/', (req, res) => {
 });
 
 // Send Full-Screen Incoming Call Wakeup Push via FCM
+// Anti-Phishing: Enforces callerId = req.user.uid and pulls verified name/phone from Firestore
 app.post('/api/call/notify-incoming', authenticateRequest, async (req, res) => {
   if (!firebaseApp || !messagingService) {
     return res.status(503).json({ error: 'Firebase Admin not initialized on server' });
   }
 
-  const { targetToken, targetUserId, callId, callerName, callerNumber } = req.body;
-  
+  const { targetUserId, callId } = req.body;
+  if (!targetUserId || !callId) {
+    return res.status(400).json({ error: 'targetUserId and callId are required fields' });
+  }
+
+  const callerUid = req.user.uid;
+  if (targetUserId === callerUid) {
+    return res.status(400).json({ error: 'Cannot send call notification to oneself' });
+  }
+
   try {
-    let token = targetToken;
-    if (!token && targetUserId && firestoreDb) {
+    // 1. Authoritative caller identification: Lock caller to req.user.uid
+    let verifiedCallerName = 'Livocal User';
+    let verifiedCallerNumber = req.user.phone_number || '';
+
+    if (firestoreDb) {
+      try {
+        const callerDoc = await firestoreDb.collection('users').doc(callerUid).get();
+        if (callerDoc.exists) {
+          const data = callerDoc.data();
+          if (data.name && typeof data.name === 'string' && data.name.trim().length > 0) {
+            verifiedCallerName = data.name.trim();
+          }
+          if (data.phone && data.phone.formattedNumber) {
+            verifiedCallerNumber = data.phone.formattedNumber;
+          } else if (data.phone && data.phone.number) {
+            verifiedCallerNumber = `${data.phone.code || ''}${data.phone.number}`;
+          }
+        }
+      } catch (profileErr) {
+        console.warn(`[CallNotify] Could not fetch caller profile for ${callerUid}:`, profileErr.message);
+      }
+    }
+
+    // 2. Authoritative target lookup: Server fetches recipient's FCM token from fcmTokens collection
+    let token = null;
+    if (firestoreDb) {
       const tokenDoc = await firestoreDb.collection('fcmTokens').doc(targetUserId).get();
       if (tokenDoc.exists) {
         token = tokenDoc.data().token;
@@ -151,7 +185,7 @@ app.post('/api/call/notify-incoming', authenticateRequest, async (req, res) => {
     }
 
     if (!token) {
-      return res.status(404).json({ error: 'No FCM token found for target user' });
+      return res.status(404).json({ error: 'Target user has no registered FCM push token' });
     }
 
     // High Priority Data Message for waking up Android / CallKit
@@ -159,9 +193,10 @@ app.post('/api/call/notify-incoming', authenticateRequest, async (req, res) => {
       token,
       data: {
         type: 'INCOMING_CALL',
-        callId: String(callId || ''),
-        callerName: String(callerName || 'Caller'),
-        callerNumber: String(callerNumber || ''),
+        callId: String(callId),
+        callerId: String(callerUid),
+        callerName: String(verifiedCallerName),
+        callerNumber: String(verifiedCallerNumber),
         timestamp: String(Date.now()),
       },
       android: {
@@ -172,21 +207,53 @@ app.post('/api/call/notify-incoming', authenticateRequest, async (req, res) => {
     const response = await messagingService.send(message);
     res.json({ success: true, messageId: response });
   } catch (err) {
-    console.error('FCM Send Error:', err);
+    console.error('FCM Call Notify Send Error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
 // Send Chat Message Push via FCM
+// Anti-Impersonation: Enforces authorId = req.user.uid and pulls verified name/avatar from Firestore
 app.post('/api/notify/chat-message', authenticateRequest, async (req, res) => {
   if (!firebaseApp || !messagingService) {
     return res.status(503).json({ error: 'Firebase Admin not initialized on server' });
   }
 
-  const { token, receiverId, messageContent, authorName, authorId, authorAvatar, messageId } = req.body;
+  const { receiverId, messageContent, messageId, authorId } = req.body;
+  if (!receiverId || !messageId) {
+    return res.status(400).json({ error: 'receiverId and messageId are required fields' });
+  }
+
+  const callerUid = req.user.uid;
+  if (authorId && authorId !== callerUid) {
+    return res.status(403).json({ error: 'Forbidden: Cannot send push notifications impersonating another user' });
+  }
+
   try {
-    let targetToken = token;
-    if (!targetToken && receiverId && firestoreDb) {
+    // 1. Authoritative author identification
+    let verifiedAuthorName = 'Livocal User';
+    let verifiedAuthorAvatar = '';
+
+    if (firestoreDb) {
+      try {
+        const authorDoc = await firestoreDb.collection('users').doc(callerUid).get();
+        if (authorDoc.exists) {
+          const data = authorDoc.data();
+          if (data.name && typeof data.name === 'string' && data.name.trim().length > 0) {
+            verifiedAuthorName = data.name.trim();
+          }
+          if (data.avatarUrl && typeof data.avatarUrl === 'string') {
+            verifiedAuthorAvatar = data.avatarUrl;
+          }
+        }
+      } catch (authorErr) {
+        console.warn(`[ChatNotify] Could not fetch author profile for ${callerUid}:`, authorErr.message);
+      }
+    }
+
+    // 2. Authoritative target lookup: Server fetches recipient's FCM token from fcmTokens collection
+    let targetToken = null;
+    if (firestoreDb) {
       const doc = await firestoreDb.collection('fcmTokens').doc(receiverId).get();
       if (doc.exists) {
         targetToken = doc.data().token;
@@ -194,22 +261,22 @@ app.post('/api/notify/chat-message', authenticateRequest, async (req, res) => {
     }
 
     if (!targetToken) {
-      return res.status(404).json({ error: 'FCM token not found' });
+      return res.status(404).json({ error: 'Recipient has no registered FCM push token' });
     }
 
     const payload = {
       token: targetToken,
       notification: {
-        title: authorName || 'New Message',
-        body: messageContent || 'Sent a message',
-        imageUrl: authorAvatar || undefined,
+        title: verifiedAuthorName,
+        body: String(messageContent || 'Sent a message').substring(0, 500),
+        imageUrl: verifiedAuthorAvatar || undefined,
       },
       data: {
         type: 'CHAT_MESSAGE',
-        messageId: String(messageId || ''),
-        authorName: String(authorName || ''),
-        authorId: String(authorId || ''),
-        authorAvatar: String(authorAvatar || ''),
+        messageId: String(messageId),
+        authorName: String(verifiedAuthorName),
+        authorId: String(callerUid),
+        authorAvatar: String(verifiedAuthorAvatar),
       },
       android: {
         priority: 'high',
@@ -352,14 +419,15 @@ wss.on('connection', (clientWs, req) => {
       if (msg.type === 'setup') {
         console.log(`[${clientId}] Received setup handshake:`, msg);
 
-        // Authenticate via Firebase ID Token (Bearer or msg.token)
-        const clientToken = msg.token ||
-            req.headers['authorization']?.replace('Bearer ', '') ||
-            req.headers['x-api-secret'] ||
-            msg.secret;
+        // Authenticate strictly via Firebase ID Token (Bearer header or msg.token)
+        const clientToken = (msg.token && typeof msg.token === 'string')
+            ? msg.token.trim()
+            : (req.headers['authorization']?.startsWith('Bearer ')
+                ? req.headers['authorization'].substring(7).trim()
+                : null);
 
         if (!clientToken) {
-          console.warn(`[${clientId}] Unauthorized WebSocket client: No token provided.`);
+          console.warn(`[${clientId}] Unauthorized WebSocket client: No Firebase ID token provided.`);
           clientWs.send(
             JSON.stringify({
               type: 'error',
@@ -371,28 +439,34 @@ wss.on('connection', (clientWs, req) => {
           return;
         }
 
-        let isAuthorized = false;
-        if (authService) {
-          try {
-            const decoded = await authService.verifyIdToken(clientToken);
-            console.log(`[${clientId}] Authenticated Firebase user: ${decoded.uid}`);
-            isAuthorized = true;
-          } catch (tokenErr) {
-            console.warn(`[${clientId}] Token verification failed: ${tokenErr.message}`);
-          }
+        if (!authService) {
+          console.error(`[${clientId}] Firebase Auth service is unavailable on the server.`);
+          clientWs.send(
+            JSON.stringify({
+              type: 'error',
+              code: 'SERVER_ERROR',
+              message: 'Authentication service unavailable.',
+            })
+          );
+          clientWs.close(4500, 'Server Auth Unavailable');
+          return;
         }
 
-        if (!isAuthorized && RELAY_SECRET && clientToken === RELAY_SECRET) {
-          isAuthorized = true;
+        let decodedUser = null;
+        try {
+          decodedUser = await authService.verifyIdToken(clientToken);
+          console.log(`[${clientId}] Authenticated WebSocket Firebase user: ${decodedUser.uid}`);
+        } catch (tokenErr) {
+          console.warn(`[${clientId}] WebSocket ID Token verification failed: ${tokenErr.message}`);
         }
 
-        if (!isAuthorized) {
-          console.warn(`[${clientId}] Unauthorized WebSocket client. Closing.`);
+        if (!decodedUser) {
+          console.warn(`[${clientId}] Unauthorized WebSocket client: Invalid ID token. Closing.`);
           clientWs.send(
             JSON.stringify({
               type: 'error',
               code: 'UNAUTHORIZED',
-              message: 'Invalid or expired authentication credentials.',
+              message: 'Invalid or expired Firebase ID token.',
             })
           );
           clientWs.close(4401, 'Unauthorized');
@@ -454,7 +528,9 @@ wss.on('connection', (clientWs, req) => {
     if (geminiWs) {
       try {
         geminiWs.close();
-      } catch (_) {}
+      } catch (err) {
+        console.warn(`[${clientId}] geminiWs.close error:`, err.message);
+      }
       geminiWs = null;
       isGeminiReady = false;
     }

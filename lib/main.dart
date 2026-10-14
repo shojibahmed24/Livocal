@@ -13,6 +13,7 @@ import 'features/auth/views/welcome.dart';
 import 'features/home/views/base.dart';
 import 'firebase_options.dart';
 
+import 'package:whatsapp_clone/features/calls/services/gemini_live_translator.dart';
 import 'package:whatsapp_clone/theme/theme.dart';
 
 void main() async {
@@ -28,8 +29,9 @@ void main() async {
 
   try {
     await SharedPref.init();
+    await GeminiLiveTranslator.initSecureStorage();
   } catch (e, st) {
-    debugPrint("SharedPref init error: $e\n$st");
+    debugPrint("SharedPref / SecureStorage init error: $e\n$st");
   }
 
   try {

@@ -132,7 +132,9 @@ Future<bool> isConnected() async {
     if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
       return true;
     }
-  } on SocketException catch (_) {}
+  } on SocketException catch (e) {
+    debugPrint('[Network] isConnected socket check: $e');
+  }
 
   return false;
 }

@@ -50,7 +50,9 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
           _mediaCount = count;
         });
       }
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('[ContactProfileScreen] _loadMediaCount error: $e\n$st');
+    }
   }
 
   @override

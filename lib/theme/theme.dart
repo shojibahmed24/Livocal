@@ -200,7 +200,9 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
       final saved = SharedPref.instance.getString('app_theme_mode');
       if (saved == 'light') return ThemeMode.light;
       if (saved == 'dark') return ThemeMode.dark;
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('[ThemeModeNotifier] _getInitialTheme error: $e\n$st');
+    }
     return ThemeMode.system;
   }
 
@@ -213,6 +215,8 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
               ? 'dark'
               : 'system';
       await SharedPref.instance.setString('app_theme_mode', str);
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('[ThemeModeNotifier] setThemeMode error: $e\n$st');
+    }
   }
 }

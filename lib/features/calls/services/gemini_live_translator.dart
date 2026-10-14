@@ -5,6 +5,7 @@ import 'dart:math' as math;
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:whatsapp_clone/features/calls/models/call_language.dart';
 import 'package:whatsapp_clone/features/calls/models/call_model.dart';
 import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
@@ -26,6 +27,30 @@ class GeminiLiveTranslator {
   static const String prefModelId = 'gemini_live_model_id';
   static const String prefVoiceName = 'gemini_live_voice_name';
 
+  static const _secureStorage = FlutterSecureStorage(
+    aOptions: AndroidOptions(resetOnError: true),
+  );
+  static String? _cachedApiKey;
+
+  /// Initializes secure storage and migrates any legacy plaintext key out of SharedPreferences
+  static Future<void> initSecureStorage() async {
+    try {
+      _cachedApiKey = await _secureStorage.read(key: prefApiKey);
+
+      // Safe migration: If key was previously in unencrypted SharedPreferences, move it to secure storage
+      final legacy = SharedPref.instance.getString(prefApiKey)?.trim();
+      if ((_cachedApiKey == null || _cachedApiKey!.isEmpty) && legacy != null && legacy.isNotEmpty) {
+        _cachedApiKey = legacy;
+        await _secureStorage.write(key: prefApiKey, value: legacy);
+        await SharedPref.instance.remove(prefApiKey);
+      } else if (legacy != null) {
+        await SharedPref.instance.remove(prefApiKey);
+      }
+    } catch (e, st) {
+      debugPrint('[GeminiLiveTranslator] initSecureStorage error: $e\n$st');
+    }
+  }
+
   static const List<GeminiModelPreset> modelPresets = [
     GeminiModelPreset(
       id: 'models/gemini-3.5-live-translate-preview',
@@ -43,11 +68,21 @@ class GeminiLiveTranslator {
     'Fenrir',
   ];
 
-  static String getSavedApiKey() =>
-      SharedPref.instance.getString(prefApiKey)?.trim() ?? '';
+  static String getSavedApiKey() {
+    if (_cachedApiKey != null) return _cachedApiKey!;
+    return SharedPref.instance.getString(prefApiKey)?.trim() ?? '';
+  }
 
-  static Future<void> saveApiKey(String key) async =>
-      await SharedPref.instance.setString(prefApiKey, key.trim());
+  static Future<void> saveApiKey(String key) async {
+    _cachedApiKey = key.trim();
+    try {
+      await _secureStorage.write(key: prefApiKey, value: key.trim());
+      // Ensure plaintext SharedPreferences never holds the secret key
+      await SharedPref.instance.remove(prefApiKey);
+    } catch (e, st) {
+      debugPrint('[GeminiLiveTranslator] saveApiKey secure storage error: $e\n$st');
+    }
+  }
 
   static String getSavedModelId() {
     final saved = SharedPref.instance.getString(prefModelId)?.trim();
@@ -389,7 +424,9 @@ CRITICAL OPERATING RULES:
           'audioStreamEnd': true,
         },
       }));
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('[GeminiLiveTranslator] signalAudioStreamEnd error: $e\n$st');
+    }
   }
 
   void _handleServerFrame(dynamic rawFrame) {
@@ -575,7 +612,9 @@ CRITICAL OPERATING RULES:
     _wsSubscription = null;
     try {
       await _ws?.close();
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('[GeminiLiveTranslator] _ws.close error: $e\n$st');
+    }
     _ws = null;
   }
 

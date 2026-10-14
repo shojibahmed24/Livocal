@@ -76,7 +76,9 @@ class WebRtcCallClient {
           };
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('[WebRtcCallClient] fetchIceServers error: $e\n$st');
+    }
   }
 
   void _updateState(WebRtcCallState state) {

@@ -499,7 +499,8 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
       } else {
         hasAccess = await hasPermission(Permission.photos);
       }
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('[ChatController] PhotoManager permission check error: $e\n$st');
       hasAccess = true;
     }
 

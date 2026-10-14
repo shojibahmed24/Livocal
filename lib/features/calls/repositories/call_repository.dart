@@ -183,7 +183,8 @@ class CallRepository {
       return rawList
           .map((item) => CallHistoryRecord.fromJson(item))
           .toList();
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('[CallRepository] getCallHistory deserialization error: $e\n$st');
       return [];
     }
   }

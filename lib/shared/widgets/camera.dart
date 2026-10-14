@@ -61,7 +61,9 @@ class CameraViewState extends ConsumerState<CameraView>
     _initializeControllerFuture = _controller.initialize().then((_) async {
       try {
         await _controller.setFlashMode(FlashMode.off);
-      } catch (_) {}
+      } catch (e, st) {
+        debugPrint('[Camera] setFlashMode error: $e\n$st');
+      }
     });
     _animationController = AnimationController(
       value: 1,

@@ -266,7 +266,9 @@ class _HomePageState extends ConsumerState<HomePage>
         contact = await ref
             .read(contactsRepositoryProvider)
             .getContactByPhone(author.phone.number!);
-      } catch (_) {}
+      } catch (e, st) {
+        debugPrint('[Base] getContactByPhone error: $e\n$st');
+      }
     }
 
     if (!mounted) return;

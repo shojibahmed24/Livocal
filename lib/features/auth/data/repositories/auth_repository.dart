@@ -55,7 +55,9 @@ class FirebaseAuthRepository implements AuthenticationRepository {
         if (auth.currentUser == null) {
           try {
             await auth.signInAnonymously();
-          } catch (_) {}
+          } catch (e, st) {
+            debugPrint('[AuthRepository] fallback signInAnonymously error: $e\n$st');
+          }
         }
         return true;
       }

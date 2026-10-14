@@ -62,7 +62,8 @@ class _CountryPageState extends ConsumerState<CountryPage> {
 
             try {
               country = searchResults[index];
-            } catch (_) {
+            } catch (e, st) {
+              debugPrint('[Countries] searchResults index out of range: $e\n$st');
               return Column(
                 children: [
                   const Padding(

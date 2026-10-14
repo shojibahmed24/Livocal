@@ -147,8 +147,8 @@ class LoginController extends StateNotifier<Country> {
     try {
       isValidPhoneNumber =
           await PhoneNumberUtil().validate(phoneNumberWithCode);
-    } catch (_) {
-      // ...
+    } catch (e, st) {
+      debugPrint('[LoginController] PhoneNumberUtil validate error: $e\n$st');
     }
 
     String errorMsg = '';

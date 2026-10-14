@@ -158,7 +158,8 @@ class _AttachmentMessageSenderState
     if (!mounted) return;
     try {
       Navigator.of(context).popUntil((route) => route.settings.name == 'chat');
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('[AttachmentMessageSender] popUntil route error: $e\n$st');
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }

@@ -69,10 +69,6 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
     super.dispose();
   }
 
-  Future<void> _connectImmediately() async {
-    await ref.read(callControllerProvider.notifier).acceptAndConnectCall();
-  }
-
   Future<void> _endCall() async {
     if (_navigated) return;
     _navigated = true;
@@ -400,33 +396,6 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
                         ],
                       ),
                     ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              // Instant Connect Button for Single-Device Testing
-              TextButton.icon(
-                onPressed: _connectImmediately,
-                style: TextButton.styleFrom(
-                  backgroundColor: const Color(0xFF00A884).withOpacity(0.18),
-                  foregroundColor: const Color(0xFF00E5B0),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    side: BorderSide(
-                      color: const Color(0xFF00A884).withOpacity(0.5),
-                    ),
-                  ),
-                ),
-                icon: const Icon(Icons.bolt_rounded, size: 18),
-                label: const Text(
-                  'Connect Live AI Interpreter Now',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
                   ),
                 ),
               ),

@@ -33,10 +33,8 @@ service cloud.firestore {
 
       match /messages/{messageId} {
         // Authenticated sender can deliver a message or status update receipt to recipient's inbox
-        allow create: if isAuthenticated() && (
-          request.resource.data.senderId == request.auth.uid ||
-          request.resource.data.action != null
-        );
+        // Security: Strictly enforce senderId == request.auth.uid to prevent impersonation/message injection
+        allow create: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
         // Only recipient or sender can read, update (delivery ticks), or delete
         allow read, delete: if isAuthenticated() && (
           request.auth.uid == receiverId ||

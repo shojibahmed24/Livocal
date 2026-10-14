@@ -280,7 +280,9 @@ class IsarDb {
             contact = await ref
                 .read(contactsRepositoryProvider)
                 .getContactByPhone(sender.phone.number!);
-          } catch (_) {}
+          } catch (e, st) {
+            debugPrint('[IsarDb] getContactByPhone error: $e\n$st');
+          }
         }
 
         if (sender == null) {
@@ -288,7 +290,9 @@ class IsarDb {
             sender = await ref
                 .read(firebaseFirestoreRepositoryProvider)
                 .getUserById(peerId);
-          } catch (_) {}
+          } catch (e, st) {
+            debugPrint('[IsarDb] getUserById from Firestore error: $e\n$st');
+          }
         }
 
         // Safe fallback user if not yet registered in Firestore

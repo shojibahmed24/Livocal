@@ -45,7 +45,9 @@ class ContactsRepository {
           }
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('[ContactsRepository] getContactByPhone error: $e\n$st');
+    }
 
     return null;
   }

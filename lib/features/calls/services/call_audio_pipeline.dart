@@ -233,18 +233,26 @@ class CallAudioPipeline {
     try {
       if (_recorder.isRecording) await _recorder.stopRecorder();
       await _recorder.closeRecorder();
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('[CallAudioPipeline] closeRecorder error: $e\n$st');
+    }
     try {
       if (_aiPlayer.isPlaying) await _aiPlayer.stopPlayer();
       await _aiPlayer.closePlayer();
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('[CallAudioPipeline] closePlayer (ai) error: $e\n$st');
+    }
     try {
       if (_peerRawPlayer.isPlaying) await _peerRawPlayer.stopPlayer();
       await _peerRawPlayer.closePlayer();
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('[CallAudioPipeline] closePlayer (peer) error: $e\n$st');
+    }
     try {
       final session = await AudioSession.instance;
       await session.setActive(false);
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('[CallAudioPipeline] session setActive false error: $e\n$st');
+    }
   }
 }
