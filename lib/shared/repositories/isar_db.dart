@@ -338,7 +338,24 @@ class IsarDb {
   }
 
   static Future<User?> getUserById(String id) async {
-    return await isar.users.filter().idEqualTo(id).findFirst();
+    final local = await isar.users.filter().idEqualTo(id).findFirst();
+    if (local != null) return local;
+
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(id).get();
+      if (doc.exists && doc.data() != null) {
+        final user = User.fromMap(doc.data()!);
+        try {
+          await isar.writeTxn(() async {
+            await isar.users.put(user);
+          });
+        } catch (_) {}
+        return user;
+      }
+    } catch (e) {
+      debugPrint('IsarDb getUserById fallback error: $e');
+    }
+    return null;
   }
 
   static Future<List<Contact>> getLivocalContacts() async {

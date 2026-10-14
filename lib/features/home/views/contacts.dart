@@ -1,9 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:whatsapp_clone/features/calls/views/widgets/direct_dial_sheet.dart';
+import 'package:whatsapp_clone/features/calls/views/outgoing_call_screen.dart';
 import 'package:whatsapp_clone/features/home/controllers/contacts_controller.dart';
 import 'package:whatsapp_clone/shared/models/contact.dart';
 import 'package:whatsapp_clone/shared/models/user.dart';
+import 'package:whatsapp_clone/shared/repositories/isar_db.dart';
 import 'package:whatsapp_clone/shared/widgets/search.dart';
 import 'package:whatsapp_clone/theme/theme.dart';
 
@@ -159,6 +162,45 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
             if (searchQuery.isEmpty)
               Column(
                 children: [
+                  InkWell(
+                    onTap: () => showDirectDialSheet(
+                      context,
+                      currentUser: widget.user,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8.0,
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: colorTheme.greenColor,
+                            child: const Icon(
+                              Icons.dialpad_rounded,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 18.0,
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Dial Phone Number (সরাসরি কল/চ্যাট)',
+                                style: Theme.of(context).custom.textTheme.bold,
+                              ),
+                              Text(
+                                'Enter number to call or chat directly',
+                                style: Theme.of(context).custom.textTheme.caption,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   InkWell(
                     onTap: () {},
                     child: Padding(
@@ -363,6 +405,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
         ),
       ),
       LocalContactsList(
+        user: widget.user,
         contactsNotOnWhatsApp: contactsNotOnWhatsApp,
         ref: ref,
       ),
@@ -371,14 +414,16 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
 }
 
 class LocalContactsList extends StatelessWidget {
+  final User user;
+  final List<Contact> contactsNotOnWhatsApp;
+  final WidgetRef ref;
+
   const LocalContactsList({
     super.key,
+    required this.user,
     required this.contactsNotOnWhatsApp,
     required this.ref,
   });
-
-  final List<Contact> contactsNotOnWhatsApp;
-  final WidgetRef ref;
 
   @override
   Widget build(BuildContext context) {
@@ -386,9 +431,11 @@ class LocalContactsList extends StatelessWidget {
       children: [
         for (var contact in contactsNotOnWhatsApp)
           InkWell(
-            onTap: () => ref
-                .read(contactPickerControllerProvider.notifier)
-                .sendSms(contact.phoneNumber),
+            onTap: () => showDirectDialSheet(
+              context,
+              currentUser: user,
+              initialPhone: contact.phoneNumber,
+            ),
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
@@ -397,18 +444,39 @@ class LocalContactsList extends StatelessWidget {
               child: Row(
                 children: [
                   const CircleAvatar(
-                    backgroundColor: Colors.black,
+                    backgroundColor: Colors.black26,
                     backgroundImage: AssetImage('assets/images/avatar.png'),
                   ),
                   const SizedBox(
                     width: 18.0,
                   ),
                   Expanded(
-                    child: Text(
-                      contact.displayName,
-                      style: Theme.of(context).custom.textTheme.bold,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          contact.displayName,
+                          style: Theme.of(context).custom.textTheme.bold,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          contact.phoneNumber,
+                          style: Theme.of(context).custom.textTheme.caption,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.phone_forwarded_rounded, size: 20),
+                    tooltip: 'Direct Call / Check Livocal',
+                    color: Theme.of(context).custom.colorTheme.greenColor,
+                    onPressed: () => showDirectDialSheet(
+                      context,
+                      currentUser: user,
+                      initialPhone: contact.phoneNumber,
                     ),
                   ),
                   TextButton(
@@ -422,9 +490,6 @@ class LocalContactsList extends StatelessWidget {
                               Theme.of(context).custom.colorTheme.greenColor),
                     ),
                   ),
-                  const SizedBox(
-                    width: 16.0,
-                  ),
                 ],
               ),
             ),
@@ -436,6 +501,8 @@ class LocalContactsList extends StatelessWidget {
 
 class WhatsAppContactsList extends StatelessWidget {
   final User user;
+  final List<Contact> contactsOnWhatsApp;
+  final WidgetRef ref;
 
   const WhatsAppContactsList({
     super.key,
@@ -443,9 +510,6 @@ class WhatsAppContactsList extends StatelessWidget {
     required this.contactsOnWhatsApp,
     required this.ref,
   });
-
-  final List<Contact> contactsOnWhatsApp;
-  final WidgetRef ref;
 
   @override
   Widget build(BuildContext context) {
@@ -464,27 +528,59 @@ class WhatsAppContactsList extends StatelessWidget {
               child: Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: Colors.black,
-                    backgroundImage: CachedNetworkImageProvider(
-                      contact.avatarUrl!,
-                    ),
+                    backgroundColor: Colors.black26,
+                    backgroundImage: (contact.avatarUrl != null &&
+                            contact.avatarUrl!.isNotEmpty)
+                        ? CachedNetworkImageProvider(contact.avatarUrl!)
+                        : const AssetImage('assets/images/avatar.png')
+                            as ImageProvider,
                   ),
                   const SizedBox(
                     width: 18.0,
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(contact.displayName,
-                          style: Theme.of(context).custom.textTheme.bold),
-                      const SizedBox(
-                        width: 4.0,
-                      ),
-                      Text(
-                        'Hey there! I\'m using Livocal.',
-                        style: Theme.of(context).custom.textTheme.caption,
-                      ),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          contact.displayName,
+                          style: Theme.of(context).custom.textTheme.bold,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          contact.phoneNumber.isNotEmpty
+                              ? contact.phoneNumber
+                              : 'Hey there! I\'m using Livocal.',
+                          style: Theme.of(context).custom.textTheme.caption,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.call_rounded,
+                      color: Color(0xFF00A884),
+                    ),
+                    tooltip: 'Call with Live AI Translation',
+                    onPressed: () async {
+                      final receiver =
+                          await IsarDb.getUserById(contact.userId!);
+                      if (receiver != null && context.mounted) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => OutgoingCallScreen(
+                              caller: user,
+                              callee: receiver,
+                              calleeDisplayName: contact.displayName,
+                            ),
+                          ),
+                        );
+                      }
+                    },
                   ),
                 ],
               ),

@@ -6,6 +6,8 @@ import 'package:whatsapp_clone/features/calls/models/call_language.dart';
 import 'package:whatsapp_clone/features/calls/views/incoming_call_screen.dart';
 import 'package:whatsapp_clone/features/calls/views/outgoing_call_screen.dart';
 import 'package:whatsapp_clone/features/calls/views/widgets/language_picker_sheet.dart';
+import 'package:whatsapp_clone/features/calls/views/widgets/direct_dial_sheet.dart';
+import 'package:whatsapp_clone/features/home/views/contacts.dart';
 import 'package:whatsapp_clone/shared/models/user.dart';
 import 'package:whatsapp_clone/theme/theme.dart';
 
@@ -74,30 +76,6 @@ class CallsTab extends ConsumerWidget {
           overridePeerLangCode: peerLangCode,
           isSimulatedDemo: isSimulatedDemo,
         ),
-      ),
-    );
-  }
-
-  void _simulateIncomingCall(
-    BuildContext context,
-    WidgetRef ref,
-    CallControllerState callState,
-  ) {
-    final peerLang = callState.peerLanguage;
-
-    ref.read(callControllerProvider.notifier).receiveIncomingCall(
-          self: user,
-          callerId: 'demo_${peerLang.code}',
-          callerName: '${peerLang.englishName} Speaker ${peerLang.flagEmoji}',
-          callerAvatar: 'https://i.pravatar.cc/150?u=sim_${peerLang.code}',
-          callerPhone: '+1 555-0199',
-          callerLangCode: peerLang.code,
-          isSimulated: true,
-        );
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const IncomingCallScreen(),
       ),
     );
   }
@@ -351,9 +329,71 @@ class CallsTab extends ConsumerWidget {
           ),
         ),
 
+        // Quick Call Actions
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00A884),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 1,
+                  ),
+                  icon: const Icon(Icons.dialpad_rounded, size: 20),
+                  label: const Text(
+                    'Dial Number',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onPressed: () => showDirectDialSheet(
+                    context,
+                    currentUser: user,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF00A884),
+                    side: const BorderSide(color: Color(0xFF00A884), width: 1.5),
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  icon: const Icon(Icons.contacts_rounded, size: 20),
+                  label: const Text(
+                    'Contacts',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ContactsPage(user: user),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+
         // Section Header
         Padding(
-          padding: const EdgeInsets.fromLTRB(18, 8, 18, 6),
+          padding: const EdgeInsets.fromLTRB(18, 12, 18, 6),
           child: Text(
             'Recent Translated & Voice Calls',
             style: TextStyle(

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -128,29 +129,68 @@ class FirebaseFirestoreRepo {
 
   Future<User?> getUserByPhone(String phoneNumber) async {
     try {
-      phoneNumber = phoneNumber
-          .replaceAll(' ', '')
-          .replaceAll('-', '')
-          .replaceAll('(', '')
-          .replaceAll(')', '');
+      final clean = phoneNumber.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+      if (clean.isEmpty) return null;
 
-      QuerySnapshot<Map<String, dynamic>> snap;
-      if (phoneNumber.startsWith('+')) {
-        snap = await firestore
-            .collection('users')
-            .where('phone.rawNumber', isEqualTo: phoneNumber)
-            .get()
-            .timeout(const Duration(seconds: 2));
+      final candidates = <String>{clean};
+      if (clean.startsWith('+')) {
+        candidates.add(clean.substring(1));
       } else {
-        snap = await firestore
-            .collection('users')
-            .where('phone.number', isEqualTo: phoneNumber)
-            .get()
-            .timeout(const Duration(seconds: 2));
+        candidates.add('+$clean');
+        if (clean.startsWith('0')) {
+          candidates.add('+880${clean.substring(1)}');
+          candidates.add('880${clean.substring(1)}');
+          candidates.add(clean.substring(1));
+        } else {
+          candidates.add('+880$clean');
+          candidates.add('0$clean');
+        }
       }
 
-      return snap.size == 0 ? null : User.fromMap(snap.docs[0].data());
-    } catch (_) {
+      for (final cand in candidates) {
+        final snapRaw = await firestore
+            .collection('users')
+            .where('phone.rawNumber', isEqualTo: cand)
+            .limit(1)
+            .get()
+            .timeout(const Duration(seconds: 3));
+        if (snapRaw.docs.isNotEmpty) {
+          return User.fromMap(snapRaw.docs.first.data());
+        }
+
+        final snapNum = await firestore
+            .collection('users')
+            .where('phone.number', isEqualTo: cand)
+            .limit(1)
+            .get()
+            .timeout(const Duration(seconds: 3));
+        if (snapNum.docs.isNotEmpty) {
+          return User.fromMap(snapNum.docs.first.data());
+        }
+      }
+
+      // Suffix fallback (match last 8-10 digits)
+      final allSnap = await firestore
+          .collection('users')
+          .get()
+          .timeout(const Duration(seconds: 5));
+      final coreDigits = clean.length >= 8 ? clean.substring(clean.length - 8) : clean;
+      for (final doc in allSnap.docs) {
+        final data = doc.data();
+        final phoneMap = data['phone'] as Map<String, dynamic>?;
+        if (phoneMap != null) {
+          final raw = (phoneMap['rawNumber'] ?? '').toString().replaceAll(RegExp(r'[\s\-\(\)\+]'), '');
+          final num = (phoneMap['number'] ?? '').toString().replaceAll(RegExp(r'[\s\-\(\)\+]'), '');
+          if ((raw.isNotEmpty && raw.endsWith(coreDigits)) ||
+              (num.isNotEmpty && num.endsWith(coreDigits))) {
+            return User.fromMap(data);
+          }
+        }
+      }
+
+      return null;
+    } catch (e) {
+      debugPrint('getUserByPhone error: $e');
       return null;
     }
   }
