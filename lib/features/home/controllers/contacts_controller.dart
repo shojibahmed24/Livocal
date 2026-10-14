@@ -65,18 +65,19 @@ class ContactPickerController extends StateNotifier<List<Contact>> {
   }
 
   void pickContact(BuildContext context, User sender, Contact contact) async {
-    User? receiver = await IsarDb.getUserById(contact.userId!);
-    receiver ??= User(
-      id: contact.userId!,
-      name: contact.displayName,
-      avatarUrl: contact.avatarUrl ?? '',
-      phone: Phone(
-        code: contact.phoneNumber.startsWith('+') ? '' : '+880',
-        number: contact.phoneNumber,
-        formattedNumber: contact.phoneNumber,
-      ),
-      activityStatus: UserActivityStatus.online,
-    );
+    final fetched = await IsarDb.getUserById(contact.userId!);
+    final User targetReceiver = fetched ??
+        User(
+          id: contact.userId!,
+          name: contact.displayName,
+          avatarUrl: contact.avatarUrl ?? '',
+          phone: Phone(
+            code: contact.phoneNumber.startsWith('+') ? '' : '+880',
+            number: contact.phoneNumber,
+            formattedNumber: contact.phoneNumber,
+          ),
+          activityStatus: UserActivityStatus.online,
+        );
 
     if (!mounted) return;
     Navigator.pushReplacement(
@@ -84,7 +85,7 @@ class ContactPickerController extends StateNotifier<List<Contact>> {
       MaterialPageRoute(
         builder: (context) => ChatPage(
           self: sender,
-          other: receiver,
+          other: targetReceiver,
           otherUserContactName: contact.displayName,
         ),
         settings: const RouteSettings(name: 'chat'),
