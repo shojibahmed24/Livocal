@@ -27,10 +27,16 @@ class GeminiLiveTranslator {
 
   static const List<GeminiModelPreset> modelPresets = [
     GeminiModelPreset(
-      id: 'models/gemini-2.0-flash-exp',
-      title: 'Gemini 2.0 Flash Live',
+      id: 'models/gemini-3.5-live-translate-preview',
+      title: 'Gemini 3.5 Live Translate (Enterprise)',
       subtitle:
-          'Ultra low-latency, real-time speech-to-speech translation',
+          'Google Cloud Agent Platform: Low-latency, real-time speech-to-speech translation',
+    ),
+    GeminiModelPreset(
+      id: 'models/gemini-2.0-flash-exp',
+      title: 'Gemini 2.0 Flash Live (AI Studio)',
+      subtitle:
+          'Ultra low-latency, real-time multimodal speech streaming for developer API keys',
     ),
     GeminiModelPreset(
       id: 'models/gemini-2.5-flash-preview',
@@ -56,7 +62,7 @@ class GeminiLiveTranslator {
 
   static String getSavedModelId() {
     final saved = SharedPref.instance.getString(prefModelId)?.trim();
-    if (saved == null || saved.isEmpty || saved.contains('gemini-3.5')) {
+    if (saved == null || saved.isEmpty) {
       return modelPresets.first.id;
     }
     return saved;

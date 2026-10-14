@@ -291,6 +291,24 @@ class _HomePageState extends ConsumerState<HomePage>
                       type: SnacBarType.info,
                     );
                     break;
+                  case 'clear_call_log':
+                    await ref.read(callRepositoryProvider).clearCallHistory();
+                    if (context.mounted) {
+                      showSnackBar(
+                        context: context,
+                        content: 'Call log cleared',
+                        type: SnacBarType.info,
+                      );
+                      setState(() {});
+                    }
+                    break;
+                  case 'status_privacy':
+                    showSnackBar(
+                      context: context,
+                      content: 'Status privacy settings are active',
+                      type: SnacBarType.info,
+                    );
+                    break;
                   case 'settings':
                     Navigator.of(context).push(
                       MaterialPageRoute(
@@ -338,36 +356,81 @@ class _HomePageState extends ConsumerState<HomePage>
                     break;
                 }
               },
-              itemBuilder: (context) => const [
-                PopupMenuItem(
-                  value: 'new_group',
-                  child: Text('New group'),
-                ),
-                PopupMenuItem(
-                  value: 'new_broadcast',
-                  child: Text('New broadcast'),
-                ),
-                PopupMenuItem(
-                  value: 'linked_devices',
-                  child: Text('Linked devices'),
-                ),
-                PopupMenuItem(
-                  value: 'starred_messages',
-                  child: Text('Starred messages'),
-                ),
-                PopupMenuItem(
-                  value: 'settings',
-                  child: Text('Settings'),
-                ),
-                PopupMenuDivider(),
-                PopupMenuItem(
-                  value: 'logout',
-                  child: Text(
-                    'Log out',
-                    style: TextStyle(color: Colors.redAccent),
+              itemBuilder: (context) {
+                if (_tabController.index == 2) {
+                  // CALLS tab
+                  return const [
+                    PopupMenuItem(
+                      value: 'clear_call_log',
+                      child: Text('Clear call log'),
+                    ),
+                    PopupMenuItem(
+                      value: 'settings',
+                      child: Text('Settings'),
+                    ),
+                    PopupMenuDivider(),
+                    PopupMenuItem(
+                      value: 'logout',
+                      child: Text(
+                        'Log out',
+                        style: TextStyle(color: Colors.redAccent),
+                      ),
+                    ),
+                  ];
+                } else if (_tabController.index == 1) {
+                  // STATUS tab
+                  return const [
+                    PopupMenuItem(
+                      value: 'status_privacy',
+                      child: Text('Status privacy'),
+                    ),
+                    PopupMenuItem(
+                      value: 'settings',
+                      child: Text('Settings'),
+                    ),
+                    PopupMenuDivider(),
+                    PopupMenuItem(
+                      value: 'logout',
+                      child: Text(
+                        'Log out',
+                        style: TextStyle(color: Colors.redAccent),
+                      ),
+                    ),
+                  ];
+                }
+
+                // CHATS tab (default)
+                return const [
+                  PopupMenuItem(
+                    value: 'new_group',
+                    child: Text('New group'),
                   ),
-                ),
-              ],
+                  PopupMenuItem(
+                    value: 'new_broadcast',
+                    child: Text('New broadcast'),
+                  ),
+                  PopupMenuItem(
+                    value: 'linked_devices',
+                    child: Text('Linked devices'),
+                  ),
+                  PopupMenuItem(
+                    value: 'starred_messages',
+                    child: Text('Starred messages'),
+                  ),
+                  PopupMenuItem(
+                    value: 'settings',
+                    child: Text('Settings'),
+                  ),
+                  PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: 'logout',
+                    child: Text(
+                      'Log out',
+                      style: TextStyle(color: Colors.redAccent),
+                    ),
+                  ),
+                ];
+              },
             ),
           ],
           bottom: TabBar(
