@@ -89,12 +89,35 @@ class ContactPickerController extends StateNotifier<List<Contact>> {
     Share.share(
       shareMsg,
       subject: 'Livocal: Real-Time AI Live Translation & Chat',
-      sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
+      sharePositionOrigin: box != null && box.hasSize
+          ? box.localToGlobal(Offset.zero) & box.size
+          : null,
     );
   }
 
-  void sendSms(String phoneNumber) {
-    launchUrl(Uri.parse('sms:$phoneNumber?body=$shareMsg'));
+  Future<void> sendSms(String phoneNumber) async {
+    final cleanNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    final Uri smsUri = Uri(
+      scheme: 'sms',
+      path: cleanNumber,
+      queryParameters: <String, String>{
+        'body': shareMsg,
+      },
+    );
+
+    try {
+      if (await canLaunchUrl(smsUri)) {
+        await launchUrl(smsUri, mode: LaunchMode.externalApplication);
+        return;
+      }
+    } catch (e) {
+      debugPrint('Error launching SMS URL: $e');
+    }
+
+    await Share.share(
+      '$shareMsg\n\nInvite: $cleanNumber',
+      subject: 'Livocal: Real-Time AI Live Translation & Chat',
+    );
   }
 
   void showHelp() {

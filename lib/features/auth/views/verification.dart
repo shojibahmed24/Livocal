@@ -179,26 +179,6 @@ class _VerificationPageState extends ConsumerState<VerificationPage> {
               style: TextStyle(color: colorTheme.greyColor),
             ),
             const SizedBox(height: 24),
-            OutlinedButton.icon(
-              icon: Icon(Icons.developer_mode, color: colorTheme.greenColor),
-              label: Text(
-                'Developer Test Mode (Bypass OTP)',
-                style: TextStyle(
-                  color: colorTheme.greenColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              onPressed: () {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(
-                    builder: (context) => UserProfileCreationPage(
-                      phone: widget.phone,
-                    ),
-                  ),
-                  (route) => false,
-                );
-              },
-            ),
           ],
         ),
       ),

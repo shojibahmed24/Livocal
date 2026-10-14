@@ -1,6 +1,5 @@
 import 'package:flutter_contacts/flutter_contacts.dart' show FlutterContacts;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:whatsapp_clone/shared/models/contact.dart';
 import 'package:whatsapp_clone/shared/models/user.dart';
 

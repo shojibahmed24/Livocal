@@ -25,8 +25,9 @@ import 'package:whatsapp_clone/shared/utils/abc.dart';
 import 'package:whatsapp_clone/theme/theme.dart';
 import '../../../shared/utils/storage_paths.dart';
 import '../../../theme/color_theme.dart';
-import '../../auth/views/welcome.dart';
-import '../../../shared/utils/shared_pref.dart';
+import 'package:whatsapp_clone/features/auth/domain/auth_service.dart';
+import 'package:whatsapp_clone/features/home/views/settings_screen.dart';
+import 'package:whatsapp_clone/shared/utils/snackbars.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   final User user;
@@ -258,22 +259,113 @@ class _HomePageState extends ConsumerState<HomePage>
                 Icons.search,
               ),
             ),
-            PopupMenuButton(
+            PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert),
-              itemBuilder: (context) => [
+              onSelected: (value) async {
+                switch (value) {
+                  case 'new_group':
+                    showSnackBar(
+                      context: context,
+                      content: 'Group creation will be available in the next release',
+                      type: SnacBarType.info,
+                    );
+                    break;
+                  case 'new_broadcast':
+                    showSnackBar(
+                      context: context,
+                      content: 'Broadcast lists will be available in the next release',
+                      type: SnacBarType.info,
+                    );
+                    break;
+                  case 'linked_devices':
+                    showSnackBar(
+                      context: context,
+                      content: 'Linked devices feature coming soon',
+                      type: SnacBarType.info,
+                    );
+                    break;
+                  case 'starred_messages':
+                    showSnackBar(
+                      context: context,
+                      content: 'No starred messages found',
+                      type: SnacBarType.info,
+                    );
+                    break;
+                  case 'settings':
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => SettingsScreen(user: widget.user),
+                      ),
+                    );
+                    break;
+                  case 'logout':
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        backgroundColor: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF1F2C34)
+                            : Colors.white,
+                        title: const Text(
+                          'Log out of Livocal?',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        content: const Text(
+                          'Are you sure you want to log out? Local data and credentials will be cleared.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('CANCEL'),
+                          ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.redAccent,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () async {
+                              Navigator.pop(ctx);
+                              await AuthController.logout(
+                                context: context,
+                                ref: ref,
+                                userId: widget.user.id,
+                              );
+                            },
+                            child: const Text('LOG OUT'),
+                          ),
+                        ],
+                      ),
+                    );
+                    break;
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: 'new_group',
+                  child: Text('New group'),
+                ),
+                PopupMenuItem(
+                  value: 'new_broadcast',
+                  child: Text('New broadcast'),
+                ),
+                PopupMenuItem(
+                  value: 'linked_devices',
+                  child: Text('Linked devices'),
+                ),
+                PopupMenuItem(
+                  value: 'starred_messages',
+                  child: Text('Starred messages'),
+                ),
+                PopupMenuItem(
+                  value: 'settings',
+                  child: Text('Settings'),
+                ),
+                PopupMenuDivider(),
                 PopupMenuItem(
                   value: 'logout',
-                  child: const Text('Log out (Reset App)'),
-                  onTap: () async {
-                    await SharedPref.instance.remove('user');
-                    if (!context.mounted) return;
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                        builder: (context) => const WelcomePage(),
-                      ),
-                      (route) => false,
-                    );
-                  },
+                  child: Text(
+                    'Log out',
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
                 ),
               ],
             ),

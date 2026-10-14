@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:whatsapp_clone/features/calls/models/call_language.dart';
@@ -28,10 +27,16 @@ class GeminiLiveTranslator {
 
   static const List<GeminiModelPreset> modelPresets = [
     GeminiModelPreset(
-      id: 'models/gemini-3.5-live-translate-preview',
-      title: 'Gemini 3.5 Live Translate',
+      id: 'models/gemini-2.0-flash-exp',
+      title: 'Gemini 2.0 Flash Live',
       subtitle:
-          'Low-latency, real-time speech-to-speech translation between 70+ languages',
+          'Ultra low-latency, real-time speech-to-speech translation',
+    ),
+    GeminiModelPreset(
+      id: 'models/gemini-2.5-flash-preview',
+      title: 'Gemini 2.5 Flash Live',
+      subtitle:
+          'High precision real-time voice translation & dialogue',
     ),
   ];
 
@@ -49,9 +54,13 @@ class GeminiLiveTranslator {
   static Future<void> saveApiKey(String key) async =>
       await SharedPref.instance.setString(prefApiKey, key.trim());
 
-  static String getSavedModelId() =>
-      SharedPref.instance.getString(prefModelId)?.trim() ??
-      modelPresets.first.id;
+  static String getSavedModelId() {
+    final saved = SharedPref.instance.getString(prefModelId)?.trim();
+    if (saved == null || saved.isEmpty || saved.contains('gemini-3.5')) {
+      return modelPresets.first.id;
+    }
+    return saved;
+  }
 
   static Future<void> saveModelId(String modelId) async {
     final normalized =

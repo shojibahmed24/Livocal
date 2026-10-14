@@ -2,9 +2,14 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:whatsapp_clone/features/auth/data/repositories/auth_repository.dart';
+import 'package:whatsapp_clone/features/auth/views/welcome.dart';
 import 'package:whatsapp_clone/shared/models/user.dart';
+import 'package:whatsapp_clone/shared/repositories/firebase_firestore.dart';
 import 'package:whatsapp_clone/shared/repositories/firebase_storage.dart';
+import 'package:whatsapp_clone/shared/repositories/isar_db.dart';
+import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
 
 final authControllerProvider = Provider((ref) {
   return AuthController(ref: ref);
@@ -75,5 +80,47 @@ class AuthController {
       await authRepository.registerUser(user.toMap());
     } catch (_) {}
     return user;
+  }
+
+  static Future<void> logout({
+    required BuildContext context,
+    required WidgetRef ref,
+    required String userId,
+  }) async {
+    try {
+      ref.read(firebaseFirestoreRepositoryProvider).setActivityStatus(
+            userId: userId,
+            statusValue: UserActivityStatus.offline.value,
+          );
+    } catch (e) {
+      debugPrint('Logout setActivityStatus error: $e');
+    }
+
+    try {
+      await IsarDb.clearAll();
+    } catch (e) {
+      debugPrint('Logout IsarDb.clearAll error: $e');
+    }
+
+    try {
+      await SharedPref.instance.remove('user');
+      await SharedPref.instance.remove('fcm_token_registered');
+    } catch (e) {
+      debugPrint('Logout SharedPref clear error: $e');
+    }
+
+    try {
+      await FirebaseAuth.instance.signOut();
+    } catch (e) {
+      debugPrint('Logout FirebaseAuth.signOut error: $e');
+    }
+
+    if (!context.mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (context) => const WelcomePage(),
+      ),
+      (route) => false,
+    );
   }
 }

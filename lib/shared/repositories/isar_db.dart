@@ -349,4 +349,19 @@ class IsarDb {
     }
     return list;
   }
+
+  static Future<void> clearAll() async {
+    try {
+      final isarInstance = _instance ?? Isar.getInstance();
+      if (isarInstance != null) {
+        await isarInstance.writeTxn(() async {
+          await isarInstance.storedMessages.clear();
+          await isarInstance.contacts.clear();
+          await isarInstance.users.clear();
+        });
+      }
+    } catch (e) {
+      debugPrint('IsarDb clearAll error: $e');
+    }
+  }
 }
