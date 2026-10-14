@@ -140,7 +140,6 @@ class CallSession {
   final bool translationEnabled;
   final CallStateStatus status;
   final bool isIncoming;
-  final bool isSimulatedTest;
   final DateTime createdAt;
   final DateTime? connectedAt;
 
@@ -159,7 +158,6 @@ class CallSession {
     this.translationEnabled = true,
     this.status = CallStateStatus.dialing,
     this.isIncoming = false,
-    this.isSimulatedTest = false,
     required this.createdAt,
     this.connectedAt,
   });
@@ -197,7 +195,6 @@ class CallSession {
       translationEnabled: translationEnabled ?? this.translationEnabled,
       status: status ?? this.status,
       isIncoming: isIncoming,
-      isSimulatedTest: isSimulatedTest,
       createdAt: createdAt,
       connectedAt: connectedAt ?? this.connectedAt,
     );

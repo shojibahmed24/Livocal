@@ -96,8 +96,12 @@ class _HomePageState extends ConsumerState<HomePage>
               path: DeviceStorage.getMediaFilePath(
                 message.attachment!.fileName,
               ),
-              onDownloadComplete: (_) {},
-              onDownloadError: () {},
+              onDownloadComplete: (filePath) {
+                debugPrint('Auto-download complete for message ${message.id}: $filePath');
+              },
+              onDownloadError: () {
+                debugPrint('Auto-download failed for message ${message.id}');
+              },
             );
           }
         }
@@ -217,7 +221,6 @@ class _HomePageState extends ConsumerState<HomePage>
             callerPhone: incomingSession.callerPhone,
             callerLangCode: incomingSession.callerLangCode,
             callId: incomingSession.callId,
-            isSimulated: false,
           );
       if (!mounted) return;
       Navigator.of(context).push(

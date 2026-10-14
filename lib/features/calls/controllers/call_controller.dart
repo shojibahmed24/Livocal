@@ -103,7 +103,6 @@ class CallController extends StateNotifier<CallControllerState> {
   final WebRtcCallClient _webrtcClient = WebRtcCallClient();
 
   Timer? _callDurationTimer;
-  Timer? _ringingAutoAnswerTimer;
   Timer? _callTimeoutTimer;
   StreamSubscription<Uint8List>? _micStreamSub;
   StreamSubscription<double>? _micRmsSub;
@@ -139,7 +138,9 @@ class CallController extends StateNotifier<CallControllerState> {
           acceptAndConnectCall(callId: callId);
         }
       }
-    }).catchError((_) {});
+    }).catchError((err, st) {
+      debugPrint('[CallController] FlutterCallkitIncoming.activeCalls error: $err\n$st');
+    });
   }
 
   CallLanguage get myLang => state.myLanguage;
@@ -253,7 +254,6 @@ class CallController extends StateNotifier<CallControllerState> {
     required String calleeDisplayName,
     String? overrideMyLangCode,
     String? overridePeerLangCode,
-    bool isSimulatedDemo = false,
   }) async {
     await _cleanupActiveResources();
 
@@ -279,7 +279,6 @@ class CallController extends StateNotifier<CallControllerState> {
       translationEnabled: state.translationEnabled,
       status: CallStateStatus.dialing,
       isIncoming: false,
-      isSimulatedTest: isSimulatedDemo,
       createdAt: DateTime.now(),
     );
 
@@ -296,10 +295,9 @@ class CallController extends StateNotifier<CallControllerState> {
 
     await repo.createCall(session);
 
-    if (!session.isSimulatedTest) {
-      _webrtcClient.startOutgoingCall(session.callId);
-      _notifyRemoteCallee(session);
-    }
+    // Always establish real WebRTC session and send high-priority FCM wake-up
+    _webrtcClient.startOutgoingCall(session.callId);
+    _notifyRemoteCallee(session);
 
     // Transition from Dialing -> Ringing after 900ms
     Future.delayed(const Duration(milliseconds: 900), () {
@@ -322,31 +320,20 @@ class CallController extends StateNotifier<CallControllerState> {
       }
     });
 
-    // If calling a Demo Contact or AI Test Call, auto-answer after 2.4s so user can test immediately!
-    if (session.isSimulatedTest) {
-      _ringingAutoAnswerTimer = Timer(const Duration(milliseconds: 2400), () {
-        if (state.activeSession?.callId == session.callId &&
-            (state.activeSession?.status == CallStateStatus.dialing ||
-                state.activeSession?.status == CallStateStatus.ringing)) {
-          acceptAndConnectCall();
-        }
-      });
-    } else {
-      // Listen for remote callee accepting or rejecting via Firestore
-      _firestoreCallSub =
-          repo.watchCallSession(session.callId, caller.id).listen((remote) {
-        if (remote == null || state.activeSession == null) return;
-        if (remote.status == CallStateStatus.connected &&
-            state.activeSession!.status != CallStateStatus.connected) {
-          acceptAndConnectCall();
-        } else if (remote.status == CallStateStatus.rejected ||
-            remote.status == CallStateStatus.ended ||
-            remote.status == CallStateStatus.busy ||
-            remote.status == CallStateStatus.missed) {
-          endCall(recordAsMissed: remote.status == CallStateStatus.missed);
-        }
-      });
-    }
+    // Listen for remote callee accepting, rejecting, or hanging up via Firestore
+    _firestoreCallSub =
+        repo.watchCallSession(session.callId, caller.id).listen((remote) {
+      if (remote == null || state.activeSession == null) return;
+      if (remote.status == CallStateStatus.connected &&
+          state.activeSession!.status != CallStateStatus.connected) {
+        acceptAndConnectCall();
+      } else if (remote.status == CallStateStatus.rejected ||
+          remote.status == CallStateStatus.ended ||
+          remote.status == CallStateStatus.busy ||
+          remote.status == CallStateStatus.missed) {
+        endCall(recordAsMissed: remote.status == CallStateStatus.missed);
+      }
+    });
 
     return session;
   }
@@ -384,7 +371,6 @@ class CallController extends StateNotifier<CallControllerState> {
     required String callerPhone,
     required String callerLangCode,
     String? callId,
-    bool isSimulated = false,
   }) {
     final session = CallSession(
       callId: callId ?? const Uuid().v4(),
@@ -401,18 +387,15 @@ class CallController extends StateNotifier<CallControllerState> {
       translationEnabled: true,
       status: CallStateStatus.ringing,
       isIncoming: true,
-      isSimulatedTest: isSimulated,
       createdAt: DateTime.now(),
     );
 
-    if (!isSimulated) {
-      CallKitService().showIncomingCall(
-        callId: session.callId,
-        callerName: callerName,
-        callerPhone: callerPhone,
-        callerAvatar: callerAvatar,
-      );
-    }
+    CallKitService().showIncomingCall(
+      callId: session.callId,
+      callerName: callerName,
+      callerPhone: callerPhone,
+      callerAvatar: callerAvatar,
+    );
 
     state = state.copyWith(
       activeSession: session,
@@ -427,7 +410,6 @@ class CallController extends StateNotifier<CallControllerState> {
 
   /// Connects the call, starts Full-Duplex Audio + Hardware AEC + Gemini Live WebSocket
   Future<void> acceptAndConnectCall({bool? withTranslation, String? callId}) async {
-    _ringingAutoAnswerTimer?.cancel();
     var current = state.activeSession;
     if (current == null && callId != null && callId.isNotEmpty) {
       try {
@@ -462,7 +444,7 @@ class CallController extends StateNotifier<CallControllerState> {
     await repo.updateCallStatus(current.callId, CallStateStatus.connected);
 
     // If real incoming call, establish WebRTC answer
-    if (!current.isSimulatedTest && current.isIncoming) {
+    if (current.isIncoming) {
       try {
         final doc =
             await repo.firestore.collection('calls').doc(current.callId).get();
@@ -476,7 +458,7 @@ class CallController extends StateNotifier<CallControllerState> {
     }
 
     // Listen for remote call termination (Caller or Callee ending the call)
-    if (!current.isSimulatedTest && _firestoreCallSub == null) {
+    if (_firestoreCallSub == null) {
       final ownUser = getCurrentUser();
       _firestoreCallSub = repo
           .watchCallSession(current.callId, ownUser?.id ?? current.calleeId)
@@ -558,7 +540,7 @@ class CallController extends StateNotifier<CallControllerState> {
 
     _geminiAudioSub =
         _geminiTranslator.translatedAudioStream.listen((pcm24kBytes) {
-      if (state.isBidirectionalSingleDevice || connectedSession.isSimulatedTest) {
+      if (state.isBidirectionalSingleDevice) {
         _audioPipeline.feedTranslatedAiPcm(pcm24kBytes);
       } else {
         // Real P2P call: stream translated 24kHz PCM to remote peer via WebRTC DataChannel
@@ -619,118 +601,6 @@ class CallController extends StateNotifier<CallControllerState> {
       transcripts: [initialBubble],
       hasApiKey: GeminiLiveTranslator.getSavedApiKey().isNotEmpty,
     );
-  }
-
-  /// Simulates speaking a phrase in [sourceLangCode] and translating it to [targetLangCode]
-  /// (Allows testing any N x N language pair like Bangla <-> English, English <-> Spanish, Spanish <-> Bangla immediately!)
-  Future<void> triggerSampleTranslation({
-    required String sourceLangCode,
-    required String targetLangCode,
-    required bool isFromSelf,
-  }) async {
-    final src = CallLanguageRegistry.fromCode(sourceLangCode);
-    final tgt = CallLanguageRegistry.fromCode(targetLangCode);
-
-    state = state.copyWith(geminiState: GeminiLiveState.translating);
-
-    await Future.delayed(const Duration(milliseconds: 350));
-
-    state = state.copyWith(geminiState: GeminiLiveState.speaking);
-    final tone = GeminiLiveTranslator.generateTestVoiceTonePcm24k(durationMs: 450);
-    _audioPipeline.feedTranslatedAiPcm(tone);
-
-    final samplePhrases = _getSamplePhraseForLanguage(src.code);
-    final translatedPhrases = _getSamplePhraseForLanguage(tgt.code);
-
-    final index = state.transcripts.length % samplePhrases.length;
-
-    final entry = LiveTranscriptEntry(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      speakerId: isFromSelf ? 'self' : 'peer',
-      speakerName: isFromSelf
-          ? 'You (${src.shortBadge})'
-          : '${state.activeSession?.peerName ?? "Peer"} (${src.shortBadge})',
-      isSelf: isFromSelf,
-      sourceLangCode: src.code,
-      targetLangCode: tgt.code,
-      originalText: samplePhrases[index],
-      translatedText: translatedPhrases[index],
-      timestamp: DateTime.now(),
-    );
-
-    state = state.copyWith(
-      transcripts: [...state.transcripts, entry],
-    );
-
-    await Future.delayed(const Duration(milliseconds: 500));
-    state = state.copyWith(geminiState: GeminiLiveState.listening);
-  }
-
-  List<String> _getSamplePhraseForLanguage(String code) {
-    final baseCode = code.split('-').first.toLowerCase();
-    switch (baseCode) {
-      case 'bn':
-        return [
-          'হ্যালো! আপনি কেমন আছেন? আমাদের প্রজেক্টের কাজ কেমন চলছে?',
-          'আমি বাংলায় কথা বলছি এবং আপনি আপনার নিজের ভাষায় সাথে সাথে শুনতে পাচ্ছেন।',
-          'আগামীকাল সকাল ১০টায় আমরা মিটিং শুরু করব, ধন্যবাদ!',
-        ];
-      case 'en':
-        return [
-          'Hello! How are you doing? How is our project progressing?',
-          'I am speaking in my language and you are hearing it in your own language in real time.',
-          'We will start the meeting tomorrow at 10 AM, thank you!',
-        ];
-      case 'es':
-        return [
-          '¡Hola! ¿Cómo estás? ¿Cómo avanza nuestro proyecto?',
-          'Estoy hablando en mi idioma y lo estás escuchando en tu propio idioma en tiempo real.',
-          'Comenzaremos la reunión mañana a las 10 de la mañana, ¡muchas gracias!',
-        ];
-      case 'ar':
-        return [
-          'مرحباً! كيف حالك؟ كيف يسير مشروعنا؟',
-          'أنا أتحدث بلغتي وأنت تسمعها بلغتك الخاصة في الوقت الفعلي.',
-          'سنبدأ الاجتماع غداً في تمام الساعة العاشرة صباحاً، شكراً لك!',
-        ];
-      case 'hi':
-        return [
-          'नमस्ते! आप कैसे हैं? हमारे प्रोजेक्ट का काम कैसा चल रहा है?',
-          'मैं अपनी भाषा में बोल रहा हूँ और आप इसे रियल-टाइम में अपनी भाषा में सुन रहे हैं।',
-          'हम कल सुबह 10 बजे मीटिंग शुरू करेंगे, धन्यवाद!',
-        ];
-      case 'ja':
-        return [
-          'こんにちは！お元気ですか？プロジェクトの進捗はいかがでしょうか？',
-          '私は自分の言語で話していますが、リアルタイムであなたの言語に翻訳されて聞こえています。',
-          '明日の午前10時に会議を始めます。ありがとうございます！',
-        ];
-      case 'fr':
-        return [
-          'Bonjour ! Comment allez-vous ? Comment avance notre projet ?',
-          'Je parle dans ma langue et vous l\'entendez dans votre propre langue en temps réel.',
-          'Nous commencerons la réunion demain à 10h00, merci beaucoup !',
-        ];
-      case 'de':
-        return [
-          'Hallo! Wie geht es Ihnen? Wie kommt unser Projekt voran?',
-          'Ich spreche in meiner Sprache und Sie hören es in Echtzeit in Ihrer eigenen Sprache.',
-          'Wir beginnen das Treffen morgen um 10 Uhr, vielen Dank!',
-        ];
-      case 'zh':
-        return [
-          '你好！你最近怎么样？我们的项目进展如何？',
-          '我用我的语言说话，你正在实时听到用你的语言翻译的声音。',
-          '我们明天上午10点开始开会，非常感谢！',
-        ];
-      default:
-        final lang = CallLanguageRegistry.fromCode(code);
-        return [
-          '[${lang.nativeName}] Hello! How are you doing? How is our project progressing?',
-          '[${lang.nativeName}] Real-time voice translation is active between ${lang.englishName} and your language.',
-          '[${lang.nativeName}] We will start the meeting tomorrow at 10 AM, thank you!',
-        ];
-    }
   }
 
   void toggleMute() {
@@ -831,8 +701,6 @@ class CallController extends StateNotifier<CallControllerState> {
   Future<void> _cleanupActiveResources() async {
     _callDurationTimer?.cancel();
     _callDurationTimer = null;
-    _ringingAutoAnswerTimer?.cancel();
-    _ringingAutoAnswerTimer = null;
     _callTimeoutTimer?.cancel();
     _callTimeoutTimer = null;
 

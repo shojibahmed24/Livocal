@@ -15,7 +15,6 @@ class OutgoingCallScreen extends ConsumerStatefulWidget {
   final String calleeDisplayName;
   final String? overrideMyLangCode;
   final String? overridePeerLangCode;
-  final bool isSimulatedDemo;
 
   const OutgoingCallScreen({
     super.key,
@@ -24,7 +23,6 @@ class OutgoingCallScreen extends ConsumerStatefulWidget {
     required this.calleeDisplayName,
     this.overrideMyLangCode,
     this.overridePeerLangCode,
-    this.isSimulatedDemo = false,
   });
 
   @override
@@ -57,7 +55,6 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
             calleeDisplayName: widget.calleeDisplayName,
             overrideMyLangCode: widget.overrideMyLangCode,
             overridePeerLangCode: widget.overridePeerLangCode,
-            isSimulatedDemo: widget.isSimulatedDemo,
           );
     });
   }

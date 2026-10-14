@@ -407,7 +407,10 @@ class _AlbumViewState extends ConsumerState<AlbumView> {
                 const ThumbnailSize.square(300),
                 quality: 100,
               )
-              .onError((_, __) => null),
+              .onError((err, st) {
+                debugPrint('[Gallery] thumbnailDataWithSize error: $err\n$st');
+                return null;
+              }),
         )
         .toList();
 

@@ -135,7 +135,6 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
           caller: widget.currentUser,
           callee: targetUser,
           calleeDisplayName: _foundUser != null ? _foundUser!.name : phone,
-          isSimulatedDemo: false,
         ),
       ),
     );

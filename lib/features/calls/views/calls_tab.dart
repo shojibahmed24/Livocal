@@ -60,7 +60,6 @@ class _CallsTabState extends ConsumerState<CallsTab>
     required String peerPhone,
     String? myLangCode,
     String? peerLangCode,
-    bool isSimulatedDemo = false,
   }) {
     final callee = User(
       id: peerId,
@@ -82,7 +81,6 @@ class _CallsTabState extends ConsumerState<CallsTab>
           calleeDisplayName: peerName,
           overrideMyLangCode: myLangCode,
           overridePeerLangCode: peerLangCode,
-          isSimulatedDemo: isSimulatedDemo,
         ),
       ),
     );
@@ -446,7 +444,6 @@ class _CallsTabState extends ConsumerState<CallsTab>
                   peerPhone: record.peerPhone,
                   myLangCode: record.myLangCode,
                   peerLangCode: record.peerLangCode,
-                  isSimulatedDemo: false,
                 );
               },
               leading: CircleAvatar(
@@ -537,7 +534,6 @@ class _CallsTabState extends ConsumerState<CallsTab>
                     peerPhone: record.peerPhone,
                     myLangCode: record.myLangCode,
                     peerLangCode: record.peerLangCode,
-                    isSimulatedDemo: false,
                   );
                 },
               ),

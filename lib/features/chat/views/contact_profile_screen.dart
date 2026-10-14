@@ -189,7 +189,6 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                             caller: widget.self,
                             callee: widget.other,
                             calleeDisplayName: widget.contactName,
-                            isSimulatedDemo: false,
                           ),
                         ),
                       );
@@ -211,7 +210,6 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                             caller: widget.self,
                             callee: widget.other,
                             calleeDisplayName: widget.contactName,
-                            isSimulatedDemo: false,
                           ),
                         ),
                       );
@@ -310,7 +308,6 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                                     caller: widget.self,
                                     callee: widget.other,
                                     calleeDisplayName: widget.contactName,
-                                    isSimulatedDemo: false,
                                   ),
                                 ),
                               );
@@ -553,7 +550,6 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                         caller: widget.self,
                         callee: widget.other,
                         calleeDisplayName: widget.contactName,
-                        isSimulatedDemo: false,
                       ),
                     ),
                   );

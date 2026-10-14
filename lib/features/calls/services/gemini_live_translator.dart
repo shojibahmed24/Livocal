@@ -69,8 +69,7 @@ class GeminiLiveTranslator {
   ];
 
   static String getSavedApiKey() {
-    if (_cachedApiKey != null) return _cachedApiKey!;
-    return SharedPref.instance.getString(prefApiKey)?.trim() ?? '';
+    return _cachedApiKey ?? '';
   }
 
   static Future<void> saveApiKey(String key) async {
