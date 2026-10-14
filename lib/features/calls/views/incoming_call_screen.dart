@@ -67,6 +67,27 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<CallControllerState>(callControllerProvider, (previous, next) {
+      if (_navigated || !mounted) return;
+      final session = next.activeSession;
+      if (session != null && session.status == CallStateStatus.connected) {
+        _navigated = true;
+        CallKitService().endAllCalls();
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const ActiveCallScreen()),
+        );
+      } else if (session == null ||
+          session.status == CallStateStatus.ended ||
+          session.status == CallStateStatus.rejected ||
+          session.status == CallStateStatus.missed) {
+        _navigated = true;
+        CallKitService().endAllCalls();
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
+      }
+    });
+
     final callState = ref.watch(callControllerProvider);
     final session = callState.activeSession;
 

@@ -119,18 +119,27 @@ class CallRepository {
     return firestore
         .collection('calls')
         .where('calleeId', isEqualTo: ownId)
-        .where('status', whereIn: ['dialing', 'ringing'])
         .snapshots()
         .map((query) {
           if (query.docs.isEmpty) return null;
-          final doc = query.docs.first.data();
-          final session = CallSession.fromMap(doc, ownId: ownId);
-          final ageSec =
-              DateTime.now().difference(session.createdAt).inSeconds.abs();
-          if (ageSec > 45) return null;
-          return session;
+          for (final doc in query.docs) {
+            final data = doc.data();
+            final session = CallSession.fromMap(data, ownId: ownId);
+            final isRinging = session.status == CallStateStatus.dialing ||
+                session.status == CallStateStatus.ringing;
+            if (!isRinging) continue;
+            final ageSec =
+                DateTime.now().difference(session.createdAt).inSeconds.abs();
+            if (ageSec <= 60) {
+              return session;
+            }
+          }
+          return null;
         })
-        .handleError((_) => null);
+        .handleError((e) {
+          debugPrint('watchIncomingCalls error: $e');
+          return null;
+        });
   }
 
   Stream<List<LiveTranscriptEntry>> watchCallTranscripts(

@@ -451,56 +451,12 @@ class CallController extends StateNotifier<CallControllerState> {
       state = state.copyWith(elapsedSeconds: state.elapsedSeconds + 1);
     });
 
-    // 2. Start Full-Duplex Audio Pipeline (16kHz Mic + 24kHz Speaker + Hardware AEC)
-    try {
-      await _audioPipeline.startFullDuplex();
-
-      _micRmsSub = _audioPipeline.micRmsStream.listen((rms) {
-        state = state.copyWith(micRmsLevel: rms);
-      });
-
-      _micStreamSub = _audioPipeline.outgoingMicPcmStream.listen((pcm16k) {
-        if (state.translationEnabled && _geminiTranslator.isConnected) {
-          _geminiTranslator.sendAudioChunk(pcm16k);
-        }
-      });
-    } catch (_) {}
-
-    // 3. Connect Gemini Live WebSocket Engine for (myLanguage <-> peerLanguage)
-    final myLang = state.myLanguage;
-    final peerLang = state.peerLanguage;
-
-    _geminiStateSub = _geminiTranslator.stateStream.listen((gState) {
-      _audioPipeline.setAiSpeakingState(gState == GeminiLiveState.speaking);
-      state = state.copyWith(geminiState: gState);
-    });
-
-    _geminiAudioSub =
-        _geminiTranslator.translatedAudioStream.listen((pcm24kBytes) {
-      if (state.isBidirectionalSingleDevice || connectedSession.isSimulatedTest) {
-        _audioPipeline.feedTranslatedAiPcm(pcm24kBytes);
-      }
-    });
-
-    _geminiInterruptedSub =
-        _geminiTranslator.interruptedStream.listen((interrupted) {
-      if (interrupted) {
-        _audioPipeline.flushAiPlayerBuffer();
-      }
-    });
-
-    _geminiTranscriptSub =
-        _geminiTranslator.transcriptStream.listen((entry) {
-      final updated = [...state.transcripts, entry];
-      state = state.copyWith(transcripts: updated);
-      repo.sendTranscriptToCall(connectedSession.callId, entry);
-    });
-
     final isSameLanguage = myLang.code == peerLang.code;
     final shouldTranslate = state.translationEnabled && !isSameLanguage;
 
     if (!shouldTranslate) {
-      // 100% Direct P2P Audio Call - No Gemini WebSocket Needed!
+      // 100% Direct P2P Audio Call - WebRTC handles native mic & speaker with hardware AEC
+      _webrtcClient.setMicrophoneMute(false);
       _webrtcClient.setRemoteAudioVolume(1.0);
 
       final directBubble = LiveTranscriptEntry(
@@ -527,6 +483,53 @@ class CallController extends StateNotifier<CallControllerState> {
       );
       return;
     }
+
+    // 2. Start Full-Duplex Audio Pipeline for Live Translation (16kHz Mic + 24kHz Speaker + Hardware AEC)
+    try {
+      await _audioPipeline.startFullDuplex();
+
+      _micRmsSub = _audioPipeline.micRmsStream.listen((rms) {
+        state = state.copyWith(micRmsLevel: rms);
+      });
+
+      _micStreamSub = _audioPipeline.outgoingMicPcmStream.listen((pcm16k) {
+        if (state.translationEnabled && _geminiTranslator.isConnected) {
+          _geminiTranslator.sendAudioChunk(pcm16k);
+        }
+      });
+    } catch (e) {
+      debugPrint('AudioPipeline start error: $e');
+    }
+
+    // Mute WebRTC raw mic when neural interpreter pipeline is active to prevent audio collision
+    _webrtcClient.setMicrophoneMute(true);
+
+    // 3. Connect Gemini Live WebSocket Engine for (myLanguage <-> peerLanguage)
+    _geminiStateSub = _geminiTranslator.stateStream.listen((gState) {
+      _audioPipeline.setAiSpeakingState(gState == GeminiLiveState.speaking);
+      state = state.copyWith(geminiState: gState);
+    });
+
+    _geminiAudioSub =
+        _geminiTranslator.translatedAudioStream.listen((pcm24kBytes) {
+      if (state.isBidirectionalSingleDevice || connectedSession.isSimulatedTest) {
+        _audioPipeline.feedTranslatedAiPcm(pcm24kBytes);
+      }
+    });
+
+    _geminiInterruptedSub =
+        _geminiTranslator.interruptedStream.listen((interrupted) {
+      if (interrupted) {
+        _audioPipeline.flushAiPlayerBuffer();
+      }
+    });
+
+    _geminiTranscriptSub =
+        _geminiTranslator.transcriptStream.listen((entry) {
+      final updated = [...state.transcripts, entry];
+      state = state.copyWith(transcripts: updated);
+      repo.sendTranscriptToCall(connectedSession.callId, entry);
+    });
 
     final connectedWs = await _geminiTranslator.connect(
       langA: myLang,

@@ -177,13 +177,115 @@ class _ChatPageState extends ConsumerState<ChatPage> {
               size: 24,
             ),
           ),
-          IconButton(
-            onPressed: () {},
+          PopupMenuButton<String>(
             icon: const Icon(
               Icons.more_vert,
               color: Colors.white,
               size: 26,
             ),
+            onSelected: (value) async {
+              switch (value) {
+                case 'view_contact':
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF1F2C34)
+                          : Colors.white,
+                      title: Text(widget.otherUserContactName),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: CircleAvatar(
+                              radius: 40,
+                              backgroundImage: other.avatarUrl.isNotEmpty
+                                  ? CachedNetworkImageProvider(other.avatarUrl)
+                                  : const AssetImage('assets/images/avatar.png') as ImageProvider,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text('Phone: ${other.phone.getFormattedNumber()}'),
+                          const SizedBox(height: 8),
+                          Text('Status: ${other.about.isNotEmpty ? other.about : "Hey there! I am using Livocal."}'),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('CLOSE'),
+                        ),
+                      ],
+                    ),
+                  );
+                  break;
+                case 'clear_chat':
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF1F2C34)
+                          : Colors.white,
+                      title: const Text('Clear this chat?'),
+                      content: const Text(
+                        'Messages will be cleared from this device.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('CANCEL'),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.redAccent,
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: const Text('CLEAR CHAT'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true && context.mounted) {
+                    final chatId = getChatId(self.id, other.id);
+                    await IsarDb.deleteChat(chatId);
+                    if (context.mounted) {
+                      showSnackBar(
+                        context: context,
+                        content: 'Chat cleared',
+                        type: SnacBarType.info,
+                      );
+                    }
+                  }
+                  break;
+                case 'mute':
+                  showSnackBar(
+                    context: context,
+                    content: 'Notifications muted for this chat',
+                    type: SnacBarType.info,
+                  );
+                  break;
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'view_contact',
+                child: Text('View contact'),
+              ),
+              PopupMenuItem(
+                value: 'mute',
+                child: Text('Mute notifications'),
+              ),
+              PopupMenuDivider(),
+              PopupMenuItem(
+                value: 'clear_chat',
+                child: Text(
+                  'Clear chat',
+                  style: TextStyle(color: Colors.redAccent),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -649,27 +751,56 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
                 ),
                 SliverToBoxAdapter(
                   child: Center(
-                    child: Container(
-                      width: MediaQuery.of(context).size.width * 0.8,
-                      margin: const EdgeInsets.only(bottom: 4),
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: isDarkTheme
-                            ? const Color.fromARGB(200, 24, 34, 40)
-                            : const Color.fromARGB(148, 248, 236, 130),
-                      ),
-                      child: Text(
-                        '🔒Messages and calls are end-to-end encrypted. No one outside this chat, not even WhatsApp, can read or listen to them. Tap to learn more.',
-                        style: TextStyle(
-                          fontSize: 13,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            backgroundColor: Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFF1F2C34)
+                                : Colors.white,
+                            title: const Row(
+                              children: [
+                                Icon(Icons.lock, color: Color(0xFF00A884)),
+                                SizedBox(width: 8),
+                                Text('End-to-End Encryption'),
+                              ],
+                            ),
+                            content: const Text(
+                              'Your messages, voice calls, and media in Livocal are secured with end-to-end encryption. No third parties, not even Livocal, can read or listen to them.',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text('OK'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      child: Container(
+                        width: MediaQuery.of(context).size.width * 0.8,
+                        margin: const EdgeInsets.only(bottom: 4),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
                           color: isDarkTheme
-                              ? colorTheme.yellowColor
-                              : colorTheme.textColor1,
+                              ? const Color.fromARGB(200, 24, 34, 40)
+                              : const Color.fromARGB(148, 248, 236, 130),
                         ),
-                        softWrap: true,
-                        textWidthBasis: TextWidthBasis.longestLine,
-                        textAlign: TextAlign.center,
+                        child: Text(
+                          '🔒 Messages and calls are end-to-end encrypted. No one outside this chat, not even Livocal, can read or listen to them. Tap to learn more.',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            color: isDarkTheme
+                                ? colorTheme.yellowColor
+                                : colorTheme.textColor1,
+                          ),
+                          softWrap: true,
+                          textWidthBasis: TextWidthBasis.longestLine,
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ),
                   ),

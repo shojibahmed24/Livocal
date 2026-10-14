@@ -229,9 +229,8 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
     final ext = path.split(".").last;
     final fileName = "AUD_${timestamp.seconds}.$ext";
 
-    await recordedFile.copy(
-      DeviceStorage.getMediaFilePath(fileName),
-    );
+    final savedFilePath = DeviceStorage.getMediaFilePath(fileName);
+    final savedFile = await recordedFile.copy(savedFilePath);
 
     final senderId = ref.read(chatControllerProvider.notifier).self.id;
     final receiverId = ref.read(chatControllerProvider.notifier).other.id;
@@ -248,11 +247,11 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
               type: AttachmentType.voice,
               url: "",
               fileName: fileName,
-              fileSize: recordedFile.lengthSync(),
+              fileSize: savedFile.existsSync() ? savedFile.lengthSync() : recordedFile.lengthSync(),
               fileExtension: ext,
               uploadStatus: UploadStatus.uploading,
               autoDownload: true,
-              file: recordedFile,
+              file: savedFile,
               samples: samples,
             ),
           ),

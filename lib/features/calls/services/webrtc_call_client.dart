@@ -140,6 +140,7 @@ class WebRtcCallClient {
           );
           await _peerConnection!.setRemoteDescription(answer);
           debugPrint('Caller successfully set remote answer description');
+          await _drainPendingCandidates();
         }
       });
 
@@ -149,7 +150,7 @@ class WebRtcCallClient {
           .doc(callId)
           .collection('calleeCandidates')
           .snapshots()
-          .listen((snapshot) {
+          .listen((snapshot) async {
         for (final change in snapshot.docChanges) {
           if (change.type == DocumentChangeType.added) {
             final data = change.doc.data();
@@ -159,7 +160,7 @@ class WebRtcCallClient {
                 data['sdpMid'],
                 data['sdpMLineIndex'],
               );
-              _peerConnection!.addCandidate(candidate);
+              await _addOrQueueCandidate(candidate);
             }
           }
         }
@@ -188,6 +189,7 @@ class WebRtcCallClient {
         offerData['type'],
       );
       await _peerConnection!.setRemoteDescription(offer);
+      await _drainPendingCandidates();
 
       // Create Answer
       final answer = await _peerConnection!.createAnswer({
@@ -211,7 +213,7 @@ class WebRtcCallClient {
           .doc(callId)
           .collection('callerCandidates')
           .snapshots()
-          .listen((snapshot) {
+          .listen((snapshot) async {
         for (final change in snapshot.docChanges) {
           if (change.type == DocumentChangeType.added) {
             final data = change.doc.data();
@@ -221,7 +223,7 @@ class WebRtcCallClient {
                 data['sdpMid'],
                 data['sdpMLineIndex'],
               );
-              _peerConnection!.addCandidate(candidate);
+              await _addOrQueueCandidate(candidate);
             }
           }
         }
@@ -229,6 +231,35 @@ class WebRtcCallClient {
     } catch (e) {
       debugPrint('Error answering WebRTC call: $e');
       _updateState(WebRtcCallState.failed);
+    }
+  }
+
+  final List<RTCIceCandidate> _pendingCandidates = [];
+
+  Future<void> _addOrQueueCandidate(RTCIceCandidate candidate) async {
+    if (_peerConnection == null) return;
+    try {
+      final remoteDesc = await _peerConnection!.getRemoteDescription();
+      if (remoteDesc != null) {
+        await _peerConnection!.addCandidate(candidate);
+      } else {
+        _pendingCandidates.add(candidate);
+      }
+    } catch (e) {
+      debugPrint('Error handling candidate: $e');
+    }
+  }
+
+  Future<void> _drainPendingCandidates() async {
+    if (_peerConnection == null || _pendingCandidates.isEmpty) return;
+    final copy = List<RTCIceCandidate>.from(_pendingCandidates);
+    _pendingCandidates.clear();
+    for (final candidate in copy) {
+      try {
+        await _peerConnection!.addCandidate(candidate);
+      } catch (e) {
+        debugPrint('Error draining candidate: $e');
+      }
     }
   }
 

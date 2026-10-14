@@ -46,6 +46,8 @@ class _HomePageState extends ConsumerState<HomePage>
   StreamSubscription<CallSession?>? _incomingCallSub;
   late TabController _tabController;
   late List<Widget> _floatingButtons;
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
@@ -194,7 +196,15 @@ class _HomePageState extends ConsumerState<HomePage>
         .read(callRepositoryProvider)
         .watchIncomingCalls(widget.user.id)
         .listen((incomingSession) {
-      if (incomingSession == null || !mounted) return;
+      if (incomingSession == null) {
+        final current = ref.read(callControllerProvider).activeSession;
+        if (current != null && current.status == CallStateStatus.ringing && current.isIncoming) {
+          CallKitService().endAllCalls();
+          ref.read(callControllerProvider.notifier).endCall(recordAsMissed: false);
+        }
+        return;
+      }
+      if (!mounted) return;
       final currentSession = ref.read(callControllerProvider).activeSession;
       if (currentSession != null) return;
       ref.read(callControllerProvider.notifier).receiveIncomingCall(
@@ -224,6 +234,7 @@ class _HomePageState extends ConsumerState<HomePage>
     _tabController.dispose();
     messageListener.cancel();
     _incomingCallSub?.cancel();
+    _searchController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -264,36 +275,74 @@ class _HomePageState extends ConsumerState<HomePage>
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(
-            'Livocal',
-            style: textTheme.titleLarge.copyWith(color: colorTheme.iconColor),
-          ),
+          leading: _isSearching
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () {
+                    setState(() {
+                      _isSearching = false;
+                      _searchController.clear();
+                    });
+                  },
+                )
+              : null,
+          title: _isSearching
+              ? TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  style: const TextStyle(color: Colors.white, fontSize: 17),
+                  cursorColor: colorTheme.greenColor,
+                  decoration: const InputDecoration(
+                    hintText: 'Search chats, messages...',
+                    hintStyle: TextStyle(color: Colors.white60, fontSize: 15),
+                    border: InputBorder.none,
+                  ),
+                  onChanged: (_) => setState(() {}),
+                )
+              : Text(
+                  'Livocal',
+                  style: textTheme.titleLarge.copyWith(color: colorTheme.iconColor),
+                ),
           actions: [
-            IconButton(
-              onPressed: () async {
-                try {
-                  final cameras = await availableCameras();
-                  if (cameras.isNotEmpty && context.mounted) {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => CameraView(cameras: cameras),
-                      ),
-                    );
+            if (_isSearching) ...[
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () {
+                  setState(() {
+                    _searchController.clear();
+                  });
+                },
+              ),
+            ] else ...[
+              IconButton(
+                onPressed: () async {
+                  try {
+                    final cameras = await availableCameras();
+                    if (cameras.isNotEmpty && context.mounted) {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => CameraView(cameras: cameras),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    debugPrint('AppBar Camera open error: $e');
                   }
-                } catch (e) {
-                  debugPrint('AppBar Camera open error: $e');
-                }
-              },
-              icon: const Icon(
-                Icons.camera_alt_outlined,
+                },
+                icon: const Icon(
+                  Icons.camera_alt_outlined,
+                ),
               ),
-            ),
-            IconButton(
-              onPressed: () {},
-              icon: const Icon(
-                Icons.search,
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    _isSearching = true;
+                  });
+                },
+                icon: const Icon(
+                  Icons.search,
+                ),
               ),
-            ),
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert),
               onSelected: (value) async {
@@ -490,7 +539,10 @@ class _HomePageState extends ConsumerState<HomePage>
             parent: AlwaysScrollableScrollPhysics(),
           ),
           children: [
-            RecentChatsBody(user: widget.user),
+            RecentChatsBody(
+              user: widget.user,
+              searchQuery: _isSearching ? _searchController.text.trim().toLowerCase() : '',
+            ),
             StatusTab(user: widget.user),
             CallsTab(user: widget.user),
           ],
@@ -505,9 +557,11 @@ class RecentChatsBody extends ConsumerWidget {
   const RecentChatsBody({
     super.key,
     required this.user,
+    this.searchQuery = '',
   });
 
   final User user;
+  final String searchQuery;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -523,8 +577,25 @@ class RecentChatsBody extends ConsumerWidget {
           return Container();
         }
 
-        final chats = snapshot.data!;
-        if (chats.isEmpty) {
+        var chats = snapshot.data!;
+        if (searchQuery.isNotEmpty) {
+          chats = chats
+              .where((c) =>
+                  c.user.name.toLowerCase().contains(searchQuery) ||
+                  c.message.content.toLowerCase().contains(searchQuery))
+              .toList();
+          if (chats.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Text(
+                  'No chats found matching "$searchQuery"',
+                  style: const TextStyle(color: Colors.grey, fontSize: 15),
+                ),
+              ),
+            );
+          }
+        } else if (chats.isEmpty) {
           return const HomePageContactsList();
         }
 

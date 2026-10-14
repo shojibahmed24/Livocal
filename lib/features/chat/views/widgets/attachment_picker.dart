@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatsapp_clone/theme/theme.dart';
 
 import '../../controllers/chat_controller.dart';
+import 'package:whatsapp_clone/shared/utils/abc.dart';
 import 'buttons.dart';
 
 class AttachmentPicker extends ConsumerStatefulWidget {
@@ -96,8 +97,12 @@ class _AttachmentPickerState extends ConsumerState<AttachmentPicker> {
             ],
             LabelledButton(
               onTap: () {
-                if (!mounted) return;
                 Navigator.pop(context);
+                showSnackBar(
+                  context: context,
+                  content: 'Live location sharing will be available in the upcoming update',
+                  type: SnacBarType.info,
+                );
               },
               label: 'Location',
               backgroundColor: Colors.green[600],
@@ -109,25 +114,33 @@ class _AttachmentPickerState extends ConsumerState<AttachmentPicker> {
             ),
             LabelledButton(
               onTap: () {
-                if (!mounted) return;
                 Navigator.pop(context);
+                showSnackBar(
+                  context: context,
+                  content: 'In-app peer-to-peer payment is coming soon',
+                  type: SnacBarType.info,
+                );
               },
               label: 'Payment',
               backgroundColor: Colors.teal[600],
-              child: CircleAvatar(
+              child: const CircleAvatar(
                 radius: 14,
                 backgroundColor: Colors.white,
                 child: Icon(
-                  Icons.currency_rupee_rounded,
+                  Icons.payment_rounded,
                   size: 18,
-                  color: Colors.teal[600],
+                  color: Colors.teal,
                 ),
               ),
             ),
             LabelledButton(
               onTap: () async {
-                if (!mounted) return;
                 Navigator.pop(context);
+                showSnackBar(
+                  context: context,
+                  content: 'Select contact from the Contacts tab to start a conversation',
+                  type: SnacBarType.info,
+                );
               },
               label: 'Contact',
               backgroundColor: Colors.blue[600],
