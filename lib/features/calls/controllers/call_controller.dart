@@ -279,8 +279,7 @@ class CallController extends StateNotifier<CallControllerState> {
       translationEnabled: state.translationEnabled,
       status: CallStateStatus.dialing,
       isIncoming: false,
-      isSimulatedTest:
-          isSimulatedDemo || callee.id.startsWith('demo_'),
+      isSimulatedTest: isSimulatedDemo,
       createdAt: DateTime.now(),
     );
 
@@ -358,7 +357,10 @@ class CallController extends StateNotifier<CallControllerState> {
           'https://livocal-relay.onrender.com/api/call/notify-incoming');
       await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-secret': GeminiLiveTranslator.defaultRelaySecret,
+        },
         body: jsonEncode({
           'targetUserId': session.calleeId,
           'calleeId': session.calleeId,
@@ -470,6 +472,22 @@ class CallController extends StateNotifier<CallControllerState> {
       } catch (e) {
         debugPrint('WebRTC answerIncomingCall error: $e');
       }
+    }
+
+    // Listen for remote call termination (Caller or Callee ending the call)
+    if (!current.isSimulatedTest && _firestoreCallSub == null) {
+      final ownUser = getCurrentUser();
+      _firestoreCallSub = repo
+          .watchCallSession(current.callId, ownUser?.id ?? current.calleeId)
+          .listen((remote) {
+        if (remote == null || state.activeSession == null) return;
+        if (remote.status == CallStateStatus.ended ||
+            remote.status == CallStateStatus.rejected ||
+            remote.status == CallStateStatus.busy ||
+            remote.status == CallStateStatus.missed) {
+          endCall(recordAsMissed: remote.status == CallStateStatus.missed);
+        }
+      });
     }
 
     // 1. Start call duration timer

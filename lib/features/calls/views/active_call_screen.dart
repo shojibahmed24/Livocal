@@ -340,10 +340,11 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                 ),
               ),
 
-              // 4. Interactive Quick Test Phrase Simulator Bar (Test Any Language Pair Instantly!)
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+              // 4. Interactive Quick Test Phrase Simulator Bar (Only visible in simulated test mode)
+              if (session?.isSimulatedTest == true)
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                 child: Row(
                   children: [
                     Expanded(

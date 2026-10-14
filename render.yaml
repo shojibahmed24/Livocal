@@ -18,3 +18,5 @@ services:
         value: Aoede
       - key: FIREBASE_SERVICE_ACCOUNT
         sync: false
+      - key: RELAY_API_SECRET
+        sync: false

@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:http/http.dart' as http;
+import 'gemini_live_translator.dart';
 
 enum WebRtcCallState {
   idle,
@@ -45,33 +48,35 @@ class WebRtcCallClient {
   WebRtcCallClient({FirebaseFirestore? firestore})
       : firestore = firestore ?? FirebaseFirestore.instance;
 
-  static const Map<String, dynamic> _iceConfiguration = {
+  static Map<String, dynamic> _iceConfiguration = {
     'iceServers': [
       {'urls': 'stun:stun.l.google.com:19302'},
-      {'urls': 'stun:stun.relay.metered.ca:80'},
-      {
-        'urls': 'turn:standard.relay.metered.ca:80',
-        'username': '19e5ee2930dceaa8605b4cbc',
-        'credential': '3zFl5+uHvCOLLxhs',
-      },
-      {
-        'urls': 'turn:standard.relay.metered.ca:80?transport=tcp',
-        'username': '19e5ee2930dceaa8605b4cbc',
-        'credential': '3zFl5+uHvCOLLxhs',
-      },
-      {
-        'urls': 'turn:standard.relay.metered.ca:443',
-        'username': '19e5ee2930dceaa8605b4cbc',
-        'credential': '3zFl5+uHvCOLLxhs',
-      },
-      {
-        'urls': 'turns:standard.relay.metered.ca:443?transport=tcp',
-        'username': '19e5ee2930dceaa8605b4cbc',
-        'credential': '3zFl5+uHvCOLLxhs',
-      },
+      {'urls': 'stun:stun1.l.google.com:19302'},
+      {'urls': 'stun:stun2.l.google.com:19302'},
     ],
     'sdpSemantics': 'unified-plan',
   };
+
+  /// Dynamically updates ICE configuration from secure backend relay
+  static Future<void> refreshIceServers() async {
+    try {
+      final res = await http.get(
+        Uri.parse('https://livocal-relay.onrender.com/api/webrtc/ice-servers'),
+        headers: {
+          'x-api-secret': GeminiLiveTranslator.defaultRelaySecret,
+        },
+      ).timeout(const Duration(seconds: 3));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['iceServers'] is List) {
+          _iceConfiguration = {
+            'iceServers': data['iceServers'],
+            'sdpSemantics': 'unified-plan',
+          };
+        }
+      }
+    } catch (_) {}
+  }
 
   void _updateState(WebRtcCallState state) {
     _currentState = state;

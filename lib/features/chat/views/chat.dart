@@ -186,7 +186,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                           caller: self,
                           callee: other,
                           calleeDisplayName: widget.otherUserContactName,
-                          isSimulatedDemo: other.id.startsWith('demo_'),
+                          isSimulatedDemo: false,
                         ),
                       ),
                     );

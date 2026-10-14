@@ -117,11 +117,13 @@ class SystemMessage {
   final String targetId;
   final MessageAction action;
   final String update;
+  final String? senderId;
 
   SystemMessage({
     required this.targetId,
     required this.action,
     required this.update,
+    this.senderId,
   });
 
   factory SystemMessage.fromMap(Map<String, dynamic> msgData) {
@@ -129,6 +131,7 @@ class SystemMessage {
       targetId: msgData['targetId'],
       action: MessageAction.fromValue(msgData['action']),
       update: msgData['update'],
+      senderId: msgData['senderId'],
     );
   }
 
@@ -137,6 +140,8 @@ class SystemMessage {
       'targetId': targetId,
       'action': action.value,
       'update': update,
+      if (senderId != null) 'senderId': senderId,
     };
   }
 }
+

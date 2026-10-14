@@ -7,10 +7,11 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isCallParticipant(callData) {
-      return isAuthenticated() && (
-        callData.callerId == request.auth.uid ||
-        callData.calleeId == request.auth.uid
+    function isCallParticipant(callId) {
+      let callDoc = get(/databases/$(database)/documents/calls/$(callId)).data;
+      return isAuthenticated() && callDoc != null && (
+        callDoc.callerId == request.auth.uid ||
+        callDoc.calleeId == request.auth.uid
       );
     }
 
@@ -32,8 +33,11 @@ service cloud.firestore {
       allow write: if isAuthenticated();
 
       match /messages/{messageId} {
-        // Authenticated sender can deliver a message to recipient's inbox
-        allow create: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
+        // Authenticated sender can deliver a message or status update receipt to recipient's inbox
+        allow create: if isAuthenticated() && (
+          request.resource.data.senderId == request.auth.uid ||
+          request.resource.data.action != null
+        );
         // Only recipient or sender can read, update (delivery ticks), or delete
         allow read, delete: if isAuthenticated() && (
           request.auth.uid == receiverId ||
@@ -51,35 +55,39 @@ service cloud.firestore {
       // Authenticated caller initiates the call session
       allow create: if isAuthenticated() && request.resource.data.callerId == request.auth.uid;
       // Both participants (caller & callee) can observe and update call state
-      allow read, update: if isAuthenticated() && (
+      // Security: Caller & Callee IDs cannot be spoofed or mutated to hijack existing calls
+      allow read: if isAuthenticated() && (
         resource.data.callerId == request.auth.uid ||
-        resource.data.calleeId == request.auth.uid ||
-        request.resource.data.callerId == request.auth.uid ||
-        request.resource.data.calleeId == request.auth.uid
+        resource.data.calleeId == request.auth.uid
       );
+      allow update: if isAuthenticated() && (
+        resource.data.callerId == request.auth.uid ||
+        resource.data.calleeId == request.auth.uid
+      ) && request.resource.data.callerId == resource.data.callerId
+        && request.resource.data.calleeId == resource.data.calleeId;
       allow delete: if isAuthenticated() && (
         resource.data.callerId == request.auth.uid ||
         resource.data.calleeId == request.auth.uid
       );
 
-      // WebRTC ICE Candidates (Caller)
+      // WebRTC ICE Candidates (Caller) - Restricted strictly to call participants
       match /callerCandidates/{candidateId} {
-        allow read, write: if isAuthenticated();
+        allow read, write: if isCallParticipant(callId);
       }
 
-      // WebRTC ICE Candidates (Callee)
+      // WebRTC ICE Candidates (Callee) - Restricted strictly to call participants
       match /calleeCandidates/{candidateId} {
-        allow read, write: if isAuthenticated();
+        allow read, write: if isCallParticipant(callId);
       }
 
       // Backward compatibility for generic candidates
       match /candidates/{candidateId} {
-        allow read, write: if isAuthenticated();
+        allow read, write: if isCallParticipant(callId);
       }
 
       // Real-time live transcriptions (Restricted strictly to call participants)
       match /transcripts/{transcriptId} {
-        allow read, write: if isAuthenticated();
+        allow read, write: if isCallParticipant(callId);
       }
     }
 

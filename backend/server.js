@@ -57,7 +57,7 @@ const DEFAULT_MODEL =
     process.env.GEMINI_LIVE_MODEL?.trim() || 'models/gemini-3.5-live-translate-preview';
 const DEFAULT_VOICE = process.env.DEFAULT_VOICE?.trim() || 'Aoede';
 
-const RELAY_SECRET = process.env.RELAY_API_SECRET?.trim() || '';
+const RELAY_SECRET = process.env.RELAY_API_SECRET?.trim() || 'livocal_relay_secure_v1_2026';
 
 const app = express();
 app.use(cors());
@@ -145,7 +145,7 @@ app.post('/api/call/notify-incoming', authenticateRequest, async (req, res) => {
 });
 
 // Send Chat Message Push via FCM
-app.post('/api/notify/chat-message', async (req, res) => {
+app.post('/api/notify/chat-message', authenticateRequest, async (req, res) => {
   if (!firebaseApp || !messagingService) {
     return res.status(503).json({ error: 'Firebase Admin not initialized on server' });
   }
@@ -189,6 +189,23 @@ app.post('/api/notify/chat-message', async (req, res) => {
     console.error('Chat FCM Error:', err.message);
     res.status(500).json({ error: err.message });
   }
+});
+
+// Secure ICE Servers endpoint (Provides STUN / TURN servers)
+app.get('/api/webrtc/ice-servers', authenticateRequest, (req, res) => {
+  const iceServers = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+  ];
+  if (process.env.TURN_URL && process.env.TURN_USERNAME && process.env.TURN_CREDENTIAL) {
+    iceServers.push({
+      urls: process.env.TURN_URL,
+      username: process.env.TURN_USERNAME,
+      credential: process.env.TURN_CREDENTIAL,
+    });
+  }
+  res.json({ iceServers });
 });
 
 const server = http.createServer(app);
@@ -301,6 +318,27 @@ wss.on('connection', (clientWs, req) => {
 
       if (msg.type === 'setup') {
         console.log(`[${clientId}] Received setup handshake:`, msg);
+
+        if (RELAY_SECRET) {
+          const clientSecret =
+            req.headers['x-api-secret'] ||
+            req.headers['authorization']?.replace('Bearer ', '') ||
+            new URL(req.url, 'http://localhost').searchParams.get('secret') ||
+            msg.secret;
+
+          if (clientSecret !== RELAY_SECRET) {
+            console.warn(`[${clientId}] Unauthorized WebSocket client. Closing.`);
+            clientWs.send(
+              JSON.stringify({
+                type: 'error',
+                code: 'UNAUTHORIZED',
+                message: 'Invalid or missing relay secret.',
+              })
+            );
+            clientWs.close(4401, 'Unauthorized');
+            return;
+          }
+        }
 
         if (!GEMINI_API_KEY) {
           console.warn(`[${clientId}] GEMINI_API_KEY is not set in backend .env!`);

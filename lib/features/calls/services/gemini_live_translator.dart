@@ -143,12 +143,25 @@ CRITICAL OPERATING RULES:
   static const String prefRelayUrl = 'gemini_live_relay_url';
   static const String defaultRelayUrl =
       'wss://livocal-relay.onrender.com/ws/live-call';
+  static const String prefRelaySecret = 'gemini_live_relay_secret';
+  static const String defaultRelaySecret = 'livocal_relay_secure_v1_2026';
 
   static String getSavedRelayUrl() =>
       SharedPref.instance.getString(prefRelayUrl)?.trim() ?? defaultRelayUrl;
 
   static Future<void> saveRelayUrl(String url) async =>
       await SharedPref.instance.setString(prefRelayUrl, url.trim());
+
+  static String getSavedRelaySecret() {
+    final saved = SharedPref.instance.getString(prefRelaySecret)?.trim();
+    if (saved == null || saved.isEmpty) {
+      return defaultRelaySecret;
+    }
+    return saved;
+  }
+
+  static Future<void> saveRelaySecret(String secret) async =>
+      await SharedPref.instance.setString(prefRelaySecret, secret.trim());
 
   bool _isUsingRelay = false;
 
@@ -168,13 +181,20 @@ CRITICAL OPERATING RULES:
     final modelId = getSavedModelId();
     final voiceName = getSavedVoiceName();
     final relayUrl = getSavedRelayUrl();
+    final relaySecret = getSavedRelaySecret();
     final apiKey = getSavedApiKey();
 
     // 1. Try Backend Relay Server first (Zero-Trust Architecture)
     if (relayUrl.isNotEmpty) {
       try {
         debugPrint('Connecting to Gemini Live Backend Relay: $relayUrl');
-        _ws = await WebSocket.connect(relayUrl).timeout(
+        final headers = <String, dynamic>{
+          if (relaySecret.isNotEmpty) 'x-api-secret': relaySecret,
+        };
+        _ws = await WebSocket.connect(
+          relayUrl,
+          headers: headers,
+        ).timeout(
           const Duration(seconds: 4),
         );
         _ws!.pingInterval = const Duration(seconds: 15);
@@ -201,6 +221,7 @@ CRITICAL OPERATING RULES:
         // Send setup handshake to Backend Relay
         final setupPayload = {
           'type': 'setup',
+          'secret': relaySecret,
           'model': modelId,
           'voice': voiceName,
           'autoDetect': true,

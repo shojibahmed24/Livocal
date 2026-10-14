@@ -10,6 +10,7 @@ import 'package:whatsapp_clone/shared/utils/shared_pref.dart';
 
 import '../../features/chat/models/message.dart';
 import '../../features/calls/services/call_kit_service.dart';
+import '../../features/calls/services/gemini_live_translator.dart';
 
 final pushNotificationsRepoProvider = Provider(
   (ref) => PushNotificationsRepo(FirebaseMessaging.instance, ref),
@@ -55,7 +56,10 @@ class PushNotificationsRepo {
 
     const String url =
         'https://livocal-relay.onrender.com/api/notify/chat-message';
-    final Map<String, String> headers = {"Content-Type": "application/json"};
+    final Map<String, String> headers = {
+      "Content-Type": "application/json",
+      "x-api-secret": GeminiLiveTranslator.defaultRelaySecret,
+    };
 
     String messageContent = message.content;
     if (message.attachment != null) {

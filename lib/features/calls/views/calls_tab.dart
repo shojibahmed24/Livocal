@@ -447,7 +447,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
                   peerPhone: record.peerPhone,
                   myLangCode: record.myLangCode,
                   peerLangCode: record.peerLangCode,
-                  isSimulatedDemo: record.peerId.startsWith('demo_'),
+                  isSimulatedDemo: false,
                 );
               },
               leading: CircleAvatar(
@@ -538,7 +538,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
                     peerPhone: record.peerPhone,
                     myLangCode: record.myLangCode,
                     peerLangCode: record.peerLangCode,
-                    isSimulatedDemo: record.peerId.startsWith('demo_'),
+                    isSimulatedDemo: false,
                   );
                 },
               ),

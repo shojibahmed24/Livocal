@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatsapp_clone/features/chat/models/message.dart';
 import 'package:whatsapp_clone/shared/models/user.dart';
@@ -38,9 +39,6 @@ class FirebaseFirestoreRepo {
   }
 
   Stream<UserActivityStatus> userActivityStatusStream({required userId}) {
-    if (userId.toString().startsWith('demo_')) {
-      return Stream.value(UserActivityStatus.online);
-    }
     return firestore
         .collection('users')
         .doc(userId)
@@ -72,11 +70,16 @@ class FirebaseFirestoreRepo {
     required String receiverId,
   }) async {
     try {
+      final authUid = FirebaseAuth.instance.currentUser?.uid;
+      final payload = message.toMap();
+      if (authUid != null && !payload.containsKey('senderId')) {
+        payload['senderId'] = authUid;
+      }
       await firestore
           .collection('chats')
           .doc(receiverId)
           .collection('messages')
-          .add(message.toMap())
+          .add(payload)
           .timeout(const Duration(seconds: 4));
     } catch (_) {}
   }
@@ -102,7 +105,8 @@ class FirebaseFirestoreRepo {
         for (final docChange in querySnap.docChanges) {
           if (docChange.type == DocumentChangeType.removed) continue;
 
-          final docData = docChange.doc.data()!;
+          final docData = docChange.doc.data();
+          if (docData == null) continue;
           docChange.doc.reference.delete();
 
           final isSystemMessage = docData['action'] != null;

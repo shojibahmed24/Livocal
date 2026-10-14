@@ -1,7 +1,7 @@
 {
-  "name": "whatsup-gemini-live-relay",
+  "name": "livocal-gemini-live-relay",
   "version": "1.0.0",
-  "description": "Zero-Trust Gemini Multimodal Live API Bidirectional Audio Relay Server for WhatsUp",
+  "description": "Zero-Trust Gemini Multimodal Live API Bidirectional Audio Relay Server for Livocal",
   "main": "server.js",
   "type": "module",
   "scripts": {
@@ -9,13 +9,14 @@
     "dev": "node --watch server.js"
   },
   "keywords": [
+    "livocal",
     "gemini",
     "webrtc",
     "voice-translation",
     "websocket",
     "zero-trust"
   ],
-  "author": "WhatsUp AI Calling Team",
+  "author": "Livocal Team",
   "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",
