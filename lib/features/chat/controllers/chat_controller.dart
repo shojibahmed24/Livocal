@@ -117,7 +117,7 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
         id: '',
         name: 'Me',
         avatarUrl: '',
-        phone: Phone(rawNumber: '', countryCode: '', formattedNumber: ''),
+        phone: Phone(code: '', number: '', formattedNumber: ''),
         activityStatus: UserActivityStatus.offline,
       );
   set self(User val) => _self = val;
@@ -128,7 +128,7 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
         id: '',
         name: 'Status',
         avatarUrl: '',
-        phone: Phone(rawNumber: '', countryCode: '', formattedNumber: ''),
+        phone: Phone(code: '', number: '', formattedNumber: ''),
         activityStatus: UserActivityStatus.offline,
       );
   set other(User val) => _other = val;

@@ -130,6 +130,9 @@ class CallController extends StateNotifier<CallControllerState> {
     );
   }
 
+  CallLanguage get myLang => state.myLanguage;
+  CallLanguage get peerLang => state.peerLanguage;
+
   void refreshSettings() {
     state = state.copyWith(
       myLangCode: CallRepository.getMyLanguageCode(),
