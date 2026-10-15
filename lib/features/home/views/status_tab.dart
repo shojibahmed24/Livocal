@@ -436,10 +436,10 @@ class _StatusTabState extends ConsumerState<StatusTab>
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.lock, size: 12, color: Colors.grey),
+              const Icon(Icons.privacy_tip_outlined, size: 13, color: Colors.grey),
               const SizedBox(width: 6),
               Text(
-                'Your status updates are private and encrypted',
+                'Your status updates are protected by your privacy settings',
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
             ],

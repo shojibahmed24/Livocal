@@ -22,16 +22,26 @@ service firebase.storage {
     }
 
     // 2. Chat Attachments & Voice Notes
-    match /attachments/{fileName} {
-      // Authenticated users can read chat attachments
-      allow read: if request.auth != null;
-      // Authenticated users can upload new attachments (max 25MB per file, valid media/doc MIME only)
-      allow create: if request.auth != null
+    // Scoped 1-on-1 Chat Attachments: Strictly restricted to Sender and Receiver
+    match /attachments/{senderId}/{receiverId}/{fileName} {
+      allow read: if request.auth != null && (
+        request.auth.uid == senderId || request.auth.uid == receiverId
+      );
+      allow create: if request.auth != null && request.auth.uid == senderId
         && request.resource.size > 0
         && request.resource.size <= 25 * 1024 * 1024
         && fileName.size() <= 128
         && request.resource.contentType.matches('^(image|video|audio|application/pdf|text/plain).*');
-      // Chat attachments are immutable once uploaded (cannot be overwritten or deleted by anyone)
+      allow update, delete: if false;
+    }
+
+    // Deprecated legacy root attachments: Deny new uploads; read only if metadata proves ownership
+    match /attachments/{fileName} {
+      allow create: if false;
+      allow read: if request.auth != null && resource.metadata != null && (
+        resource.metadata.senderId == request.auth.uid ||
+        resource.metadata.receiverId == request.auth.uid
+      );
       allow update, delete: if false;
     }
 

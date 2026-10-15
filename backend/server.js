@@ -33,8 +33,10 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
 // Whitelist of valid Gemini 3.5 Live Translation voices
 const ALLOWED_VOICES = new Set(['Puck', 'Charon', 'Kore', 'Fenrir', 'Aoede']);
 
-// Concurrent WebSocket session tracking per user UID (Rate Limiting)
+// Concurrent WebSocket session tracking per user UID & per IP (Rate Limiting)
 const activeUserSessions = new Map();
+const ipWsConnections = new Map();
+const MAX_WS_PER_IP = 8;
 
 if (serviceAccount) {
   try {
@@ -127,6 +129,15 @@ const apiLimiter = rateLimit({
 });
 app.use('/api/', apiLimiter);
 
+// Specific rate limiter for push notification endpoints (prevent notification flooding)
+const pushLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30, // max 30 push notifications per minute per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many push notification requests. Please slow down.' },
+});
+
 /**
  * Strict Zero-Trust Firebase ID Token Authentication Middleware.
  * No hardcoded secrets, no x-api-secret fallback, no environment bypass.
@@ -181,6 +192,7 @@ app.get('/', (req, res) => {
 // Anti-Phishing: Enforces callerId = req.user.uid and pulls verified name/phone from Firestore
 app.post(
   '/api/call/notify-incoming',
+  pushLimiter,
   authenticateRequest,
   validateBody(CallNotifySchema),
   async (req, res) => {
@@ -196,6 +208,18 @@ app.post(
     }
 
     try {
+      // 0. Anti-Spam Relationship Check: Verify valid, active call session in Firestore
+      if (firestoreDb) {
+        const callDoc = await firestoreDb.collection('calls').doc(String(callId)).get();
+        if (!callDoc.exists) {
+          return res.status(403).json({ error: 'Forbidden: No active call record found for callId' });
+        }
+        const callData = callDoc.data();
+        if (callData.callerId !== callerUid || callData.calleeId !== targetUserId) {
+          return res.status(403).json({ error: 'Forbidden: Caller/callee mismatch with call session' });
+        }
+      }
+
       // 1. Authoritative caller identification: Lock caller to req.user.uid
       let verifiedCallerName = 'Livocal User';
       let verifiedCallerNumber = req.user.phone_number || '';
@@ -261,6 +285,7 @@ app.post(
 // Anti-Impersonation: Enforces authorId = req.user.uid and pulls verified name/avatar from Firestore
 app.post(
   '/api/notify/chat-message',
+  pushLimiter,
   authenticateRequest,
   validateBody(ChatMessageNotifySchema),
   async (req, res) => {
@@ -276,6 +301,23 @@ app.post(
     }
 
     try {
+      // 0. Anti-Spam Relationship Check: Verify verifiable message in Firestore sent by callerUid
+      if (firestoreDb) {
+        const msgDoc = await firestoreDb
+          .collection('chats')
+          .doc(receiverId)
+          .collection('messages')
+          .doc(String(messageId))
+          .get();
+        if (!msgDoc.exists) {
+          return res.status(403).json({ error: 'Forbidden: No verifiable message found in recipient inbox' });
+        }
+        const msgData = msgDoc.data();
+        if (msgData.senderId !== callerUid) {
+          return res.status(403).json({ error: 'Forbidden: Sender identity does not match message record' });
+        }
+      }
+
       // 1. Authoritative author identification
       let verifiedAuthorName = 'Livocal User';
       let verifiedAuthorAvatar = '';
@@ -500,9 +542,29 @@ CRITICAL OPERATING RULES:
 }
 
 wss.on('connection', (clientWs, req) => {
+  const clientIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
+
+  // Per-IP Connection Limiting (Pre-auth socket flood protection)
+  const currentIpCount = ipWsConnections.get(clientIp) || 0;
+  if (currentIpCount >= MAX_WS_PER_IP) {
+    console.warn(`[WSS] Connection rejected: IP ${clientIp} exceeded max WebSocket connections (${currentIpCount}/${MAX_WS_PER_IP})`);
+    if (clientWs.readyState === WebSocket.OPEN) {
+      clientWs.send(
+        JSON.stringify({
+          type: 'error',
+          code: 'IP_CONCURRENT_LIMIT_EXCEEDED',
+          message: 'Too many concurrent WebSocket connections from this IP address.',
+        })
+      );
+      clientWs.close(4429, 'Rate limit: Too many connections from IP');
+    }
+    return;
+  }
+  ipWsConnections.set(clientIp, currentIpCount + 1);
+
   activeSessionsCount++;
   const clientId = `client_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-  console.log(`[${clientId}] Client connected from ${req.socket.remoteAddress}`);
+  console.log(`[${clientId}] Client connected from ${clientIp}`);
 
   let geminiWs = null;
   let isGeminiReady = false;
@@ -526,6 +588,24 @@ wss.on('connection', (clientWs, req) => {
   let lastAudioSecond = Date.now();
   const MAX_AUDIO_CHUNKS_PER_SEC = 50;
 
+  // Pre-auth Handshake Timeout: Stalled unauthenticated connections killed after 15 seconds
+  const preAuthTimeout = setTimeout(() => {
+    if (!authenticatedUid && !isClosing) {
+      console.warn(`[${clientId}] Pre-auth setup handshake timeout (15s) from ${clientIp}. Terminating.`);
+      if (clientWs.readyState === WebSocket.OPEN) {
+        clientWs.send(
+          JSON.stringify({
+            type: 'error',
+            code: 'AUTH_TIMEOUT',
+            message: 'Setup authentication handshake was not received within 15 seconds.',
+          })
+        );
+        clientWs.close(4408, 'Pre-auth handshake timeout');
+      }
+      cleanup();
+    }
+  }, 15000);
+
   // Maximum call session duration limit: 60 minutes
   const sessionLimitTimer = setTimeout(() => {
     console.log(`[${clientId}] Session reached maximum 60 minute duration. Closing.`);
@@ -544,8 +624,16 @@ wss.on('connection', (clientWs, req) => {
   function cleanup() {
     if (isClosing) return;
     isClosing = true;
+    clearTimeout(preAuthTimeout);
     clearInterval(heartbeatInterval);
     clearTimeout(sessionLimitTimer);
+
+    const ipCount = ipWsConnections.get(clientIp) || 1;
+    if (ipCount <= 1) {
+      ipWsConnections.delete(clientIp);
+    } else {
+      ipWsConnections.set(clientIp, ipCount - 1);
+    }
 
     if (authenticatedUid && activeUserSessions.has(authenticatedUid)) {
       const userSessions = activeUserSessions.get(authenticatedUid);
@@ -688,6 +776,7 @@ wss.on('connection', (clientWs, req) => {
 
         // Rate Limiter: Max 2 concurrent sessions per authenticated user
         authenticatedUid = decodedUser.uid;
+        clearTimeout(preAuthTimeout);
         const userSessions = activeUserSessions.get(authenticatedUid) || new Set();
         if (userSessions.size >= 2) {
           console.warn(`[${clientId}] Rate limit: User ${authenticatedUid} reached max concurrent sessions (${userSessions.size}).`);

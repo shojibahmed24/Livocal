@@ -376,7 +376,8 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
     await UploadService.upload(
       taskId: message.id,
       file: message.attachment!.file!,
-      path: 'attachments/${message.attachment!.fileName}',
+      path:
+          'attachments/${message.senderId}/${message.receiverId}/${message.attachment!.fileName}',
       onUploadDone: (snapshot) async =>
           await uploadCompleteHandler(snapshot, message),
       onUploadError: () async => await stopUpload(message),

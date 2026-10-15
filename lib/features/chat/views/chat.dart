@@ -842,7 +842,7 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
                               : const Color.fromARGB(148, 248, 236, 130),
                         ),
                         child: Text(
-                          '🔒 Messages and calls are private and encrypted. Protected with zero-trust access control. Tap to learn more.',
+                          '🔒 Messages and calls are private and secured. Protected with zero-trust access control. Tap to learn more.',
                           style: TextStyle(
                             fontSize: 12.5,
                             color: isDarkTheme

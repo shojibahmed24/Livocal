@@ -730,7 +730,7 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
                             style: TextStyle(color: colorTheme.greyColor),
                           ),
                           TextSpan(
-                            text: 'private and encrypted',
+                            text: 'private and secured',
                             style: TextStyle(color: colorTheme.greenColor),
                           ),
                         ],

@@ -31,7 +31,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDxaUXWZs4Fkfo2IGbneHDSDGDrshMLYSU',
+    apiKey: 'AIzaSyCwlQsJhaQF30xjFV6xgm84k34kOz0Rj_0',
     appId: '1:729373303752:ios:073839fdb12829046bf757',
     messagingSenderId: '729373303752',
     projectId: 'livocal24',

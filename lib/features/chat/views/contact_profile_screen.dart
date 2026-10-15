@@ -379,9 +379,9 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                   const Divider(height: 1, indent: 56),
                   ListTile(
                     leading: const Icon(Icons.lock_outline, color: Color(0xFF8696A0)),
-                    title: const Text('Encryption'),
+                    title: const Text('Encryption & Security'),
                     subtitle: const Text(
-                      'Messages and calls are private and encrypted. Tap to verify.',
+                      'Messages and calls are private and secured. Tap to learn more.',
                       style: TextStyle(fontSize: 12),
                     ),
                     trailing: const Icon(Icons.lock, color: Color(0xFF00A884), size: 18),
