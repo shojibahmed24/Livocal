@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:livocal/features/chat/views/chat.dart';
 import 'package:livocal/shared/models/messages.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/widgets/shimmer_skeleton.dart';
@@ -62,42 +63,35 @@ class _StarredMessagesScreenState extends ConsumerState<StarredMessagesScreen> {
   }
 
   void _confirmUnstarAll(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showDialog(
+    showAppDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
-        title: const Text('Unstar all messages?'),
-        content: const Text(
+      title: 'Unstar all messages?',
+      icon: Icons.star_border_rounded,
+      iconColor: Colors.amber,
+      contentText:
           'Are you sure you want to unstar all messages? This will remove all starred items from your list.',
+      actions: [
+        AppDialogAction(
+          label: 'CANCEL',
+          onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('CANCEL'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await SharedPref.instance.setStringList('starred_message_ids', []);
-              await _loadStarredMessages();
-              if (context.mounted) {
-                showSnackBar(
-                  context: context,
-                  content: 'All messages have been unstarred.',
-                  type: SnacBarType.info,
-                );
-              }
-            },
-            child: const Text('UNSTAR ALL'),
-          ),
-        ],
-      ),
+        AppDialogAction(
+          label: 'UNSTAR ALL',
+          isDestructive: true,
+          onPressed: () async {
+            Navigator.pop(context);
+            await SharedPref.instance.setStringList('starred_message_ids', []);
+            await _loadStarredMessages();
+            if (context.mounted) {
+              showSnackBar(
+                context: context,
+                content: 'All messages have been unstarred.',
+                type: SnacBarType.info,
+              );
+            }
+          },
+        ),
+      ],
     );
   }
 
@@ -144,7 +138,18 @@ class _StarredMessagesScreenState extends ConsumerState<StarredMessagesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Starred messages'),
+        backgroundColor: isDark ? AppColors.darkSurface : AppColors.primary,
+        foregroundColor: Colors.white,
+        scrolledUnderElevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Starred messages',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         actions: [
           if (_starredMessages.isNotEmpty)
             PopupMenuButton<String>(

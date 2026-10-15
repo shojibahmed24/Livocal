@@ -8,11 +8,11 @@ import 'package:livocal/features/calls/services/gemini_live_translator.dart';
 import 'package:livocal/features/home/views/profile_edit_screen.dart';
 import 'package:livocal/features/settings/views/qr_code_screen.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/widgets/settings_row.dart';
 import 'package:livocal/theme/app_colors.dart';
-import 'package:livocal/theme/app_tokens.dart';
 import 'package:livocal/theme/theme.dart';
 import 'package:livocal/features/settings/views/account_settings_screen.dart';
 import 'package:livocal/features/settings/views/privacy_settings_screen.dart';
@@ -41,100 +41,86 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void _showThemeSelectionDialog() {
     final currentTheme = ref.read(themeModeProvider);
 
-    showDialog(
+    showAppDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1F2C34)
-            : Colors.white,
-        title: const Text('Choose Theme'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RadioListTile<ThemeMode>(
-              title: const Text('System default'),
-              value: ThemeMode.system,
-              groupValue: currentTheme,
-              activeColor: AppColors.primary,
-              onChanged: (mode) {
-                if (mode != null) {
-                  ref.read(themeModeProvider.notifier).setThemeMode(mode);
-                  Navigator.pop(ctx);
-                }
-              },
-            ),
-            RadioListTile<ThemeMode>(
-              title: const Text('Light'),
-              value: ThemeMode.light,
-              groupValue: currentTheme,
-              activeColor: AppColors.primary,
-              onChanged: (mode) {
-                if (mode != null) {
-                  ref.read(themeModeProvider.notifier).setThemeMode(mode);
-                  Navigator.pop(ctx);
-                }
-              },
-            ),
-            RadioListTile<ThemeMode>(
-              title: const Text('Dark'),
-              value: ThemeMode.dark,
-              groupValue: currentTheme,
-              activeColor: AppColors.primary,
-              onChanged: (mode) {
-                if (mode != null) {
-                  ref.read(themeModeProvider.notifier).setThemeMode(mode);
-                  Navigator.pop(ctx);
-                }
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('CANCEL'),
+      title: 'Choose Theme',
+      icon: Icons.brightness_6_rounded,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          RadioListTile<ThemeMode>(
+            title: const Text('System default'),
+            value: ThemeMode.system,
+            groupValue: currentTheme,
+            activeColor: AppColors.primary,
+            onChanged: (mode) {
+              if (mode != null) {
+                ref.read(themeModeProvider.notifier).setThemeMode(mode);
+                Navigator.pop(context);
+              }
+            },
+          ),
+          RadioListTile<ThemeMode>(
+            title: const Text('Light'),
+            value: ThemeMode.light,
+            groupValue: currentTheme,
+            activeColor: AppColors.primary,
+            onChanged: (mode) {
+              if (mode != null) {
+                ref.read(themeModeProvider.notifier).setThemeMode(mode);
+                Navigator.pop(context);
+              }
+            },
+          ),
+          RadioListTile<ThemeMode>(
+            title: const Text('Dark'),
+            value: ThemeMode.dark,
+            groupValue: currentTheme,
+            activeColor: AppColors.primary,
+            onChanged: (mode) {
+              if (mode != null) {
+                ref.read(themeModeProvider.notifier).setThemeMode(mode);
+                Navigator.pop(context);
+              }
+            },
           ),
         ],
       ),
+      actions: [
+        AppDialogAction(
+          label: 'CANCEL',
+          onPressed: () => Navigator.pop(context),
+        ),
+      ],
     );
   }
 
   void _showLogoutDialog() {
-    showDialog(
+    showAppDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1F2C34)
-            : Colors.white,
-        title: const Text(
-          'Log out of Livocal?',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: const Text(
+      title: 'Log out of Livocal?',
+      icon: Icons.logout_rounded,
+      iconColor: Colors.redAccent,
+      contentText:
           'Are you sure you want to log out? Your local messages and credentials will be safely preserved in local storage.',
+      actions: [
+        AppDialogAction(
+          label: 'CANCEL',
+          onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('CANCEL'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await AuthController.logout(
-                context: context,
-                ref: ref,
-                userId: widget.user.id,
-              );
-            },
-            child: const Text('LOG OUT'),
-          ),
-        ],
-      ),
+        AppDialogAction(
+          label: 'LOG OUT',
+          isDestructive: true,
+          onPressed: () async {
+            Navigator.pop(context);
+            await AuthController.logout(
+              context: context,
+              ref: ref,
+              userId: widget.user.id,
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -144,140 +130,133 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     String selectedModel = GeminiLiveTranslator.getSavedModelId();
     String selectedVoice = GeminiLiveTranslator.getSavedVoiceName();
 
-    showDialog(
+    showAppDialog(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          return AlertDialog(
-            backgroundColor: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.darkSurface
-                : AppColors.lightBackground,
-            shape: const RoundedRectangleBorder(borderRadius: AppRadius.lg),
-            title: const Row(
-              children: [
-                Icon(Icons.auto_awesome, color: AppColors.primary),
-                SizedBox(width: 8),
-                Text('Gemini Live Voice Settings', style: TextStyle(fontSize: 18)),
-              ],
+      title: 'Gemini Live Voice Settings',
+      icon: Icons.auto_awesome,
+      content: StatefulBuilder(
+        builder: (ctx, setDialogState) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Gemini API Key (Optional if Backend Relay is active):',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
             ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Gemini API Key (Optional if Backend Relay is active):',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: apiKeyController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      hintText: 'AIzaSy...',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'AI Live Translation Model:',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 6),
-                  DropdownButtonFormField<String>(
-                    value: GeminiLiveTranslator.modelPresets.any((m) => m.id == selectedModel)
-                        ? selectedModel
-                        : GeminiLiveTranslator.modelPresets.first.id,
-                    isExpanded: true,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                    items: GeminiLiveTranslator.modelPresets.map((preset) {
-                      return DropdownMenuItem(
-                        value: preset.id,
-                        child: Text(preset.title, style: const TextStyle(fontSize: 13)),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) {
-                        setDialogState(() => selectedModel = val);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'AI Live Voice Persona:',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 6),
-                  DropdownButtonFormField<String>(
-                    value: GeminiLiveTranslator.availableVoices.contains(selectedVoice)
-                        ? selectedVoice
-                        : GeminiLiveTranslator.availableVoices.first,
-                    isExpanded: true,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                    items: GeminiLiveTranslator.availableVoices.map((voice) {
-                      return DropdownMenuItem(
-                        value: voice,
-                        child: Text(voice, style: const TextStyle(fontSize: 13)),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) {
-                        setDialogState(() => selectedVoice = val);
-                      }
-                    },
-                  ),
-                ],
+            const SizedBox(height: 6),
+            TextField(
+              controller: apiKeyController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                hintText: 'AIzaSy...',
+                border: OutlineInputBorder(),
+                isDense: true,
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('CANCEL'),
+            const SizedBox(height: 16),
+            const Text(
+              'AI Live Translation Model:',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
+            DropdownButtonFormField<String>(
+              value: GeminiLiveTranslator.modelPresets
+                      .any((m) => m.id == selectedModel)
+                  ? selectedModel
+                  : GeminiLiveTranslator.modelPresets.first.id,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                isDense: true,
               ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () async {
-                  await GeminiLiveTranslator.saveApiKey(apiKeyController.text);
-                  await GeminiLiveTranslator.saveModelId(selectedModel);
-                  await GeminiLiveTranslator.saveVoiceName(selectedVoice);
-                  if (context.mounted) {
-                    Navigator.pop(ctx);
-                    showSnackBar(
-                      context: context,
-                      content: 'Gemini Live settings saved successfully!',
-                      type: SnacBarType.info,
-                    );
-                  }
-                },
-                child: const Text('SAVE'),
+              items: GeminiLiveTranslator.modelPresets.map((preset) {
+                return DropdownMenuItem(
+                  value: preset.id,
+                  child:
+                      Text(preset.title, style: const TextStyle(fontSize: 13)),
+                );
+              }).toList(),
+              onChanged: (val) {
+                if (val != null) {
+                  setDialogState(() => selectedModel = val);
+                }
+              },
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'AI Live Voice Persona:',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
+            DropdownButtonFormField<String>(
+              value: GeminiLiveTranslator.availableVoices.contains(selectedVoice)
+                  ? selectedVoice
+                  : GeminiLiveTranslator.availableVoices.first,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                isDense: true,
               ),
-            ],
-          );
-        },
+              items: GeminiLiveTranslator.availableVoices.map((voice) {
+                return DropdownMenuItem(
+                  value: voice,
+                  child: Text(voice, style: const TextStyle(fontSize: 13)),
+                );
+              }).toList(),
+              onChanged: (val) {
+                if (val != null) {
+                  setDialogState(() => selectedVoice = val);
+                }
+              },
+            ),
+          ],
+        ),
       ),
+      actions: [
+        AppDialogAction(
+          label: 'CANCEL',
+          onPressed: () => Navigator.pop(context),
+        ),
+        AppDialogAction(
+          label: 'SAVE',
+          isPrimary: true,
+          onPressed: () async {
+            await GeminiLiveTranslator.saveApiKey(apiKeyController.text);
+            await GeminiLiveTranslator.saveModelId(selectedModel);
+            await GeminiLiveTranslator.saveVoiceName(selectedVoice);
+            if (context.mounted) {
+              Navigator.pop(context);
+              showSnackBar(
+                context: context,
+                content: 'Gemini Live settings saved successfully!',
+                type: SnacBarType.info,
+              );
+            }
+          },
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorTheme = Theme.of(context).custom.colorTheme;
     final textTheme = Theme.of(context).custom.textTheme;
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        backgroundColor: isDark ? AppColors.darkSurface : AppColors.primary,
+        foregroundColor: Colors.white,
+        scrolledUnderElevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
           'Settings',
-          style: textTheme.titleLarge.copyWith(color: colorTheme.iconColor),
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: ListView(

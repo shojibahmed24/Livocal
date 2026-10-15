@@ -2,9 +2,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/network_tracker.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/shared/widgets/settings_row.dart';
 import 'package:livocal/theme/app_colors.dart';
 
 class StorageSettingsScreen extends ConsumerStatefulWidget {
@@ -135,39 +137,39 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
     required String current,
     required ValueChanged<String> onSelected,
   }) {
-    showDialog(
+    showAppDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1F2C34)
-            : Colors.white,
-        title: Text(title),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: ['No media', 'Photos', 'Photos, Audio', 'All media']
-              .map(
-                (opt) => RadioListTile<String>(
-                  title: Text(opt),
-                  value: opt,
-                  groupValue: current,
-                  activeColor: AppColors.primary,
-                  onChanged: (val) {
-                    if (val != null) {
-                      onSelected(val);
-                      Navigator.pop(ctx);
-                    }
-                  },
-                ),
-              )
-              .toList(),
-        ),
+      title: title,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: ['No media', 'Photos', 'Photos, Audio', 'All media']
+            .map(
+              (opt) => RadioListTile<String>(
+                title: Text(opt),
+                value: opt,
+                groupValue: current,
+                activeColor: AppColors.primary,
+                onChanged: (val) {
+                  if (val != null) {
+                    onSelected(val);
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+            )
+            .toList(),
       ),
+      actions: [
+        AppDialogAction(
+          label: 'CANCEL',
+          onPressed: () => Navigator.pop(context),
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Theme.of(context).colorScheme.primary;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final sentBytes = NetworkTracker.getSentBytes();
@@ -175,129 +177,135 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Storage and data'),
+        backgroundColor: isDark ? AppColors.darkSurface : AppColors.primary,
+        foregroundColor: Colors.white,
+        scrolledUnderElevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Storage and data',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       body: ListView(
         children: [
-          ListTile(
-            leading: Icon(Icons.folder_outlined, color: primaryColor),
-            title: const Text('Manage storage'),
-            subtitle: Text(
-              _isLoadingSizes
-                  ? 'Calculating real disk usage...'
-                  : 'Database: ${_formatBytes(_dbBytes)} • Cache: ${_formatBytes(_cacheBytes)}',
-            ),
-            trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+          const SettingsSectionHeader(title: 'Storage & Network Usage'),
+          SettingsRow(
+            icon: Icons.folder_outlined,
+            title: 'Manage storage',
+            subtitle: _isLoadingSizes
+                ? 'Calculating real disk usage...'
+                : 'Database: ${_formatBytes(_dbBytes)} • Cache: ${_formatBytes(_cacheBytes)}',
             onTap: () {
-              showDialog(
+              showAppDialog(
                 context: context,
-                builder: (ctx) => AlertDialog(
-                  backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
-                  title: const Text('Storage Breakdown'),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('• App Database (Isar): ${_formatBytes(_dbBytes)}'),
-                      const SizedBox(height: 8),
-                      Text('• Cached Media & Temporary Audio: ${_formatBytes(_cacheBytes)}'),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Total App Footprint: ${_formatBytes(_dbBytes + _cacheBytes)}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ],
+                title: 'Storage Breakdown',
+                icon: Icons.pie_chart_outline_rounded,
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('• App Database (Isar): ${_formatBytes(_dbBytes)}'),
+                    const SizedBox(height: 8),
+                    Text(
+                        '• Cached Media & Temporary Audio: ${_formatBytes(_cacheBytes)}'),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Total App Footprint: ${_formatBytes(_dbBytes + _cacheBytes)}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                actions: [
+                  AppDialogAction(
+                    label: 'CLEAR CACHE',
+                    isDestructive: true,
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _clearCache();
+                    },
                   ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text('CLOSE'),
-                    ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        _clearCache();
-                      },
-                      child: const Text('CLEAR CACHE'),
-                    ),
-                  ],
-                ),
+                  AppDialogAction(
+                    label: 'CLOSE',
+                    isPrimary: true,
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
               );
             },
           ),
-          ListTile(
-            leading: Icon(Icons.data_usage, color: primaryColor),
-            title: const Text('Network usage'),
-            subtitle: Text('${_formatBytes(sentBytes)} sent • ${_formatBytes(recvBytes)} received'),
-            trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+          const Divider(height: 1),
+          SettingsRow(
+            icon: Icons.data_usage_rounded,
+            title: 'Network usage',
+            subtitle:
+                '${_formatBytes(sentBytes)} sent • ${_formatBytes(recvBytes)} received',
             onTap: () {
-              showDialog(
+              showAppDialog(
                 context: context,
-                builder: (ctx) => AlertDialog(
-                  backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
-                  title: const Text('Network Usage Details'),
-                  content: (sentBytes == 0 && recvBytes == 0)
-                      ? const Text('No network usage recorded yet.')
-                      : Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('• Total Traffic: ${_formatBytes(sentBytes + recvBytes)}'),
-                            const SizedBox(height: 6),
-                            Text('• Sent: ${_formatBytes(sentBytes)}'),
-                            const SizedBox(height: 6),
-                            Text('• Received: ${_formatBytes(recvBytes)}'),
-                          ],
-                        ),
-                  actions: [
-                    if (sentBytes > 0 || recvBytes > 0)
-                      TextButton(
-                        onPressed: () {
-                          NetworkTracker.resetUsage();
-                          Navigator.pop(ctx);
-                          setState(() {});
-                        },
-                        child: const Text('RESET USAGE', style: TextStyle(color: Colors.redAccent)),
+                title: 'Network Usage Details',
+                icon: Icons.network_check_rounded,
+                content: (sentBytes == 0 && recvBytes == 0)
+                    ? const Text('No network usage recorded yet.')
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                              '• Total Traffic: ${_formatBytes(sentBytes + recvBytes)}'),
+                          const SizedBox(height: 6),
+                          Text('• Sent: ${_formatBytes(sentBytes)}'),
+                          const SizedBox(height: 6),
+                          Text('• Received: ${_formatBytes(recvBytes)}'),
+                        ],
                       ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text('CLOSE'),
+                actions: [
+                  if (sentBytes > 0 || recvBytes > 0)
+                    AppDialogAction(
+                      label: 'RESET USAGE',
+                      isDestructive: true,
+                      onPressed: () {
+                        NetworkTracker.resetUsage();
+                        Navigator.pop(context);
+                        setState(() {});
+                      },
                     ),
-                  ],
-                ),
+                  AppDialogAction(
+                    label: 'CLOSE',
+                    isPrimary: true,
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
               );
             },
           ),
-          SwitchListTile(
-            secondary: Icon(Icons.phone_in_talk_outlined, color: primaryColor),
-            title: const Text('Use less data for calls'),
-            subtitle: const Text('Optimizes Opus codec audio bitrate during low network connectivity'),
-            value: _lessDataForCalls,
-            activeTrackColor: AppColors.primary,
-            onChanged: (val) {
-              setState(() => _lessDataForCalls = val);
-              SharedPref.instance.setBool('storage_less_data_calls', val);
-            },
-          ),
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
-            child: Text(
-              'Media auto-download',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
-              ),
+          const Divider(height: 1),
+          const SettingsSectionHeader(title: 'Call Settings'),
+          SettingsRow(
+            icon: Icons.phone_in_talk_outlined,
+            title: 'Use less data for calls',
+            subtitle:
+                'Optimizes Opus codec audio bitrate during low network connectivity',
+            showChevron: false,
+            trailing: Switch(
+              value: _lessDataForCalls,
+              activeTrackColor: AppColors.primary,
+              activeThumbColor: Colors.white,
+              onChanged: (val) {
+                setState(() => _lessDataForCalls = val);
+                SharedPref.instance.setBool('storage_less_data_calls', val);
+              },
             ),
           ),
-          ListTile(
-            title: const Text('When using mobile data'),
-            subtitle: Text(_mobileDataAuto, style: const TextStyle(color: Colors.grey)),
+          const Divider(height: 1),
+          const SettingsSectionHeader(title: 'Media auto-download'),
+          SettingsRow(
+            icon: Icons.signal_cellular_alt_rounded,
+            title: 'When using mobile data',
+            subtitle: _mobileDataAuto,
             onTap: () => _showAutoDownloadDialog(
               title: 'When using mobile data',
               current: _mobileDataAuto,
@@ -307,9 +315,11 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
               },
             ),
           ),
-          ListTile(
-            title: const Text('When connected to Wi-Fi'),
-            subtitle: Text(_wifiAuto, style: const TextStyle(color: Colors.grey)),
+          const Divider(height: 1),
+          SettingsRow(
+            icon: Icons.wifi_rounded,
+            title: 'When connected to Wi-Fi',
+            subtitle: _wifiAuto,
             onTap: () => _showAutoDownloadDialog(
               title: 'When connected to Wi-Fi',
               current: _wifiAuto,
@@ -319,9 +329,11 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
               },
             ),
           ),
-          ListTile(
-            title: const Text('When roaming'),
-            subtitle: Text(_roamingAuto, style: const TextStyle(color: Colors.grey)),
+          const Divider(height: 1),
+          SettingsRow(
+            icon: Icons.public_rounded,
+            title: 'When roaming',
+            subtitle: _roamingAuto,
             onTap: () => _showAutoDownloadDialog(
               title: 'When roaming',
               current: _roamingAuto,

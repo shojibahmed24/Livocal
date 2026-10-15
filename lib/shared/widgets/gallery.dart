@@ -125,9 +125,11 @@ class _GalleryState extends ConsumerState<Gallery>
 
                   Navigator.pop(context);
                 },
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_back,
-                  color: AppColorsDark.iconColor,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white
+                      : AppColors.lightIcon,
                 ),
               ),
               title: Text(
@@ -143,9 +145,11 @@ class _GalleryState extends ConsumerState<Gallery>
                   IconButton(
                     onPressed:
                         ref.read(galleryStateProvider.notifier).toggleCanSelect,
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.check_box_outlined,
-                      color: AppColorsDark.iconColor,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : AppColors.lightIcon,
                     ),
                   )
               ],
@@ -472,9 +476,11 @@ class _AlbumViewState extends ConsumerState<AlbumView> {
 
                   Navigator.pop(context);
                 },
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_back,
-                  color: AppColorsDark.unselectedLabelColor,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white
+                      : AppColors.lightIcon,
                 ),
               ),
               title: Text(

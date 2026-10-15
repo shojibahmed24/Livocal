@@ -49,19 +49,19 @@ class CallScaffold extends StatelessWidget {
     return Container(
       width: 120,
       height: 120,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF00B386),
-            Color(0xFF007A5C),
+            AppColors.primary,
+            AppColors.primaryDark,
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: Color(0x3300B386),
+            color: AppColors.primary.withValues(alpha: 0.2),
             blurRadius: 18,
             spreadRadius: 2,
           ),

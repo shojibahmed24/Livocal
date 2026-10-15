@@ -19,6 +19,9 @@ class ConfirmationDialog extends StatelessWidget {
     final actions = actionCallbacks.entries.toList();
     return AlertDialog(
       backgroundColor: backgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(16)),
+      ),
       content: child,
       actionsAlignment: MainAxisAlignment.spaceBetween,
       actions: [

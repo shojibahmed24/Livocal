@@ -223,7 +223,7 @@ class _UniversalLanguagePickerSheetState
                         ),
                       ),
                       subtitle: Text(
-                        '${lang.region} • Code: ${lang.bcp47}',
+                        lang.region,
                         style: TextStyle(
                           color: colorTheme.greyColor,
                           fontSize: 12,

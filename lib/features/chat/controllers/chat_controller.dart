@@ -23,7 +23,8 @@ import 'package:livocal/shared/repositories/upload_service.dart';
 import 'package:livocal/shared/utils/attachment_utils.dart';
 import 'package:livocal/shared/utils/storage_paths.dart';
 import 'package:livocal/shared/widgets/camera.dart';
-import 'package:livocal/theme/theme.dart';
+import 'package:livocal/theme/app_tokens.dart';
+import 'package:livocal/theme/color_theme.dart';
 
 import '../../../shared/repositories/download_service.dart';
 import '../../../shared/repositories/push_notifications.dart';
@@ -617,17 +618,20 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return AlertDialog(
           key: dialogKey,
+          backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightBackground,
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.lg),
           content: Row(
             children: [
-              const CircularProgressIndicator(),
+              CircularProgressIndicator(color: AppColors.primary),
               const SizedBox(width: 24),
               Text(
                 'Preparing media',
                 style: TextStyle(
                   fontSize: 16,
-                  color: Theme.of(context).custom.colorTheme.textColor2,
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                 ),
               ),
             ],

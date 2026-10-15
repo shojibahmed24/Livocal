@@ -7,6 +7,8 @@ import 'package:livocal/features/auth/views/user_details.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 
+import 'package:livocal/theme/app_tokens.dart';
+import 'package:livocal/theme/color_theme.dart';
 import 'package:livocal/theme/theme.dart';
 
 import '../../../shared/models/user.dart';
@@ -163,7 +165,10 @@ class VerificationController {
             });
           }
 
+          final isDark = Theme.of(context).brightness == Brightness.dark;
           return AlertDialog(
+            backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightBackground,
+            shape: RoundedRectangleBorder(borderRadius: AppRadius.lg),
             actionsPadding: const EdgeInsets.all(0),
             content: Row(
               children: [
@@ -268,7 +273,10 @@ class VerificationController {
                 });
               }
 
+              final isDark = Theme.of(context).brightness == Brightness.dark;
               return AlertDialog(
+                backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightBackground,
+                shape: RoundedRectangleBorder(borderRadius: AppRadius.lg),
                 actionsPadding: const EdgeInsets.all(0),
                 content: Row(
                   children: [

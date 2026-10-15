@@ -6,6 +6,7 @@ import 'package:livocal/features/calls/controllers/call_controller.dart';
 import 'package:livocal/features/calls/models/call_model.dart';
 import 'package:livocal/features/calls/services/webrtc_call_client.dart';
 import 'package:livocal/features/calls/views/widgets/language_picker_sheet.dart';
+import 'package:livocal/theme/color_theme.dart';
 import 'package:livocal/theme/theme.dart';
 
 class ActiveCallScreen extends ConsumerStatefulWidget {
@@ -17,14 +18,35 @@ class ActiveCallScreen extends ConsumerStatefulWidget {
 
 class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
   final ScrollController _transcriptScrollController = ScrollController();
+  bool _userScrolledUp = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _transcriptScrollController.addListener(_onTranscriptScroll);
+  }
+
+  void _onTranscriptScroll() {
+    if (!_transcriptScrollController.hasClients) return;
+    final maxScroll = _transcriptScrollController.position.maxScrollExtent;
+    final currentScroll = _transcriptScrollController.position.pixels;
+    final isScrolledUp = currentScroll < maxScroll - 50;
+    if (isScrolledUp != _userScrolledUp) {
+      setState(() {
+        _userScrolledUp = isScrolledUp;
+      });
+    }
+  }
 
   @override
   void dispose() {
+    _transcriptScrollController.removeListener(_onTranscriptScroll);
     _transcriptScrollController.dispose();
     super.dispose();
   }
 
-  void _scrollToBottom() {
+  void _scrollToBottom({bool force = false}) {
+    if (_userScrolledUp && !force) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_transcriptScrollController.hasClients) {
         _transcriptScrollController.animateTo(
@@ -303,9 +325,10 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                             ],
                           ),
                         ),
-                        Switch.adaptive(
+                        Switch(
                           value: callState.translationEnabled,
-                          activeColor: colorTheme.greenColor,
+                          activeTrackColor: AppColors.primary,
+                          activeThumbColor: Colors.white,
                           onChanged: (val) {
                             HapticFeedback.lightImpact();
                             controller.toggleTranslationEnabled(val);
@@ -449,7 +472,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                     color: const Color(0xFF111B21),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.06),
+                      color: Colors.white.withValues(alpha: 0.06),
                     ),
                   ),
                   child: callState.transcripts.isEmpty
@@ -465,13 +488,61 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                             ),
                           ),
                         )
-                      : ListView.builder(
-                          controller: _transcriptScrollController,
-                          itemCount: callState.transcripts.length,
-                          itemBuilder: (context, index) {
-                            final item = callState.transcripts[index];
-                            return _TranscriptBubbleCard(entry: item);
-                          },
+                      : Stack(
+                          children: [
+                            ListView.builder(
+                              controller: _transcriptScrollController,
+                              itemCount: callState.transcripts.length,
+                              itemBuilder: (context, index) {
+                                final item = callState.transcripts[index];
+                                return _TranscriptBubbleCard(entry: item);
+                              },
+                            ),
+                            if (_userScrolledUp)
+                              Positioned(
+                                bottom: 6,
+                                right: 6,
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() => _userScrolledUp = false);
+                                    _scrollToBottom(force: true);
+                                  },
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary,
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.35),
+                                          blurRadius: 6,
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.arrow_downward,
+                                            color: Colors.white, size: 13),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          'Latest',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                 ),
               ),
@@ -664,13 +735,13 @@ class _TranscriptBubbleCard extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: isSelf
-              ? const Color(0xFF005C4B).withOpacity(0.85)
+              ? const Color(0xFF005C4B).withValues(alpha: 0.85)
               : const Color(0xFF1F2C34),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelf
-                ? const Color(0xFF05A585).withOpacity(0.4)
-                : const Color(0xFF53BDEC).withOpacity(0.35),
+                ? AppColors.primary.withValues(alpha: 0.4)
+                : const Color(0xFF53BDEC).withValues(alpha: 0.35),
           ),
         ),
         child: Column(

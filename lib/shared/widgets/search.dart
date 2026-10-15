@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:livocal/theme/color_theme.dart';
 import 'package:livocal/theme/theme.dart';
 
 class ScaffoldWithSearch extends StatefulWidget {
@@ -98,8 +99,14 @@ class _ScaffoldWithSearchState extends State<ScaffoldWithSearch> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final searchAppBar = AppBar(
       elevation: 0.0,
+      scrolledUnderElevation: 0,
+      backgroundColor: isDark ? AppColors.darkSurface : AppColors.primary,
+      foregroundColor: Colors.white,
+      iconTheme: const IconThemeData(color: Colors.white),
+      actionsIconTheme: const IconThemeData(color: Colors.white),
       title: TextField(
         onChanged: (value) {
           if (value.isNotEmpty) {

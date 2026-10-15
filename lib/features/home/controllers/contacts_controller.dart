@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:livocal/features/home/data/repositories/contact_repository.dart';
 import 'package:livocal/shared/models/contact.dart';
 import 'package:livocal/features/chat/views/chat.dart';
+import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/abc.dart';
@@ -134,9 +135,8 @@ class ContactPickerController extends StateNotifier<List<Contact>> {
 
   void showHelp() {
     launchUrl(
-      Uri.parse(
-        'https://faq.whatsapp.com/cxt?entrypointid=missingcontacts&lg=en&lc=GB&platform=android&anid=c93a2583-9f2f-4e30-8b8c-ed7e6cc01c4d',
-      ),
+      Uri.parse(AppConfig.missingContactsHelpUrl),
+      mode: LaunchMode.externalApplication,
     );
   }
 

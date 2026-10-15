@@ -97,15 +97,23 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.contactName),
-          bottom: TabBar(
-            indicatorColor: primaryColor,
-            labelColor: primaryColor,
-            unselectedLabelColor: isDark ? Colors.white60 : Colors.black54,
+          backgroundColor: isDark ? AppColors.darkSurface : AppColors.primary,
+          foregroundColor: Colors.white,
+          scrolledUnderElevation: 0,
+          iconTheme: const IconThemeData(color: Colors.white),
+          actionsIconTheme: const IconThemeData(color: Colors.white),
+          title: Text(
+            widget.contactName,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          bottom: const TabBar(
+            indicatorColor: Colors.white,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
             tabs: [
-              Tab(text: 'Media (${_mediaMessages.length})'),
-              Tab(text: 'Docs (${_docMessages.length})'),
-              Tab(text: 'Links (${_linkMessages.length})'),
+              Tab(text: 'Media'),
+              Tab(text: 'Docs'),
+              Tab(text: 'Links'),
             ],
           ),
         ),

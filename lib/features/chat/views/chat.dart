@@ -23,13 +23,13 @@ import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/widgets/bottom_inset.dart';
 import 'package:livocal/shared/widgets/shimmer_skeleton.dart';
 import 'package:livocal/theme/app_tokens.dart';
 import 'package:livocal/theme/color_theme.dart';
 import 'package:livocal/theme/theme.dart';
-import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 
 import '../../../shared/widgets/emoji_picker.dart';
@@ -90,10 +90,18 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     final recordingState = ref.watch(
       chatControllerProvider.select((chatState) => chatState.recordingState),
     );
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final appBarBg = isDark ? AppColors.darkSurface : AppColors.primary;
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
+        backgroundColor: appBarBg,
+        foregroundColor: Colors.white,
+        scrolledUnderElevation: 0,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
         titleSpacing: 0.0,
         title: InkWell(
           borderRadius: BorderRadius.circular(8),
@@ -227,31 +235,23 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                   );
                   break;
                 case 'clear_chat':
-                  final confirmed = await showDialog<bool>(
+                  final confirmed = await showAppDialog<bool>(
                     context: context,
-                    builder: (ctx) => AlertDialog(
-                      backgroundColor: Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFF1F2C34)
-                          : Colors.white,
-                      title: const Text('Clear this chat?'),
-                      content: const Text(
-                        'Messages will be cleared from this device.',
+                    title: 'Clear this chat?',
+                    contentText: 'Messages will be cleared from this device.',
+                    icon: Icons.delete_sweep_outlined,
+                    iconColor: Colors.redAccent,
+                    actions: [
+                      AppDialogAction(
+                        label: 'CANCEL',
+                        onPressed: () => Navigator.pop(context, false),
                       ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx, false),
-                          child: const Text('CANCEL'),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.redAccent,
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: () => Navigator.pop(ctx, true),
-                          child: const Text('CLEAR CHAT'),
-                        ),
-                      ],
-                    ),
+                      AppDialogAction(
+                        label: 'CLEAR CHAT',
+                        isDestructive: true,
+                        onPressed: () => Navigator.pop(context, true),
+                      ),
+                    ],
                   );
                   if (confirmed == true && context.mounted) {
                     final chatId = getChatId(self.id, other.id);

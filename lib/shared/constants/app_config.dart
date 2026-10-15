@@ -40,4 +40,10 @@ class AppConfig {
 
   static String get privacyPolicyUrl =>
       '$relayHttpBaseUrl/privacy-policy';
+
+  static String get termsOfServiceUrl =>
+      '$relayHttpBaseUrl/terms-of-service';
+
+  static String get missingContactsHelpUrl =>
+      '$relayHttpBaseUrl/help/missing-contacts';
 }

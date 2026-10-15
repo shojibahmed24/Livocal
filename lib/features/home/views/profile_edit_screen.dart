@@ -8,12 +8,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/attachment_utils.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/app_tokens.dart';
-import 'package:livocal/theme/theme.dart';
 
 class ProfileEditScreen extends ConsumerStatefulWidget {
   final User user;
@@ -176,131 +176,114 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   void _showEditNameDialog() {
     final controller = TextEditingController(text: _currentUser.name);
 
-    showDialog(
+    showAppDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? AppColors.darkSurface
-            : AppColors.lightBackground,
-        shape: const RoundedRectangleBorder(borderRadius: AppRadius.lg),
-        title: const Text('Enter your name'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLength: 30,
-          decoration: const InputDecoration(
-            hintText: 'Your name',
-          ),
+      title: 'Enter your name',
+      icon: Icons.person_outline,
+      content: TextField(
+        controller: controller,
+        autofocus: true,
+        maxLength: 30,
+        decoration: const InputDecoration(
+          hintText: 'Your name',
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('CANCEL'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () async {
-              final newName = controller.text.trim();
-              if (newName.isNotEmpty) {
-                Navigator.pop(ctx);
-                setState(() {
-                  _currentUser = _currentUser.copyWith(name: newName);
-                });
-                await _syncUserToStorageAndFirestore(_currentUser);
-              }
-            },
-            child: const Text('SAVE'),
-          ),
-        ],
       ),
+      actions: [
+        AppDialogAction(
+          label: 'CANCEL',
+          onPressed: () => Navigator.pop(context),
+        ),
+        AppDialogAction(
+          label: 'SAVE',
+          isPrimary: true,
+          onPressed: () async {
+            final newName = controller.text.trim();
+            if (newName.isNotEmpty) {
+              Navigator.pop(context);
+              setState(() {
+                _currentUser = _currentUser.copyWith(name: newName);
+              });
+              await _syncUserToStorageAndFirestore(_currentUser);
+            }
+          },
+        ),
+      ],
     );
   }
 
   void _showEditAboutDialog() {
     final controller = TextEditingController(text: _aboutController.text);
 
-    showDialog(
+    showAppDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? AppColors.darkSurface
-            : AppColors.lightBackground,
-        shape: const RoundedRectangleBorder(borderRadius: AppRadius.lg),
-        title: const Text('About'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: controller,
-                autofocus: true,
-                maxLength: 70,
-                decoration: const InputDecoration(
-                  hintText: 'About message',
-                ),
+      title: 'About',
+      icon: Icons.info_outline,
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: controller,
+              autofocus: true,
+              maxLength: 70,
+              decoration: const InputDecoration(
+                hintText: 'About message',
               ),
-              const SizedBox(height: 12),
-              const Text(
-                'Select About',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-              ),
-              const SizedBox(height: 8),
-              Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: _aboutPresets.length,
-                  itemBuilder: (ctx, i) {
-                    final preset = _aboutPresets[i];
-                    return ListTile(
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(preset, style: const TextStyle(fontSize: 14)),
-                      onTap: () {
-                        controller.text = preset;
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('CANCEL'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
             ),
-            onPressed: () async {
-              final newAbout = controller.text.trim();
-              if (newAbout.isNotEmpty) {
-                Navigator.pop(ctx);
-                setState(() {
-                  _aboutController.text = newAbout;
-                });
-                await SharedPref.instance.setString('user_about', newAbout);
-              }
-            },
-            child: const Text('SAVE'),
-          ),
-        ],
+            const SizedBox(height: 12),
+            const Text(
+              'Select About',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+            const SizedBox(height: 8),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: _aboutPresets.length,
+                itemBuilder: (ctx, i) {
+                  final preset = _aboutPresets[i];
+                  return ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(preset, style: const TextStyle(fontSize: 14)),
+                    onTap: () {
+                      controller.text = preset;
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
+      actions: [
+        AppDialogAction(
+          label: 'CANCEL',
+          onPressed: () => Navigator.pop(context),
+        ),
+        AppDialogAction(
+          label: 'SAVE',
+          isPrimary: true,
+          onPressed: () async {
+            final newAbout = controller.text.trim();
+            if (newAbout.isNotEmpty) {
+              Navigator.pop(context);
+              setState(() {
+                _aboutController.text = newAbout;
+              });
+              await SharedPref.instance.setString('user_about', newAbout);
+            }
+          },
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorTheme = Theme.of(context).custom.colorTheme;
-    final textTheme = Theme.of(context).custom.textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return PopScope(
       canPop: false,
@@ -311,9 +294,17 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(
+          backgroundColor: isDark ? AppColors.darkSurface : AppColors.primary,
+          foregroundColor: Colors.white,
+          scrolledUnderElevation: 0,
+          iconTheme: const IconThemeData(color: Colors.white),
+          actionsIconTheme: const IconThemeData(color: Colors.white),
+          title: const Text(
             'Profile',
-            style: textTheme.titleLarge.copyWith(color: colorTheme.iconColor),
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         body: ListView(

@@ -11,6 +11,7 @@ import 'package:livocal/shared/widgets/bottom_inset.dart';
 
 import 'package:livocal/shared/widgets/buttons.dart';
 import 'package:livocal/shared/widgets/emoji_picker.dart';
+import 'package:livocal/theme/color_theme.dart';
 import 'package:livocal/theme/theme.dart';
 
 import '../../../shared/models/user.dart';
@@ -211,9 +212,26 @@ class _UserProfileCreationPageState
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        iconTheme: IconThemeData(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
+              : AppColors.lightIcon,
+        ),
+        actionsIconTheme: IconThemeData(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
+              : AppColors.lightIcon,
+        ),
         title: Text(
           'Profile info',
-          style: TextStyle(color: colorTheme.textColor1),
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkTextPrimary
+                : AppColors.lightTextPrimary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
         systemOverlayStyle: SystemUiOverlayStyle(
@@ -228,7 +246,9 @@ class _UserProfileCreationPageState
         actions: [
           Icon(
             Icons.more_vert_rounded,
-            color: colorTheme.greyColor,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : AppColors.lightIcon,
           ),
           const SizedBox(width: 16)
         ],

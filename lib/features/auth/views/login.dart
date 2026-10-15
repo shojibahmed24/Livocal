@@ -41,6 +41,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
+        elevation: 0,
+        scrolledUnderElevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: colorTheme.statusBarColor,
           statusBarIconBrightness:
@@ -51,15 +53,32 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           systemNavigationBarDividerColor: colorTheme.navigationBarColor,
         ),
         backgroundColor: colorTheme.backgroundColor,
+        iconTheme: IconThemeData(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
+              : AppColors.lightIcon,
+        ),
+        actionsIconTheme: IconThemeData(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
+              : AppColors.lightIcon,
+        ),
         title: Text(
           'Enter your phone number',
-          style: TextStyle(color: colorTheme.textColor1),
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkTextPrimary
+                : AppColors.lightTextPrimary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
         actions: [
           Icon(
             Icons.more_vert_rounded,
-            color: colorTheme.greyColor,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : AppColors.lightIcon,
           ),
           const SizedBox(width: 16)
         ],

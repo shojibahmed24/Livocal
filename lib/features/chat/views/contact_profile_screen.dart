@@ -70,7 +70,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
           SliverAppBar(
             expandedHeight: 320.0,
             pinned: true,
-            backgroundColor: isDark ? const Color(0xFF1F2C34) : AppColorsLight.appBarColor,
+            scrolledUnderElevation: 0,
+            backgroundColor: isDark ? AppColors.darkSurface : AppColors.primary,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.white),
               onPressed: () => Navigator.pop(context),
@@ -566,74 +567,60 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
   }
 
   void _showBlockConfirmation(BuildContext context) {
-    showDialog(
+    showAppDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1F2C34)
-            : Colors.white,
-        title: Text('Block ${widget.contactName}?'),
-        content: const Text(
+      title: 'Block ${widget.contactName}?',
+      contentText:
           'Blocked contacts will no longer be able to call you or send you messages.',
+      icon: Icons.block_flipped,
+      iconColor: Colors.redAccent,
+      actions: [
+        AppDialogAction(
+          label: 'CANCEL',
+          onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('CANCEL'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              showSnackBar(
-                context: context,
-                content: '${widget.contactName} has been blocked',
-                type: SnacBarType.info,
-              );
-            },
-            child: const Text('BLOCK'),
-          ),
-        ],
-      ),
+        AppDialogAction(
+          label: 'BLOCK',
+          isDestructive: true,
+          onPressed: () {
+            Navigator.pop(context);
+            showSnackBar(
+              context: context,
+              content: '${widget.contactName} has been blocked',
+              type: SnacBarType.info,
+            );
+          },
+        ),
+      ],
     );
   }
 
   void _showReportConfirmation(BuildContext context) {
-    showDialog(
+    showAppDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1F2C34)
-            : Colors.white,
-        title: Text('Report ${widget.contactName}?'),
-        content: const Text(
+      title: 'Report ${widget.contactName}?',
+      contentText:
           'The last 5 messages from this contact will be forwarded to Livocal. The contact will not be notified.',
+      icon: Icons.report_problem_outlined,
+      iconColor: Colors.redAccent,
+      actions: [
+        AppDialogAction(
+          label: 'CANCEL',
+          onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('CANCEL'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              showSnackBar(
-                context: context,
-                content: 'Report submitted. Thank you for your feedback.',
-                type: SnacBarType.info,
-              );
-            },
-            child: const Text('REPORT'),
-          ),
-        ],
-      ),
+        AppDialogAction(
+          label: 'REPORT',
+          isDestructive: true,
+          onPressed: () {
+            Navigator.pop(context);
+            showSnackBar(
+              context: context,
+              content: 'Report submitted. Thank you for your feedback.',
+              type: SnacBarType.info,
+            );
+          },
+        ),
+      ],
     );
   }
 }

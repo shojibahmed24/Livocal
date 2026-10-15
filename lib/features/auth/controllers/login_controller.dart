@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phone_number/phone_number.dart';
 import 'package:livocal/features/auth/views/countries.dart';
 import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/widgets/dialogs.dart';
 import 'package:livocal/theme/theme.dart';
 
@@ -195,33 +196,19 @@ class LoginController extends StateNotifier<Country> {
                 'for the country: ${state.name}';
       }
 
-      return showDialog(
+      return showAppDialog(
         context: context,
-        builder: (context) {
-          return AlertDialog(
-            actionsPadding: const EdgeInsets.all(0),
-            backgroundColor: Theme.of(context).brightness == Brightness.dark
-                ? colorTheme.appBarColor
-                : colorTheme.backgroundColor,
-            content: Text(
-              errorMsg,
-              style: TextStyle(
-                color: colorTheme.greyColor,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(
-                  'OK',
-                  style: TextStyle(
-                    color: colorTheme.greenColor,
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
+        title: 'Invalid Phone Number',
+        icon: Icons.error_outline_rounded,
+        iconColor: Theme.of(context).colorScheme.error,
+        contentText: errorMsg,
+        actions: [
+          AppDialogAction(
+            label: 'OK',
+            isPrimary: true,
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
       );
     }
 

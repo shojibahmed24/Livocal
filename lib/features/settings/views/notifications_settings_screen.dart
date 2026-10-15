@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/shared/widgets/settings_row.dart';
 import 'package:livocal/theme/app_colors.dart';
 
 class NotificationsSettingsScreen extends ConsumerStatefulWidget {
@@ -48,35 +50,36 @@ class _NotificationsSettingsScreenState
     required String currentValue,
     required ValueChanged<String> onSelected,
   }) {
-    showDialog(
+    showAppDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1F2C34)
-            : Colors.white,
-        title: Text(title),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: options
-              .map(
-                (opt) => RadioListTile<String>(
-                  title: Text(opt),
-                  value: opt,
-                  groupValue: currentValue,
-                  activeColor: AppColors.primary,
-                  onChanged: (val) {
-                    if (val != null) {
-                      SystemSound.play(SystemSoundType.click);
-                      HapticFeedback.selectionClick();
-                      onSelected(val);
-                      Navigator.pop(ctx);
-                    }
-                  },
-                ),
-              )
-              .toList(),
-        ),
+      title: title,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: options
+            .map(
+              (opt) => RadioListTile<String>(
+                title: Text(opt),
+                value: opt,
+                groupValue: currentValue,
+                activeColor: AppColors.primary,
+                onChanged: (val) {
+                  if (val != null) {
+                    SystemSound.play(SystemSoundType.click);
+                    HapticFeedback.selectionClick();
+                    onSelected(val);
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+            )
+            .toList(),
       ),
+      actions: [
+        AppDialogAction(
+          label: 'CANCEL',
+          onPressed: () => Navigator.pop(context),
+        ),
+      ],
     );
   }
 
@@ -86,7 +89,18 @@ class _NotificationsSettingsScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        backgroundColor: isDark ? AppColors.darkSurface : AppColors.primary,
+        foregroundColor: Colors.white,
+        scrolledUnderElevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Notifications',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.more_vert),
@@ -134,31 +148,28 @@ class _NotificationsSettingsScreenState
       ),
       body: ListView(
         children: [
-          SwitchListTile(
-            title: const Text('Conversation tones'),
-            subtitle: const Text('Play sounds for incoming and outgoing messages'),
-            value: _conversationTones,
-            activeTrackColor: AppColors.primary,
-            onChanged: (val) {
-              setState(() => _conversationTones = val);
-              SharedPref.instance.setBool('notif_conv_tones', val);
-            },
-          ),
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
-            child: Text(
-              'Messages',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
-              ),
+          const SettingsSectionHeader(title: 'General'),
+          SettingsRow(
+            icon: Icons.volume_up_outlined,
+            title: 'Conversation tones',
+            subtitle: 'Play sounds for incoming and outgoing messages',
+            showChevron: false,
+            trailing: Switch(
+              value: _conversationTones,
+              activeTrackColor: AppColors.primary,
+              activeThumbColor: Colors.white,
+              onChanged: (val) {
+                setState(() => _conversationTones = val);
+                SharedPref.instance.setBool('notif_conv_tones', val);
+              },
             ),
           ),
-          ListTile(
-            title: const Text('Notification tone'),
-            subtitle: Text(_msgTone, style: const TextStyle(color: Colors.grey)),
+          const Divider(height: 1),
+          const SettingsSectionHeader(title: 'Messages'),
+          SettingsRow(
+            icon: Icons.music_note_outlined,
+            title: 'Notification tone',
+            subtitle: _msgTone,
             onTap: () => _showRadioDialog(
               title: 'Notification tone',
               options: ['Default (Livocal)', 'Chime', 'Bell', 'Note', 'Silent'],
@@ -169,9 +180,11 @@ class _NotificationsSettingsScreenState
               },
             ),
           ),
-          ListTile(
-            title: const Text('Vibrate'),
-            subtitle: Text(_msgVibrate, style: const TextStyle(color: Colors.grey)),
+          const Divider(height: 1),
+          SettingsRow(
+            icon: Icons.vibration_outlined,
+            title: 'Vibrate',
+            subtitle: _msgVibrate,
             onTap: () => _showRadioDialog(
               title: 'Vibrate',
               options: ['Default', 'Short', 'Long', 'Off'],
@@ -182,41 +195,44 @@ class _NotificationsSettingsScreenState
               },
             ),
           ),
-          SwitchListTile(
-            title: const Text('Use high priority notifications'),
-            subtitle: const Text('Show previews of notifications at the top of the screen'),
-            value: _highPriority,
-            activeTrackColor: AppColors.primary,
-            onChanged: (val) {
-              setState(() => _highPriority = val);
-              SharedPref.instance.setBool('notif_high_priority', val);
-            },
-          ),
-          SwitchListTile(
-            title: const Text('Reaction notifications'),
-            subtitle: const Text('Show notifications for reactions to messages you send'),
-            value: _reactionNotifications,
-            activeTrackColor: AppColors.primary,
-            onChanged: (val) {
-              setState(() => _reactionNotifications = val);
-              SharedPref.instance.setBool('notif_reactions', val);
-            },
-          ),
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
-            child: Text(
-              'Calls',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
-              ),
+          const Divider(height: 1),
+          SettingsRow(
+            icon: Icons.priority_high_outlined,
+            title: 'Use high priority notifications',
+            subtitle: 'Show previews of notifications at the top of the screen',
+            showChevron: false,
+            trailing: Switch(
+              value: _highPriority,
+              activeTrackColor: AppColors.primary,
+              activeThumbColor: Colors.white,
+              onChanged: (val) {
+                setState(() => _highPriority = val);
+                SharedPref.instance.setBool('notif_high_priority', val);
+              },
             ),
           ),
-          ListTile(
-            title: const Text('Ringtone'),
-            subtitle: Text(_callRingtone, style: const TextStyle(color: Colors.grey)),
+          const Divider(height: 1),
+          SettingsRow(
+            icon: Icons.add_reaction_outlined,
+            title: 'Reaction notifications',
+            subtitle: 'Show notifications for reactions to messages you send',
+            showChevron: false,
+            trailing: Switch(
+              value: _reactionNotifications,
+              activeTrackColor: AppColors.primary,
+              activeThumbColor: Colors.white,
+              onChanged: (val) {
+                setState(() => _reactionNotifications = val);
+                SharedPref.instance.setBool('notif_reactions', val);
+              },
+            ),
+          ),
+          const Divider(height: 1),
+          const SettingsSectionHeader(title: 'Calls'),
+          SettingsRow(
+            icon: Icons.ring_volume_outlined,
+            title: 'Ringtone',
+            subtitle: _callRingtone,
             onTap: () => _showRadioDialog(
               title: 'Ringtone',
               options: ['Default (Livocal)', 'Digital Phone', 'Marimba', 'Classic Bell'],
@@ -227,9 +243,11 @@ class _NotificationsSettingsScreenState
               },
             ),
           ),
-          ListTile(
-            title: const Text('Vibrate'),
-            subtitle: Text(_callVibrate, style: const TextStyle(color: Colors.grey)),
+          const Divider(height: 1),
+          SettingsRow(
+            icon: Icons.vibration_outlined,
+            title: 'Vibrate',
+            subtitle: _callVibrate,
             onTap: () => _showRadioDialog(
               title: 'Vibrate',
               options: ['Default', 'Short', 'Long', 'Off'],

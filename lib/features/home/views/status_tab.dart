@@ -9,6 +9,7 @@ import 'package:livocal/features/status/services/status_service.dart';
 import 'package:livocal/features/status/views/status_view_screen.dart';
 import 'package:livocal/features/status/views/text_status_composer_screen.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/widgets/shimmer_skeleton.dart';
 import 'package:livocal/theme/app_colors.dart';
@@ -50,45 +51,38 @@ class _StatusTabState extends ConsumerState<StatusTab>
       if (!mounted) return;
 
       final captionController = TextEditingController();
-      final confirm = await showDialog<bool>(
+      final confirm = await showAppDialog<bool>(
         context: context,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFF1F2C34)
-              : Colors.white,
-          title: const Text('Add Status Caption'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.file(file, height: 160, fit: BoxFit.cover),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: captionController,
-                decoration: const InputDecoration(
-                  hintText: 'Add a caption...',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('CANCEL'),
+        title: 'Add Status Caption',
+        icon: Icons.add_photo_alternate_outlined,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.file(file, height: 160, fit: BoxFit.cover),
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+            const SizedBox(height: 12),
+            TextField(
+              controller: captionController,
+              decoration: const InputDecoration(
+                hintText: 'Add a caption...',
+                border: OutlineInputBorder(),
               ),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('SEND'),
             ),
           ],
         ),
+        actions: [
+          AppDialogAction(
+            label: 'CANCEL',
+            onPressed: () => Navigator.pop(context, false),
+          ),
+          AppDialogAction(
+            label: 'SEND',
+            isPrimary: true,
+            onPressed: () => Navigator.pop(context, true),
+          ),
+        ],
       );
 
       if (confirm == true && mounted) {

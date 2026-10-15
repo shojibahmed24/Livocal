@@ -24,6 +24,7 @@ import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/repositories/push_notifications.dart';
 import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/time_ticker.dart';
 import 'package:livocal/shared/widgets/shimmer_skeleton.dart';
 import 'package:livocal/theme/app_tokens.dart';
@@ -305,6 +306,14 @@ class _HomePageState extends ConsumerState<HomePage>
       length: 3,
       child: Scaffold(
         appBar: AppBar(
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.darkSurface
+              : AppColors.primary,
+          foregroundColor: Colors.white,
+          scrolledUnderElevation: 0,
+          elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.white),
+          actionsIconTheme: const IconThemeData(color: Colors.white),
           leading: _isSearching
               ? IconButton(
                   icon: const Icon(Icons.arrow_back),
@@ -331,7 +340,11 @@ class _HomePageState extends ConsumerState<HomePage>
                 )
               : Text(
                   'Livocal',
-                  style: textTheme.titleLarge.copyWith(color: colorTheme.iconColor),
+                  style: textTheme.titleLarge.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
                 ),
           actions: [
             if (_isSearching) ...[
@@ -405,73 +418,70 @@ class _HomePageState extends ConsumerState<HomePage>
                     }
                     break;
                   case 'status_privacy':
-                    showDialog(
+                    String privacy = SharedPref.instance.getString('status_privacy') ?? 'contacts';
+                    showAppDialog(
                       context: context,
-                      builder: (ctx) {
-                        String privacy = SharedPref.instance.getString('status_privacy') ?? 'contacts';
-                        return StatefulBuilder(
-                          builder: (ctx, setDlgState) => AlertDialog(
-                            backgroundColor: Theme.of(context).brightness == Brightness.dark
-                                ? AppColors.darkSurface
-                                : AppColors.lightBackground,
-                            shape: const RoundedRectangleBorder(borderRadius: AppRadius.lg),
-                            title: const Text('Status privacy', style: TextStyle(fontWeight: FontWeight.bold)),
-                            content: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Who can see my status updates:', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                                const SizedBox(height: 8),
-                                RadioListTile<String>(
-                                   title: const Text('My contacts'),
-                                  subtitle: const Text('Share with all contacts in phonebook'),
-                                  value: 'contacts',
-                                  groupValue: privacy,
-                                  activeColor: AppColors.primary,
-                                  onChanged: (val) {
-                                    if (val != null) {
-                                      setDlgState(() => privacy = val);
-                                      SharedPref.instance.setString('status_privacy', val);
-                                    }
-                                  },
-                                ),
-                                RadioListTile<String>(
-                                  title: const Text('My contacts except...'),
-                                  subtitle: const Text('Hide status from selected contacts'),
-                                  value: 'except',
-                                  groupValue: privacy,
-                                  activeColor: AppColors.primary,
-                                  onChanged: (val) {
-                                    if (val != null) {
-                                      setDlgState(() => privacy = val);
-                                      SharedPref.instance.setString('status_privacy', val);
-                                    }
-                                  },
-                                ),
-                                RadioListTile<String>(
-                                  title: const Text('Only share with...'),
-                                  subtitle: const Text('Share only with chosen friends'),
-                                  value: 'only',
-                                  groupValue: privacy,
-                                  activeColor: AppColors.primary,
-                                  onChanged: (val) {
-                                    if (val != null) {
-                                      setDlgState(() => privacy = val);
-                                      SharedPref.instance.setString('status_privacy', val);
-                                    }
-                                  },
-                                ),
-                              ],
+                      title: 'Status privacy',
+                      icon: Icons.lock_outline_rounded,
+                      content: StatefulBuilder(
+                        builder: (ctx, setDlgState) => Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Who can see my status updates:',
+                              style: TextStyle(color: Colors.grey, fontSize: 13),
                             ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx),
-                                child: const Text('DONE', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+                            const SizedBox(height: 8),
+                            RadioListTile<String>(
+                              title: const Text('My contacts'),
+                              subtitle: const Text('Share with all contacts in phonebook'),
+                              value: 'contacts',
+                              groupValue: privacy,
+                              activeColor: AppColors.primary,
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setDlgState(() => privacy = val);
+                                  SharedPref.instance.setString('status_privacy', val);
+                                }
+                              },
+                            ),
+                            RadioListTile<String>(
+                              title: const Text('My contacts except...'),
+                              subtitle: const Text('Hide status from selected contacts'),
+                              value: 'except',
+                              groupValue: privacy,
+                              activeColor: AppColors.primary,
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setDlgState(() => privacy = val);
+                                  SharedPref.instance.setString('status_privacy', val);
+                                }
+                              },
+                            ),
+                            RadioListTile<String>(
+                              title: const Text('Only share with...'),
+                              subtitle: const Text('Share only with chosen friends'),
+                              value: 'only',
+                              groupValue: privacy,
+                              activeColor: AppColors.primary,
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setDlgState(() => privacy = val);
+                                  SharedPref.instance.setString('status_privacy', val);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      actions: [
+                        AppDialogAction(
+                          label: 'DONE',
+                          isPrimary: true,
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
                     );
                     break;
                   case 'settings':
@@ -482,41 +492,31 @@ class _HomePageState extends ConsumerState<HomePage>
                     );
                     break;
                   case 'logout':
-                    showDialog(
+                    showAppDialog(
                       context: context,
-                      builder: (ctx) => AlertDialog(
-                        backgroundColor: Theme.of(context).brightness == Brightness.dark
-                            ? const Color(0xFF1F2C34)
-                            : Colors.white,
-                        title: const Text(
-                          'Log out of Livocal?',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        content: const Text(
+                      title: 'Log out of Livocal?',
+                      icon: Icons.logout_rounded,
+                      iconColor: Colors.redAccent,
+                      contentText:
                           'Are you sure you want to log out? Local data and credentials will be cleared.',
+                      actions: [
+                        AppDialogAction(
+                          label: 'CANCEL',
+                          onPressed: () => Navigator.pop(context),
                         ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            child: const Text('CANCEL'),
-                          ),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.redAccent,
-                              foregroundColor: Colors.white,
-                            ),
-                            onPressed: () async {
-                              Navigator.pop(ctx);
-                              await AuthController.logout(
-                                context: context,
-                                ref: ref,
-                                userId: widget.user.id,
-                              );
-                            },
-                            child: const Text('LOG OUT'),
-                          ),
-                        ],
-                      ),
+                        AppDialogAction(
+                          label: 'LOG OUT',
+                          isDestructive: true,
+                          onPressed: () async {
+                            Navigator.pop(context);
+                            await AuthController.logout(
+                              context: context,
+                              ref: ref,
+                              userId: widget.user.id,
+                            );
+                          },
+                        ),
+                      ],
                     );
                     break;
                 }
@@ -874,7 +874,7 @@ class HomePageContactsList extends StatelessWidget {
     final colorTheme = Theme.of(context).custom.colorTheme;
 
     return FutureBuilder(
-      future: IsarDb.getWhatsAppContacts(),
+      future: IsarDb.getLivocalContacts(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return Container();

@@ -136,6 +136,11 @@ final _theme = ThemeData(
     ),
     backgroundColor: AppColors.primary,
     foregroundColor: Colors.white,
+    titleTextStyle: TextStyle(
+      color: Colors.white,
+      fontSize: 20,
+      fontWeight: FontWeight.w600,
+    ),
     systemOverlayStyle: SystemUiOverlayStyle(
       statusBarIconBrightness: Brightness.light,
       statusBarColor: AppColors.primaryDark,
@@ -200,13 +205,18 @@ final _darkTheme = ThemeData(
     scrolledUnderElevation: AppElevation.flat,
     surfaceTintColor: Colors.transparent,
     actionsIconTheme: IconThemeData(
-      color: AppColors.darkIcon,
+      color: Colors.white,
     ),
     iconTheme: IconThemeData(
-      color: AppColors.darkIcon,
+      color: Colors.white,
     ),
     backgroundColor: AppColors.darkSurface,
-    foregroundColor: AppColors.darkTextPrimary,
+    foregroundColor: Colors.white,
+    titleTextStyle: TextStyle(
+      color: Colors.white,
+      fontSize: 20,
+      fontWeight: FontWeight.w600,
+    ),
     systemOverlayStyle: SystemUiOverlayStyle(
       statusBarIconBrightness: Brightness.light,
       statusBarColor: AppColors.darkSurface,

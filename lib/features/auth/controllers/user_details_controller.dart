@@ -9,9 +9,12 @@ import 'package:livocal/features/auth/views/auth_complete.dart';
 
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/attachment_utils.dart';
 // import 'package:livocal/shared/widgets/emoji_picker.dart';
 import 'package:livocal/shared/widgets/gallery.dart';
+import 'package:livocal/theme/app_tokens.dart';
+import 'package:livocal/theme/color_theme.dart';
 import 'package:livocal/theme/theme.dart';
 
 import '../../../shared/repositories/compression_service.dart';
@@ -104,29 +107,19 @@ class UserDetailsController extends StateNotifier<File?> {
     if (!mounted) return;
 
     if (errorMsg.isNotEmpty) {
-      return showDialog(
+      return showAppDialog(
         context: context,
-        builder: (context) {
-          return AlertDialog(
-            actionsPadding: const EdgeInsets.all(0),
-            content: Text(
-              errorMsg,
-              style: Theme.of(context).textTheme.bodySmall!,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(
-                  'OK',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall!
-                      .copyWith(color: colorTheme.greenColor),
-                ),
-              ),
-            ],
-          );
-        },
+        title: 'Network Error',
+        icon: Icons.wifi_off_rounded,
+        iconColor: Theme.of(context).colorScheme.error,
+        contentText: errorMsg,
+        actions: [
+          AppDialogAction(
+            label: 'OK',
+            isPrimary: true,
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
       );
     }
 
@@ -178,7 +171,10 @@ class UserDetailsController extends StateNotifier<File?> {
                 });
               }
 
+              final isDark = Theme.of(context).brightness == Brightness.dark;
               return AlertDialog(
+                backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightBackground,
+                shape: RoundedRectangleBorder(borderRadius: AppRadius.lg),
                 actionsPadding: const EdgeInsets.all(0),
                 content: Row(
                   children: [

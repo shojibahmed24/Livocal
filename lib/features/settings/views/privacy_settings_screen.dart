@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/shared/widgets/settings_row.dart';
 import 'package:livocal/theme/app_colors.dart';
 
 class PrivacySettingsScreen extends ConsumerStatefulWidget {
@@ -25,13 +27,19 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _lastSeen = SharedPref.instance.getString('privacy_last_seen') ?? 'Everyone';
-    _profilePhoto = SharedPref.instance.getString('privacy_profile_photo') ?? 'Everyone';
+    _lastSeen =
+        SharedPref.instance.getString('privacy_last_seen') ?? 'Everyone';
+    _profilePhoto =
+        SharedPref.instance.getString('privacy_profile_photo') ?? 'Everyone';
     _about = SharedPref.instance.getString('privacy_about') ?? 'Everyone';
-    _statusPrivacy = SharedPref.instance.getString('status_privacy') ?? 'contacts';
-    _readReceipts = SharedPref.instance.getBool('privacy_read_receipts') ?? true;
-    _disappearingTimer = SharedPref.instance.getString('privacy_disappearing') ?? 'Off';
-    _fingerprintLock = SharedPref.instance.getBool('privacy_fingerprint') ?? false;
+    _statusPrivacy =
+        SharedPref.instance.getString('status_privacy') ?? 'contacts';
+    _readReceipts =
+        SharedPref.instance.getBool('privacy_read_receipts') ?? true;
+    _disappearingTimer =
+        SharedPref.instance.getString('privacy_disappearing') ?? 'Off';
+    _fingerprintLock =
+        SharedPref.instance.getBool('privacy_fingerprint') ?? false;
   }
 
   void _showRadioOptionDialog({
@@ -40,33 +48,34 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
     required String currentValue,
     required ValueChanged<String> onSelected,
   }) {
-    showDialog(
+    showAppDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1F2C34)
-            : Colors.white,
-        title: Text(title),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: options
-              .map(
-                (opt) => RadioListTile<String>(
-                  title: Text(opt),
-                  value: opt,
-                  groupValue: currentValue,
-                  activeColor: AppColors.primary,
-                  onChanged: (val) {
-                    if (val != null) {
-                      onSelected(val);
-                      Navigator.pop(ctx);
-                    }
-                  },
-                ),
-              )
-              .toList(),
-        ),
+      title: title,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: options
+            .map(
+              (opt) => RadioListTile<String>(
+                title: Text(opt),
+                value: opt,
+                groupValue: currentValue,
+                activeColor: AppColors.primary,
+                onChanged: (val) {
+                  if (val != null) {
+                    onSelected(val);
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+            )
+            .toList(),
       ),
+      actions: [
+        AppDialogAction(
+          label: 'CANCEL',
+          onPressed: () => Navigator.pop(context),
+        ),
+      ],
     );
   }
 
@@ -76,24 +85,26 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Privacy'),
+        backgroundColor: isDark ? AppColors.darkSurface : AppColors.primary,
+        foregroundColor: Colors.white,
+        scrolledUnderElevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Privacy',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       body: ListView(
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 16, top: 16, bottom: 8),
-            child: Text(
-              'Who can see my personal info',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
-              ),
-            ),
-          ),
-          ListTile(
-            title: const Text('Last seen and online'),
-            subtitle: Text(_lastSeen, style: const TextStyle(color: Colors.grey)),
+          const SettingsSectionHeader(title: 'Who can see my personal info'),
+          SettingsRow(
+            icon: Icons.visibility_outlined,
+            title: 'Last seen and online',
+            subtitle: _lastSeen,
             onTap: () => _showRadioOptionDialog(
               title: 'Last seen and online',
               options: ['Everyone', 'My contacts', 'Nobody'],
@@ -104,9 +115,11 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
               },
             ),
           ),
-          ListTile(
-            title: const Text('Profile photo'),
-            subtitle: Text(_profilePhoto, style: const TextStyle(color: Colors.grey)),
+          const Divider(height: 1),
+          SettingsRow(
+            icon: Icons.account_circle_outlined,
+            title: 'Profile photo',
+            subtitle: _profilePhoto,
             onTap: () => _showRadioOptionDialog(
               title: 'Profile photo',
               options: ['Everyone', 'My contacts', 'Nobody'],
@@ -117,9 +130,11 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
               },
             ),
           ),
-          ListTile(
-            title: const Text('About'),
-            subtitle: Text(_about, style: const TextStyle(color: Colors.grey)),
+          const Divider(height: 1),
+          SettingsRow(
+            icon: Icons.info_outline,
+            title: 'About',
+            subtitle: _about,
             onTap: () => _showRadioOptionDialog(
               title: 'About',
               options: ['Everyone', 'My contacts', 'Nobody'],
@@ -130,19 +145,22 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
               },
             ),
           ),
-          ListTile(
-            title: const Text('Status'),
-            subtitle: Text(
-              _statusPrivacy == 'contacts'
-                  ? 'My contacts'
-                  : (_statusPrivacy == 'except'
-                      ? 'My contacts except...'
-                      : 'Only share with...'),
-              style: const TextStyle(color: Colors.grey),
-            ),
+          const Divider(height: 1),
+          SettingsRow(
+            icon: Icons.donut_large_outlined,
+            title: 'Status',
+            subtitle: _statusPrivacy == 'contacts'
+                ? 'My contacts'
+                : (_statusPrivacy == 'except'
+                    ? 'My contacts except...'
+                    : 'Only share with...'),
             onTap: () => _showRadioOptionDialog(
               title: 'Status privacy',
-              options: ['My contacts', 'My contacts except...', 'Only share with...'],
+              options: [
+                'My contacts',
+                'My contacts except...',
+                'Only share with...'
+              ],
               currentValue: _statusPrivacy == 'contacts'
                   ? 'My contacts'
                   : (_statusPrivacy == 'except'
@@ -157,33 +175,29 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
               },
             ),
           ),
-          SwitchListTile(
-            title: const Text('Read receipts'),
-            subtitle: const Text(
-              'If turned off, you won\'t send or receive Read receipts (blue ticks).',
-            ),
-            value: _readReceipts,
-            activeTrackColor: AppColors.primary,
-            onChanged: (val) {
-              setState(() => _readReceipts = val);
-              SharedPref.instance.setBool('privacy_read_receipts', val);
-            },
-          ),
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
-            child: Text(
-              'Disappearing messages',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
-              ),
+          const Divider(height: 1),
+          SettingsRow(
+            icon: Icons.done_all_outlined,
+            title: 'Read receipts',
+            subtitle:
+                'If turned off, you won\'t send or receive Read receipts (blue ticks).',
+            showChevron: false,
+            trailing: Switch(
+              value: _readReceipts,
+              activeTrackColor: AppColors.primary,
+              activeThumbColor: Colors.white,
+              onChanged: (val) {
+                setState(() => _readReceipts = val);
+                SharedPref.instance.setBool('privacy_read_receipts', val);
+              },
             ),
           ),
-          ListTile(
-            title: const Text('Default message timer'),
-            subtitle: Text(_disappearingTimer, style: const TextStyle(color: Colors.grey)),
+          const Divider(height: 1),
+          const SettingsSectionHeader(title: 'Disappearing messages'),
+          SettingsRow(
+            icon: Icons.timer_outlined,
+            title: 'Default message timer',
+            subtitle: _disappearingTimer,
             onTap: () => _showRadioOptionDialog(
               title: 'Default message timer',
               options: ['Off', '24 hours', '7 days', '90 days'],
@@ -194,91 +208,98 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
               },
             ),
           ),
-          const Divider(),
-          ListTile(
-            title: const Text('Blocked contacts'),
-            subtitle: const Text('0 contacts', style: TextStyle(color: Colors.grey)),
-            trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+          const Divider(height: 1),
+          const SettingsSectionHeader(title: 'Security & App Lock'),
+          SettingsRow(
+            icon: Icons.block_flipped,
+            title: 'Blocked contacts',
+            subtitle: '0 contacts',
             onTap: () {
-              showDialog(
+              showAppDialog(
                 context: context,
-                builder: (ctx) => AlertDialog(
-                  backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
-                  title: const Text('Blocked contacts'),
-                  content: const Text('No blocked contacts.'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text('OK'),
-                    ),
-                  ],
-                ),
+                title: 'Blocked contacts',
+                icon: Icons.block_flipped,
+                contentText: 'No blocked contacts.',
+                actions: [
+                  AppDialogAction(
+                    label: 'OK',
+                    isPrimary: true,
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
               );
             },
           ),
-          SwitchListTile(
-            title: const Text('Fingerprint lock'),
-            subtitle: const Text('Require biometric authentication to open Livocal'),
-            value: _fingerprintLock,
-            activeTrackColor: AppColors.primary,
-            onChanged: (val) async {
-              try {
-                final auth = LocalAuthentication();
-                final canCheck = await auth.canCheckBiometrics;
-                final isSupported = await auth.isDeviceSupported();
-                if (!canCheck && !isSupported) {
-                  if (context.mounted) {
-                    showSnackBar(
-                      context: context,
-                      content:
-                          'Biometric authentication is not supported on this device.',
-                      type: SnacBarType.error,
-                    );
+          const Divider(height: 1),
+          SettingsRow(
+            icon: Icons.fingerprint_rounded,
+            title: 'Fingerprint lock',
+            subtitle: 'Require biometric authentication to open Livocal',
+            showChevron: false,
+            trailing: Switch(
+              value: _fingerprintLock,
+              activeTrackColor: AppColors.primary,
+              activeThumbColor: Colors.white,
+              onChanged: (val) async {
+                try {
+                  final auth = LocalAuthentication();
+                  final canCheck = await auth.canCheckBiometrics;
+                  final isSupported = await auth.isDeviceSupported();
+                  if (!canCheck && !isSupported) {
+                    if (context.mounted) {
+                      showSnackBar(
+                        context: context,
+                        content:
+                            'Biometric authentication is not supported on this device.',
+                        type: SnacBarType.error,
+                      );
+                    }
+                    return;
                   }
-                  return;
-                }
 
-                final authenticated = await auth.authenticate(
-                  localizedReason: val
-                      ? 'Confirm your fingerprint or biometric credential to enable lock'
-                      : 'Confirm your biometric credential to disable lock',
-                  biometricOnly: false,
-                  persistAcrossBackgrounding: true,
-                );
-
-                if (authenticated) {
-                  await SharedPref.instance.setBool('privacy_fingerprint', val);
-                  if (mounted) {
-                    setState(() => _fingerprintLock = val);
-                  }
-                  if (context.mounted) {
-                    showSnackBar(
-                      context: context,
-                      content: val
-                          ? 'Fingerprint lock enabled'
-                          : 'Fingerprint lock disabled',
-                      type: SnacBarType.info,
-                    );
-                  }
-                } else {
-                  if (context.mounted) {
-                    showSnackBar(
-                      context: context,
-                      content: 'Biometric verification cancelled.',
-                      type: SnacBarType.error,
-                    );
-                  }
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  showSnackBar(
-                    context: context,
-                    content: 'Biometric error: $e',
-                    type: SnacBarType.error,
+                  final authenticated = await auth.authenticate(
+                    localizedReason: val
+                        ? 'Confirm your fingerprint or biometric credential to enable lock'
+                        : 'Confirm your biometric credential to disable lock',
+                    biometricOnly: false,
+                    persistAcrossBackgrounding: true,
                   );
+
+                  if (authenticated) {
+                    await SharedPref.instance
+                        .setBool('privacy_fingerprint', val);
+                    if (mounted) {
+                      setState(() => _fingerprintLock = val);
+                    }
+                    if (context.mounted) {
+                      showSnackBar(
+                        context: context,
+                        content: val
+                            ? 'Fingerprint lock enabled'
+                            : 'Fingerprint lock disabled',
+                        type: SnacBarType.info,
+                      );
+                    }
+                  } else {
+                    if (context.mounted) {
+                      showSnackBar(
+                        context: context,
+                        content: 'Biometric verification cancelled.',
+                        type: SnacBarType.error,
+                      );
+                    }
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    showSnackBar(
+                      context: context,
+                      content: 'Biometric error: $e',
+                      type: SnacBarType.error,
+                    );
+                  }
                 }
-              }
-            },
+              },
+            ),
           ),
         ],
       ),

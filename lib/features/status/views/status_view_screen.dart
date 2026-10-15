@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:livocal/features/status/models/status_model.dart';
 import 'package:livocal/features/status/services/status_service.dart';
+import 'package:livocal/theme/app_colors.dart';
 
 class StatusViewScreen extends StatefulWidget {
   final List<StatusModel> statuses;
@@ -138,7 +139,7 @@ class _StatusViewScreenState extends State<StatusViewScreen>
     }
     return CircleAvatar(
       radius: 18,
-      backgroundColor: const Color(0xFF00B386),
+      backgroundColor: AppColors.primary,
       child: Text(
         status.userName.isNotEmpty ? status.userName[0].toUpperCase() : '?',
         style: const TextStyle(

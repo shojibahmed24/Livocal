@@ -27,7 +27,7 @@ class AppColorsDark {
 }
 
 class AppColorsLight {
-  static const iconColor = Color.fromRGBO(248, 249, 249, 1);
+  static const iconColor = AppColors.lightIcon;
   static const textColor1 = Color.fromRGBO(24, 24, 24, 1);
   static const textColor2 = Color.fromRGBO(0, 0, 0, 1);
   static const appBarColor = AppColors.primary;

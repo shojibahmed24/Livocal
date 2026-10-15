@@ -43,10 +43,23 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
     bool buildLivocalContactsList = contactsOnLivocal.isNotEmpty;
     bool buildLocalContactsList = contactsNotOnLivocal.isNotEmpty;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return ScaffoldWithSearch(
       appBar: AppBar(
         elevation: 0.0,
-        title: const Text('Select contact'),
+        scrolledUnderElevation: 0,
+        backgroundColor: isDark ? AppColors.darkSurface : AppColors.primary,
+        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Select contact',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -421,9 +434,9 @@ class LocalContactsList extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const CircleAvatar(
-                    backgroundColor: Colors.black26,
-                    backgroundImage: AssetImage('assets/images/avatar.png'),
+                  _ContactAvatar(
+                    displayName: contact.displayName,
+                    radius: 20,
                   ),
                   const SizedBox(
                     width: 18.0,
@@ -505,13 +518,10 @@ class LivocalContactsList extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    backgroundColor: Colors.black26,
-                    backgroundImage: (contact.avatarUrl != null &&
-                            contact.avatarUrl!.isNotEmpty)
-                        ? CachedNetworkImageProvider(contact.avatarUrl!)
-                        : const AssetImage('assets/images/avatar.png')
-                            as ImageProvider,
+                  _ContactAvatar(
+                    displayName: contact.displayName,
+                    avatarUrl: contact.avatarUrl,
+                    radius: 20,
                   ),
                   const SizedBox(
                     width: 18.0,
@@ -568,3 +578,82 @@ class LivocalContactsList extends StatelessWidget {
     );
   }
 }
+
+class _ContactAvatar extends StatelessWidget {
+  final String displayName;
+  final String? avatarUrl;
+  final double radius;
+
+  const _ContactAvatar({
+    required this.displayName,
+    this.avatarUrl,
+    this.radius = 20,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (avatarUrl != null && avatarUrl!.trim().isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: avatarUrl!,
+        imageBuilder: (context, imageProvider) => CircleAvatar(
+          radius: radius,
+          backgroundImage: imageProvider,
+        ),
+        placeholder: (context, url) => CircleAvatar(
+          radius: radius,
+          backgroundColor: Colors.grey.withValues(alpha: 0.2),
+          child: SizedBox(
+            width: radius,
+            height: radius,
+            child: const CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+        errorWidget: (context, url, error) => _buildInitials(),
+      );
+    }
+    return _buildInitials();
+  }
+
+  Widget _buildInitials() {
+    final initials = _getInitials(displayName);
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: _getAvatarColor(displayName),
+      child: Text(
+        initials,
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: radius * 0.75,
+        ),
+      ),
+    );
+  }
+
+  static String _getInitials(String name) {
+    if (name.trim().isEmpty) return '?';
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.length >= 2) {
+      final first = parts[0].isNotEmpty ? parts[0][0] : '';
+      final second = parts[1].isNotEmpty ? parts[1][0] : '';
+      final res = '$first$second'.toUpperCase();
+      if (res.isNotEmpty) return res;
+    }
+    return name.trim().substring(0, name.trim().length.clamp(1, 2)).toUpperCase();
+  }
+
+  static Color _getAvatarColor(String name) {
+    const colors = [
+      AppColors.primary,
+      Color(0xFF1E88E5),
+      Color(0xFFE53935),
+      Color(0xFF8E24AA),
+      Color(0xFFFB8C00),
+      Color(0xFF00897B),
+      Color(0xFF3949AB),
+      Color(0xFF43A047),
+    ];
+    return colors[name.hashCode.abs() % colors.length];
+  }
+}
+

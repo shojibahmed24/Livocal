@@ -4,7 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:livocal/shared/constants/app_config.dart';
+import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/shared/widgets/settings_row.dart';
 import 'package:livocal/theme/app_colors.dart';
 
 class HelpSettingsScreen extends StatelessWidget {
@@ -12,17 +14,18 @@ class HelpSettingsScreen extends StatelessWidget {
 
   void _showContactUsDialog(BuildContext context) {
     final textController = TextEditingController();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     bool isSubmitting = false;
+    void Function(void Function())? dialogStateSetter;
 
-    showDialog(
+    showAppDialog(
       context: context,
+      title: 'Contact Support',
+      icon: Icons.support_agent_outlined,
       barrierDismissible: false,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
-          title: const Text('Contact Support'),
-          content: Column(
+      content: StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          dialogStateSetter = setDialogState;
+          return Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -49,132 +52,125 @@ class HelpSettingsScreen extends StatelessWidget {
                 ),
               ],
             ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
-              child: const Text('CANCEL'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: isSubmitting
-                  ? null
-                  : () async {
-                      final message = textController.text.trim();
-                      if (message.isEmpty) {
-                        showSnackBar(
-                          context: context,
-                          content: 'Please enter a message before submitting.',
-                          type: SnacBarType.error,
-                        );
-                        return;
-                      }
-
-                      setDialogState(() => isSubmitting = true);
-                      try {
-                        final user = FirebaseAuth.instance.currentUser;
-                        await FirebaseFirestore.instance.collection('feedback').add({
-                          'userId': user?.uid ?? 'anonymous',
-                          'phoneNumber': user?.phoneNumber ?? '',
-                          'message': message,
-                          'platform': Platform.operatingSystem,
-                          'appVersion': '1.0.0',
-                          'createdAt': FieldValue.serverTimestamp(),
-                        });
-
-                        if (context.mounted) {
-                          Navigator.pop(ctx);
-                          showSnackBar(
-                            context: context,
-                            content: 'Thank you! Your feedback has been sent to the Livocal engineering team.',
-                            type: SnacBarType.info,
-                          );
-                        }
-                      } catch (e) {
-                        setDialogState(() => isSubmitting = false);
-                        if (context.mounted) {
-                          showSnackBar(
-                            context: context,
-                            content: 'Failed to send feedback: $e',
-                            type: SnacBarType.error,
-                          );
-                        }
-                      }
-                    },
-              child: const Text('SUBMIT'),
-            ),
-          ],
-        ),
+          );
+        },
       ),
+      actions: [
+        AppDialogAction(
+          label: 'CANCEL',
+          onPressed: () => Navigator.pop(context),
+        ),
+        AppDialogAction(
+          label: 'SUBMIT',
+          isPrimary: true,
+          onPressed: () async {
+            final message = textController.text.trim();
+            if (message.isEmpty) {
+              showSnackBar(
+                context: context,
+                content: 'Please enter a message before submitting.',
+                type: SnacBarType.error,
+              );
+              return;
+            }
+
+            dialogStateSetter?.call(() => isSubmitting = true);
+            try {
+              final user = FirebaseAuth.instance.currentUser;
+              await FirebaseFirestore.instance.collection('feedback').add({
+                'userId': user?.uid ?? 'anonymous',
+                'phoneNumber': user?.phoneNumber ?? '',
+                'message': message,
+                'platform': Platform.operatingSystem,
+                'appVersion': '1.0.0',
+                'createdAt': FieldValue.serverTimestamp(),
+              });
+
+              if (context.mounted) {
+                Navigator.pop(context);
+                showSnackBar(
+                  context: context,
+                  content:
+                      'Thank you! Your feedback has been sent to the Livocal engineering team.',
+                  type: SnacBarType.info,
+                );
+              }
+            } catch (e) {
+              dialogStateSetter?.call(() => isSubmitting = false);
+              if (context.mounted) {
+                showSnackBar(
+                  context: context,
+                  content: 'Failed to send feedback: $e',
+                  type: SnacBarType.error,
+                );
+              }
+            }
+          },
+        ),
+      ],
     );
   }
 
   void _showAppInfoDialog(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showDialog(
+    showAppDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
-        title: const Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: AppColors.primary,
-              radius: 16,
-              child: Icon(Icons.bolt, color: Colors.white, size: 20),
-            ),
-            SizedBox(width: 10),
-            Text('About Livocal'),
-          ],
-        ),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Livocal for Android',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 4),
-            Text('Version 1.0.0 (Production Build 2026.10.15)'),
-            SizedBox(height: 12),
-            Text(
-              'Real-Time AI Voice Translation & Secure Messaging powered by WebRTC, Gemini Multimodal Live API, and Flutter.',
-              style: TextStyle(fontSize: 13, color: Colors.grey),
-            ),
-            SizedBox(height: 12),
-            Text('© 2026 Livocal Inc. All rights reserved.'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('CLOSE'),
+      title: 'About Livocal',
+      icon: Icons.bolt_rounded,
+      content: const Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Livocal for Android',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
+          SizedBox(height: 4),
+          Text('Version 1.0.0 (Production Build 2026.10.15)'),
+          SizedBox(height: 12),
+          Text(
+            'Real-Time AI Voice Translation & Secure Messaging powered by WebRTC, Gemini Multimodal Live API, and Flutter.',
+            style: TextStyle(fontSize: 13, color: Colors.grey),
+          ),
+          SizedBox(height: 12),
+          Text('© 2026 Livocal Inc. All rights reserved.'),
         ],
       ),
+      actions: [
+        AppDialogAction(
+          label: 'CLOSE',
+          isPrimary: true,
+          onPressed: () => Navigator.pop(context),
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Theme.of(context).colorScheme.primary;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Help'),
+        backgroundColor: isDark ? AppColors.darkSurface : AppColors.primary,
+        foregroundColor: Colors.white,
+        scrolledUnderElevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Help',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       body: ListView(
         children: [
-          ListTile(
-            leading: Icon(Icons.help_center_outlined, color: primaryColor),
-            title: const Text('Help Centre'),
-            subtitle: const Text('FAQs, user guides, troubleshooting'),
-            trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+          const SettingsSectionHeader(title: 'Support & Knowledge'),
+          SettingsRow(
+            icon: Icons.help_center_outlined,
+            title: 'Help Centre',
+            subtitle: 'FAQs, user guides, troubleshooting',
             onTap: () {
               Navigator.push(
                 context,
@@ -183,67 +179,62 @@ class HelpSettingsScreen extends StatelessWidget {
             },
           ),
           const Divider(height: 1),
-          ListTile(
-            leading: Icon(Icons.support_agent_outlined, color: primaryColor),
-            title: const Text('Contact us'),
-            subtitle: const Text('Questions? Need help? Reach our team'),
-            trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+          SettingsRow(
+            icon: Icons.support_agent_outlined,
+            title: 'Contact us',
+            subtitle: 'Questions? Need help? Reach our team',
             onTap: () => _showContactUsDialog(context),
           ),
-          const Divider(height: 1),
-          ListTile(
-            leading: Icon(Icons.privacy_tip_outlined, color: primaryColor),
-            title: const Text('Terms and Privacy Policy'),
-            subtitle: const Text('Private communication & zero-knowledge policy'),
-            trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+          const SettingsSectionHeader(title: 'Legal & Info'),
+          SettingsRow(
+            icon: Icons.privacy_tip_outlined,
+            title: 'Terms and Privacy Policy',
+            subtitle: 'Private communication & zero-knowledge policy',
             onTap: () {
-              showDialog(
+              showAppDialog(
                 context: context,
-                builder: (ctx) => AlertDialog(
-                  backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
-                  title: const Text('Terms & Privacy'),
-                  content: const SingleChildScrollView(
-                    child: Text(
-                      'Livocal values your privacy:\n\n'
-                      '1. Private Encryption: Your 1-on-1 calls and messages are strictly protected.\n\n'
-                      '2. Gemini Live Translation: Voice streams are processed in ephemeral secure memory during active calls and are never stored or trained on.\n\n'
-                      '3. Zero Phonebook Harvesting: Contact matching occurs via cryptographic hash lookups without uploading your unhashed address book.',
-                      style: TextStyle(fontSize: 13, height: 1.4),
-                    ),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () async {
-                        final uri = Uri.parse(AppConfig.privacyPolicyUrl);
-                        try {
-                          await launchUrl(uri, mode: LaunchMode.externalApplication);
-                        } catch (e) {
-                          if (context.mounted) {
-                            showSnackBar(
-                              context: context,
-                              content: 'Could not open privacy policy URL: $uri',
-                              type: SnacBarType.error,
-                            );
-                          }
-                        }
-                      },
-                      child: Text('OPEN ONLINE POLICY', style: TextStyle(color: primaryColor)),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text('I UNDERSTAND'),
-                    ),
-                  ],
+                title: 'Terms & Privacy',
+                icon: Icons.privacy_tip_outlined,
+                content: const Text(
+                  'Livocal values your privacy:\n\n'
+                  '1. Private Encryption: Your 1-on-1 calls and messages are strictly protected.\n\n'
+                  '2. Gemini Live Translation: Voice streams are processed in ephemeral secure memory during active calls and are never stored or trained on.\n\n'
+                  '3. Zero Phonebook Harvesting: Contact matching occurs via cryptographic hash lookups without uploading your unhashed address book.',
+                  style: TextStyle(fontSize: 13, height: 1.4),
                 ),
+                actions: [
+                  AppDialogAction(
+                    label: 'ONLINE POLICY',
+                    isPrimary: true,
+                    onPressed: () async {
+                      final uri = Uri.parse(AppConfig.privacyPolicyUrl);
+                      try {
+                        await launchUrl(uri,
+                            mode: LaunchMode.externalApplication);
+                      } catch (e) {
+                        if (context.mounted) {
+                          showSnackBar(
+                            context: context,
+                            content: 'Could not open privacy policy URL: $uri',
+                            type: SnacBarType.error,
+                          );
+                        }
+                      }
+                    },
+                  ),
+                  AppDialogAction(
+                    label: 'I UNDERSTAND',
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
               );
             },
           ),
           const Divider(height: 1),
-          ListTile(
-            leading: Icon(Icons.info_outline, color: primaryColor),
-            title: const Text('App info'),
-            subtitle: const Text('Livocal v1.0.0'),
-            trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+          SettingsRow(
+            icon: Icons.info_outline,
+            title: 'App info',
+            subtitle: 'Livocal v1.0.0',
             onTap: () => _showAppInfoDialog(context),
           ),
         ],
@@ -257,9 +248,22 @@ class FAQScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Help Centre & FAQs'),
+        backgroundColor: isDark ? AppColors.darkSurface : AppColors.primary,
+        foregroundColor: Colors.white,
+        scrolledUnderElevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Help Centre & FAQs',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       body: ListView(
         children: const [

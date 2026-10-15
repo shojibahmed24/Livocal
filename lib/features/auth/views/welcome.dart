@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:livocal/features/auth/views/login.dart';
 import 'package:livocal/features/settings/views/app_language_screen.dart';
 import 'package:livocal/shared/constants/app_config.dart';
+import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
@@ -45,7 +46,7 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
       title: 'Private & Secure by Default',
       description:
           'DTLS-SRTP encrypted voice streams, protected personal data, zero address-book harvesting, and biometric app lock.',
-      accentColor: Color(0xFF00E676),
+      accentColor: AppColors.primary,
     ),
   ];
 
@@ -84,30 +85,32 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
     }
   }
 
-  void _showTermsDialog() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    showDialog(
+  Future<void> _showTermsDialog() async {
+    final uri = Uri.parse(AppConfig.termsOfServiceUrl);
+    try {
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (launched) return;
+    } catch (_) {}
+
+    if (!mounted) return;
+    await showAppDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
-        title: const Text('Terms of Service'),
-        content: const SingleChildScrollView(
-          child: Text(
-            'By using Livocal, you agree to:\n\n'
-            '1. Accept responsibility for your account activity.\n'
-            '2. Respect communication privacy and refrain from harassment.\n'
-            '3. Understand that real-time voice translation uses AI inference to assist cross-language communication.\n'
-            '4. Acknowledge that Livocal does not sell your private contact or message data to third parties.',
-            style: TextStyle(fontSize: 13, height: 1.4),
-          ),
+      title: 'Terms of Service',
+      icon: Icons.description_outlined,
+      iconColor: AppColors.primary,
+      contentText:
+          'By using Livocal, you agree to:\n\n'
+          '1. Accept responsibility for your account activity.\n'
+          '2. Respect communication privacy and refrain from harassment.\n'
+          '3. Understand that real-time voice translation uses AI inference to assist cross-language communication.\n'
+          '4. Acknowledge that Livocal does not sell your private contact or message data to third parties.',
+      actions: [
+        AppDialogAction(
+          label: 'Close',
+          isPrimary: true,
+          onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('CLOSE'),
-          ),
-        ],
-      ),
+      ],
     );
   }
 
@@ -123,6 +126,13 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        iconTheme: IconThemeData(
+          color: isDark ? Colors.white : AppColors.lightIcon,
+        ),
+        actionsIconTheme: IconThemeData(
+          color: isDark ? Colors.white : AppColors.lightIcon,
+        ),
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
@@ -173,11 +183,21 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
                             ),
                           ),
                           child: Center(
-                            child: Icon(
-                              slide.icon,
-                              size: 72,
-                              color: slide.accentColor,
-                            ),
+                            child: index == 0
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(40),
+                                    child: Image.asset(
+                                      'assets/images/logo.png',
+                                      width: 80,
+                                      height: 80,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  )
+                                : Icon(
+                                    slide.icon,
+                                    size: 72,
+                                    color: slide.accentColor,
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 28),

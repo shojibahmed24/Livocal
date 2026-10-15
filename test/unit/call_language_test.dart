@@ -23,7 +23,7 @@ void main() {
     });
 
     test('Supported languages list is not empty and codes are unique', () {
-      final all = CallLanguageRegistry.allLanguages;
+      const all = CallLanguageRegistry.allLanguages;
       expect(all, isNotEmpty);
 
       final codes = all.map((l) => l.code).toSet();

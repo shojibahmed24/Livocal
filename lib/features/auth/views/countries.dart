@@ -3,6 +3,7 @@ import 'package:country_picker/country_picker.dart';
 import 'package:livocal/features/auth/controllers/login_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/shared/widgets/search.dart';
+import 'package:livocal/theme/color_theme.dart';
 import 'package:livocal/theme/theme.dart';
 
 class CountryPage extends ConsumerStatefulWidget {
@@ -39,7 +40,20 @@ class _CountryPageState extends ConsumerState<CountryPage> {
           ref.read(countryPickerControllerProvider.notifier).onCrossPressed,
       appBar: AppBar(
         elevation: 0.0,
-        title: const Text('Choose a country'),
+        scrolledUnderElevation: 0,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? AppColors.darkSurface
+            : AppColors.primary,
+        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Choose a country',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
