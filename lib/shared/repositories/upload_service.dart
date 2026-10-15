@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:livocal/shared/utils/network_tracker.dart';
 
 class UploadService {
   final Map<String, UploadTask> _uploadTasks = {};
@@ -21,6 +22,7 @@ class UploadService {
       instance._uploadTasks[taskId] = uploadTask;
       uploadTask.then<void>(
         (snapshot) {
+          NetworkTracker.recordBytesSent(snapshot.totalBytes);
           onUploadDone(snapshot);
           instance._uploadTasks.remove(taskId);
         },

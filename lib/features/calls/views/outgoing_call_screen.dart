@@ -47,15 +47,28 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
       HapticFeedback.lightImpact();
     });
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      ref.read(callControllerProvider.notifier).startOutgoingCall(
+      final session = await ref.read(callControllerProvider.notifier).startOutgoingCall(
             caller: widget.caller,
             callee: widget.callee,
             calleeDisplayName: widget.calleeDisplayName,
             overrideMyLangCode: widget.overrideMyLangCode,
             overridePeerLangCode: widget.overridePeerLangCode,
           );
+      if (session == null && mounted) {
+        _navigated = true;
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to initiate call. Please check your network connection.'),
+            backgroundColor: Colors.redAccent,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
     });
   }
 

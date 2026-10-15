@@ -195,8 +195,8 @@ app.get('/', (req, res) => {
 // Anti-Phishing: Enforces callerId = req.user.uid and pulls verified name/phone from Firestore
 app.post(
   '/api/call/notify-incoming',
-  pushLimiter,
   authenticateRequest,
+  pushLimiter,
   validateBody(CallNotifySchema),
   async (req, res) => {
     if (!firebaseApp || !messagingService) {
@@ -289,8 +289,8 @@ app.post(
 // Anti-Impersonation: Enforces authorId = req.user.uid and pulls verified name/avatar from Firestore
 app.post(
   '/api/notify/chat-message',
-  pushLimiter,
   authenticateRequest,
+  pushLimiter,
   validateBody(ChatMessageNotifySchema),
   async (req, res) => {
     if (!firebaseApp || !messagingService) {

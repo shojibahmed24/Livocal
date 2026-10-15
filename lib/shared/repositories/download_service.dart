@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:livocal/shared/utils/network_tracker.dart';
 
 class DownloadService {
   final Map<String, DownloadTask> _downloadTasks = {};
@@ -20,6 +21,7 @@ class DownloadService {
       instance._downloadTasks[taskId] = downloadTask;
       downloadTask.then<void>(
         (snapshot) {
+          NetworkTracker.recordBytesReceived(snapshot.totalBytes);
           onDownloadComplete(snapshot);
           instance._downloadTasks.remove(taskId);
         },

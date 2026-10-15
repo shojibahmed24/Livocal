@@ -9,6 +9,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/features/calls/models/call_model.dart';
 import 'package:livocal/shared/constants/app_config.dart';
+import 'package:livocal/shared/utils/network_tracker.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
 class GeminiModelPreset {
@@ -421,6 +422,7 @@ CRITICAL OPERATING RULES:
         };
         _ws!.add(jsonEncode(frame));
       }
+      NetworkTracker.recordBytesSent(pcm16kBytes.length);
     } catch (e) {
       debugPrint('Error sending audio chunk: $e');
     }
@@ -467,6 +469,7 @@ CRITICAL OPERATING RULES:
           if (b64Audio != null && b64Audio.isNotEmpty) {
             final audioBytes = base64Decode(b64Audio);
             if (audioBytes.isNotEmpty) {
+              NetworkTracker.recordBytesReceived(audioBytes.length);
               _stateController.add(GeminiLiveState.speaking);
               _translatedPcmController.add(audioBytes);
             }

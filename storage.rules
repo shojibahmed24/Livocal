@@ -35,10 +35,16 @@ service firebase.storage {
       allow update, delete: if false;
     }
 
-    // Deprecated legacy root attachments: Deny new uploads; allow authenticated read so existing media is not orphaned
+    // Deprecated legacy root attachments: Deny new uploads; read permitted only if authenticated user is the sender/receiver or filename matches caller UID
     match /attachments/{fileName} {
       allow create, update, delete: if false;
-      allow read: if request.auth != null;
+      allow read: if request.auth != null && (
+        (resource.metadata != null && (
+          resource.metadata.senderId == request.auth.uid ||
+          resource.metadata.receiverId == request.auth.uid
+        )) ||
+        fileName.matches(request.auth.uid + '.*')
+      );
     }
 
     // 3. Ephemeral Status Images (Max 10MB, strictly owner-owned & recipient authorized)
@@ -57,10 +63,13 @@ service firebase.storage {
         && request.auth.uid == userId;
     }
 
-    // Deprecated legacy root statuses: Deny new uploads
+    // Deprecated legacy root statuses: Deny new uploads; read permitted only for the author
     match /statuses/{fileName} {
       allow create, update, delete: if false;
-      allow read: if request.auth != null;
+      allow read: if request.auth != null && (
+        (resource.metadata != null && resource.metadata.authorId == request.auth.uid) ||
+        fileName.matches(request.auth.uid + '.*')
+      );
     }
   }
 }

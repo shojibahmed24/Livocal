@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:livocal/shared/utils/network_tracker.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 
@@ -168,8 +169,8 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
     const primaryColor = Color(0xFF00A884);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final sentBytes = SharedPref.instance.getInt('net_bytes_sent') ?? 0;
-    final recvBytes = SharedPref.instance.getInt('net_bytes_received') ?? 0;
+    final sentBytes = NetworkTracker.getSentBytes();
+    final recvBytes = NetworkTracker.getReceivedBytes();
 
     return Scaffold(
       appBar: AppBar(
@@ -252,6 +253,15 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
                           ],
                         ),
                   actions: [
+                    if (sentBytes > 0 || recvBytes > 0)
+                      TextButton(
+                        onPressed: () {
+                          NetworkTracker.resetUsage();
+                          Navigator.pop(ctx);
+                          setState(() {});
+                        },
+                        child: const Text('RESET USAGE', style: TextStyle(color: Colors.redAccent)),
+                      ),
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),
                       child: const Text('CLOSE'),

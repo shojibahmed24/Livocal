@@ -6,6 +6,7 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:http/http.dart' as http;
 import 'gemini_live_translator.dart';
 import 'package:livocal/shared/constants/app_config.dart';
+import 'package:livocal/shared/utils/network_tracker.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
 enum WebRtcCallState {
@@ -380,6 +381,7 @@ class WebRtcCallClient {
   void _setupDataChannel(RTCDataChannel channel) {
     channel.onMessage = (RTCDataChannelMessage msg) {
       if (msg.isBinary) {
+        NetworkTracker.recordBytesReceived(msg.binary.length);
         _remoteTranslatedAudioController.add(msg.binary);
       }
     };
@@ -391,6 +393,7 @@ class WebRtcCallClient {
         _dataChannel!.state == RTCDataChannelState.RTCDataChannelOpen) {
       try {
         _dataChannel!.send(RTCDataChannelMessage.fromBinary(pcmBytes));
+        NetworkTracker.recordBytesSent(pcmBytes.length);
       } catch (e) {
         debugPrint('Error sending translated audio over DataChannel: $e');
       }
