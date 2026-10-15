@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:http/http.dart' as http;
 import 'gemini_live_translator.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
 
 enum WebRtcCallState {
   idle,
@@ -91,12 +92,16 @@ class WebRtcCallClient {
   /// Initialize local audio stream with Hardware Echo Cancellation & Noise Suppression
   Future<MediaStream?> initLocalStream() async {
     try {
+      final lessData =
+          SharedPref.instance.getBool('storage_less_data_calls') ?? false;
       final mediaConstraints = {
         'audio': {
           'echoCancellation': true,
           'noiseSuppression': true,
           'autoGainControl': true,
           'highpassFilter': true,
+          if (lessData) 'sampleRate': 16000,
+          if (lessData) 'channelCount': 1,
         },
         'video': false,
       };

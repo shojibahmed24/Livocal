@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 
@@ -68,7 +69,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = const Color(0xFF00A884);
+    const primaryColor = Color(0xFF00A884);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -191,16 +192,63 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
             subtitle: const Text('Require biometric authentication to open Livocal'),
             value: _fingerprintLock,
             activeColor: primaryColor,
-            onChanged: (val) {
-              setState(() => _fingerprintLock = val);
-              SharedPref.instance.setBool('privacy_fingerprint', val);
-              showSnackBar(
-                context: context,
-                content: val
-                    ? 'Fingerprint lock enabled'
-                    : 'Fingerprint lock disabled',
-                type: SnacBarType.info,
-              );
+            onChanged: (val) async {
+              try {
+                final auth = LocalAuthentication();
+                final canCheck = await auth.canCheckBiometrics;
+                final isSupported = await auth.isDeviceSupported();
+                if (!canCheck && !isSupported) {
+                  if (context.mounted) {
+                    showSnackBar(
+                      context: context,
+                      content:
+                          'Biometric authentication is not supported on this device.',
+                      type: SnacBarType.error,
+                    );
+                  }
+                  return;
+                }
+
+                final authenticated = await auth.authenticate(
+                  localizedReason: val
+                      ? 'Confirm your fingerprint or biometric credential to enable lock'
+                      : 'Confirm your biometric credential to disable lock',
+                  biometricOnly: false,
+                  persistAcrossBackgrounding: true,
+                );
+
+                if (authenticated) {
+                  await SharedPref.instance.setBool('privacy_fingerprint', val);
+                  if (mounted) {
+                    setState(() => _fingerprintLock = val);
+                  }
+                  if (context.mounted) {
+                    showSnackBar(
+                      context: context,
+                      content: val
+                          ? 'Fingerprint lock enabled'
+                          : 'Fingerprint lock disabled',
+                      type: SnacBarType.info,
+                    );
+                  }
+                } else {
+                  if (context.mounted) {
+                    showSnackBar(
+                      context: context,
+                      content: 'Biometric verification cancelled.',
+                      type: SnacBarType.error,
+                    );
+                  }
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  showSnackBar(
+                    context: context,
+                    content: 'Biometric error: $e',
+                    type: SnacBarType.error,
+                  );
+                }
+              }
             },
           ),
         ],

@@ -136,7 +136,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
             ),
             onPressed: () async {
               Navigator.pop(ctx);
-              await AuthController.logout(
+              await AuthController.deleteAccount(
                 context: context,
                 ref: ref,
                 userId: widget.user.id,

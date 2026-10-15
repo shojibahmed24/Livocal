@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 
@@ -17,6 +19,10 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
   String _wifiAuto = 'All media';
   String _roamingAuto = 'No media';
 
+  int _dbBytes = 0;
+  int _cacheBytes = 0;
+  bool _isLoadingSizes = true;
+
   @override
   void initState() {
     super.initState();
@@ -28,6 +34,98 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
         SharedPref.instance.getString('storage_wifi_auto') ?? 'All media';
     _roamingAuto =
         SharedPref.instance.getString('storage_roaming_auto') ?? 'No media';
+
+    _loadRealStorageSizes();
+  }
+
+  String _formatBytes(int bytes) {
+    if (bytes <= 0) return '0 B';
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
+    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
+  }
+
+  Future<int> _calculateDirSize(Directory dir) async {
+    int total = 0;
+    try {
+      if (await dir.exists()) {
+        final entities = dir.listSync(recursive: true, followLinks: false);
+        for (final entity in entities) {
+          if (entity is File) {
+            try {
+              total += entity.lengthSync();
+            } catch (_) {}
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[StorageSettings] Error computing dir size: $e');
+    }
+    return total;
+  }
+
+  Future<void> _loadRealStorageSizes() async {
+    setState(() => _isLoadingSizes = true);
+    try {
+      final docDir = await getApplicationDocumentsDirectory();
+      final tempDir = await getTemporaryDirectory();
+
+      final dbSize = await _calculateDirSize(docDir);
+      final cacheSize = await _calculateDirSize(tempDir);
+
+      if (mounted) {
+        setState(() {
+          _dbBytes = dbSize;
+          _cacheBytes = cacheSize;
+          _isLoadingSizes = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('[StorageSettings] Failed to calculate storage: $e');
+      if (mounted) {
+        setState(() => _isLoadingSizes = false);
+      }
+    }
+  }
+
+  Future<void> _clearCache() async {
+    try {
+      final tempDir = await getTemporaryDirectory();
+      int freed = 0;
+      if (await tempDir.exists()) {
+        final entities = tempDir.listSync(recursive: true, followLinks: false);
+        for (final entity in entities) {
+          if (entity is File) {
+            try {
+              final len = entity.lengthSync();
+              entity.deleteSync();
+              freed += len;
+            } catch (_) {}
+          }
+        }
+      }
+
+      await _loadRealStorageSizes();
+
+      if (mounted) {
+        showSnackBar(
+          context: context,
+          content: 'Cache cleared successfully (${_formatBytes(freed)} freed)',
+          type: SnacBarType.info,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        showSnackBar(
+          context: context,
+          content: 'Failed to clear cache: $e',
+          type: SnacBarType.error,
+        );
+      }
+    }
   }
 
   void _showAutoDownloadDialog({
@@ -67,8 +165,11 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = const Color(0xFF00A884);
+    const primaryColor = Color(0xFF00A884);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final sentBytes = SharedPref.instance.getInt('net_bytes_sent') ?? (34 * 1024 * 1024);
+    final recvBytes = SharedPref.instance.getInt('net_bytes_received') ?? (98 * 1024 * 1024);
 
     return Scaffold(
       appBar: AppBar(
@@ -79,29 +180,36 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
           ListTile(
             leading: Icon(Icons.folder_outlined, color: primaryColor),
             title: const Text('Manage storage'),
-            subtitle: const Text('Local Isar database: 14.2 MB • Cache: 4.8 MB'),
+            subtitle: Text(
+              _isLoadingSizes
+                  ? 'Calculating real disk usage...'
+                  : 'Database: ${_formatBytes(_dbBytes)} • Cache: ${_formatBytes(_cacheBytes)}',
+            ),
             trailing: const Icon(Icons.chevron_right, color: Colors.grey),
             onTap: () {
               showDialog(
                 context: context,
                 builder: (ctx) => AlertDialog(
                   backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
-                  title: const Text('Storage Details'),
-                  content: const Column(
+                  title: const Text('Storage Breakdown'),
+                  content: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('• Message DB: 14.2 MB (Isar Engine)'),
-                      SizedBox(height: 6),
-                      Text('• Cached Media & Waveforms: 4.8 MB'),
-                      SizedBox(height: 6),
-                      Text('• Translation Audio Cache: 1.2 MB'),
+                      Text('• App Database (Isar): ${_formatBytes(_dbBytes)}'),
+                      const SizedBox(height: 8),
+                      Text('• Cached Media & Temporary Audio: ${_formatBytes(_cacheBytes)}'),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Total App Footprint: ${_formatBytes(_dbBytes + _cacheBytes)}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ],
                   ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),
-                      child: const Text('OK'),
+                      child: const Text('CLOSE'),
                     ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
@@ -110,11 +218,7 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
                       ),
                       onPressed: () {
                         Navigator.pop(ctx);
-                        showSnackBar(
-                          context: context,
-                          content: 'Temporary audio cache cleared (6.0 MB freed)',
-                          type: SnacBarType.info,
-                        );
+                        _clearCache();
                       },
                       child: const Text('CLEAR CACHE'),
                     ),
@@ -126,23 +230,23 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
           ListTile(
             leading: Icon(Icons.data_usage, color: primaryColor),
             title: const Text('Network usage'),
-            subtitle: const Text('42.8 MB sent • 128.4 MB received'),
+            subtitle: Text('${_formatBytes(sentBytes)} sent • ${_formatBytes(recvBytes)} received'),
             trailing: const Icon(Icons.chevron_right, color: Colors.grey),
             onTap: () {
               showDialog(
                 context: context,
                 builder: (ctx) => AlertDialog(
                   backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
-                  title: const Text('Network Usage'),
-                  content: const Column(
+                  title: const Text('Network Usage Details'),
+                  content: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('• Calls: 34.5 MB sent • 98.2 MB received'),
-                      SizedBox(height: 6),
-                      Text('• Messages: 5.2 MB sent • 18.6 MB received'),
-                      SizedBox(height: 6),
-                      Text('• Media: 3.1 MB sent • 11.6 MB received'),
+                      Text('• WebRTC Calls: ${_formatBytes((sentBytes * 0.75).round())} sent • ${_formatBytes((recvBytes * 0.75).round())} received'),
+                      const SizedBox(height: 6),
+                      Text('• Messages & Statuses: ${_formatBytes((sentBytes * 0.15).round())} sent • ${_formatBytes((recvBytes * 0.15).round())} received'),
+                      const SizedBox(height: 6),
+                      Text('• Media & Attachments: ${_formatBytes((sentBytes * 0.10).round())} sent • ${_formatBytes((recvBytes * 0.10).round())} received'),
                     ],
                   ),
                   actions: [

@@ -1,11 +1,14 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:livocal/features/status/models/status_model.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
 class StatusService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static final FirebaseStorage _storage = FirebaseStorage.instance;
 
   static Future<void> postStatus(StatusModel status) async {
     try {
@@ -26,7 +29,6 @@ class StatusService {
       await SharedPref.instance.setString('my_last_status', jsonEncode(myStatusMap));
     } catch (e) {
       debugPrint('[StatusService] postStatus error: $e');
-      // Even if Firestore fails (e.g. offline), preserve locally
       final myStatusMap = {
         'id': status.id,
         'userId': status.userId,
@@ -41,6 +43,45 @@ class StatusService {
     }
   }
 
+  static Future<StatusModel?> uploadPhotoStatus({
+    required String userId,
+    required String userName,
+    required String userAvatar,
+    required File imageFile,
+    String caption = '',
+  }) async {
+    try {
+      final now = DateTime.now();
+      final statusId = 'status_${userId}_${now.millisecondsSinceEpoch}';
+      final fileName = '${userId}_${now.millisecondsSinceEpoch}.jpg';
+
+      // 1. Upload to Firebase Storage under /statuses/{fileName}
+      final storageRef = _storage.ref().child('statuses/$fileName');
+      final metadata = SettableMetadata(contentType: 'image/jpeg');
+      final uploadTask = await storageRef.putFile(imageFile, metadata);
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
+
+      // 2. Create StatusModel
+      final status = StatusModel(
+        id: statusId,
+        userId: userId,
+        userName: userName,
+        userAvatar: userAvatar,
+        text: caption,
+        mediaUrl: downloadUrl,
+        colorValue: 0xFF000000,
+        timestamp: now,
+      );
+
+      // 3. Save to Firestore
+      await postStatus(status);
+      return status;
+    } catch (e) {
+      debugPrint('[StatusService] uploadPhotoStatus error: $e');
+      rethrow;
+    }
+  }
+
   static StatusModel? getMyLocalStatus() {
     try {
       final raw = SharedPref.instance.getString('my_last_status');
@@ -52,6 +93,28 @@ class StatusService {
     } catch (e) {
       return null;
     }
+  }
+
+  static Stream<StatusModel?> getMyStatusStream(String currentUserId) {
+    final cutoff = DateTime.now().subtract(const Duration(hours: 24));
+    return _firestore
+        .collection('statuses')
+        .where('userId', isEqualTo: currentUserId)
+        .where('timestamp', isGreaterThan: Timestamp.fromDate(cutoff))
+        .orderBy('timestamp', descending: true)
+        .limit(1)
+        .snapshots()
+        .map((snap) {
+          if (snap.docs.isEmpty) return getMyLocalStatus();
+          final doc = snap.docs.first;
+          final status = StatusModel.fromMap(doc.data(), doc.id);
+          if (status.isExpired) return null;
+          return status;
+        })
+        .handleError((err) {
+          debugPrint('[StatusService] getMyStatusStream error: $err');
+          return getMyLocalStatus();
+        });
   }
 
   static Stream<List<StatusModel>> getRecentStatusesStream(String currentUserId) {

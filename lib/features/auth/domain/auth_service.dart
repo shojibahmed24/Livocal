@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:livocal/features/auth/data/repositories/auth_repository.dart';
 import 'package:livocal/features/auth/views/welcome.dart';
@@ -129,5 +130,40 @@ class AuthController {
       ),
       (route) => false,
     );
+  }
+
+  static Future<void> deleteAccount({
+    required BuildContext context,
+    required WidgetRef ref,
+    required String userId,
+  }) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(userId).delete();
+    } catch (e) {
+      debugPrint('[AuthController] Delete user doc error: $e');
+    }
+
+    try {
+      await FirebaseFirestore.instance.collection('fcmTokens').doc(userId).delete();
+    } catch (e) {
+      debugPrint('[AuthController] Delete fcmToken doc error: $e');
+    }
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await user.delete();
+      }
+    } catch (e) {
+      debugPrint('[AuthController] FirebaseAuth delete user error: $e');
+    }
+
+    if (context.mounted) {
+      await logout(
+        context: context,
+        ref: ref,
+        userId: userId,
+      );
+    }
   }
 }

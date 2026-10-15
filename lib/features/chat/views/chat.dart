@@ -709,6 +709,11 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
   void markAsSeen(Message message) {
     if (message.senderId == self.id) return;
     if (message.status == MessageStatus.seen) return;
+    final readReceiptsEnabled = SharedPref.instance.getBool('privacy_read_receipts') ?? true;
+    if (!readReceiptsEnabled) {
+      IsarDb.updateMessage(message.id, status: MessageStatus.seen);
+      return;
+    }
     ref.read(chatControllerProvider.notifier).markMessageAsSeen(message);
   }
 

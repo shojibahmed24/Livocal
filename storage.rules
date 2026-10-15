@@ -34,5 +34,17 @@ service firebase.storage {
       // Chat attachments are immutable once uploaded (cannot be overwritten or deleted by anyone)
       allow update, delete: if false;
     }
+
+    // 3. Ephemeral Status Images (Max 10MB, strictly owner-owned)
+    match /statuses/{fileName} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && fileName.matches(request.auth.uid + '.*')
+        && request.resource.size > 0
+        && request.resource.size <= 10 * 1024 * 1024
+        && request.resource.contentType.matches('^(image|video).*');
+      allow update, delete: if request.auth != null
+        && fileName.matches(request.auth.uid + '.*');
+    }
   }
 }

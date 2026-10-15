@@ -1,12 +1,15 @@
+import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:livocal/features/status/models/status_model.dart';
 import 'package:livocal/features/status/services/status_service.dart';
 import 'package:livocal/features/status/views/status_view_screen.dart';
 import 'package:livocal/features/status/views/text_status_composer_screen.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/theme.dart';
 
 class StatusTab extends ConsumerStatefulWidget {
@@ -22,30 +25,140 @@ class _StatusTabState extends ConsumerState<StatusTab>
   @override
   bool get wantKeepAlive => true;
 
-  StatusModel? _myStatus;
-
-  @override
-  void initState() {
-    super.initState();
-    _refreshMyStatus();
-  }
-
-  void _refreshMyStatus() {
-    setState(() {
-      _myStatus = StatusService.getMyLocalStatus();
-    });
-  }
-
   void _openTextStatusComposer() async {
-    final posted = await Navigator.push<bool>(
+    await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (_) => TextStatusComposerScreen(user: widget.user),
       ),
     );
-    if (posted == true) {
-      _refreshMyStatus();
+  }
+
+  Future<void> _pickAndUploadPhotoStatus(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: source, imageQuality: 80);
+      if (picked == null) return;
+
+      final file = File(picked.path);
+      if (!mounted) return;
+
+      final captionController = TextEditingController();
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF1F2C34)
+              : Colors.white,
+          title: const Text('Add Status Caption'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.file(file, height: 160, fit: BoxFit.cover),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: captionController,
+                decoration: const InputDecoration(
+                  hintText: 'Add a caption...',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('CANCEL'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00A884),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('SEND'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm == true && mounted) {
+        showSnackBar(
+          context: context,
+          content: 'Uploading status...',
+          type: SnacBarType.info,
+        );
+
+        await StatusService.uploadPhotoStatus(
+          userId: widget.user.id,
+          userName: widget.user.name,
+          userAvatar: widget.user.avatarUrl,
+          imageFile: file,
+          caption: captionController.text.trim(),
+        );
+
+        if (mounted) {
+          showSnackBar(
+            context: context,
+            content: 'Status uploaded successfully',
+            type: SnacBarType.info,
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        showSnackBar(
+          context: context,
+          content: 'Failed to upload status: $e',
+          type: SnacBarType.error,
+        );
+      }
     }
+  }
+
+  void _showAddStatusOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1F2C34)
+          : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Color(0xFF00A884)),
+              title: const Text('Take a photo'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickAndUploadPhotoStatus(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: Color(0xFF00A884)),
+              title: const Text('Choose from gallery'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickAndUploadPhotoStatus(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.edit, color: Color(0xFF00A884)),
+              title: const Text('Text status'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _openTextStatusComposer();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   String _formatTime(DateTime dt) {
@@ -66,139 +179,147 @@ class _StatusTabState extends ConsumerState<StatusTab>
 
     return ListView(
       children: [
-        // My Status Tile
-        ListTile(
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          leading: GestureDetector(
-            onTap: () {
-              if (_myStatus != null) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => StatusViewScreen(status: _myStatus!),
-                  ),
-                );
-              } else {
-                _openTextStatusComposer();
-              }
-            },
-            child: Stack(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(2.5),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: _myStatus != null
-                        ? Border.all(color: primaryColor, width: 2.5)
-                        : null,
-                  ),
-                  child: CircleAvatar(
-                    radius: 26,
-                    backgroundColor: Colors.grey[700],
-                    backgroundImage: widget.user.avatarUrl.isNotEmpty
-                        ? CachedNetworkImageProvider(widget.user.avatarUrl)
-                        : null,
-                    child: widget.user.avatarUrl.isEmpty
-                        ? Text(
-                            widget.user.name.isNotEmpty
-                                ? widget.user.name[0].toUpperCase()
-                                : '?',
-                            style: const TextStyle(
-                              fontSize: 22,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          )
-                        : null,
-                  ),
-                ),
-                if (_myStatus == null)
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: primaryColor,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Theme.of(context).scaffoldBackgroundColor,
-                          width: 2,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.add,
-                        size: 14,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          title: Text(
-            'My status',
-            style: textTheme.titleMedium.copyWith(fontWeight: FontWeight.bold),
-          ),
-          subtitle: Text(
-            _myStatus != null
-                ? 'Today, ${_formatTime(_myStatus!.timestamp)}'
-                : 'Tap to add status update',
-            style: TextStyle(
-              color: _myStatus != null ? primaryColor : Colors.grey,
-              fontSize: 13,
-            ),
-          ),
-          trailing: _myStatus != null
-              ? IconButton(
-                  icon: const Icon(Icons.more_horiz, color: Colors.grey),
-                  onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      builder: (ctx) => Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ListTile(
-                            leading: const Icon(Icons.visibility),
-                            title: const Text('View status'),
-                            onTap: () {
-                              Navigator.pop(ctx);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      StatusViewScreen(status: _myStatus!),
-                                ),
-                              );
-                            },
-                          ),
-                          ListTile(
-                            leading: const Icon(Icons.edit),
-                            title: const Text('Add new status'),
-                            onTap: () {
-                              Navigator.pop(ctx);
-                              _openTextStatusComposer();
-                            },
-                          ),
-                        ],
+        // Realtime My Status Stream
+        StreamBuilder<StatusModel?>(
+          stream: StatusService.getMyStatusStream(widget.user.id),
+          builder: (context, snapshot) {
+            final myStatus = snapshot.data ?? StatusService.getMyLocalStatus();
+
+            return ListTile(
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              leading: GestureDetector(
+                onTap: () {
+                  if (myStatus != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => StatusViewScreen(status: myStatus),
                       ),
                     );
-                  },
-                )
-              : null,
-          onTap: () {
-            if (_myStatus != null) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => StatusViewScreen(status: _myStatus!),
+                  } else {
+                    _showAddStatusOptions();
+                  }
+                },
+                child: Stack(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(2.5),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: myStatus != null
+                            ? Border.all(color: primaryColor, width: 2.5)
+                            : null,
+                      ),
+                      child: CircleAvatar(
+                        radius: 26,
+                        backgroundColor: Colors.grey[700],
+                        backgroundImage: widget.user.avatarUrl.isNotEmpty
+                            ? CachedNetworkImageProvider(widget.user.avatarUrl)
+                            : null,
+                        child: widget.user.avatarUrl.isEmpty
+                            ? Text(
+                                widget.user.name.isNotEmpty
+                                    ? widget.user.name[0].toUpperCase()
+                                    : '?',
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              )
+                            : null,
+                      ),
+                    ),
+                    if (myStatus == null)
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: primaryColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Theme.of(context).scaffoldBackgroundColor,
+                              width: 2,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.add,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-              );
-            } else {
-              _openTextStatusComposer();
-            }
+              ),
+              title: Text(
+                'My status',
+                style: textTheme.titleMedium.copyWith(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(
+                myStatus != null
+                    ? 'Today, ${_formatTime(myStatus.timestamp)}'
+                    : 'Tap to add status update',
+                style: TextStyle(
+                  color: myStatus != null ? primaryColor : Colors.grey,
+                  fontSize: 13,
+                ),
+              ),
+              trailing: myStatus != null
+                  ? IconButton(
+                      icon: const Icon(Icons.more_horiz, color: Colors.grey),
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
+                          builder: (ctx) => Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ListTile(
+                                leading: const Icon(Icons.visibility),
+                                title: const Text('View status'),
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          StatusViewScreen(status: myStatus),
+                                    ),
+                                  );
+                                },
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.add),
+                                title: const Text('Add new status'),
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  _showAddStatusOptions();
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    )
+                  : null,
+              onTap: () {
+                if (myStatus != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => StatusViewScreen(status: myStatus),
+                    ),
+                  );
+                } else {
+                  _showAddStatusOptions();
+                }
+              },
+            );
           },
         ),
 

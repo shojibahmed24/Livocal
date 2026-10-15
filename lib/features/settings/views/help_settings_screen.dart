@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 
@@ -7,52 +10,101 @@ class HelpSettingsScreen extends StatelessWidget {
   void _showContactUsDialog(BuildContext context) {
     final textController = TextEditingController();
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    bool isSubmitting = false;
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
-        title: const Text('Contact Support'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Tell us how we can help you. Describe your issue or suggestion:',
-              style: TextStyle(fontSize: 14),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: textController,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                hintText: 'Type your message here...',
-                border: OutlineInputBorder(),
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
+          title: const Text('Contact Support'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Tell us how we can help you. Describe your issue or suggestion:',
+                style: TextStyle(fontSize: 14),
               ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: textController,
+                maxLines: 4,
+                enabled: !isSubmitting,
+                decoration: const InputDecoration(
+                  hintText: 'Type your message here...',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              if (isSubmitting) ...[
+                const SizedBox(height: 16),
+                const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00A884)),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
+              child: const Text('CANCEL'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00A884),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: isSubmitting
+                  ? null
+                  : () async {
+                      final message = textController.text.trim();
+                      if (message.isEmpty) {
+                        showSnackBar(
+                          context: context,
+                          content: 'Please enter a message before submitting.',
+                          type: SnacBarType.error,
+                        );
+                        return;
+                      }
+
+                      setDialogState(() => isSubmitting = true);
+                      try {
+                        final user = FirebaseAuth.instance.currentUser;
+                        await FirebaseFirestore.instance.collection('feedback').add({
+                          'userId': user?.uid ?? 'anonymous',
+                          'phoneNumber': user?.phoneNumber ?? '',
+                          'message': message,
+                          'platform': Platform.operatingSystem,
+                          'appVersion': '1.0.0',
+                          'createdAt': FieldValue.serverTimestamp(),
+                        });
+
+                        if (context.mounted) {
+                          Navigator.pop(ctx);
+                          showSnackBar(
+                            context: context,
+                            content: 'Thank you! Your feedback has been sent to the Livocal engineering team.',
+                            type: SnacBarType.info,
+                          );
+                        }
+                      } catch (e) {
+                        setDialogState(() => isSubmitting = false);
+                        if (context.mounted) {
+                          showSnackBar(
+                            context: context,
+                            content: 'Failed to send feedback: $e',
+                            type: SnacBarType.error,
+                          );
+                        }
+                      }
+                    },
+              child: const Text('SUBMIT'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('CANCEL'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00A884),
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              showSnackBar(
-                context: context,
-                content: 'Thank you! Your feedback has been sent to the Livocal engineering team.',
-                type: SnacBarType.info,
-              );
-            },
-            child: const Text('SUBMIT'),
-          ),
-        ],
       ),
     );
   }

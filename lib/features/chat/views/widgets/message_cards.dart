@@ -7,6 +7,7 @@ import 'package:flutter_emoji/flutter_emoji.dart';
 import 'package:livocal/features/chat/models/message.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/theme/theme.dart';
 
 import '../../models/attachement.dart';
@@ -75,6 +76,39 @@ class _MessageCardState extends State<MessageCard>
                           content: Text('Message copied to clipboard'),
                           duration: Duration(seconds: 2),
                         ),
+                      );
+                    },
+                  ),
+                if (!isDeleted)
+                  Builder(
+                    builder: (context) {
+                      final starred = SharedPref.instance.getStringList('starred_message_ids') ?? [];
+                      final isStarred = starred.contains(widget.message.id);
+                      return ListTile(
+                        leading: Icon(
+                          isStarred ? Icons.star_rounded : Icons.star_border_rounded,
+                          color: isStarred ? Colors.amber : colorTheme.iconColor,
+                        ),
+                        title: Text(isStarred ? 'Unstar' : 'Star'),
+                        onTap: () async {
+                          Navigator.pop(ctx);
+                          final list = SharedPref.instance.getStringList('starred_message_ids') ?? [];
+                          if (isStarred) {
+                            list.remove(widget.message.id);
+                          } else {
+                            list.add(widget.message.id);
+                          }
+                          await SharedPref.instance.setStringList('starred_message_ids', list);
+                          if (mounted) setState(() {});
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(isStarred ? 'Message unstarred' : 'Message starred'),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
                       );
                     },
                   ),
@@ -357,7 +391,15 @@ class _MessageCardState extends State<MessageCard>
                                         )
                                     : Colors.white,
                               ),
-                        )
+                        ),
+                        if (SharedPref.instance.getStringList('starred_message_ids')?.contains(widget.message.id) == true) ...[
+                          const SizedBox(width: 3.0),
+                          const Icon(
+                            Icons.star_rounded,
+                            size: 13,
+                            color: Colors.amber,
+                          ),
+                        ],
                       ],
                       if (isSentMessageCard) ...[
                         const SizedBox(

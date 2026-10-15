@@ -13,6 +13,7 @@ import 'package:livocal/shared/utils/storage_paths.dart';
 import 'features/auth/views/welcome.dart';
 
 import 'features/home/views/base.dart';
+import 'package:livocal/shared/widgets/app_auth_guard.dart';
 import 'firebase_options.dart';
 
 import 'package:livocal/features/calls/services/gemini_live_translator.dart';
@@ -85,7 +86,9 @@ class Livocal extends ConsumerWidget {
         builder: (BuildContext context, snapshot) {
           final user = getCurrentUser();
           if (user != null) {
-            return HomePage(user: user);
+            return AppAuthGuard(
+              child: HomePage(user: user),
+            );
           }
           return const WelcomePage();
         },
