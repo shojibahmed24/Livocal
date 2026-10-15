@@ -127,7 +127,9 @@ class WebRtcCallClient {
           NetworkTracker.recordBytesReceived(delta);
           _lastRtpBytesReceived = totalReceived;
         }
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[WebRtcCallClient] RTP stats tracking error: $e');
+      }
     });
   }
 

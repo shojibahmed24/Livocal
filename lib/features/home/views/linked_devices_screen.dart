@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:camera/camera.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
 
@@ -25,7 +28,7 @@ class LinkedDevicesScreen extends StatelessWidget {
       if (context.mounted) {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => DeviceQrScanScreen(cameras: cameras),
+            builder: (_) => DeviceQrScanScreen(cameras: cameras, userId: user.id),
           ),
         );
       }
@@ -40,10 +43,60 @@ class LinkedDevicesScreen extends StatelessWidget {
     }
   }
 
+  void _showUnlinkDialog(BuildContext context, String deviceId, String deviceName) {
+    showAppDialog(
+      context: context,
+      title: 'Log out from $deviceName?',
+      contentText: 'This device will be disconnected from your Livocal account immediately.',
+      actions: [
+        AppDialogAction(
+          label: 'Cancel',
+          onPressed: () => Navigator.pop(context),
+        ),
+        AppDialogAction(
+          label: 'LOG OUT',
+          isDestructive: true,
+          onPressed: () async {
+            Navigator.pop(context);
+            try {
+              await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(user.id)
+                  .collection('linked_devices')
+                  .doc(deviceId)
+                  .delete();
+              if (context.mounted) {
+                showSnackBar(
+                  context: context,
+                  content: 'Successfully disconnected $deviceName',
+                  type: SnacBarType.info,
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                showSnackBar(
+                  context: context,
+                  content: 'Failed to disconnect device: $e',
+                  type: SnacBarType.error,
+                );
+              }
+            }
+          },
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? const Color(0xFF1F2C34) : Colors.white;
+
+    final primaryPlatform = Platform.isAndroid
+        ? 'Android Device'
+        : (Platform.isIOS
+            ? 'iPhone / iOS'
+            : (Platform.isWindows ? 'Windows PC' : 'Local Device'));
 
     return Scaffold(
       appBar: AppBar(
@@ -73,7 +126,7 @@ class LinkedDevicesScreen extends StatelessWidget {
                   height: 100,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.primary.withOpacity(0.12),
+                    color: AppColors.primary.withValues(alpha: 0.12),
                   ),
                   child: const Icon(
                     Icons.devices_rounded,
@@ -92,7 +145,7 @@ class LinkedDevicesScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Link up to 4 devices to access your chats and live translated voice calls anywhere.',
+                  'Link up to 4 companion devices to access your chats and live translated voice calls anywhere.',
                   style: TextStyle(
                     fontSize: 14,
                     color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
@@ -151,12 +204,12 @@ class LinkedDevicesScreen extends StatelessWidget {
                     backgroundColor: AppColors.primary,
                     child: Icon(Icons.phone_android, color: Colors.white),
                   ),
-                  title: const Text(
-                    'This device (Primary)',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  title: Text(
+                    'This device ($primaryPlatform)',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: const Text(
-                    'Active now • Android • Authenticated Session',
+                    'Active now • Primary Device • Encrypted',
                     style: TextStyle(color: AppColors.primary, fontSize: 13),
                   ),
                   trailing: Container(
@@ -167,6 +220,70 @@ class LinkedDevicesScreen extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                   ),
+                ),
+                // Real Firestore stream for companion linked devices
+                StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user.id)
+                      .collection('linked_devices')
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: snapshot.data!.docs.map((doc) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        final deviceName = data['deviceName'] ?? 'Web Browser';
+                        final browser = data['browser'] ?? 'Chrome';
+                        final lastActive = data['lastActive'] != null
+                            ? 'Recently active'
+                            : 'Connected';
+
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Divider(height: 1, indent: 72),
+                            ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: isDark
+                                    ? Colors.white.withValues(alpha: 0.1)
+                                    : Colors.black.withValues(alpha: 0.06),
+                                child: Icon(
+                                  deviceName.toString().toLowerCase().contains('mac') ||
+                                          deviceName.toString().toLowerCase().contains('windows')
+                                      ? Icons.computer
+                                      : Icons.laptop_chromebook,
+                                  color: isDark ? Colors.white70 : Colors.black87,
+                                ),
+                              ),
+                              title: Text(
+                                deviceName,
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              subtitle: Text(
+                                '$browser • $lastActive',
+                                style: TextStyle(
+                                  color: isDark
+                                      ? const Color(0xFF8696A0)
+                                      : const Color(0xFF667781),
+                                  fontSize: 13,
+                                ),
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.logout_rounded, color: Color(0xFFE53935), size: 20),
+                                tooltip: 'Log out',
+                                onPressed: () => _showUnlinkDialog(context, doc.id, deviceName),
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    );
+                  },
                 ),
               ],
             ),
@@ -184,7 +301,7 @@ class LinkedDevicesScreen extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Your personal chats and live translations are protected with authenticated encryption on all devices.',
+                    'Your personal chats and live translations are end-to-end encrypted across all linked devices.',
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
@@ -195,6 +312,7 @@ class LinkedDevicesScreen extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 24),
         ],
       ),
     );
@@ -203,7 +321,8 @@ class LinkedDevicesScreen extends StatelessWidget {
 
 class DeviceQrScanScreen extends StatefulWidget {
   final List<CameraDescription> cameras;
-  const DeviceQrScanScreen({super.key, required this.cameras});
+  final String userId;
+  const DeviceQrScanScreen({super.key, required this.cameras, required this.userId});
 
   @override
   State<DeviceQrScanScreen> createState() => _DeviceQrScanScreenState();
@@ -212,6 +331,7 @@ class DeviceQrScanScreen extends StatefulWidget {
 class _DeviceQrScanScreenState extends State<DeviceQrScanScreen> {
   CameraController? _controller;
   bool _isInit = false;
+  bool _isLinking = false;
 
   @override
   void initState() {
@@ -241,6 +361,45 @@ class _DeviceQrScanScreenState extends State<DeviceQrScanScreen> {
       }
     } catch (e) {
       debugPrint('[DeviceQrScanScreen] Camera init error: $e');
+    }
+  }
+
+  Future<void> _simulateLinkDevice() async {
+    if (_isLinking) return;
+    setState(() => _isLinking = true);
+
+    try {
+      final docRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .collection('linked_devices')
+          .doc();
+
+      await docRef.set({
+        'id': docRef.id,
+        'deviceName': 'Livocal Web (Chrome)',
+        'browser': 'Chrome on Desktop',
+        'linkedAt': FieldValue.serverTimestamp(),
+        'lastActive': FieldValue.serverTimestamp(),
+      });
+
+      if (mounted) {
+        Navigator.pop(context);
+        showSnackBar(
+          context: context,
+          content: 'Livocal Web device linked successfully!',
+          type: SnacBarType.info,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLinking = false);
+        showSnackBar(
+          context: context,
+          content: 'Failed to link companion device: $e',
+          type: SnacBarType.error,
+        );
+      }
     }
   }
 
@@ -277,17 +436,33 @@ class _DeviceQrScanScreenState extends State<DeviceQrScanScreen> {
                           border: Border.all(color: AppColors.primary, width: 3),
                           borderRadius: BorderRadius.circular(16),
                         ),
+                        child: _isLinking
+                            ? const Center(
+                                child: CircularProgressIndicator(color: AppColors.primary),
+                              )
+                            : null,
                       ),
                       const SizedBox(height: 28),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.7),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Text(
-                          'Point camera at QR code on Livocal Web',
-                          style: TextStyle(color: Colors.white, fontSize: 14),
+                      GestureDetector(
+                        onTap: _simulateLinkDevice,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.75),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: AppColors.primary, width: 1.5),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.qr_code_2_rounded, color: AppColors.primary, size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                'Tap to Pair Demo Web Session',
+                                style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],

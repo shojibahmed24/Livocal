@@ -48,7 +48,9 @@ class SecurePinService {
       if (lockoutUntilMs > nowMs) {
         return ((lockoutUntilMs - nowMs) / 1000).ceil();
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[SecurePinService] Lockout check error: $e');
+    }
     return 0;
   }
 

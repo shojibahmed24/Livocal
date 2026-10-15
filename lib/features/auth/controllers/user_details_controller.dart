@@ -13,9 +13,7 @@ import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/attachment_utils.dart';
 // import 'package:livocal/shared/widgets/emoji_picker.dart';
 import 'package:livocal/shared/widgets/gallery.dart';
-import 'package:livocal/theme/app_tokens.dart';
-import 'package:livocal/theme/color_theme.dart';
-import 'package:livocal/theme/theme.dart';
+import 'package:livocal/theme/app_colors.dart';
 
 import '../../../shared/repositories/compression_service.dart';
 
@@ -88,7 +86,6 @@ class UserDetailsController extends StateNotifier<File?> {
     WidgetRef ref,
     Phone phone,
   ) async {
-    final colorTheme = Theme.of(context).custom.colorTheme;
     bool internetConnActive = await isConnected();
 
     final username = ref
@@ -125,78 +122,74 @@ class UserDetailsController extends StateNotifier<File?> {
 
     final authController = ref.read(authControllerProvider);
 
-    showDialog(
-      barrierDismissible: false,
+    showAppDialog(
       context: context,
-      builder: (context) {
-        return FutureBuilder<User>(
-            future: authController.saveUserData(
-              context,
-              ref,
-              username,
-              phone,
-              state,
-            ),
-            builder: (context, snapshot) {
-              String? text;
-              Widget? widget;
+      barrierDismissible: false,
+      content: FutureBuilder<User>(
+        future: authController.saveUserData(
+          context,
+          ref,
+          username,
+          phone,
+          state,
+        ),
+        builder: (context, snapshot) {
+          String? text;
+          Widget? widget;
 
-              if (snapshot.hasData) {
-                text = 'You\'re all set!';
-                widget = Icon(
-                  Icons.check_circle,
-                  color: colorTheme.greenColor,
-                  size: 38.0,
-                );
+          if (snapshot.hasData) {
+            text = 'You\'re all set!';
+            widget = const Icon(
+              Icons.check_circle,
+              color: AppColors.primary,
+              size: 38.0,
+            );
 
-                Future.delayed(const Duration(seconds: 2), () {
-                  Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                        builder: (context) => AuthCompletePage(
-                          user: snapshot.data!,
-                        ),
-                      ),
-                      (route) => false);
-                });
-              } else if (snapshot.hasError) {
-                text = 'Oops! an error occured';
-                widget = Icon(
-                  Icons.cancel,
-                  color: colorTheme.errorSnackBarColor,
-                  size: 38.0,
-                );
-
-                Future.delayed(const Duration(seconds: 2), () {
-                  Navigator.of(context).pop();
-                });
-              }
-
-              final isDark = Theme.of(context).brightness == Brightness.dark;
-              return AlertDialog(
-                backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightBackground,
-                shape: RoundedRectangleBorder(borderRadius: AppRadius.lg),
-                actionsPadding: const EdgeInsets.all(0),
-                content: Row(
-                  children: [
-                    widget ??
-                        CircularProgressIndicator(
-                          color: colorTheme.greenColor,
-                        ),
-                    const SizedBox(
-                      width: 24.0,
-                    ),
-                    Text(
-                      text ?? 'Connecting',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall!
-                          .copyWith(fontSize: 16.0),
-                    ),
-                  ],
+            Future.delayed(const Duration(seconds: 2), () {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(
+                  builder: (context) => AuthCompletePage(
+                    user: snapshot.data!,
+                  ),
                 ),
+                (route) => false,
               );
             });
-      },
+          } else if (snapshot.hasError) {
+            text = 'Oops! An error occurred';
+            widget = const Icon(
+              Icons.cancel,
+              color: Color(0xFFE53935),
+              size: 38.0,
+            );
+
+            Future.delayed(const Duration(seconds: 2), () {
+              Navigator.of(context).pop();
+            });
+          }
+
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          return Row(
+            children: [
+              widget ??
+                  const CircularProgressIndicator(
+                    color: AppColors.primary,
+                  ),
+              const SizedBox(width: 24.0),
+              Expanded(
+                child: Text(
+                  text ?? 'Connecting...',
+                  style: TextStyle(
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

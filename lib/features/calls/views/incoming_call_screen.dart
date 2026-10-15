@@ -9,6 +9,7 @@ import 'package:livocal/features/calls/views/widgets/call_scaffold.dart';
 import 'package:livocal/features/calls/views/widgets/language_picker_sheet.dart';
 import 'package:livocal/features/calls/views/widgets/swipe_to_answer.dart';
 import 'package:livocal/features/calls/services/call_kit_service.dart';
+import 'package:livocal/features/calls/services/ringtone_manager.dart';
 import 'package:livocal/theme/app_colors.dart';
 
 class IncomingCallScreen extends ConsumerStatefulWidget {
@@ -31,11 +32,12 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1600),
     )..repeat(reverse: true);
-    // Note: Vibration spam timer removed in favor of OS telecom/CallKit native profile.
+    RingtoneManager().startIncomingRingtone();
   }
 
   @override
   void dispose() {
+    RingtoneManager().stopRingtone();
     _pulseController.dispose();
     super.dispose();
   }
@@ -43,6 +45,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
   Future<void> _acceptCall() async {
     if (_navigated) return;
     _navigated = true;
+    await RingtoneManager().stopRingtone();
     final controller = ref.read(callControllerProvider.notifier);
     if (!_answerWithTranslation) {
       await controller.setAudioMode(CallAudioMode.originalOnly);
@@ -63,6 +66,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
   Future<void> _declineCall() async {
     if (_navigated) return;
     _navigated = true;
+    await RingtoneManager().stopRingtone();
     await ref.read(callControllerProvider.notifier).endCall(
           recordAsMissed: true,
         );
@@ -78,6 +82,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
       final session = next.activeSession;
       if (session != null && session.status == CallStateStatus.connected) {
         _navigated = true;
+        RingtoneManager().stopRingtone();
         CallKitService().endAllCalls();
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const ActiveCallScreen()),
@@ -87,6 +92,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
           session.status == CallStateStatus.rejected ||
           session.status == CallStateStatus.missed) {
         _navigated = true;
+        RingtoneManager().stopRingtone();
         CallKitService().endAllCalls();
         if (Navigator.of(context).canPop()) {
           Navigator.of(context).pop();

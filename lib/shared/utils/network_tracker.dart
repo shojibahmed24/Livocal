@@ -11,7 +11,9 @@ class NetworkTracker {
     try {
       final current = SharedPref.instance.getInt(keySent) ?? 0;
       SharedPref.instance.setInt(keySent, current + bytes);
-    } catch (_) {}
+    } catch (e) {
+      // Ignore transient storage errors while recording
+    }
   }
 
   /// Records inbound network data payload in bytes.
@@ -20,7 +22,9 @@ class NetworkTracker {
     try {
       final current = SharedPref.instance.getInt(keyRecv) ?? 0;
       SharedPref.instance.setInt(keyRecv, current + bytes);
-    } catch (_) {}
+    } catch (e) {
+      // Ignore transient storage errors while recording
+    }
   }
 
   /// Returns total bytes sent since app installation or last reset.

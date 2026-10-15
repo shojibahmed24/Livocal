@@ -61,7 +61,9 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
           if (entity is File) {
             try {
               total += entity.lengthSync();
-            } catch (_) {}
+            } catch (e) {
+              debugPrint('[StorageSettings] File length error: $e');
+            }
           }
         }
       }
@@ -107,7 +109,9 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
               final len = entity.lengthSync();
               entity.deleteSync();
               freed += len;
-            } catch (_) {}
+            } catch (e) {
+              debugPrint('[StorageSettings] Temp file deletion error: $e');
+            }
           }
         }
       }

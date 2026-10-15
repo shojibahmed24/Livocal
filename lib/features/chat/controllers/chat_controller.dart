@@ -20,11 +20,10 @@ import 'package:livocal/shared/repositories/compression_service.dart';
 import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/repositories/upload_service.dart';
+import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/attachment_utils.dart';
 import 'package:livocal/shared/utils/storage_paths.dart';
 import 'package:livocal/shared/widgets/camera.dart';
-import 'package:livocal/theme/app_tokens.dart';
-import 'package:livocal/theme/color_theme.dart';
 
 import '../../../shared/repositories/download_service.dart';
 import '../../../shared/repositories/push_notifications.dart';
@@ -614,32 +613,11 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
 
   GlobalKey showLoading(context) {
     final dialogKey = GlobalKey();
-    showDialog(
+    showAppProgressDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (ctx) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        return AlertDialog(
-          key: dialogKey,
-          backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightBackground,
-          shape: RoundedRectangleBorder(borderRadius: AppRadius.lg),
-          content: Row(
-            children: [
-              CircularProgressIndicator(color: AppColors.primary),
-              const SizedBox(width: 24),
-              Text(
-                'Preparing media',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+      message: 'Preparing media',
+      key: dialogKey,
     );
-
     return dialogKey;
   }
 

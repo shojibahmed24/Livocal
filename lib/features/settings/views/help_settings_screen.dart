@@ -191,16 +191,51 @@ class HelpSettingsScreen extends StatelessWidget {
             title: 'Terms and Privacy Policy',
             subtitle: 'Private communication & zero-knowledge policy',
             onTap: () {
+              bool isBnSelected = false;
               showAppDialog(
                 context: context,
-                title: 'Terms & Privacy',
+                title: 'Terms & Privacy Policy',
                 icon: Icons.privacy_tip_outlined,
-                content: const Text(
-                  'Livocal values your privacy:\n\n'
-                  '1. Private Encryption: Your 1-on-1 calls and messages are strictly protected.\n\n'
-                  '2. Gemini Live Translation: Voice streams are processed in ephemeral secure memory during active calls and are never stored or trained on.\n\n'
-                  '3. Zero Phonebook Harvesting: Contact matching occurs via cryptographic hash lookups without uploading your unhashed address book.',
-                  style: TextStyle(fontSize: 13, height: 1.4),
+                content: StatefulBuilder(
+                  builder: (ctx, setContentState) {
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            ChoiceChip(
+                              label: const Text('English', style: TextStyle(fontSize: 12)),
+                              selected: !isBnSelected,
+                              onSelected: (val) => setContentState(() => isBnSelected = !val),
+                              selectedColor: AppColors.primary.withValues(alpha: 0.15),
+                            ),
+                            const SizedBox(width: 8),
+                            ChoiceChip(
+                              label: const Text('বাংলা', style: TextStyle(fontSize: 12)),
+                              selected: isBnSelected,
+                              onSelected: (val) => setContentState(() => isBnSelected = val),
+                              selectedColor: AppColors.primary.withValues(alpha: 0.15),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          isBnSelected
+                              ? 'Livocal আপনার গোপনীয়তাকে সর্বোচ্চ অগ্রাধিকার দেয়:\n\n'
+                                '১. ব্যক্তিগত এনক্রিপশন: আপনার প্রতিটি ব্যক্তিগত কল ও চ্যাট মেসেজ সম্পূর্ণরূপে সুরক্ষিত।\n\n'
+                                '২. জেমিনি লাইভ অনুবাদ: লাইভ ভয়েস অনুবাদ শুধুমাত্র সক্রিয় কলের সময় ক্ষণস্থায়ী সুরক্ষিত মেমরিতে প্রক্রিয়া করা হয়, কখনোই এটি স্থায়ীভাবে রেকর্ড বা এআই প্রশিক্ষণে ব্যবহৃত হয় না।\n\n'
+                                '৩. সুরক্ষিত কন্টাক্ট ম্যাচিং: আপনার সম্পূর্ণ ফোনবুক সার্ভারে আপলোড না করে ক্রিপ্টোগ্রাফিক হ্যাশ লুকআপের মাধ্যমে নিবন্ধিত ব্যবহারকারী শনাক্ত করা হয়।'
+                              : 'Livocal values your privacy:\n\n'
+                                '1. Private Encryption: Your 1-on-1 calls and messages are strictly protected.\n\n'
+                                '2. Gemini Live Translation: Voice streams are processed in ephemeral secure memory during active calls and are never stored or trained on.\n\n'
+                                '3. Zero Phonebook Harvesting: Contact matching occurs via cryptographic hash lookups without uploading your unhashed address book.',
+                          style: const TextStyle(fontSize: 13.5, height: 1.45),
+                        ),
+                      ],
+                    );
+                  },
                 ),
                 actions: [
                   AppDialogAction(

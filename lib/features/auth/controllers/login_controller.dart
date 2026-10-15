@@ -5,8 +5,6 @@ import 'package:phone_number/phone_number.dart';
 import 'package:livocal/features/auth/views/countries.dart';
 import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
-import 'package:livocal/shared/widgets/dialogs.dart';
-import 'package:livocal/theme/theme.dart';
 
 import '../../../shared/models/user.dart';
 import '../views/verification.dart';
@@ -23,7 +21,9 @@ Country _resolveDefaultCountry() {
         return match.first;
       }
     }
-  } catch (_) {}
+  } catch (e) {
+    debugPrint('[LoginController] Default country resolution error: $e');
+  }
 
   // Default to Bangladesh (BD / +880) for Livocal core userbase
   final bd = countriesList.where((c) => c.countryCode.toUpperCase() == 'BD');
@@ -162,8 +162,6 @@ class LoginController extends StateNotifier<Country> {
   }
 
   void onNextBtnPressed(context) async {
-    final colorTheme = Theme.of(context).custom.colorTheme;
-
     String phoneNumberWithCode =
         '+${state.phoneCode} ${phoneNumberController.text}';
 
@@ -212,69 +210,76 @@ class LoginController extends StateNotifier<Country> {
       );
     }
 
-    showDialog(
-      barrierDismissible: false,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showAppDialog(
       context: context,
-      builder: (context) {
-        return ConfirmationDialog(
-          backgroundColor: Theme.of(context).brightness == Brightness.dark
-              ? colorTheme.appBarColor
-              : colorTheme.backgroundColor,
-          actionButtonTextColor: colorTheme.greenColor,
-          actionCallbacks: {
-            'EDIT': () => Navigator.of(context).pop(),
-            'OK': () async {
-              final formattedPhoneNumber =
-                  '+${state.phoneCode.trim()} ${phoneNumberController.text.trim()}';
-              final phone = Phone(
-                code: '+${state.phoneCode.trim()}',
-                number: ref
-                    .read(loginControllerProvider.notifier)
-                    .phoneNumberController
-                    .text
-                    .replaceAll(' ', '')
-                    .replaceAll('-', '')
-                    .replaceAll('(', '')
-                    .replaceAll(')', ''),
-                formattedNumber: formattedPhoneNumber,
-              );
-
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(
-                  builder: (context) => VerificationPage(phone: phone),
-                ),
-                (route) => false,
-              );
-            },
-          },
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'You entered the phone number:',
-                style: TextStyle(color: colorTheme.greyColor, fontSize: 16),
-              ),
-              const SizedBox(height: 16.0),
-              Text(
-                phoneNumberWithCode,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: colorTheme.greyColor,
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              Text(
-                'Is this OK, or would you like to edit '
-                'the number?',
-                style: TextStyle(
-                  color: colorTheme.greyColor,
-                ),
-              ),
-            ],
+      barrierDismissible: false,
+      title: 'Confirm Phone Number',
+      icon: Icons.phone_android_rounded,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'You entered the phone number:',
+            style: TextStyle(
+              fontSize: 14,
+              color: isDark ? const Color(0xFF8696A0) : Colors.black87,
+            ),
           ),
-        );
-      },
+          const SizedBox(height: 12.0),
+          Text(
+            phoneNumberWithCode,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 12.0),
+          Text(
+            'Is this OK, or would you like to edit the number?',
+            style: TextStyle(
+              fontSize: 13.5,
+              color: isDark ? const Color(0xFF8696A0) : Colors.black54,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        AppDialogAction(
+          label: 'EDIT',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        AppDialogAction(
+          label: 'OK',
+          isPrimary: true,
+          onPressed: () {
+            Navigator.of(context).pop();
+            final formattedPhoneNumber =
+                '+${state.phoneCode.trim()} ${phoneNumberController.text.trim()}';
+            final phone = Phone(
+              code: '+${state.phoneCode.trim()}',
+              number: ref
+                  .read(loginControllerProvider.notifier)
+                  .phoneNumberController
+                  .text
+                  .replaceAll(' ', '')
+                  .replaceAll('-', '')
+                  .replaceAll('(', '')
+                  .replaceAll(')', ''),
+              formattedNumber: formattedPhoneNumber,
+            );
+
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(
+                builder: (context) => VerificationPage(phone: phone),
+              ),
+              (route) => false,
+            );
+          },
+        ),
+      ],
     );
   }
 

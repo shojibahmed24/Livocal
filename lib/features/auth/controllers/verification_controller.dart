@@ -4,12 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/auth/domain/auth_service.dart';
 import 'package:livocal/features/auth/views/user_details.dart';
+import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 
-import 'package:livocal/theme/app_tokens.dart';
-import 'package:livocal/theme/color_theme.dart';
-import 'package:livocal/theme/theme.dart';
+import 'package:livocal/theme/app_colors.dart';
 
 import '../../../shared/models/user.dart';
 
@@ -132,13 +131,11 @@ class VerificationController {
     BuildContext context,
     String phoneNumber,
   ) async {
-    final colorTheme = Theme.of(context).custom.colorTheme;
-
-    return showDialog(
-      barrierDismissible: false,
+    return showAppDialog(
       context: context,
-      builder: (context) {
-        return FutureBuilder<void>(future: () async {
+      barrierDismissible: false,
+      content: FutureBuilder<void>(
+        future: () async {
           final authController = ref.read(
             authControllerProvider,
           );
@@ -148,15 +145,16 @@ class VerificationController {
             phoneNumber,
             updateVerificationCode,
           );
-        }(), builder: (context, snapshot) {
+        }(),
+        builder: (context, snapshot) {
           String? text;
           Widget? widget;
 
           if (snapshot.hasError) {
-            text = 'Oops! an error occured';
-            widget = Icon(
+            text = 'Oops! An error occurred';
+            widget = const Icon(
               Icons.cancel,
-              color: colorTheme.errorSnackBarColor,
+              color: Color(0xFFE53935),
               size: 38.0,
             );
 
@@ -166,37 +164,32 @@ class VerificationController {
           }
 
           final isDark = Theme.of(context).brightness == Brightness.dark;
-          return AlertDialog(
-            backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightBackground,
-            shape: RoundedRectangleBorder(borderRadius: AppRadius.lg),
-            actionsPadding: const EdgeInsets.all(0),
-            content: Row(
-              children: [
-                widget ??
-                    CircularProgressIndicator(
-                      color: colorTheme.greenColor,
-                    ),
-                const SizedBox(
-                  width: 24.0,
+          return Row(
+            children: [
+              widget ??
+                  const CircularProgressIndicator(
+                    color: AppColors.primary,
+                  ),
+              const SizedBox(width: 24.0),
+              Expanded(
+                child: Text(
+                  text ?? 'Requesting verification code...',
+                  style: TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                  ),
                 ),
-                Text(
-                  text ?? 'Connecting',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall!
-                      .copyWith(fontSize: 16.0),
-                ),
-              ],
-            ),
+              ),
+            ],
           );
-        });
-      },
+        },
+      ),
     );
   }
 
   void onFilled(BuildContext context, String smsCode, Phone phone) async {
     final authController = ref.read(authControllerProvider);
-    final colorTheme = Theme.of(context).custom.colorTheme;
 
     if (_verificationCode.isEmpty) {
       ref.read(otpErrorProvider.notifier).state =
@@ -209,96 +202,92 @@ class VerificationController {
       return;
     }
 
-    return showDialog(
-      barrierDismissible: false,
+    return showAppDialog(
       context: context,
-      builder: (context) {
-        return FutureBuilder<bool>(
-            future: authController.verifyOtp(
-              _verificationCode,
-              smsCode,
-            ),
-            builder: (context, snapshot) {
-              String? text;
-              Widget? widget;
+      barrierDismissible: false,
+      content: FutureBuilder<bool>(
+        future: authController.verifyOtp(
+          _verificationCode,
+          smsCode,
+        ),
+        builder: (context, snapshot) {
+          String? text;
+          Widget? widget;
 
-              if (snapshot.hasData && snapshot.data == true) {
-                text = 'Verification complete';
-                widget = Icon(
-                  Icons.check_circle,
-                  color: colorTheme.greenColor,
-                  size: 38.0,
-                );
+          if (snapshot.hasData && snapshot.data == true) {
+            text = 'Verification complete';
+            widget = const Icon(
+              Icons.check_circle,
+              color: AppColors.primary,
+              size: 38.0,
+            );
 
-                Future.delayed(const Duration(seconds: 2), () {
-                  SharedPref.instance.setInt(
-                    'resendTime',
-                    0,
-                  );
-                  Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                        builder: (context) => UserProfileCreationPage(
-                          phone: phone,
-                        ),
-                      ),
-                      (route) => false);
-                });
-              } else if (snapshot.hasError || (snapshot.hasData && snapshot.data == false)) {
-                text = 'Invalid OTP! Please try again.';
-
-                if (snapshot.hasError && snapshot.error.runtimeType == FirebaseAuthException) {
-                  final FirebaseAuthException error =
-                      snapshot.error as FirebaseAuthException;
-
-                  final msgs = {
-                    'invalid-verification-code': 'Invalid OTP!',
-                    'network-request-failed': 'Network error!'
-                  };
-
-                  if (msgs.containsKey(error.code)) {
-                    text = msgs[error.code];
-                  }
-                }
-
-                ref.read(otpErrorProvider.notifier).state = text;
-
-                widget = Icon(
-                  Icons.cancel,
-                  color: colorTheme.errorSnackBarColor,
-                  size: 38.0,
-                );
-
-                Future.delayed(const Duration(seconds: 2), () {
-                  Navigator.of(context).pop();
-                });
-              }
-
-              final isDark = Theme.of(context).brightness == Brightness.dark;
-              return AlertDialog(
-                backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightBackground,
-                shape: RoundedRectangleBorder(borderRadius: AppRadius.lg),
-                actionsPadding: const EdgeInsets.all(0),
-                content: Row(
-                  children: [
-                    widget ??
-                        CircularProgressIndicator(
-                          color: colorTheme.greenColor,
-                        ),
-                    const SizedBox(
-                      width: 24.0,
-                    ),
-                    Text(
-                      text ?? 'Connecting',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall!
-                          .copyWith(fontSize: 16.0),
-                    ),
-                  ],
+            Future.delayed(const Duration(seconds: 2), () {
+              SharedPref.instance.setInt(
+                'resendTime',
+                0,
+              );
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(
+                  builder: (context) => UserProfileCreationPage(
+                    phone: phone,
+                  ),
                 ),
+                (route) => false,
               );
             });
-      },
+          } else if (snapshot.hasError || (snapshot.hasData && snapshot.data == false)) {
+            text = 'Invalid OTP! Please try again.';
+
+            if (snapshot.hasError && snapshot.error.runtimeType == FirebaseAuthException) {
+              final FirebaseAuthException error =
+                  snapshot.error as FirebaseAuthException;
+
+              final msgs = {
+                'invalid-verification-code': 'Invalid OTP!',
+                'network-request-failed': 'Network error!'
+              };
+
+              if (msgs.containsKey(error.code)) {
+                text = msgs[error.code];
+              }
+            }
+
+            ref.read(otpErrorProvider.notifier).state = text;
+
+            widget = const Icon(
+              Icons.cancel,
+              color: Color(0xFFE53935),
+              size: 38.0,
+            );
+
+            Future.delayed(const Duration(seconds: 2), () {
+              Navigator.of(context).pop();
+            });
+          }
+
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          return Row(
+            children: [
+              widget ??
+                  const CircularProgressIndicator(
+                    color: AppColors.primary,
+                  ),
+              const SizedBox(width: 24.0),
+              Expanded(
+                child: Text(
+                  text ?? 'Verifying OTP...',
+                  style: TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

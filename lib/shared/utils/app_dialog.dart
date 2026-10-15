@@ -22,7 +22,7 @@ class AppDialogAction {
 /// and readable typography in both Light and Dark themes (resolving dark mode invisible text).
 Future<T?> showAppDialog<T>({
   required BuildContext context,
-  required String title,
+  String? title,
   Widget? content,
   String? contentText,
   List<AppDialogAction>? actions,
@@ -41,32 +41,34 @@ Future<T?> showAppDialog<T>({
       final effectiveIconColor = iconColor ?? (isDark ? AppColors.primary : AppColors.primaryDark);
 
       Widget? titleWidget;
-      if (icon != null) {
-        titleWidget = Row(
-          children: [
-            Icon(icon, color: effectiveIconColor, size: 24),
-            AppSpacing.horizontalMd,
-            Expanded(
-              child: Text(
-                title,
-                style: TextStyle(
-                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+      if (title != null) {
+        if (icon != null) {
+          titleWidget = Row(
+            children: [
+              Icon(icon, color: effectiveIconColor, size: 24),
+              AppSpacing.horizontalMd,
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
+            ],
+          );
+        } else {
+          titleWidget = Text(
+            title,
+            style: TextStyle(
+              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
             ),
-          ],
-        );
-      } else {
-        titleWidget = Text(
-          title,
-          style: TextStyle(
-            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        );
+          );
+        }
       }
 
       Widget? bodyWidget;
@@ -124,6 +126,46 @@ Future<T?> showAppDialog<T>({
         title: titleWidget,
         content: bodyWidget != null ? SingleChildScrollView(child: bodyWidget) : null,
         actions: dialogActions,
+      );
+    },
+  );
+}
+
+/// Standardized high-contrast progress dialog with custom message and theme tokens.
+Future<T?> showAppProgressDialog<T>({
+  required BuildContext context,
+  required String message,
+  bool barrierDismissible = false,
+  Key? key,
+}) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return showDialog<T>(
+    context: context,
+    barrierDismissible: barrierDismissible,
+    builder: (ctx) {
+      return AlertDialog(
+        key: key,
+        backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightBackground,
+        shape: const RoundedRectangleBorder(borderRadius: AppRadius.lg),
+        content: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Row(
+            children: [
+              const CircularProgressIndicator(color: AppColors.primary),
+              const SizedBox(width: 24),
+              Expanded(
+                child: Text(
+                  message,
+                  style: TextStyle(
+                    fontSize: 15.5,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     },
   );

@@ -17,13 +17,13 @@ class _AppLanguageScreenState extends ConsumerState<AppLanguageScreen> {
   String _selectedLang = 'en';
 
   final List<Map<String, String>> _languages = [
-    {'code': 'en', 'name': 'English', 'native': 'English (device\'s language)'},
-    {'code': 'bn', 'name': 'Bengali', 'native': 'বাংলা (Bangla)'},
-    {'code': 'hi', 'name': 'Hindi', 'native': 'हिन्दी (Hindi)'},
-    {'code': 'ar', 'name': 'Arabic', 'native': 'العربية (Arabic)'},
-    {'code': 'es', 'name': 'Spanish', 'native': 'Español (Spanish)'},
-    {'code': 'fr', 'name': 'French', 'native': 'Français (French)'},
-    {'code': 'de', 'name': 'German', 'native': 'Deutsch (German)'},
+    {'code': 'en', 'name': 'English', 'native': 'English (Device language)', 'flag': '🇺🇸'},
+    {'code': 'bn', 'name': 'Bengali', 'native': 'বাংলা (Bangla)', 'flag': '🇧🇩'},
+    {'code': 'hi', 'name': 'Hindi', 'native': 'हिन्दी (Hindi)', 'flag': '🇮🇳'},
+    {'code': 'ar', 'name': 'Arabic', 'native': 'العربية (Arabic)', 'flag': '🇸🇦'},
+    {'code': 'es', 'name': 'Spanish', 'native': 'Español (Spanish)', 'flag': '🇪🇸'},
+    {'code': 'fr', 'name': 'French', 'native': 'Français (French)', 'flag': '🇫🇷'},
+    {'code': 'de', 'name': 'German', 'native': 'Deutsch (German)', 'flag': '🇩🇪'},
   ];
 
   @override
@@ -53,53 +53,58 @@ class _AppLanguageScreenState extends ConsumerState<AppLanguageScreen> {
       ),
       body: ListView(
         children: [
-          const SettingsSectionHeader(title: 'Choose Language'),
+          const SettingsSectionHeader(title: 'Choose Interface Language'),
           ..._languages.map((lang) {
             final isSelected = _selectedLang == lang['code'];
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                RadioListTile<String>(
-                  title: Text(
-                    lang['native']!,
-                    style: TextStyle(
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.w500,
-                      color: isSelected
-                          ? AppColors.primary
-                          : (isDark ? Colors.white : Colors.black87),
-                    ),
+                SettingsRow(
+                  icon: Icons.language_rounded,
+                  title: lang['native']!,
+                  subtitle: lang['name']!,
+                  showChevron: false,
+                  iconColor: isSelected ? Colors.white : AppColors.primary,
+                  iconBackgroundColor: isSelected ? AppColors.primary : null,
+                  trailing: Icon(
+                    isSelected
+                        ? Icons.check_circle_rounded
+                        : Icons.radio_button_unchecked_rounded,
+                    color: isSelected
+                        ? AppColors.primary
+                        : (isDark ? Colors.white38 : Colors.black26),
+                    size: 22,
                   ),
-                  subtitle: Text(
-                    lang['name']!,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isDark
-                          ? const Color(0xFF8696A0)
-                          : Colors.grey.shade600,
-                    ),
-                  ),
-                  value: lang['code']!,
-                  groupValue: _selectedLang,
-                  activeColor: AppColors.primary,
-                  onChanged: (val) async {
-                    if (val != null) {
-                      setState(() => _selectedLang = val);
-                      await ref.read(appLocaleProvider.notifier).setLocale(val);
-                      if (context.mounted) {
-                        showSnackBar(
-                          context: context,
-                          content: 'App language set to ${lang['name']}',
-                          type: SnacBarType.info,
-                        );
-                      }
+                  onTap: () async {
+                    final val = lang['code']!;
+                    setState(() => _selectedLang = val);
+                    await ref.read(appLocaleProvider.notifier).setLocale(val);
+                    if (context.mounted) {
+                      showSnackBar(
+                        context: context,
+                        content: 'App language set to ${lang['name']}',
+                        type: SnacBarType.info,
+                      );
                     }
                   },
                 ),
-                const Divider(height: 1),
+                const Divider(height: 1, indent: 72),
               ],
             );
           }),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Text(
+              'Changing language updates all UI screens, notifications, dialogs and voice call prompts instantly.',
+              style: TextStyle(
+                fontSize: 12.5,
+                color: isDark ? Colors.white38 : Colors.black45,
+                height: 1.4,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
         ],
       ),
     );

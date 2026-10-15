@@ -246,7 +246,9 @@ class IsarDb {
             .collection('messages')
             .doc(messageId)
             .update(updateData);
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[IsarDb] Firestore local chat update error: $e');
+      }
     }
   }
 
@@ -559,8 +561,6 @@ class IsarDb {
     }
     return list;
   }
-
-  static Future<List<Contact>> getWhatsAppContacts() => getLivocalContacts();
 
   static Future<void> deleteChat(String chatId) async {
     try {
