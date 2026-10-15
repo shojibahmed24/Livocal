@@ -374,25 +374,26 @@ app.post(
       }
 
       const sanitizedNumbers = phoneNumbers
-        .slice(0, 500)
+        .slice(0, 50)
         .map((p) => String(p).trim().replace(/[\s\-\(\)\+]/g, ''))
         .filter((n) => n.length >= 6);
 
-      const lookupSet = new Set(sanitizedNumbers);
-      const snap = await firestoreDb.collection('users').get();
       const matches = [];
+      const seenIds = new Set();
 
-      snap.forEach((doc) => {
-        const data = doc.data();
-        const phone = data.phone;
-        if (!phone) return;
+      // Query in batches of 30 using 'in' queries on indexed phone fields
+      // Prevents full collection memory dump and limits database read costs
+      for (let i = 0; i < sanitizedNumbers.length; i += 30) {
+        const chunk = sanitizedNumbers.slice(i, i + 30);
+        const [snap1, snap2] = await Promise.all([
+          firestoreDb.collection('users').where('phone.rawNumber', 'in', chunk).get(),
+          firestoreDb.collection('users').where('phone.number', 'in', chunk).get(),
+        ]);
 
-        const raw = (phone.rawNumber || '').replace(/[\s\-\(\)\+]/g, '');
-        const num = (phone.number || '').replace(/[\s\-\(\)\+]/g, '');
-        const code = (phone.code || '').replace(/[\s\-\(\)\+]/g, '');
-        const codeNum = code + num;
-
-        if (lookupSet.has(raw) || lookupSet.has(num) || lookupSet.has(codeNum)) {
+        [...snap1.docs, ...snap2.docs].forEach((doc) => {
+          if (seenIds.has(doc.id)) return;
+          seenIds.add(doc.id);
+          const data = doc.data();
           matches.push({
             id: data.id || doc.id,
             name: data.name || '',
@@ -400,8 +401,8 @@ app.post(
             phone: data.phone,
             activityStatus: data.activityStatus || 'offline',
           });
-        }
-      });
+        });
+      }
 
       res.json({ matches });
     } catch (err) {
@@ -576,42 +577,60 @@ wss.on('connection', (clientWs, req) => {
 
   clientWs.on('message', async (data, isBinary) => {
     try {
-      // 1. Binary Audio Chunks (Raw 16kHz PCM16 Mono from phone microphone)
-      if (isBinary) {
-        // Audio chunk rate limiter
-        const now = Date.now();
-        if (now - lastAudioSecond > 1000) {
-          audioChunkCount = 0;
-          lastAudioSecond = now;
-        }
-        audioChunkCount++;
-        if (audioChunkCount > MAX_AUDIO_CHUNKS_PER_SEC) {
-          return; // Drop excessive audio chunks to protect quota
+      // 1. STRICT AUTHENTICATION GUARD:
+      // The socket MUST authenticate via 'setup' handshake with a valid Firebase ID token first.
+      // Unauthenticated audio packets or control messages are immediately rejected and connection terminated.
+      if (!authenticatedUid) {
+        if (isBinary) {
+          console.warn(`[${clientId}] Unauthenticated binary packet rejected. Closing connection.`);
+          if (clientWs.readyState === WebSocket.OPEN) {
+            clientWs.send(
+              JSON.stringify({
+                type: 'error',
+                code: 'UNAUTHORIZED',
+                message: 'Authentication required. Please complete setup handshake first.',
+              })
+            );
+            clientWs.close(4401, 'Unauthorized');
+          }
+          return;
         }
 
-        if (geminiWs && geminiWs.readyState === WebSocket.OPEN && isGeminiReady) {
-          const base64Audio = Buffer.from(data).toString('base64');
-          const realtimeFrame = {
-            realtimeInput: {
-              mediaChunks: [
-                {
-                  mimeType: 'audio/pcm;rate=16000',
-                  data: base64Audio,
-                },
-              ],
-            },
-          };
-          geminiWs.send(JSON.stringify(realtimeFrame));
+        let msg;
+        try {
+          msg = JSON.parse(data.toString('utf8'));
+        } catch (jsonErr) {
+          if (clientWs.readyState === WebSocket.OPEN) {
+            clientWs.send(
+              JSON.stringify({
+                type: 'error',
+                code: 'INVALID_JSON',
+                message: 'Malformed JSON payload.',
+              })
+            );
+            clientWs.close(4400, 'Invalid JSON');
+          }
+          return;
         }
-        return;
-      }
 
-      // 2. JSON Control Messages
-      const text = data.toString('utf8');
-      const msg = JSON.parse(text);
+        if (msg.type !== 'setup') {
+          console.warn(`[${clientId}] Unauthorized message type '${msg.type}' before authentication. Closing.`);
+          if (clientWs.readyState === WebSocket.OPEN) {
+            clientWs.send(
+              JSON.stringify({
+                type: 'error',
+                code: 'UNAUTHORIZED',
+                message: 'Authentication required. Setup handshake required.',
+              })
+            );
+            clientWs.close(4401, 'Unauthorized');
+          }
+          return;
+        }
 
-      if (msg.type === 'setup') {
-        console.log(`[${clientId}] Received setup handshake:`, msg);
+        // REDACT TOKEN IN LOGS (Prevents credential leakage in server console)
+        const sanitizedMsg = { ...msg, token: msg.token ? '[REDACTED]' : undefined };
+        console.log(`[${clientId}] Received setup handshake:`, sanitizedMsg);
 
         // Authenticate strictly via Firebase ID Token (Bearer header or msg.token)
         const clientToken = (msg.token && typeof msg.token === 'string')
@@ -713,7 +732,43 @@ wss.on('connection', (clientWs, req) => {
         };
 
         await initGeminiSession();
-      } else if (msg.type === 'audio_base64') {
+        return;
+      }
+
+      // 2. AUTHENTICATED USER SESSIONS ONLY:
+      if (isBinary) {
+        // Audio chunk rate limiter
+        const now = Date.now();
+        if (now - lastAudioSecond > 1000) {
+          audioChunkCount = 0;
+          lastAudioSecond = now;
+        }
+        audioChunkCount++;
+        if (audioChunkCount > MAX_AUDIO_CHUNKS_PER_SEC) {
+          return; // Drop excessive audio chunks to protect quota
+        }
+
+        if (geminiWs && geminiWs.readyState === WebSocket.OPEN && isGeminiReady) {
+          const base64Audio = Buffer.from(data).toString('base64');
+          const realtimeFrame = {
+            realtimeInput: {
+              mediaChunks: [
+                {
+                  mimeType: 'audio/pcm;rate=16000',
+                  data: base64Audio,
+                },
+              ],
+            },
+          };
+          geminiWs.send(JSON.stringify(realtimeFrame));
+        }
+        return;
+      }
+
+      const text = data.toString('utf8');
+      const msg = JSON.parse(text);
+
+      if (msg.type === 'audio_base64') {
         // Base64 audio rate limiter
         const now = Date.now();
         if (now - lastAudioSecond > 1000) {

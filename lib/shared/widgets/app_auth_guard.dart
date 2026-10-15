@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:livocal/shared/utils/secure_pin_service.dart';
@@ -19,6 +20,8 @@ class _AppAuthGuardState extends State<AppAuthGuard>
   final LocalAuthentication _auth = LocalAuthentication();
   final TextEditingController _pinController = TextEditingController();
   String? _pinError;
+  int _lockoutSeconds = 0;
+  Timer? _lockoutTimer;
 
   @override
   void initState() {
@@ -30,6 +33,7 @@ class _AppAuthGuardState extends State<AppAuthGuard>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _lockoutTimer?.cancel();
     _pinController.dispose();
     super.dispose();
   }
@@ -117,19 +121,59 @@ class _AppAuthGuardState extends State<AppAuthGuard>
     }
   }
 
+  void _startLockoutTimer(int seconds) {
+    _lockoutTimer?.cancel();
+    setState(() {
+      _lockoutSeconds = seconds;
+      _pinError = 'Too many attempts. Locked out for $_lockoutSeconds s.';
+    });
+    _lockoutTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
+      final remaining = SecurePinService.getRemainingLockoutSeconds();
+      if (remaining <= 0) {
+        t.cancel();
+        setState(() {
+          _lockoutSeconds = 0;
+          _pinError = null;
+        });
+      } else {
+        setState(() {
+          _lockoutSeconds = remaining;
+          _pinError = 'Too many attempts. Locked out for $_lockoutSeconds s.';
+        });
+      }
+    });
+  }
+
   Future<void> _verifyPin(String enteredPin) async {
+    final lockout = SecurePinService.getRemainingLockoutSeconds();
+    if (lockout > 0) {
+      _startLockoutTimer(lockout);
+      return;
+    }
+
     final isValid = await SecurePinService.verifyPin(enteredPin);
     if (mounted) {
       if (isValid) {
+        _lockoutTimer?.cancel();
         setState(() {
           _isLocked = false;
           _pinError = null;
+          _lockoutSeconds = 0;
         });
         _pinController.clear();
       } else {
-        setState(() {
-          _pinError = 'Incorrect PIN. Please try again.';
-        });
+        final remaining = SecurePinService.getRemainingLockoutSeconds();
+        if (remaining > 0) {
+          _startLockoutTimer(remaining);
+        } else {
+          setState(() {
+            _pinError = 'Incorrect PIN. Please try again.';
+          });
+        }
         _pinController.clear();
       }
     }
@@ -194,6 +238,7 @@ class _AppAuthGuardState extends State<AppAuthGuard>
                     width: 220,
                     child: TextField(
                       controller: _pinController,
+                      enabled: _lockoutSeconds == 0,
                       keyboardType: TextInputType.number,
                       maxLength: 6,
                       obscureText: true,
@@ -217,7 +262,7 @@ class _AppAuthGuardState extends State<AppAuthGuard>
                         ),
                       ),
                       onChanged: (val) {
-                        if (val.length == 6) {
+                        if (val.length == 6 && _lockoutSeconds == 0) {
                           _verifyPin(val);
                         }
                       },
@@ -233,8 +278,10 @@ class _AppAuthGuardState extends State<AppAuthGuard>
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    onPressed: () => _verifyPin(_pinController.text.trim()),
-                    child: const Text('SUBMIT PIN'),
+                    onPressed: _lockoutSeconds > 0
+                        ? null
+                        : () => _verifyPin(_pinController.text.trim()),
+                    child: Text(_lockoutSeconds > 0 ? 'LOCKED (${_lockoutSeconds}s)' : 'SUBMIT PIN'),
                   ),
                 ],
                 if (fingerprintEnabled) ...[

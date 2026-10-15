@@ -13,7 +13,8 @@ class AppLocaleNotifier extends StateNotifier<Locale> {
   static Locale _getInitialLocale() {
     try {
       final saved = SharedPref.instance.getString('app_language');
-      if (saved != null && (saved == 'bn' || saved == 'en')) {
+      const supported = {'en', 'bn', 'hi', 'ar', 'es', 'fr', 'de'};
+      if (saved != null && supported.contains(saved)) {
         return Locale(saved);
       }
     } catch (e) {

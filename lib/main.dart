@@ -87,6 +87,11 @@ class Livocal extends ConsumerWidget {
       supportedLocales: const [
         Locale('en'),
         Locale('bn'),
+        Locale('hi'),
+        Locale('ar'),
+        Locale('es'),
+        Locale('fr'),
+        Locale('de'),
       ],
       debugShowCheckedModeBanner: false,
       home: StreamBuilder<auth.User?>(

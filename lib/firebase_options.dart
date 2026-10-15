@@ -32,10 +32,10 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyDxaUXWZs4Fkfo2IGbneHDSDGDrshMLYSU',
-    appId: '1:1007219918966:ios:073839fdb12829046bf757',
-    messagingSenderId: '1007219918966',
-    projectId: 'whatsapp-clone-7a78c',
-    storageBucket: 'whatsapp-clone-7a78c.appspot.com',
-    iosBundleId: 'com.tauseef.whatsappclone',
+    appId: '1:729373303752:ios:073839fdb12829046bf757',
+    messagingSenderId: '729373303752',
+    projectId: 'livocal24',
+    storageBucket: 'livocal24.firebasestorage.app',
+    iosBundleId: 'com.livocal.app',
   );
 }

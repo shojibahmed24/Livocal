@@ -93,6 +93,41 @@ void main() {
       expect(await SecurePinService.verifyPin('987654'), isTrue);
       expect(SharedPref.instance.getString('two_step_pin'), isNull);
     });
+
+    test('Brute-force lockout: 5 consecutive failed attempts trigger lockout', () async {
+      await SecurePinService.disablePin();
+      await SecurePinService.setPin('123456');
+
+      expect(SecurePinService.getRemainingLockoutSeconds(), equals(0));
+
+      // Attempt 4 failed tries
+      for (int i = 0; i < 4; i++) {
+        expect(await SecurePinService.verifyPin('000000'), isFalse);
+        expect(SecurePinService.getRemainingLockoutSeconds(), equals(0));
+      }
+
+      // 5th failed try triggers lockout
+      expect(await SecurePinService.verifyPin('000000'), isFalse);
+      expect(SecurePinService.getRemainingLockoutSeconds(), greaterThan(0));
+
+      // During lockout, even correct PIN is rejected
+      expect(await SecurePinService.verifyPin('123456'), isFalse);
+
+      // Disabling PIN clears lockout
+      await SecurePinService.disablePin();
+      expect(SecurePinService.getRemainingLockoutSeconds(), equals(0));
+    });
+  });
+
+  group('Locale Persistence & Restart Tests', () {
+    test('App language persists and loads for all 7 supported locales', () async {
+      const allLocales = ['en', 'bn', 'hi', 'ar', 'es', 'fr', 'de'];
+      for (final code in allLocales) {
+        await SharedPref.instance.setString('app_language', code);
+        final notifier = AppLocaleNotifier();
+        expect(notifier.state.languageCode, equals(code));
+      }
+    });
   });
 
   group('Centralized AppConfig Tests', () {

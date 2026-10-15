@@ -13,9 +13,8 @@ class StatusService {
 
   static Future<void> postStatus(StatusModel status) async {
     try {
-      // 1. Populate privacy and allowedUserIds based on user's privacy setting
       final privacySetting =
-          SharedPref.instance.getString('status_privacy') ?? 'My contacts';
+          SharedPref.instance.getString('status_privacy') ?? 'contacts';
       List<String> allowedRecipients = List<String>.from(status.allowedUserIds);
 
       if (allowedRecipients.isEmpty) {
@@ -27,7 +26,16 @@ class StatusService {
               .cast<String>()
               .toSet()
               .toList();
-          allowedRecipients = registeredUids;
+
+          if (privacySetting == 'except') {
+            final excluded = SharedPref.instance.getStringList('status_privacy_excluded') ?? [];
+            allowedRecipients = registeredUids.where((u) => !excluded.contains(u)).toList();
+          } else if (privacySetting == 'only') {
+            final only = SharedPref.instance.getStringList('status_privacy_only') ?? [];
+            allowedRecipients = registeredUids.where((u) => only.contains(u)).toList();
+          } else {
+            allowedRecipients = registeredUids;
+          }
         } catch (e) {
           debugPrint('[StatusService] Error getting contacts for status privacy: $e');
         }
@@ -145,24 +153,19 @@ class StatusService {
   }
 
   static Stream<List<StatusModel>> getRecentStatusesStream(String currentUserId) {
-    final cutoff = DateTime.now().subtract(const Duration(hours: 24));
     return _firestore
         .collection('statuses')
-        .where('timestamp', isGreaterThan: Timestamp.fromDate(cutoff))
-        .orderBy('timestamp', descending: true)
+        .where('allowedUserIds', arrayContains: currentUserId)
         .snapshots()
         .map((snap) {
           final list = <StatusModel>[];
           for (final doc in snap.docs) {
             final st = StatusModel.fromMap(doc.data(), doc.id);
             if (st.userId != currentUserId && !st.isExpired) {
-              // Privacy enforcement: only show if current user is in allowedUserIds
-              if (st.allowedUserIds.contains(currentUserId) ||
-                  st.allowedUserIds.isEmpty) {
-                list.add(st);
-              }
+              list.add(st);
             }
           }
+          list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
           return list;
         })
         .handleError((err) {

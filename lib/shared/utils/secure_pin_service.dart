@@ -37,8 +37,28 @@ class SecurePinService {
     return false;
   }
 
-  /// Verifies entered PIN against hardware-encrypted secure storage.
+  static const _attemptsKey = 'livocal_pin_failed_attempts';
+  static const _lockoutUntilKey = 'livocal_pin_lockout_until';
+
+  /// Returns remaining lockout time in seconds, or 0 if not locked out.
+  static int getRemainingLockoutSeconds() {
+    try {
+      final lockoutUntilMs = SharedPref.instance.getInt(_lockoutUntilKey) ?? 0;
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      if (lockoutUntilMs > nowMs) {
+        return ((lockoutUntilMs - nowMs) / 1000).ceil();
+      }
+    } catch (_) {}
+    return 0;
+  }
+
+  /// Verifies entered PIN against hardware-encrypted secure storage with brute-force protection.
   static Future<bool> verifyPin(String enteredPin) async {
+    final lockoutSeconds = getRemainingLockoutSeconds();
+    if (lockoutSeconds > 0) {
+      return false;
+    }
+
     try {
       String? actualPin = await _secureStorage.read(key: _storageKey);
       if (actualPin == null || actualPin.isEmpty) {
@@ -50,7 +70,36 @@ class SecurePinService {
           actualPin = legacy;
         }
       }
-      return actualPin != null && actualPin == enteredPin;
+
+      final isMatch = actualPin != null && actualPin == enteredPin;
+      if (isMatch) {
+        // Successful verification: reset attempt counter and lockout
+        await SharedPref.instance.remove(_attemptsKey);
+        await SharedPref.instance.remove(_lockoutUntilKey);
+        return true;
+      } else {
+        // Incorrect PIN: increment failed attempts counter
+        final attempts = (SharedPref.instance.getInt(_attemptsKey) ?? 0) + 1;
+        await SharedPref.instance.setInt(_attemptsKey, attempts);
+
+        if (attempts >= 10) {
+          // Lock out for 5 minutes
+          final until =
+              DateTime.now().add(const Duration(minutes: 5)).millisecondsSinceEpoch;
+          await SharedPref.instance.setInt(_lockoutUntilKey, until);
+        } else if (attempts >= 8) {
+          // Lock out for 1 minute
+          final until =
+              DateTime.now().add(const Duration(seconds: 60)).millisecondsSinceEpoch;
+          await SharedPref.instance.setInt(_lockoutUntilKey, until);
+        } else if (attempts >= 5) {
+          // Lock out for 30 seconds
+          final until =
+              DateTime.now().add(const Duration(seconds: 30)).millisecondsSinceEpoch;
+          await SharedPref.instance.setInt(_lockoutUntilKey, until);
+        }
+        return false;
+      }
     } catch (e) {
       debugPrint('[SecurePinService] verifyPin error: $e');
       return false;
@@ -61,7 +110,9 @@ class SecurePinService {
   static Future<void> setPin(String pin) async {
     try {
       await _secureStorage.write(key: _storageKey, value: pin);
-      // Ensure no plaintext remains
+      // Reset lockout and attempts
+      await SharedPref.instance.remove(_attemptsKey);
+      await SharedPref.instance.remove(_lockoutUntilKey);
       await SharedPref.instance.remove('two_step_pin');
     } catch (e) {
       debugPrint('[SecurePinService] setPin error: $e');
@@ -73,6 +124,8 @@ class SecurePinService {
   static Future<void> disablePin() async {
     try {
       await _secureStorage.delete(key: _storageKey);
+      await SharedPref.instance.remove(_attemptsKey);
+      await SharedPref.instance.remove(_lockoutUntilKey);
       await SharedPref.instance.remove('two_step_pin');
     } catch (e) {
       debugPrint('[SecurePinService] disablePin error: $e');
