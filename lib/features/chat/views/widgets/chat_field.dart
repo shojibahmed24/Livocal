@@ -9,6 +9,7 @@ class ChatField extends StatelessWidget {
     required this.textController,
     this.onTextChanged,
     this.focusNode,
+    this.onSubmitted,
   });
 
   final Widget leading;
@@ -16,6 +17,7 @@ class ChatField extends StatelessWidget {
   final TextEditingController textController;
   final Function(String)? onTextChanged;
   final FocusNode? focusNode;
+  final ValueChanged<String>? onSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +46,8 @@ class ChatField extends StatelessWidget {
               controller: textController,
               focusNode: focusNode,
               textCapitalization: TextCapitalization.sentences,
+              textInputAction: TextInputAction.send,
+              onSubmitted: onSubmitted,
               maxLines: 6,
               minLines: 1,
               cursorColor: colorTheme.greenColor,

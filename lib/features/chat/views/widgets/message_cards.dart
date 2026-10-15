@@ -9,6 +9,8 @@ import 'package:livocal/features/chat/models/message.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
+import 'package:livocal/theme/app_colors.dart';
+import 'package:livocal/theme/app_tokens.dart';
 import 'package:livocal/theme/theme.dart';
 
 import '../../models/attachement.dart';
@@ -31,15 +33,47 @@ class MessageCard extends StatefulWidget {
 }
 
 class _MessageCardState extends State<MessageCard>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
+  late final AnimationController _animController;
+  late final Animation<double> _fadeAnim;
+  late final Animation<Offset> _slideAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+    );
+    _fadeAnim = CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeOut,
+    );
+    _slideAnim = Tween<Offset>(
+      begin: const Offset(0, 0.12),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeOutCubic,
+    ));
+    _animController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
   bool shouldHaveBiggerFont(String text) {
     final x = EmojiParser().parseEmojis(text);
     return text.runes.length == x.length;
   }
 
   void _showMessageActionSheet(BuildContext context, bool isSender) {
+    HapticFeedback.mediumImpact();
     final colorTheme = Theme.of(context).custom.colorTheme;
-    final isDeleted = widget.message.content == '🚫 This message was deleted';
+    final isDeleted = widget.message.isDeleted;
 
     showModalBottomSheet(
       context: context,
@@ -61,7 +95,7 @@ class _MessageCardState extends State<MessageCard>
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.4),
+                    color: Colors.grey.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -193,7 +227,7 @@ class _MessageCardState extends State<MessageCard>
     super.build(context);
     final colorTheme = Theme.of(context).custom.colorTheme;
     final size = MediaQuery.of(context).size;
-    final hasAttachment = widget.message.attachment != null;
+    final hasAttachment = !widget.message.isDeleted && widget.message.attachment != null;
     final attachmentType = widget.message.attachment?.type;
     final isSentMessageCard = widget.currentUserId == widget.message.senderId;
     final messageHasText = widget.message.content.isNotEmpty;
@@ -237,232 +271,256 @@ class _MessageCardState extends State<MessageCard>
       height = width / aspectRatio;
     }
 
-    return GestureDetector(
-      onLongPress: () => _showMessageActionSheet(context, isSentMessageCard),
-      child: Align(
-        alignment:
-            isSentMessageCard ? Alignment.centerRight : Alignment.centerLeft,
-      child: ClipPath(
-        clipper: widget.special
-            ? TriangleClipper(isSender: isSentMessageCard)
-            : null,
-        child: Container(
-          constraints: BoxConstraints(
-            minHeight: 34,
-            minWidth: widget.special ? (isSentMessageCard ? 98 : 76) : 60,
-            maxWidth: hasImageOrVideo
-                ? width
-                : size.width * 0.80 + (widget.special ? 10 : 0),
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.only(
-              topLeft: widget.special && !isSentMessageCard
-                  ? const Radius.circular(4)
-                  : const Radius.circular(12.0),
-              topRight: widget.special && isSentMessageCard
-                  ? const Radius.circular(4)
-                  : const Radius.circular(12.0),
-              bottomLeft: const Radius.circular(12.0),
-              bottomRight: const Radius.circular(12.0),
-            ),
-            color: isSentMessageCard
-                ? colorTheme.outgoingMessageBubbleColor
-                : colorTheme.incomingMessageBubbleColor,
-          ),
-          margin: EdgeInsets.only(
-            bottom: 3.0,
-            top: widget.special ? 6.0 : 0,
-            left: widget.special ? 6 : 16.0,
-            right: widget.special ? 6 : 16.0,
-          ),
-          padding: hasAttachment
-              ? attachmentType == AttachmentType.audio && !messageHasText
-                  ? EdgeInsets.only(
-                      left: isSentMessageCard ? 8 : (widget.special ? 18 : 8),
-                      right: isSentMessageCard ? (widget.special ? 10 : 0) : 0,
-                    )
-                  : EdgeInsets.only(
-                      top: 4.0,
-                      bottom: 4.0,
-                      left: widget.special && !isSentMessageCard ? 14.0 : 4.0,
-                      right: widget.special && isSentMessageCard ? 14.0 : 4.0,
-                    )
-              : EdgeInsets.only(
-                  left: 10,
-                  right: widget.special && isSentMessageCard ? 16 : 10,
-                  top: 4,
-                  bottom: 6,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDeleted = widget.message.isDeleted;
+
+    return FadeTransition(
+      opacity: _fadeAnim,
+      child: SlideTransition(
+        position: _slideAnim,
+        child: GestureDetector(
+          onLongPress: () => _showMessageActionSheet(context, isSentMessageCard),
+          child: Align(
+            alignment:
+                isSentMessageCard ? Alignment.centerRight : Alignment.centerLeft,
+            child: ClipPath(
+              clipper: widget.special
+                  ? TriangleClipper(isSender: isSentMessageCard)
+                  : null,
+              child: Container(
+                constraints: BoxConstraints(
+                  minHeight: 34,
+                  minWidth: widget.special ? (isSentMessageCard ? 98 : 76) : 60,
+                  maxWidth: hasImageOrVideo
+                      ? width
+                      : size.width * 0.80 + (widget.special ? 10 : 0),
                 ),
-          child: Stack(
-            alignment: Alignment.centerLeft,
-            children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (hasAttachment) ...[
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight:
-                            height < width ? 0.65 * width : double.infinity,
-                      ),
-                      child: AttachmentPreview(
-                        message: widget.message,
-                        width: width,
-                        height: height,
-                      ),
-                    ),
-                  ],
-                  if (messageHasText) ...[
-                    Padding(
-                      padding: hasAttachment
-                          ? const EdgeInsets.only(left: 4.0, top: 4.0)
-                          : widget.special && !isSentMessageCard
-                              ? EdgeInsets.only(
-                                  left: 10,
-                                  top: 4,
-                                  bottom: biggerFont
-                                      ? 12
-                                      : padding == 0
-                                          ? 14.0
-                                          : 0,
-                                )
-                              : EdgeInsets.only(
-                                  top: 2.0,
-                                  bottom: biggerFont
-                                      ? (Platform.isAndroid ? 16.0 : 12.0)
-                                      : padding == 0
-                                          ? 14.0
-                                          : 0,
-                                ),
-                      child: Text(
-                        '${widget.message.content} $textPadding',
-                        textWidthBasis: TextWidthBasis.longestLine,
-                        style: Theme.of(context)
-                            .custom
-                            .textTheme
-                            .bodyText1
-                            .copyWith(
-                              fontSize: biggerFont ? 40 : 16,
-                              color: colorTheme.textColor1,
-                            ),
-                        softWrap: true,
-                      ),
-                    )
-                  ],
-                ],
-              ),
-              Positioned(
-                right: widget.special && isSentMessageCard && messageHasText
-                    ? -6
-                    : 0,
-                bottom: -1,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                    boxShadow: [
-                      if (!messageHasText &&
-                          (attachmentType != AttachmentType.document &&
-                              attachmentType != AttachmentType.audio &&
-                              attachmentType != AttachmentType.voice)) ...[
-                        const BoxShadow(
-                          color: Color.fromARGB(174, 1, 4, 21),
-                          blurRadius: 20,
-                        )
-                      ],
-                    ],
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.only(
+                    topLeft: widget.special && !isSentMessageCard
+                        ? AppRadius.rXs
+                        : AppRadius.rMd,
+                    topRight: widget.special && isSentMessageCard
+                        ? AppRadius.rXs
+                        : AppRadius.rMd,
+                    bottomLeft: AppRadius.rMd,
+                    bottomRight: AppRadius.rMd,
                   ),
-                  margin: !messageHasText &&
-                          hasAttachment &&
-                          attachmentType != AttachmentType.audio
-                      ? const EdgeInsets.all(4.0)
-                      : null,
-                  padding: !messageHasText &&
-                          hasAttachment &&
-                          attachmentType != AttachmentType.audio
-                      ? const EdgeInsets.symmetric(
-                          horizontal: 4.0,
-                          vertical: 2.0,
-                        )
-                      : null,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      if (showTimeStamp) ...[
-                        Text(
-                          formattedTimestamp(
-                            widget.message.timestamp,
-                            true,
-                            Platform.isIOS,
-                          ),
-                          style: Theme.of(context)
-                              .custom
-                              .textTheme
-                              .caption
-                              .copyWith(
-                                fontSize: 11,
-                                color: messageHasText
-                                    ? colorTheme.textColor1
-                                        .withOpacity(0.9)
-                                        .withBlue(
-                                          Theme.of(context).brightness ==
-                                                  Brightness.dark
-                                              ? 255
-                                              : 100,
-                                        )
-                                    : Colors.white,
-                              ),
-                        ),
-                        if (SharedPref.instance.getStringList('starred_message_ids')?.contains(widget.message.id) == true) ...[
-                          const SizedBox(width: 3.0),
-                          const Icon(
-                            Icons.star_rounded,
-                            size: 13,
-                            color: Colors.amber,
+                  color: isSentMessageCard
+                      ? (isDark
+                          ? AppColors.darkOutgoingBubble
+                          : AppColors.lightOutgoingBubble)
+                      : (isDark
+                          ? AppColors.darkIncomingBubble
+                          : AppColors.lightIncomingBubble),
+                ),
+                margin: EdgeInsets.only(
+                  bottom: 3.0,
+                  top: widget.special ? 6.0 : 0,
+                  left: widget.special ? 6 : 16.0,
+                  right: widget.special ? 6 : 16.0,
+                ),
+                padding: hasAttachment
+                    ? attachmentType == AttachmentType.audio && !messageHasText
+                        ? EdgeInsets.only(
+                            left: isSentMessageCard ? 8 : (widget.special ? 18 : 8),
+                            right: isSentMessageCard ? (widget.special ? 10 : 0) : 0,
+                          )
+                        : EdgeInsets.only(
+                            top: 4.0,
+                            bottom: 4.0,
+                            left: widget.special && !isSentMessageCard ? 14.0 : 4.0,
+                            right: widget.special && isSentMessageCard ? 14.0 : 4.0,
+                          )
+                    : EdgeInsets.only(
+                        left: 10,
+                        right: widget.special && isSentMessageCard ? 16 : 10,
+                        top: 4,
+                        bottom: 6,
+                      ),
+                child: Stack(
+                  alignment: Alignment.centerLeft,
+                  children: [
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (hasAttachment) ...[
+                          ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxHeight:
+                                  height < width ? 0.65 * width : double.infinity,
+                            ),
+                            child: AttachmentPreview(
+                              message: widget.message,
+                              width: width,
+                              height: height,
+                            ),
                           ),
                         ],
+                        if (messageHasText || isDeleted) ...[
+                          Padding(
+                            padding: hasAttachment
+                                ? const EdgeInsets.only(left: 4.0, top: 4.0)
+                                : widget.special && !isSentMessageCard
+                                    ? EdgeInsets.only(
+                                        left: 10,
+                                        top: 4,
+                                        bottom: biggerFont
+                                            ? 12
+                                            : padding == 0
+                                                ? 14.0
+                                                : 0,
+                                      )
+                                    : EdgeInsets.only(
+                                        top: 2.0,
+                                        bottom: biggerFont
+                                            ? (Platform.isAndroid ? 16.0 : 12.0)
+                                            : padding == 0
+                                                ? 14.0
+                                                : 0,
+                                      ),
+                            child: isDeleted
+                                ? Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.block_rounded,
+                                        size: 15,
+                                        color: isDark
+                                            ? AppColors.darkTextSecondary
+                                            : AppColors.lightTextSecondary,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'This message was deleted $textPadding',
+                                        textWidthBasis:
+                                            TextWidthBasis.longestLine,
+                                        style: TextStyle(
+                                          fontSize: 14.5,
+                                          fontStyle: FontStyle.italic,
+                                          color: isDark
+                                              ? AppColors.darkTextSecondary
+                                              : AppColors.lightTextSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : Text(
+                                    '${widget.message.content} $textPadding',
+                                    textWidthBasis: TextWidthBasis.longestLine,
+                                    style: Theme.of(context)
+                                        .custom
+                                        .textTheme
+                                        .bodyText1
+                                        .copyWith(
+                                          fontSize: biggerFont ? 40 : 16,
+                                          color: colorTheme.textColor1,
+                                        ),
+                                    softWrap: true,
+                                  ),
+                          )
+                        ],
                       ],
-                      if (isSentMessageCard) ...[
-                        const SizedBox(
-                          width: 2.0,
+                    ),
+                    Positioned(
+                      right: widget.special && isSentMessageCard && (messageHasText || isDeleted)
+                          ? -6
+                          : 0,
+                      bottom: -1,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(6),
+                          boxShadow: [
+                            if (!messageHasText &&
+                                !isDeleted &&
+                                (attachmentType != AttachmentType.document &&
+                                    attachmentType != AttachmentType.audio &&
+                                    attachmentType != AttachmentType.voice)) ...[
+                              const BoxShadow(
+                                color: Color.fromARGB(174, 1, 4, 21),
+                                blurRadius: 20,
+                              )
+                            ],
+                          ],
                         ),
-                        Image.asset(
-                          'assets/images/${widget.message.status.value}.png',
-                          color: widget.message.status.value != 'SEEN'
-                              ? messageHasText
-                                  ? colorTheme.textColor1
-                                      .withOpacity(0.65)
-                                      .withBlue(Theme.of(context).brightness ==
-                                              Brightness.dark
-                                          ? 255
-                                          : 150)
-                                  : Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? Colors.white
-                                      : colorTheme.textColor1
-                                          .withOpacity(0.7)
-                                          .withBlue(
-                                            Theme.of(context).brightness ==
-                                                    Brightness.dark
-                                                ? 255
-                                                : 100,
-                                          )
-                              : null,
-                          width: 16.0,
+                        margin: !messageHasText &&
+                                hasAttachment &&
+                                attachmentType != AttachmentType.audio
+                            ? const EdgeInsets.all(4.0)
+                            : null,
+                        padding: !messageHasText &&
+                                hasAttachment &&
+                                attachmentType != AttachmentType.audio
+                            ? const EdgeInsets.symmetric(
+                                horizontal: 4.0,
+                                vertical: 2.0,
+                              )
+                            : null,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            if (showTimeStamp) ...[
+                              Text(
+                                formattedTimestamp(
+                                  widget.message.timestamp,
+                                  true,
+                                  Platform.isIOS,
+                                ),
+                                style: Theme.of(context)
+                                    .custom
+                                    .textTheme
+                                    .caption
+                                    .copyWith(
+                                      fontSize: 11,
+                                      color: (messageHasText || isDeleted)
+                                          ? (isDark
+                                              ? AppColors.darkTextSecondary
+                                              : AppColors.lightTextSecondary)
+                                          : Colors.white,
+                                    ),
+                              ),
+                              if (SharedPref.instance.getStringList('starred_message_ids')?.contains(widget.message.id) == true) ...[
+                                const SizedBox(width: 3.0),
+                                const Icon(
+                                  Icons.star_rounded,
+                                  size: 13,
+                                  color: Colors.amber,
+                                ),
+                              ],
+                            ],
+                            if (isSentMessageCard) ...[
+                              const SizedBox(
+                                width: 2.0,
+                              ),
+                              Image.asset(
+                                'assets/images/${widget.message.status.value}.png',
+                                color: widget.message.status.value != 'SEEN'
+                                    ? ((messageHasText || isDeleted)
+                                        ? (isDark
+                                            ? AppColors.darkTextSecondary
+                                            : AppColors.lightTextSecondary)
+                                        : (isDark
+                                            ? Colors.white
+                                            : AppColors.lightTextSecondary))
+                                    : null,
+                                width: 14.0,
+                              ),
+                            ],
+                            if (widget.special &&
+                                isSentMessageCard &&
+                                (messageHasText || isDeleted)) ...[const SizedBox(width: 9)],
+                          ],
                         ),
-                      ],
-                      if (widget.special &&
-                          isSentMessageCard &&
-                          messageHasText) ...[const SizedBox(width: 9)],
-                    ],
-                  ),
+                      ),
+                    )
+                  ],
                 ),
-              )
-            ],
+              ),
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 }

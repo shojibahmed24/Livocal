@@ -24,6 +24,8 @@ import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/repositories/push_notifications.dart';
 import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/shared/utils/time_ticker.dart';
+import 'package:livocal/shared/widgets/shimmer_skeleton.dart';
 import 'package:livocal/theme/app_tokens.dart';
 import 'package:livocal/theme/theme.dart';
 import '../../../shared/utils/storage_paths.dart';
@@ -133,6 +135,7 @@ class _HomePageState extends ConsumerState<HomePage>
       await handleNotificationClick(message);
     });
 
+    TimeTicker.ensureStarted();
     _tabController = TabController(length: 3, vsync: this, initialIndex: 0);
     _tabController.addListener(handleTabIndexChange);
 
@@ -652,10 +655,53 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
       stream: IsarDb.getRecentChatStream(ref),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return const HomePageContactsList();
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 48.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.cloud_off_rounded,
+                    size: 56,
+                    color: colorTheme.greyColor,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Couldn't load chats",
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Please check your connection and tap retry.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: colorTheme.greyColor, fontSize: 13),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorTheme.greenColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.radiusXl),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                    onPressed: () {
+                      setState(() {});
+                    },
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
         }
         if (!snapshot.hasData) {
-          return Container();
+          return const ChatListShimmerSkeleton();
         }
 
         var chats = snapshot.data!;
@@ -677,7 +723,76 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
             );
           }
         } else if (chats.isEmpty) {
-          return const HomePageContactsList();
+          return Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 48.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 90,
+                    height: 90,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: colorTheme.greenColor.withValues(alpha: 0.12),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.chat_bubble_outline_rounded,
+                        size: 46,
+                        color: colorTheme.greenColor,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'No conversations yet',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Start chatting with your contacts with real-time translation and voice calls.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: colorTheme.greyColor,
+                      fontSize: 14,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorTheme.greenColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.radiusXl),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                      elevation: 2,
+                    ),
+                    onPressed: () async {
+                      if (!await hasPermission(Permission.contacts)) return;
+                      if (!context.mounted) return;
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ContactsPage(
+                            user: widget.user,
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.add_comment_rounded, size: 20),
+                    label: const Text(
+                      'Start new chat',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
         }
 
         return ListView(
@@ -877,18 +992,22 @@ class RecentChatWidget extends StatelessWidget {
     final trailingChildren = [
       RecentChatTime(chat: chat, colorTheme: colorTheme),
       if (chat.unreadCount > 0) ...[
+        const SizedBox(height: 4.0),
         Container(
+          constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
+            borderRadius: BorderRadius.circular(AppRadius.radiusFull),
             color: colorTheme.greenColor,
           ),
           margin: const EdgeInsets.only(left: 4.0),
-          padding: const EdgeInsets.all(6.0),
+          padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
           child: Text(
-            chat.unreadCount.toString(),
+            chat.unreadCount > 99 ? '99+' : chat.unreadCount.toString(),
+            textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.w500,
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
             ),
           ),
         )
@@ -998,7 +1117,7 @@ class RecentChatWidget extends StatelessWidget {
   }
 }
 
-class RecentChatTime extends StatefulWidget {
+class RecentChatTime extends StatelessWidget {
   const RecentChatTime({
     super.key,
     required this.chat,
@@ -1009,38 +1128,21 @@ class RecentChatTime extends StatefulWidget {
   final ColorTheme colorTheme;
 
   @override
-  State<RecentChatTime> createState() => _RecentChatTimeState();
-}
-
-class _RecentChatTimeState extends State<RecentChatTime> {
-  late final Timer timer;
-
-  @override
-  void initState() {
-    timer = Timer.periodic(const Duration(minutes: 1), (_) {
-      if (!mounted) return;
-      setState(() {});
-    });
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    timer.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Text(
-      formattedTimestamp(
-        widget.chat.message.timestamp,
-      ),
-      style: Theme.of(context).custom.textTheme.caption.copyWith(
-            color: widget.chat.unreadCount > 0
-                ? widget.colorTheme.greenColor
-                : Theme.of(context).custom.colorTheme.greyColor,
+    return ValueListenableBuilder<DateTime>(
+      valueListenable: TimeTicker.minuteTicker,
+      builder: (context, _, __) {
+        return Text(
+          formattedTimestamp(
+            chat.message.timestamp,
           ),
+          style: Theme.of(context).custom.textTheme.caption.copyWith(
+                color: chat.unreadCount > 0
+                    ? colorTheme.greenColor
+                    : Theme.of(context).custom.colorTheme.greyColor,
+              ),
+        );
+      },
     );
   }
 }

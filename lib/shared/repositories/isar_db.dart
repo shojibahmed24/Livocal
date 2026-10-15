@@ -323,6 +323,8 @@ class IsarDb {
                         samples: msg.attachment!.samples,
                       )
                     : null,
+                isDeleted: msg.content == '🚫 This message was deleted' ||
+                    msg.content.contains('message was deleted'),
               ),
             )
             .toList());
@@ -430,6 +432,8 @@ class IsarDb {
                       samples: msg.attachment!.samples,
                     )
                   : null,
+              isDeleted: msg.content == '🚫 This message was deleted' ||
+                  msg.content.contains('message was deleted'),
             ),
             user: User(
               id: sender.id,

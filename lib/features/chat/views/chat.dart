@@ -25,6 +25,8 @@ import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/widgets/bottom_inset.dart';
+import 'package:livocal/shared/widgets/shimmer_skeleton.dart';
+import 'package:livocal/theme/app_tokens.dart';
 import 'package:livocal/theme/color_theme.dart';
 import 'package:livocal/theme/theme.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
@@ -126,7 +128,10 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                     children: [
                       Text(
                         widget.otherUserContactName,
-                        style: Theme.of(context).custom.textTheme.titleMedium,
+                        style: Theme.of(context).custom.textTheme.titleMedium.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
                         overflow: TextOverflow.ellipsis,
                       ),
                       StreamBuilder<UserActivityStatus>(
@@ -135,15 +140,18 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                             .userActivityStatusStream(userId: other.id),
                         builder: (context, snapshot) {
                           if (!snapshot.hasData) {
-                            return Container();
+                            return const SizedBox.shrink();
                           }
 
                           return snapshot.data!.value == 'Online'
                               ? Text(
                                   'Online',
-                                  style: Theme.of(context).custom.textTheme.caption,
+                                  style: Theme.of(context).custom.textTheme.caption.copyWith(
+                                        color: Colors.white.withValues(alpha: 0.85),
+                                        fontSize: 12,
+                                      ),
                                 )
-                              : Container();
+                              : const SizedBox.shrink();
                         },
                       ),
                     ],
@@ -160,6 +168,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           icon: const Icon(
             Icons.arrow_back,
             size: 24,
+            color: Colors.white,
           ),
         ),
         actions: [
@@ -457,6 +466,7 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
                     hideElements
                         ? InkWell(
                             onTap: () async {
+                              HapticFeedback.lightImpact();
                               ref
                                   .read(chatControllerProvider.notifier)
                                   .onSendBtnPressed(
@@ -496,6 +506,16 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
         focusNode: ref.read(chatControllerProvider).fieldFocusNode,
         onTextChanged: (value) =>
             ref.read(chatControllerProvider.notifier).onTextChanged(value),
+        onSubmitted: (value) {
+          if (value.trim().isNotEmpty) {
+            HapticFeedback.lightImpact();
+            ref.read(chatControllerProvider.notifier).onSendBtnPressed(
+                  ref,
+                  widget.self,
+                  widget.other,
+                );
+          }
+        },
         textController: ref.read(chatControllerProvider).messageController,
         actions: [
           InkWell(
@@ -752,7 +772,7 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
       stream: messageStream,
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return Container();
+          return const ChatBubbleShimmerSkeleton();
         }
 
         final messages = snapshot.data!;
@@ -765,6 +785,97 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
         }
 
         prevMsgCount = messages.length;
+
+        if (messages.isEmpty) {
+          return Stack(
+            alignment: Alignment.topCenter,
+            children: [
+              Container(color: Colors.transparent),
+              Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildSecurityBanner(context, isDarkTheme, colorTheme),
+                      const SizedBox(height: 28),
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.primary.withValues(alpha: 0.12),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            '👋',
+                            style: TextStyle(fontSize: 40),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Say hello to ${other.name.isNotEmpty ? other.name : "your contact"}',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: isDarkTheme
+                              ? AppColors.darkTextPrimary
+                              : AppColors.lightTextPrimary,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'No messages here yet. Send a greeting or voice note to begin the conversation.',
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          color: isDarkTheme
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.radiusXl),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                        ),
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          ref.read(chatControllerProvider.notifier).sendMessageNoAttachments(
+                                Message(
+                                  id: const Uuid().v4(),
+                                  content: 'Hello! 👋',
+                                  status: MessageStatus.pending,
+                                  senderId: self.id,
+                                  receiverId: other.id,
+                                  timestamp: Timestamp.now(),
+                                ),
+                              );
+                        },
+                        icon: const Text('👋', style: TextStyle(fontSize: 16)),
+                        label: const Text(
+                          'Say hello!',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
         return Stack(
           alignment: Alignment.topCenter,
           children: [
@@ -803,58 +914,12 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
                   },
                 ),
                 SliverToBoxAdapter(
-                  child: Center(
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () {
-                        showAppDialog(
-                          context: context,
-                          icon: Icons.lock,
-                          iconColor: AppColors.primary,
-                          title: 'Private & Secure Messaging',
-                          contentText:
-                              'Your messages and media are protected with zero-trust authenticated access control and TLS encryption. Voice calls stream securely via DTLS-SRTP with ephemeral Gemini Live AI translation.',
-                          actions: [
-                            AppDialogAction(
-                              label: 'OK',
-                              isPrimary: true,
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                          ],
-                        );
-                      },
-                      child: Container(
-                        width: MediaQuery.of(context).size.width * 0.8,
-                        margin: const EdgeInsets.only(bottom: 4),
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: isDarkTheme
-                              ? const Color.fromARGB(200, 24, 34, 40)
-                              : const Color.fromARGB(148, 248, 236, 130),
-                        ),
-                        child: Text(
-                          '🔒 Messages and calls are private and secured. Protected with zero-trust access control. Tap to learn more.',
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            color: isDarkTheme
-                                ? colorTheme.yellowColor
-                                : colorTheme.textColor1,
-                          ),
-                          softWrap: true,
-                          textWidthBasis: TextWidthBasis.longestLine,
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                  ),
+                  child: _buildSecurityBanner(context, isDarkTheme, colorTheme),
                 ),
                 SliverToBoxAdapter(
                   child: Center(
                     child: ChatDate(
-                      date: messages.isEmpty
-                          ? 'Today'
-                          : dateFromTimestamp(messages.last.timestamp),
+                      date: dateFromTimestamp(messages.last.timestamp),
                     ),
                   ),
                 ),
@@ -898,6 +963,85 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSecurityBanner(
+    BuildContext context,
+    bool isDarkTheme,
+    ColorTheme colorTheme,
+  ) {
+    return Center(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.radiusMd),
+        onTap: () {
+          showAppDialog(
+            context: context,
+            icon: Icons.lock_outline_rounded,
+            iconColor: AppColors.primary,
+            title: 'Private & Secure Messaging',
+            contentText:
+                'Your messages and media are protected with zero-trust authenticated access control and TLS encryption. Voice calls stream securely via DTLS-SRTP with ephemeral Gemini Live AI translation.',
+            actions: [
+              AppDialogAction(
+                label: 'OK',
+                isPrimary: true,
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          );
+        },
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.88,
+          margin: const EdgeInsets.only(bottom: 8, top: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.radiusMd),
+            color: isDarkTheme
+                ? const Color(0xFF182228)
+                : const Color(0xFFFFF9E6),
+            border: Border.all(
+              color: isDarkTheme
+                  ? const Color(0xFF233138)
+                  : const Color(0xFFFFE082),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.lock_rounded,
+                size: 16,
+                color: isDarkTheme
+                    ? const Color(0xFFFFD279)
+                    : const Color(0xFF8D6E63),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Messages and calls are end-to-end encrypted and private.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.3,
+                    color: isDarkTheme
+                        ? const Color(0xFFFFD279)
+                        : const Color(0xFF5D4037),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: isDarkTheme
+                    ? const Color(0xFFFFD279)
+                    : const Color(0xFF8D6E63),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

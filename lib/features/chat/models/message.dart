@@ -31,6 +31,7 @@ class Message {
   final Timestamp timestamp;
   final Attachment? attachment;
   MessageStatus status;
+  final bool isDeleted;
 
   Message({
     required this.id,
@@ -40,12 +41,18 @@ class Message {
     required this.timestamp,
     required this.status,
     this.attachment,
+    this.isDeleted = false,
   });
 
   factory Message.fromMap(Map<String, dynamic> msgData) {
+    final rawContent = msgData['content'] as String? ?? '';
+    final isDeletedMsg = msgData['deletedForEveryone'] == true ||
+        msgData['isDeleted'] == true ||
+        rawContent == '🚫 This message was deleted';
+
     return Message(
       id: msgData['id'],
-      content: msgData['content'],
+      content: rawContent,
       status: MessageStatus.fromValue(msgData['status']),
       senderId: msgData['senderId'],
       receiverId: msgData['receiverId'],
@@ -53,6 +60,7 @@ class Message {
       attachment: msgData["attachment"] != null
           ? Attachment.fromMap(msgData["attachment"])
           : null,
+      isDeleted: isDeletedMsg,
     );
   }
 
@@ -64,6 +72,7 @@ class Message {
     Timestamp? timestamp,
     MessageStatus? status,
     Attachment? attachment,
+    bool? isDeleted,
   }) {
     return Message(
       id: id ?? this.id,
@@ -73,6 +82,7 @@ class Message {
       timestamp: timestamp ?? this.timestamp,
       status: status ?? this.status,
       attachment: attachment ?? this.attachment,
+      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 
@@ -90,6 +100,8 @@ class Message {
       'receiverId': receiverId,
       'timestamp': timestamp,
       "attachment": attachment?.toMap(),
+      'isDeleted': isDeleted,
+      'deletedForEveryone': isDeleted,
     };
   }
 }
