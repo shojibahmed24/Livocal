@@ -8,6 +8,7 @@ import 'package:livocal/features/calls/views/widgets/language_picker_sheet.dart'
 import 'package:livocal/features/calls/views/widgets/direct_dial_sheet.dart';
 import 'package:livocal/features/home/views/contacts.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/theme.dart';
 
 class CallsTab extends ConsumerStatefulWidget {
@@ -114,7 +115,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
             ),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: const Color(0xFF00A884).withOpacity(0.45),
+              color: AppColors.primary.withOpacity(0.45),
             ),
             boxShadow: [
               BoxShadow(
@@ -132,12 +133,12 @@ class _CallsTabState extends ConsumerState<CallsTab>
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF00A884).withOpacity(0.22),
+                      color: AppColors.primary.withOpacity(0.22),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.translate_rounded,
-                      color: Color(0xFF00E5B0),
+                      color: AppColors.primary,
                       size: 20,
                     ),
                   ),
@@ -157,7 +158,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
                         Text(
                           '${CallLanguageRegistry.allLanguages.length}+ Languages • Universal Any-to-Any Pair',
                           style: const TextStyle(
-                            color: Color(0xFF00E5B0),
+                            color: AppColors.primary,
                             fontSize: 11.5,
                             fontWeight: FontWeight.w500,
                           ),
@@ -251,12 +252,12 @@ class _CallsTabState extends ConsumerState<CallsTab>
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF00A884).withOpacity(0.25),
+                          color: AppColors.primary.withOpacity(0.25),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
                           Icons.swap_horiz_rounded,
-                          color: Color(0xFF00E5B0),
+                          color: AppColors.primary,
                           size: 20,
                         ),
                       ),
@@ -344,7 +345,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
               Expanded(
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00A884),
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 13),
                     shape: RoundedRectangleBorder(
@@ -370,8 +371,8 @@ class _CallsTabState extends ConsumerState<CallsTab>
               Expanded(
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF00A884),
-                    side: const BorderSide(color: Color(0xFF00A884), width: 1.5),
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.primary, width: 1.5),
                     padding: const EdgeInsets.symmetric(vertical: 13),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -479,7 +480,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
                         size: 15,
                         color: isMissed
                             ? Colors.redAccent
-                            : const Color(0xFF00A884),
+                            : AppColors.primary,
                       ),
                       const SizedBox(width: 5),
                       Expanded(
@@ -503,13 +504,13 @@ class _CallsTabState extends ConsumerState<CallsTab>
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF00A884).withOpacity(0.14),
+                        color: AppColors.primary.withOpacity(0.14),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         '🌐 $pairBadge',
                         style: const TextStyle(
-                          color: Color(0xFF00A884),
+                          color: AppColors.primary,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
@@ -522,7 +523,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
                 tooltip: 'Call with Live AI Translation',
                 icon: const Icon(
                   Icons.call_rounded,
-                  color: Color(0xFF00A884),
+                  color: AppColors.primary,
                 ),
                 onPressed: () {
                   _startCallToPeer(

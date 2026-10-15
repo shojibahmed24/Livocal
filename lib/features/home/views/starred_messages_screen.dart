@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:livocal/shared/models/messages.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
+import 'package:livocal/theme/app_colors.dart';
 
 class StarredMessagesScreen extends ConsumerStatefulWidget {
   const StarredMessagesScreen({super.key});
@@ -102,13 +103,13 @@ class _StarredMessagesScreenState extends ConsumerState<StarredMessagesScreen> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: isDark
-                                ? const Color(0xFF1F2C34)
-                                : const Color(0xFFE9EDEF),
+                                ? AppColors.darkSurface
+                                : AppColors.lightSurfaceContainerHigh,
                           ),
                           child: const Icon(
                             Icons.star_rounded,
                             size: 64,
-                            color: Color(0xFF00A884),
+                            color: AppColors.primary,
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -125,8 +126,8 @@ class _StarredMessagesScreenState extends ConsumerState<StarredMessagesScreen> {
                           style: TextStyle(
                             fontSize: 14,
                             color: isDark
-                                ? const Color(0xFF8696A0)
-                                : const Color(0xFF667781),
+                                ? AppColors.darkTextSecondary
+                                : AppColors.lightTextSecondary,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -145,7 +146,7 @@ class _StarredMessagesScreenState extends ConsumerState<StarredMessagesScreen> {
                         vertical: 8,
                       ),
                       leading: const CircleAvatar(
-                        backgroundColor: Color(0xFF00A884),
+                        backgroundColor: AppColors.primary,
                         child: Icon(Icons.star, color: Colors.white, size: 20),
                       ),
                       title: Text(

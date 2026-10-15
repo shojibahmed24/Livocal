@@ -9,6 +9,7 @@ import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/theme/color_theme.dart';
 
 class ContactProfileScreen extends ConsumerStatefulWidget {
@@ -182,7 +183,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                   _buildActionButton(
                     icon: Icons.call,
                     label: 'Audio Call',
-                    color: const Color(0xFF00A884),
+                    color: AppColors.primary,
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -198,7 +199,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                   _buildActionButton(
                     icon: Icons.translate_rounded,
                     label: 'AI Translate',
-                    color: const Color(0xFF00E5B0),
+                    color: AppColors.primary,
                     onTap: () {
                       _showTranslationInfo(context);
                     },
@@ -206,7 +207,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                   _buildActionButton(
                     icon: Icons.search,
                     label: 'Search',
-                    color: const Color(0xFF00A884),
+                    color: AppColors.primary,
                     onTap: () {
                       Navigator.pop(context);
                     },
@@ -248,7 +249,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       color: widget.other.activityStatus == UserActivityStatus.online
-                          ? const Color(0xFF00A884)
+                          ? AppColors.primary
                           : Colors.grey,
                     ),
                   ),
@@ -276,11 +277,11 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                       Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.message, color: Color(0xFF00A884)),
+                            icon: const Icon(Icons.message, color: AppColors.primary),
                             onPressed: () => Navigator.pop(context),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.call, color: Color(0xFF00A884)),
+                            icon: const Icon(Icons.call, color: AppColors.primary),
                             onPressed: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
@@ -349,7 +350,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     title: const Text('Mute notifications'),
                     subtitle: const Text('Silence alerts for new messages from this contact'),
                     value: _isMuted,
-                    activeColor: const Color(0xFF00A884),
+                    activeColor: AppColors.primary,
                     onChanged: (val) {
                       setState(() {
                         _isMuted = val;
@@ -384,7 +385,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                       'Messages and calls are private and secured. Tap to learn more.',
                       style: TextStyle(fontSize: 12),
                     ),
-                    trailing: const Icon(Icons.lock, color: Color(0xFF00A884), size: 18),
+                    trailing: const Icon(Icons.lock, color: AppColors.primary, size: 18),
                     onTap: () => _showEncryptionDialog(context),
                   ),
                   const Divider(height: 1, indent: 56),
@@ -504,7 +505,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.translate_rounded, color: Color(0xFF00E5B0), size: 48),
+              const Icon(Icons.translate_rounded, color: AppColors.primary, size: 48),
               const SizedBox(height: 16),
               const Text(
                 'Gemini AI Live Translation',
@@ -519,7 +520,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
               const SizedBox(height: 20),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00A884),
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   minimumSize: const Size.fromHeight(46),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -547,29 +548,20 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
   }
 
   void _showEncryptionDialog(BuildContext context) {
-    showDialog(
+    showAppDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1F2C34)
-            : Colors.white,
-        title: const Row(
-          children: [
-            Icon(Icons.lock, color: Color(0xFF00A884)),
-            SizedBox(width: 8),
-            Text('Private & Secure Messaging'),
-          ],
-        ),
-        content: Text(
+      icon: Icons.lock,
+      iconColor: AppColors.primary,
+      title: 'Private & Secure Messaging',
+      contentText:
           'Messages and calls with ${widget.contactName} are protected with authenticated TLS and DTLS-SRTP encryption. Real-time voice translations are processed in ephemeral memory by Gemini Live API.',
+      actions: [
+        AppDialogAction(
+          label: 'OK',
+          isPrimary: true,
+          onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
+      ],
     );
   }
 

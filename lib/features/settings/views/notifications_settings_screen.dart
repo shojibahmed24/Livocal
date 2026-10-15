@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/theme/app_colors.dart';
 
 class NotificationsSettingsScreen extends ConsumerStatefulWidget {
   const NotificationsSettingsScreen({super.key});
@@ -62,7 +63,7 @@ class _NotificationsSettingsScreenState
                   title: Text(opt),
                   value: opt,
                   groupValue: currentValue,
-                  activeColor: const Color(0xFF00A884),
+                  activeColor: AppColors.primary,
                   onChanged: (val) {
                     if (val != null) {
                       SystemSound.play(SystemSoundType.click);
@@ -81,7 +82,7 @@ class _NotificationsSettingsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = const Color(0xFF00A884);
+    final primaryColor = Theme.of(context).colorScheme.primary;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(

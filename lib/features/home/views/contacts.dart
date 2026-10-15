@@ -8,6 +8,7 @@ import 'package:livocal/shared/models/contact.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/widgets/search.dart';
+import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/theme.dart';
 
 class ContactsPage extends ConsumerStatefulWidget {
@@ -540,7 +541,7 @@ class WhatsAppContactsList extends StatelessWidget {
                   IconButton(
                     icon: const Icon(
                       Icons.call_rounded,
-                      color: Color(0xFF00A884),
+                      color: AppColors.primary,
                     ),
                     tooltip: 'Call with Live AI Translation',
                     onPressed: () async {

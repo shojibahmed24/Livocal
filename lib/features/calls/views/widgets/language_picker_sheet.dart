@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/features/calls/services/gemini_live_translator.dart';
+import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/theme.dart';
 
 Future<CallLanguage?> showUniversalLanguagePicker(
@@ -338,17 +339,17 @@ class _GeminiLiveSettingsSheetState extends State<_GeminiLiveSettingsSheet> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF00A884).withOpacity(0.12),
+                  color: AppColors.primary.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: const Color(0xFF00A884).withOpacity(0.35),
+                    color: AppColors.primary.withOpacity(0.35),
                   ),
                 ),
                 child: Row(
                   children: [
                     const Icon(
                       Icons.shield_outlined,
-                      color: Color(0xFF00E5B0),
+                      color: AppColors.primary,
                       size: 22,
                     ),
                     const SizedBox(width: 10),
@@ -359,7 +360,7 @@ class _GeminiLiveSettingsSheetState extends State<_GeminiLiveSettingsSheet> {
                           const Text(
                             'Zero-Trust Cloud AI Relay Active',
                             style: TextStyle(
-                              color: Color(0xFF00E5B0),
+                              color: AppColors.primary,
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
                             ),

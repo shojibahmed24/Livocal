@@ -9,6 +9,7 @@ import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/theme/app_colors.dart';
 
 Future<void> showDirectDialSheet(
   BuildContext context, {
@@ -189,9 +190,9 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? const Color(0xFF1F2C34) : Colors.white;
-    final textColor = isDark ? Colors.white : Colors.black87;
-    final primaryColor = const Color(0xFF00A884);
+    final bgColor = isDark ? AppColors.darkSurface : AppColors.lightBackground;
+    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
+    final primaryColor = AppColors.primary;
 
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
@@ -277,7 +278,7 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
               ),
               onChanged: _onPhoneChanged,
               decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.phone, color: Color(0xFF00A884)),
+                prefixIcon: const Icon(Icons.phone, color: AppColors.primary),
                 hintText: 'e.g. 01721-013902 or +8801303456776',
                 hintStyle: TextStyle(
                   color: isDark ? Colors.white38 : Colors.black38,
@@ -305,7 +306,7 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                           )
                         : null),
                 filled: true,
-                fillColor: isDark ? const Color(0xFF121B22) : const Color(0xFFF0F2F5),
+                fillColor: isDark ? AppColors.darkBackground : AppColors.lightSurfaceContainer,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                   borderSide: BorderSide.none,
@@ -357,7 +358,7 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                               const SizedBox(width: 6),
                               const Icon(
                                 Icons.check_circle_rounded,
-                                color: Color(0xFF00E5B0),
+                                color: AppColors.primary,
                                 size: 16,
                               ),
                             ],
@@ -365,7 +366,7 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                           Text(
                             'Registered Livocal User (${_foundUser!.phone.getFormattedNumber()})',
                             style: const TextStyle(
-                              color: Color(0xFF00A884),
+                              color: AppColors.primary,
                               fontSize: 11.5,
                               fontWeight: FontWeight.w500,
                             ),

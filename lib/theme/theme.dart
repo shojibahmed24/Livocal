@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
+import 'package:livocal/theme/app_tokens.dart';
 import 'package:livocal/theme/color_theme.dart';
 import 'package:livocal/theme/text_theme.dart';
 
@@ -66,112 +67,180 @@ class CustomThemeData {
 final darkThemeProvider = Provider((ref) => _darkTheme);
 final lightThemeProvider = Provider((ref) => _theme);
 
+// MATERIAL 3 COLOR SCHEMES
+final _lightColorScheme = ColorScheme.fromSeed(
+  seedColor: AppColors.primary,
+  brightness: Brightness.light,
+  primary: AppColors.primary,
+  onPrimary: Colors.white,
+  primaryContainer: AppColors.primaryContainerLight,
+  onPrimaryContainer: AppColors.primaryDark,
+  surface: AppColors.lightBackground,
+  onSurface: AppColors.lightTextPrimary,
+  onSurfaceVariant: AppColors.lightTextSecondary,
+  surfaceContainer: AppColors.lightSurfaceContainer,
+  surfaceContainerHigh: AppColors.lightSurfaceContainerHigh,
+  outline: AppColors.lightDivider,
+  error: AppColors.errorLight,
+  onError: Colors.white,
+);
+
+final _darkColorScheme = ColorScheme.fromSeed(
+  seedColor: AppColors.primary,
+  brightness: Brightness.dark,
+  primary: AppColors.primary,
+  onPrimary: Colors.white,
+  primaryContainer: AppColors.primaryContainerDark,
+  onPrimaryContainer: AppColors.primaryLight,
+  surface: AppColors.darkBackground,
+  onSurface: AppColors.darkTextPrimary,
+  onSurfaceVariant: AppColors.darkTextSecondary,
+  surfaceContainer: AppColors.darkSurface,
+  surfaceContainerHigh: AppColors.darkSurfaceContainer,
+  outline: AppColors.darkDivider,
+  error: AppColors.error,
+  onError: Colors.white,
+);
+
 // THEMES
-// Light theme (Not implemented yet)
 final _customTheme = CustomThemeData(isDarkTheme: false);
 final _theme = ThemeData(
+  useMaterial3: true,
   brightness: Brightness.light,
-  dialogTheme: DialogThemeData(
+  colorScheme: _lightColorScheme,
+  dialogTheme: const DialogThemeData(
     shape: RoundedRectangleBorder(
-      side: const BorderSide(color: Colors.transparent),
-      borderRadius: BorderRadius.circular(4.0),
+      borderRadius: AppRadius.lg,
     ),
-    backgroundColor: AppColorsLight.backgroundColor,
-    titleTextStyle:
-        const TextStyle(color: AppColorsLight.textColor1, fontSize: 16),
-    contentTextStyle: const TextStyle(
-      color: AppColorsLight.textColor1,
-      fontSize: 16,
+    backgroundColor: AppColors.lightBackground,
+    titleTextStyle: TextStyle(
+      color: AppColors.lightTextPrimary,
+      fontSize: 18,
+      fontWeight: FontWeight.w600,
+    ),
+    contentTextStyle: TextStyle(
+      color: AppColors.lightTextSecondary,
+      fontSize: 15,
+      height: 1.4,
     ),
   ),
   appBarTheme: const AppBarTheme(
-    elevation: 0.0,
+    elevation: AppElevation.flat,
+    scrolledUnderElevation: AppElevation.flat,
+    surfaceTintColor: Colors.transparent,
     actionsIconTheme: IconThemeData(
-      color: AppColorsLight.iconColor,
+      color: Colors.white,
     ),
-    backgroundColor: AppColorsLight.appBarColor,
+    iconTheme: IconThemeData(
+      color: Colors.white,
+    ),
+    backgroundColor: AppColors.primary,
+    foregroundColor: Colors.white,
     systemOverlayStyle: SystemUiOverlayStyle(
       statusBarIconBrightness: Brightness.light,
-      statusBarColor: AppColorsLight.appBarColor,
-      systemNavigationBarColor: AppColorsLight.backgroundColor,
-      systemNavigationBarDividerColor: AppColorsLight.backgroundColor,
+      statusBarColor: AppColors.primaryDark,
+      systemNavigationBarColor: AppColors.lightBackground,
+      systemNavigationBarDividerColor: AppColors.lightDivider,
     ),
   ),
   floatingActionButtonTheme: const FloatingActionButtonThemeData(
-    backgroundColor: AppColorsLight.greenColor,
+    backgroundColor: AppColors.primary,
     foregroundColor: Colors.white,
+    shape: RoundedRectangleBorder(borderRadius: AppRadius.lg),
+    elevation: AppElevation.medium,
   ),
-  scaffoldBackgroundColor: AppColorsLight.backgroundColor,
+  scaffoldBackgroundColor: AppColors.lightBackground,
   iconTheme: const IconThemeData(
-    color: AppColorsLight.iconColor,
+    color: AppColors.lightIcon,
   ),
   progressIndicatorTheme: const ProgressIndicatorThemeData(
-    color: AppColorsLight.greenColor,
+    color: AppColors.primary,
   ),
   dividerTheme: const DividerThemeData(
-    color: AppColorsLight.greyColor,
-    thickness: 0.1,
+    color: AppColors.lightDivider,
+    thickness: 0.5,
   ),
   tabBarTheme: const TabBarThemeData(
-    indicatorColor: AppColorsLight.indicatorColor,
+    indicatorColor: Colors.white,
     indicatorSize: TabBarIndicatorSize.tab,
-    labelColor: AppColorsLight.selectedLabelColor,
-    unselectedLabelColor: AppColorsLight.unselectedLabelColor,
+    labelColor: Colors.white,
+    unselectedLabelColor: Colors.white70,
     dividerHeight: 0,
+  ),
+  cardTheme: const CardThemeData(
+    elevation: AppElevation.low,
+    shape: RoundedRectangleBorder(borderRadius: AppRadius.md),
   ),
 );
 
 // Dark theme
 final _customDarkTheme = CustomThemeData(isDarkTheme: true);
 final _darkTheme = ThemeData(
+  useMaterial3: true,
   brightness: Brightness.dark,
-  dialogTheme: DialogThemeData(
+  colorScheme: _darkColorScheme,
+  dialogTheme: const DialogThemeData(
     shape: RoundedRectangleBorder(
-      side: const BorderSide(color: Colors.transparent),
-      borderRadius: BorderRadius.circular(4.0),
+      borderRadius: AppRadius.lg,
     ),
-    backgroundColor: AppColorsDark.appBarColor,
-    titleTextStyle:
-        const TextStyle(color: AppColorsLight.textColor1, fontSize: 16),
-    contentTextStyle: const TextStyle(
-      color: AppColorsLight.textColor1,
-      fontSize: 16,
+    backgroundColor: AppColors.darkSurface,
+    titleTextStyle: TextStyle(
+      color: AppColors.darkTextPrimary,
+      fontSize: 18,
+      fontWeight: FontWeight.w600,
+    ),
+    contentTextStyle: TextStyle(
+      color: AppColors.darkTextSecondary,
+      fontSize: 15,
+      height: 1.4,
     ),
   ),
   appBarTheme: const AppBarTheme(
-    elevation: 0.0,
+    elevation: AppElevation.flat,
+    scrolledUnderElevation: AppElevation.flat,
+    surfaceTintColor: Colors.transparent,
     actionsIconTheme: IconThemeData(
-      color: AppColorsDark.iconColor,
+      color: AppColors.darkIcon,
     ),
-    backgroundColor: AppColorsDark.appBarColor,
+    iconTheme: IconThemeData(
+      color: AppColors.darkIcon,
+    ),
+    backgroundColor: AppColors.darkSurface,
+    foregroundColor: AppColors.darkTextPrimary,
     systemOverlayStyle: SystemUiOverlayStyle(
       statusBarIconBrightness: Brightness.light,
-      statusBarColor: AppColorsDark.appBarColor,
-      systemNavigationBarColor: AppColorsDark.backgroundColor,
-      systemNavigationBarDividerColor: AppColorsDark.backgroundColor,
+      statusBarColor: AppColors.darkSurface,
+      systemNavigationBarColor: AppColors.darkBackground,
+      systemNavigationBarDividerColor: AppColors.darkDivider,
     ),
   ),
   floatingActionButtonTheme: const FloatingActionButtonThemeData(
-    backgroundColor: AppColorsDark.indicatorColor,
+    backgroundColor: AppColors.primary,
     foregroundColor: Colors.white,
+    shape: RoundedRectangleBorder(borderRadius: AppRadius.lg),
+    elevation: AppElevation.medium,
   ),
-  scaffoldBackgroundColor: AppColorsDark.backgroundColor,
+  scaffoldBackgroundColor: AppColors.darkBackground,
   iconTheme: const IconThemeData(
-    color: AppColorsDark.iconColor,
+    color: AppColors.darkIcon,
   ),
   progressIndicatorTheme: const ProgressIndicatorThemeData(
-    color: AppColorsDark.greenColor,
+    color: AppColors.primary,
   ),
   dividerTheme: const DividerThemeData(
-    color: AppColorsDark.greyColor,
-    thickness: 0.1,
+    color: AppColors.darkDivider,
+    thickness: 0.5,
   ),
   tabBarTheme: const TabBarThemeData(
-    indicatorColor: AppColorsDark.indicatorColor,
+    indicatorColor: AppColors.primary,
     indicatorSize: TabBarIndicatorSize.tab,
-    labelColor: AppColorsDark.selectedLabelColor,
-    unselectedLabelColor: AppColorsDark.unselectedLabelColor,
+    labelColor: AppColors.primary,
+    unselectedLabelColor: AppColors.darkTextSecondary,
     dividerHeight: 0,
+  ),
+  cardTheme: const CardThemeData(
+    elevation: AppElevation.low,
+    shape: RoundedRectangleBorder(borderRadius: AppRadius.md),
   ),
 );
 

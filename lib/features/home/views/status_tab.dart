@@ -10,6 +10,8 @@ import 'package:livocal/features/status/views/status_view_screen.dart';
 import 'package:livocal/features/status/views/text_status_composer_screen.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/theme/app_colors.dart';
+import 'package:livocal/theme/app_tokens.dart';
 import 'package:livocal/theme/theme.dart';
 
 class StatusTab extends ConsumerStatefulWidget {
@@ -75,7 +77,7 @@ class _StatusTabState extends ConsumerState<StatusTab>
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00A884),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(ctx, true),
@@ -123,16 +125,16 @@ class _StatusTabState extends ConsumerState<StatusTab>
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF1F2C34)
-          : Colors.white,
+          ? AppColors.darkSurface
+          : AppColors.lightBackground,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.radiusLg)),
       ),
       builder: (ctx) => SafeArea(
         child: Wrap(
           children: [
             ListTile(
-              leading: const Icon(Icons.camera_alt, color: Color(0xFF00A884)),
+              leading: const Icon(Icons.camera_alt, color: AppColors.primary),
               title: const Text('Take a photo'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -140,7 +142,7 @@ class _StatusTabState extends ConsumerState<StatusTab>
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library, color: Color(0xFF00A884)),
+              leading: const Icon(Icons.photo_library, color: AppColors.primary),
               title: const Text('Choose from gallery'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -148,7 +150,7 @@ class _StatusTabState extends ConsumerState<StatusTab>
               },
             ),
             ListTile(
-              leading: const Icon(Icons.edit, color: Color(0xFF00A884)),
+              leading: const Icon(Icons.edit, color: AppColors.primary),
               title: const Text('Text status'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -175,7 +177,7 @@ class _StatusTabState extends ConsumerState<StatusTab>
     super.build(context);
     final textTheme = Theme.of(context).custom.textTheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = const Color(0xFF00A884);
+    final primaryColor = AppColors.primary;
 
     return ListView(
       children: [

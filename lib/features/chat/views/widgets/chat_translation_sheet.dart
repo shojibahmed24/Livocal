@@ -2,19 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/shared/services/translation_service.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/theme/app_colors.dart';
+import 'package:livocal/theme/app_tokens.dart';
 
 void showInChatTranslationSheet({
   required BuildContext context,
   required String peerName,
 }) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFF1F2C34)
-        : Colors.white,
+    backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightBackground,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.radiusLg)),
     ),
     builder: (ctx) => _ChatTranslationSheetContent(peerName: peerName),
   );
@@ -83,7 +84,7 @@ class _ChatTranslationSheetContentState
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = const Color(0xFF00E5B0);
+    final primaryColor = AppColors.primary;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -192,7 +193,7 @@ class _ChatTranslationSheetContentState
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: IconButton(
-                    icon: const Icon(Icons.swap_horiz, color: Color(0xFF00A884)),
+                    icon: const Icon(Icons.swap_horiz, color: AppColors.primary),
                     onPressed: () {
                       setState(() {
                         final temp = _myLanguage;
@@ -244,7 +245,7 @@ class _ChatTranslationSheetContentState
               title: const Text('Auto-translate incoming messages', style: TextStyle(fontSize: 14)),
               subtitle: const Text('Automatically displays translations below received messages', style: TextStyle(fontSize: 12)),
               value: _autoTranslateIncoming,
-              activeColor: const Color(0xFF00A884),
+              activeColor: AppColors.primary,
               onChanged: (val) => setState(() => _autoTranslateIncoming = val ?? true),
             ),
             CheckboxListTile(
@@ -252,7 +253,7 @@ class _ChatTranslationSheetContentState
               title: const Text('Live Voice Note Transcription', style: TextStyle(fontSize: 14)),
               subtitle: const Text('Transcribe and translate incoming audio voice messages', style: TextStyle(fontSize: 12)),
               value: _autoTranscribeVoiceNotes,
-              activeColor: const Color(0xFF00A884),
+              activeColor: AppColors.primary,
               onChanged: (val) => setState(() => _autoTranscribeVoiceNotes = val ?? true),
             ),
             const Divider(height: 20),
@@ -277,7 +278,7 @@ class _ChatTranslationSheetContentState
                 const SizedBox(width: 8),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00A884),
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -306,7 +307,7 @@ class _ChatTranslationSheetContentState
             const SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00A884),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 minimumSize: const Size.fromHeight(46),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),

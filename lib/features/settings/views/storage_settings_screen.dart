@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:livocal/shared/utils/network_tracker.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/theme/app_colors.dart';
 
 class StorageSettingsScreen extends ConsumerStatefulWidget {
   const StorageSettingsScreen({super.key});
@@ -149,7 +150,7 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
                   title: Text(opt),
                   value: opt,
                   groupValue: current,
-                  activeColor: const Color(0xFF00A884),
+                  activeColor: AppColors.primary,
                   onChanged: (val) {
                     if (val != null) {
                       onSelected(val);
@@ -166,7 +167,7 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF00A884);
+    final primaryColor = Theme.of(context).colorScheme.primary;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final sentBytes = NetworkTracker.getSentBytes();
@@ -214,7 +215,7 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
                     ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF00A884),
+                        backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                       ),
                       onPressed: () {

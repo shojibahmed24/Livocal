@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/theme/app_colors.dart';
 
 class HelpSettingsScreen extends StatelessWidget {
   const HelpSettingsScreen({super.key});
@@ -43,7 +44,7 @@ class HelpSettingsScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 const Center(
                   child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00A884)),
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
                   ),
                 ),
               ],
@@ -56,7 +57,7 @@ class HelpSettingsScreen extends StatelessWidget {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00A884),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
               ),
               onPressed: isSubmitting
@@ -121,7 +122,7 @@ class HelpSettingsScreen extends StatelessWidget {
         title: const Row(
           children: [
             CircleAvatar(
-              backgroundColor: Color(0xFF00A884),
+              backgroundColor: AppColors.primary,
               radius: 16,
               child: Icon(Icons.bolt, color: Colors.white, size: 20),
             ),
@@ -160,7 +161,7 @@ class HelpSettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = const Color(0xFF00A884);
+    final primaryColor = Theme.of(context).colorScheme.primary;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -226,7 +227,7 @@ class HelpSettingsScreen extends StatelessWidget {
                           }
                         }
                       },
-                      child: const Text('OPEN ONLINE POLICY', style: TextStyle(color: Color(0xFF00A884))),
+                      child: Text('OPEN ONLINE POLICY', style: TextStyle(color: primaryColor)),
                     ),
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),

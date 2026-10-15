@@ -8,6 +8,7 @@ import 'package:livocal/features/calls/models/call_model.dart';
 import 'package:livocal/features/calls/views/active_call_screen.dart';
 import 'package:livocal/features/calls/views/widgets/language_picker_sheet.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/theme/app_colors.dart';
 
 class OutgoingCallScreen extends ConsumerStatefulWidget {
   final User caller;
@@ -195,7 +196,7 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
               Text(
                 statusText,
                 style: const TextStyle(
-                  color: Color(0xFF00E5B0),
+                  color: AppColors.primary,
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                 ),
@@ -224,11 +225,11 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: const Color(0xFF00A884)
+                                    color: AppColors.primary
                                         .withOpacity(opacity),
                                     width: 2.0,
                                   ),
-                                  color: const Color(0xFF00A884)
+                                  color: AppColors.primary
                                       .withOpacity(opacity * 0.25),
                                 ),
                               );
@@ -240,7 +241,7 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
                   },
                   child: CircleAvatar(
                     radius: 60,
-                    backgroundColor: const Color(0xFF1F2C34),
+                    backgroundColor: AppColors.darkSurface,
                     backgroundImage: widget.callee.avatarUrl.isNotEmpty
                         ? CachedNetworkImageProvider(widget.callee.avatarUrl)
                         : null,
@@ -264,7 +265,7 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
                     color: const Color(0xFF18252D).withOpacity(0.95),
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                      color: const Color(0xFF00A884).withOpacity(0.45),
+                      color: AppColors.primary.withOpacity(0.45),
                     ),
                   ),
                   child: Column(
@@ -274,14 +275,14 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
                         children: [
                           Icon(
                             Icons.translate_rounded,
-                            color: Color(0xFF00E5B0),
+                            color: AppColors.primary,
                             size: 16,
                           ),
                           SizedBox(width: 6),
                           Text(
                             'LIVE VOICE TRANSLATION PAIR (N × N)',
                             style: TextStyle(
-                              color: Color(0xFF00E5B0),
+                              color: AppColors.primary,
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.7,
@@ -350,7 +351,7 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
                             },
                             icon: const Icon(
                               Icons.swap_horiz_rounded,
-                              color: Color(0xFF00E5B0),
+                              color: AppColors.primary,
                             ),
                           ),
                           Expanded(

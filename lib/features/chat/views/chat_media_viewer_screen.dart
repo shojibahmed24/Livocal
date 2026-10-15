@@ -8,6 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:livocal/features/chat/models/attachement.dart';
 import 'package:livocal/shared/models/messages.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/theme/app_colors.dart';
 
 class ChatMediaViewerScreen extends ConsumerStatefulWidget {
   final String chatId;
@@ -89,7 +90,7 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = const Color(0xFF00A884);
+    final primaryColor = AppColors.primary;
 
     return DefaultTabController(
       length: 3,

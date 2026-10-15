@@ -11,6 +11,8 @@ import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/attachment_utils.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/theme/app_colors.dart';
+import 'package:livocal/theme/app_tokens.dart';
 import 'package:livocal/theme/theme.dart';
 
 class ProfileEditScreen extends ConsumerStatefulWidget {
@@ -63,10 +65,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF1F2C34)
-          : Colors.white,
+          ? AppColors.darkSurface
+          : AppColors.lightBackground,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.radiusLg)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
@@ -75,7 +77,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.camera_alt, color: Color(0xFF25D366)),
+                leading: const Icon(Icons.camera_alt, color: AppColors.primary),
                 title: const Text('Camera'),
                 onTap: () async {
                   Navigator.pop(ctx);
@@ -87,7 +89,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.photo_library, color: Color(0xFF25D366)),
+                leading: const Icon(Icons.photo_library, color: AppColors.primary),
                 title: const Text('Gallery'),
                 onTap: () async {
                   Navigator.pop(ctx);
@@ -178,8 +180,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1F2C34)
-            : Colors.white,
+            ? AppColors.darkSurface
+            : AppColors.lightBackground,
+        shape: const RoundedRectangleBorder(borderRadius: AppRadius.lg),
         title: const Text('Enter your name'),
         content: TextField(
           controller: controller,
@@ -196,7 +199,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF25D366),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
             ),
             onPressed: () async {
@@ -223,8 +226,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1F2C34)
-            : Colors.white,
+            ? AppColors.darkSurface
+            : AppColors.lightBackground,
+        shape: const RoundedRectangleBorder(borderRadius: AppRadius.lg),
         title: const Text('About'),
         content: SizedBox(
           width: double.maxFinite,
@@ -273,7 +277,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF25D366),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
             ),
             onPressed: () async {
@@ -345,7 +349,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                   if (_isSaving)
                     const Positioned.fill(
                       child: CircularProgressIndicator(
-                        color: Color(0xFF25D366),
+                        color: AppColors.primary,
                       ),
                     ),
                   Positioned(
@@ -356,7 +360,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: const BoxDecoration(
-                          color: Color(0xFF25D366),
+                          color: AppColors.primary,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -381,7 +385,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               trailing: IconButton(
-                icon: const Icon(Icons.edit, color: Color(0xFF25D366)),
+                icon: const Icon(Icons.edit, color: AppColors.primary),
                 onPressed: _showEditNameDialog,
               ),
             ),
@@ -403,7 +407,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 style: const TextStyle(fontSize: 15),
               ),
               trailing: IconButton(
-                icon: const Icon(Icons.edit, color: Color(0xFF25D366)),
+                icon: const Icon(Icons.edit, color: AppColors.primary),
                 onPressed: _showEditAboutDialog,
               ),
             ),

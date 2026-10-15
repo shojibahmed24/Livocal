@@ -19,7 +19,7 @@ class _TextStatusComposerScreenState extends State<TextStatusComposerScreen> {
   bool _isPosting = false;
 
   final List<int> _backgroundColors = [
-    0xFF00A884, // Livocal Green
+    0xFF00B386, // Livocal Brand Emerald Green
     0xFF6B46C1, // Royal Purple
     0xFFD53F8C, // Vibrant Pink
     0xFFDD6B20, // Vivid Orange

@@ -32,7 +32,7 @@ class _AppLanguageScreenState extends ConsumerState<AppLanguageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = const Color(0xFF00A884);
+    final primaryColor = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
       appBar: AppBar(

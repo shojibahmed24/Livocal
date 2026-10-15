@@ -1,4 +1,6 @@
 import 'dart:ui';
+import 'package:livocal/theme/app_colors.dart';
+export 'package:livocal/theme/app_colors.dart';
 
 class AppColorsDark {
   static const iconColor = Color.fromRGBO(133, 148, 163, 1);
@@ -12,14 +14,14 @@ class AppColorsDark {
   static const outgoingMessageBubbleColor = Color.fromRGBO(1, 92, 75, 1);
   static const incomingEmbedColor = Color.fromRGBO(25, 35, 40, 1);
   static const outgoingEmbedColor = Color.fromRGBO(0, 74, 64, 1);
-  static const selectedLabelColor = Color.fromRGBO(5, 165, 133, 1);
+  static const selectedLabelColor = AppColors.primary;
   static const unselectedLabelColor = Color.fromRGBO(131, 151, 161, 1);
-  static const indicatorColor = Color.fromRGBO(5, 165, 133, 1);
+  static const indicatorColor = AppColors.primary;
   static const statusBarColor = appBarColor;
   static const navigationBarColor = Color.fromRGBO(23, 36, 45, 1);
 
   static const blueColor = Color.fromRGBO(83, 189, 236, 1);
-  static const greenColor = Color.fromRGBO(5, 165, 133, 1);
+  static const greenColor = AppColors.primary;
   static const yellowColor = Color.fromRGBO(255, 210, 121, 1);
   static const greyColor = Color.fromRGBO(134, 151, 161, 1);
 }
@@ -28,7 +30,7 @@ class AppColorsLight {
   static const iconColor = Color.fromRGBO(248, 249, 249, 1);
   static const textColor1 = Color.fromRGBO(24, 24, 24, 1);
   static const textColor2 = Color.fromRGBO(0, 0, 0, 1);
-  static const appBarColor = Color.fromRGBO(0, 128, 105, 1);
+  static const appBarColor = AppColors.primary;
   static const dividerColor = Color.fromRGBO(37, 45, 50, 1);
   static const backgroundColor = Color.fromRGBO(252, 252, 252, 1);
   static const errorSnackBarColor = Color.fromRGBO(211, 45, 81, 1);
@@ -43,7 +45,7 @@ class AppColorsLight {
   static const navigationBarColor = Color.fromARGB(255, 244, 244, 244);
 
   static const blueColor = Color.fromRGBO(83, 189, 236, 1);
-  static const greenColor = Color.fromRGBO(26, 181, 148, 1);
+  static const greenColor = AppColors.primary;
   static const yellowColor = Color.fromRGBO(255, 210, 121, 1);
   static const greyColor = Color.fromRGBO(102, 117, 127, 1);
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/theme/app_colors.dart';
+import 'package:livocal/theme/app_tokens.dart';
 
 void showSendPaymentSheet({
   required BuildContext context,
@@ -9,14 +11,13 @@ void showSendPaymentSheet({
   required String contactName,
   required Function(String amount, String note) onPaymentConfirmed,
 }) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFF1F2C34)
-        : Colors.white,
+    backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightBackground,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.radiusLg)),
     ),
     builder: (ctx) => _SendPaymentSheetContent(
       self: self,
@@ -120,7 +121,7 @@ class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
               children: [
                 const CircleAvatar(
                   radius: 20,
-                  backgroundColor: Color(0xFF00A884),
+                  backgroundColor: AppColors.primary,
                   child: Icon(Icons.attach_money_rounded, color: Colors.white, size: 24),
                 ),
                 const SizedBox(width: 12),
@@ -156,7 +157,7 @@ class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
                       style: TextStyle(
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF00A884),
+                        color: AppColors.primary,
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -192,9 +193,9 @@ class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
                   return ChoiceChip(
                     label: Text('\$$amt'),
                     selected: isSelected,
-                    selectedColor: const Color(0xFF00A884).withOpacity(0.2),
+                    selectedColor: AppColors.primary.withOpacity(0.2),
                     labelStyle: TextStyle(
-                      color: isSelected ? const Color(0xFF00A884) : (isDark ? Colors.white : Colors.black87),
+                      color: isSelected ? AppColors.primary : (isDark ? Colors.white : Colors.black87),
                       fontWeight: FontWeight.w600,
                     ),
                     onSelected: (val) {
@@ -239,12 +240,12 @@ class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
                     groupValue: _selectedMethod,
                     title: const Row(
                       children: [
-                        Icon(Icons.credit_card, size: 20, color: Color(0xFF00A884)),
+                        Icon(Icons.credit_card, size: 20, color: AppColors.primary),
                         SizedBox(width: 8),
                         Text('Credit / Debit Card (Stripe USD)', style: TextStyle(fontSize: 14)),
                       ],
                     ),
-                    activeColor: const Color(0xFF00A884),
+                    activeColor: AppColors.primary,
                     onChanged: (val) => setState(() => _selectedMethod = val!),
                   ),
                   const Divider(height: 1),
@@ -258,7 +259,7 @@ class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
                         Text('Google Pay / Apple Pay', style: TextStyle(fontSize: 14)),
                       ],
                     ),
-                    activeColor: const Color(0xFF00A884),
+                    activeColor: AppColors.primary,
                     onChanged: (val) => setState(() => _selectedMethod = val!),
                   ),
                   const Divider(height: 1),
@@ -272,7 +273,7 @@ class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
                         Text('bKash / Nagad (BDT Exchange)', style: TextStyle(fontSize: 14)),
                       ],
                     ),
-                    activeColor: const Color(0xFF00A884),
+                    activeColor: AppColors.primary,
                     onChanged: (val) => setState(() => _selectedMethod = val!),
                   ),
                 ],
@@ -283,7 +284,7 @@ class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
             // Send button
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00A884),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 minimumSize: const Size.fromHeight(48),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),

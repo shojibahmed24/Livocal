@@ -8,6 +8,7 @@ import 'package:livocal/features/calls/models/call_model.dart';
 import 'package:livocal/features/calls/views/active_call_screen.dart';
 import 'package:livocal/features/calls/views/widgets/language_picker_sheet.dart';
 import 'package:livocal/features/calls/services/call_kit_service.dart';
+import 'package:livocal/theme/app_colors.dart';
 
 class IncomingCallScreen extends ConsumerStatefulWidget {
   const IncomingCallScreen({super.key});
@@ -128,10 +129,10 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF00A884).withOpacity(0.18),
+                  color: AppColors.primary.withOpacity(0.18),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: const Color(0xFF00A884).withOpacity(0.45),
+                    color: AppColors.primary.withOpacity(0.45),
                   ),
                 ),
                 child: const Row(
@@ -139,14 +140,14 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
                   children: [
                     Icon(
                       Icons.auto_awesome_rounded,
-                      color: Color(0xFF00E5B0),
+                      color: AppColors.primary,
                       size: 15,
                     ),
                     SizedBox(width: 6),
                     Text(
                       'Livocal AI Translated Voice Call',
                       style: TextStyle(
-                        color: Color(0xFF00E5B0),
+                        color: AppColors.primary,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -178,7 +179,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
               const Text(
                 'Incoming Voice Call...',
                 style: TextStyle(
-                  color: Color(0xFF00E5B0),
+                  color: AppColors.primary,
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                 ),
@@ -199,7 +200,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
                           height: 150,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: const Color(0xFF00A884).withOpacity(0.12),
+                            color: AppColors.primary.withOpacity(0.12),
                           ),
                         ),
                       ),
@@ -211,7 +212,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: const Color(0xFF00E5B0).withOpacity(0.5),
+                              color: AppColors.primary.withOpacity(0.5),
                               width: 2.5,
                             ),
                           ),
@@ -246,7 +247,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
                     color: const Color(0xFF18252D),
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                      color: const Color(0xFF00A884).withOpacity(0.45),
+                      color: AppColors.primary.withOpacity(0.45),
                     ),
                   ),
                   child: Column(
@@ -255,7 +256,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
                         children: [
                           const Icon(
                             Icons.translate_rounded,
-                            color: Color(0xFF00E5B0),
+                            color: AppColors.primary,
                             size: 18,
                           ),
                           const SizedBox(width: 8),
@@ -271,7 +272,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
                           ),
                           Switch(
                             value: _answerWithTranslation,
-                            activeColor: const Color(0xFF00E5B0),
+                            activeColor: AppColors.primary,
                             onChanged: (val) {
                               setState(() {
                                 _answerWithTranslation = val;
@@ -325,7 +326,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
                             ),
                             const Icon(
                               Icons.arrow_forward_rounded,
-                              color: Color(0xFF00E5B0),
+                              color: AppColors.primary,
                               size: 18,
                             ),
                             Expanded(
@@ -358,7 +359,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
-                                        color: Color(0xFF00E5B0),
+                                        color: AppColors.primary,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 13,
                                       ),
@@ -426,12 +427,12 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
                           Container(
                             width: 68,
                             height: 68,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF00A884),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Color(0x6600A884),
+                                  color: AppColors.primary.withOpacity(0.4),
                                   blurRadius: 16,
                                   spreadRadius: 2,
                                 ),
@@ -447,7 +448,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
                           Text(
                             _answerWithTranslation ? 'Accept (AI)' : 'Accept',
                             style: const TextStyle(
-                              color: Color(0xFF00E5B0),
+                              color: AppColors.primary,
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                             ),

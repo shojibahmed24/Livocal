@@ -27,6 +27,7 @@ import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/widgets/bottom_inset.dart';
 import 'package:livocal/theme/color_theme.dart';
 import 'package:livocal/theme/theme.dart';
+import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 
 import '../../../shared/widgets/emoji_picker.dart';
@@ -173,7 +174,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             icon: const Icon(
               Icons.translate_rounded,
               size: 24,
-              color: Color(0xFF00E5B0),
+              color: Colors.white,
             ),
           ),
           IconButton(
@@ -806,29 +807,20 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
                       onTap: () {
-                        showDialog(
+                        showAppDialog(
                           context: context,
-                          builder: (ctx) => AlertDialog(
-                            backgroundColor: Theme.of(context).brightness == Brightness.dark
-                                ? const Color(0xFF1F2C34)
-                                : Colors.white,
-                            title: const Row(
-                              children: [
-                                Icon(Icons.lock, color: Color(0xFF00A884)),
-                                SizedBox(width: 8),
-                                Text('Private & Secure Messaging'),
-                              ],
-                            ),
-                            content: const Text(
+                          icon: Icons.lock,
+                          iconColor: AppColors.primary,
+                          title: 'Private & Secure Messaging',
+                          contentText:
                               'Your messages and media are protected with zero-trust authenticated access control and TLS encryption. Voice calls stream securely via DTLS-SRTP with ephemeral Gemini Live AI translation.',
+                          actions: [
+                            AppDialogAction(
+                              label: 'OK',
+                              isPrimary: true,
+                              onPressed: () => Navigator.pop(context),
                             ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx),
-                                child: const Text('OK'),
-                              ),
-                            ],
-                          ),
+                          ],
                         );
                       },
                       child: Container(

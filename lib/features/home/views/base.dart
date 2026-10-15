@@ -24,6 +24,7 @@ import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/repositories/push_notifications.dart';
 import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/theme/app_tokens.dart';
 import 'package:livocal/theme/theme.dart';
 import '../../../shared/utils/storage_paths.dart';
 import '../../../theme/color_theme.dart';
@@ -408,8 +409,9 @@ class _HomePageState extends ConsumerState<HomePage>
                         return StatefulBuilder(
                           builder: (ctx, setDlgState) => AlertDialog(
                             backgroundColor: Theme.of(context).brightness == Brightness.dark
-                                ? const Color(0xFF1F2C34)
-                                : Colors.white,
+                                ? AppColors.darkSurface
+                                : AppColors.lightBackground,
+                            shape: const RoundedRectangleBorder(borderRadius: AppRadius.lg),
                             title: const Text('Status privacy', style: TextStyle(fontWeight: FontWeight.bold)),
                             content: Column(
                               mainAxisSize: MainAxisSize.min,
@@ -418,11 +420,11 @@ class _HomePageState extends ConsumerState<HomePage>
                                 const Text('Who can see my status updates:', style: TextStyle(color: Colors.grey, fontSize: 13)),
                                 const SizedBox(height: 8),
                                 RadioListTile<String>(
-                                  title: const Text('My contacts'),
+                                   title: const Text('My contacts'),
                                   subtitle: const Text('Share with all contacts in phonebook'),
                                   value: 'contacts',
                                   groupValue: privacy,
-                                  activeColor: const Color(0xFF00A884),
+                                  activeColor: AppColors.primary,
                                   onChanged: (val) {
                                     if (val != null) {
                                       setDlgState(() => privacy = val);
@@ -435,7 +437,7 @@ class _HomePageState extends ConsumerState<HomePage>
                                   subtitle: const Text('Hide status from selected contacts'),
                                   value: 'except',
                                   groupValue: privacy,
-                                  activeColor: const Color(0xFF00A884),
+                                  activeColor: AppColors.primary,
                                   onChanged: (val) {
                                     if (val != null) {
                                       setDlgState(() => privacy = val);
@@ -448,7 +450,7 @@ class _HomePageState extends ConsumerState<HomePage>
                                   subtitle: const Text('Share only with chosen friends'),
                                   value: 'only',
                                   groupValue: privacy,
-                                  activeColor: const Color(0xFF00A884),
+                                  activeColor: AppColors.primary,
                                   onChanged: (val) {
                                     if (val != null) {
                                       setDlgState(() => privacy = val);
@@ -461,7 +463,7 @@ class _HomePageState extends ConsumerState<HomePage>
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(ctx),
-                                child: const Text('DONE', style: TextStyle(color: Color(0xFF00A884))),
+                                child: const Text('DONE', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
                               ),
                             ],
                           ),

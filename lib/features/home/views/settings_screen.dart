@@ -8,6 +8,8 @@ import 'package:livocal/features/home/views/profile_edit_screen.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/theme/app_colors.dart';
+import 'package:livocal/theme/app_tokens.dart';
 import 'package:livocal/theme/theme.dart';
 import 'package:livocal/features/settings/views/account_settings_screen.dart';
 import 'package:livocal/features/settings/views/privacy_settings_screen.dart';
@@ -142,11 +144,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         builder: (context, setDialogState) {
           return AlertDialog(
             backgroundColor: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF1F2C34)
-                : Colors.white,
+                ? AppColors.darkSurface
+                : AppColors.lightBackground,
+            shape: const RoundedRectangleBorder(borderRadius: AppRadius.lg),
             title: const Row(
               children: [
-                Icon(Icons.auto_awesome, color: Color(0xFF25D366)),
+                Icon(Icons.auto_awesome, color: AppColors.primary),
                 SizedBox(width: 8),
                 Text('Gemini Live Voice Settings', style: TextStyle(fontSize: 18)),
               ],
@@ -234,8 +237,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF25D366),
-                  foregroundColor: Colors.black,
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
                 ),
                 onPressed: () async {
                   await GeminiLiveTranslator.saveApiKey(apiKeyController.text);
@@ -340,7 +343,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ],
                     ),
                   ),
-                  const Icon(Icons.qr_code_2, color: Color(0xFF25D366)),
+                  const Icon(Icons.qr_code_2, color: AppColors.primary),
                 ],
               ),
             ),
@@ -349,7 +352,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           // Gemini Live Translation
           ListTile(
-            leading: const Icon(Icons.auto_awesome, color: Color(0xFF25D366)),
+            leading: const Icon(Icons.auto_awesome, color: AppColors.primary),
             title: const Text('Gemini Live Voice Translation'),
             subtitle: const Text('API key, live models & AI voice settings'),
             onTap: _showGeminiConfigDialog,
@@ -496,7 +499,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     fontSize: 14,
                     letterSpacing: 2,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF25D366),
+                    color: AppColors.primary,
                   ),
                 ),
                 SizedBox(height: 4),

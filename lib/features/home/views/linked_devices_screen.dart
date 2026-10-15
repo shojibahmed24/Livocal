@@ -2,6 +2,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/theme/app_colors.dart';
 
 class LinkedDevicesScreen extends StatelessWidget {
   final User user;
@@ -61,12 +62,12 @@ class LinkedDevicesScreen extends StatelessWidget {
                   height: 100,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFF00A884).withOpacity(0.12),
+                    color: AppColors.primary.withOpacity(0.12),
                   ),
                   child: const Icon(
                     Icons.devices_rounded,
                     size: 54,
-                    color: Color(0xFF00A884),
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -93,7 +94,7 @@ class LinkedDevicesScreen extends StatelessWidget {
                   height: 46,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00A884),
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
@@ -136,7 +137,7 @@ class LinkedDevicesScreen extends StatelessWidget {
               children: [
                 ListTile(
                   leading: const CircleAvatar(
-                    backgroundColor: Color(0xFF00A884),
+                    backgroundColor: AppColors.primary,
                     child: Icon(Icons.phone_android, color: Colors.white),
                   ),
                   title: const Text(
@@ -145,13 +146,13 @@ class LinkedDevicesScreen extends StatelessWidget {
                   ),
                   subtitle: const Text(
                     'Active now • Android • Authenticated Session',
-                    style: TextStyle(color: Color(0xFF00A884), fontSize: 13),
+                    style: TextStyle(color: AppColors.primary, fontSize: 13),
                   ),
                   trailing: Container(
                     width: 10,
                     height: 10,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF00A884),
+                      color: AppColors.primary,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -262,7 +263,7 @@ class _DeviceQrScanScreenState extends State<DeviceQrScanScreen> {
                         width: 250,
                         height: 250,
                         decoration: BoxDecoration(
-                          border: Border.all(color: const Color(0xFF00A884), width: 3),
+                          border: Border.all(color: AppColors.primary, width: 3),
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
@@ -285,7 +286,7 @@ class _DeviceQrScanScreenState extends State<DeviceQrScanScreen> {
             )
           : const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00A884)),
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
               ),
             ),
     );

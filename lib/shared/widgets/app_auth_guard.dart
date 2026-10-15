@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:livocal/shared/utils/secure_pin_service.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
+import 'package:livocal/theme/app_colors.dart';
 
 class AppAuthGuard extends StatefulWidget {
   final Widget child;
@@ -189,10 +190,10 @@ class _AppAuthGuardState extends State<AppAuthGuard>
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const primaryColor = Color(0xFF00A884);
+    const primaryColor = AppColors.primary;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121B22) : const Color(0xFFF0F2F5),
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightSurfaceContainer,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(

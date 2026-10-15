@@ -5,6 +5,7 @@ import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/utils/secure_pin_service.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/theme/app_colors.dart';
 
 class AccountSettingsScreen extends ConsumerStatefulWidget {
   final User user;
@@ -76,7 +77,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: _twoStepEnabled ? Colors.redAccent : const Color(0xFF00A884),
+              backgroundColor: _twoStepEnabled ? Colors.redAccent : AppColors.primary,
               foregroundColor: Colors.white,
             ),
             onPressed: () async {
@@ -180,7 +181,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = const Color(0xFF00A884);
+    final primaryColor = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
       appBar: AppBar(
