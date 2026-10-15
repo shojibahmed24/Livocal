@@ -30,9 +30,9 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
   Widget build(BuildContext context) {
     final colorTheme = Theme.of(context).custom.colorTheme;
     final searchResults = ref.watch(contactPickerControllerProvider);
-    final contactsOnWhatsApp =
+    final contactsOnLivocal =
         searchResults.where((contact) => contact.userId != null).toList();
-    final contactsNotOnWhatsApp =
+    final contactsNotOnLivocal =
         searchResults.where((contact) => contact.userId == null).toList();
 
     String searchQuery = ref
@@ -40,8 +40,8 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
         .searchController
         .text;
 
-    bool buildWhatsAppContactsList = contactsOnWhatsApp.isNotEmpty;
-    bool buildLocalContactsList = contactsNotOnWhatsApp.isNotEmpty;
+    bool buildLivocalContactsList = contactsOnLivocal.isNotEmpty;
+    bool buildLocalContactsList = contactsNotOnLivocal.isNotEmpty;
 
     return ScaffoldWithSearch(
       appBar: AppBar(
@@ -149,7 +149,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
           physics: const BouncingScrollPhysics(),
           shrinkWrap: true,
           children: [
-            if (!buildWhatsAppContactsList &&
+            if (!buildLivocalContactsList &&
                 !buildLocalContactsList &&
                 searchQuery.isNotEmpty)
               Padding(
@@ -235,10 +235,10 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                   ),
                 ],
               ),
-            if (contactsOnWhatsApp.isNotEmpty)
-              ..._buildWhatsAppContactsList(context, contactsOnWhatsApp),
-            if (contactsNotOnWhatsApp.isNotEmpty)
-              ..._buildLocalContactsList(context, contactsNotOnWhatsApp),
+            if (contactsOnLivocal.isNotEmpty)
+              ..._buildLivocalContactsList(context, contactsOnLivocal),
+            if (contactsNotOnLivocal.isNotEmpty)
+              ..._buildLocalContactsList(context, contactsNotOnLivocal),
             if (searchQuery.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(
@@ -344,9 +344,9 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
     );
   }
 
-  List<Widget> _buildWhatsAppContactsList(
+  List<Widget> _buildLivocalContactsList(
     BuildContext context,
-    List<Contact> contactsOnWhatsApp,
+    List<Contact> contactsOnLivocal,
   ) {
     return [
       Padding(
@@ -359,9 +359,9 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
           style: Theme.of(context).custom.textTheme.caption,
         ),
       ),
-      WhatsAppContactsList(
+      LivocalContactsList(
         user: widget.user,
-        contactsOnWhatsApp: contactsOnWhatsApp,
+        contactsOnLivocal: contactsOnLivocal,
         ref: ref,
       )
     ];
@@ -369,7 +369,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
 
   List<Widget> _buildLocalContactsList(
     BuildContext context,
-    List<Contact> contactsNotOnWhatsApp,
+    List<Contact> contactsNotOnLivocal,
   ) {
     return [
       Padding(
@@ -384,7 +384,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
       ),
       LocalContactsList(
         user: widget.user,
-        contactsNotOnWhatsApp: contactsNotOnWhatsApp,
+        contactsNotOnLivocal: contactsNotOnLivocal,
         ref: ref,
       ),
     ];
@@ -393,13 +393,13 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
 
 class LocalContactsList extends StatelessWidget {
   final User user;
-  final List<Contact> contactsNotOnWhatsApp;
+  final List<Contact> contactsNotOnLivocal;
   final WidgetRef ref;
 
   const LocalContactsList({
     super.key,
     required this.user,
-    required this.contactsNotOnWhatsApp,
+    required this.contactsNotOnLivocal,
     required this.ref,
   });
 
@@ -407,7 +407,7 @@ class LocalContactsList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        for (var contact in contactsNotOnWhatsApp)
+        for (var contact in contactsNotOnLivocal)
           InkWell(
             onTap: () => showDirectDialSheet(
               context,
@@ -477,15 +477,15 @@ class LocalContactsList extends StatelessWidget {
   }
 }
 
-class WhatsAppContactsList extends StatelessWidget {
+class LivocalContactsList extends StatelessWidget {
   final User user;
-  final List<Contact> contactsOnWhatsApp;
+  final List<Contact> contactsOnLivocal;
   final WidgetRef ref;
 
-  const WhatsAppContactsList({
+  const LivocalContactsList({
     super.key,
     required this.user,
-    required this.contactsOnWhatsApp,
+    required this.contactsOnLivocal,
     required this.ref,
   });
 
@@ -493,7 +493,7 @@ class WhatsAppContactsList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        for (var contact in contactsOnWhatsApp)
+        for (var contact in contactsOnLivocal)
           InkWell(
             onTap: () => ref
                 .read(contactPickerControllerProvider.notifier)

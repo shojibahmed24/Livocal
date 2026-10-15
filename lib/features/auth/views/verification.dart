@@ -196,12 +196,28 @@ class OTPField extends ConsumerStatefulWidget {
   ConsumerState<OTPField> createState() => _OTPFieldState();
 }
 
-class _OTPFieldState extends ConsumerState<OTPField> {
+class _OTPFieldState extends ConsumerState<OTPField>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _shakeController;
+  late final Animation<double> _shakeAnimation;
   final _textController = TextEditingController();
   final hintText = '––– –––';
 
   @override
+  void initState() {
+    super.initState();
+    _shakeController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _shakeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _shakeController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
   void dispose() {
+    _shakeController.dispose();
     _textController.dispose();
     super.dispose();
   }
@@ -227,6 +243,15 @@ class _OTPFieldState extends ConsumerState<OTPField> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<String?>(otpErrorProvider, (previous, next) {
+      if (next != null) {
+        _shakeController.forward(from: 0.0);
+        HapticFeedback.heavyImpact();
+        _textController.clear();
+      }
+    });
+
+    final otpError = ref.watch(otpErrorProvider);
     final colorTheme = Theme.of(context).custom.colorTheme;
     final hintWidth = calculateHintWidth() + 4;
     final totalWidth = hintWidth + 50;
@@ -238,80 +263,140 @@ class _OTPFieldState extends ConsumerState<OTPField> {
       color: colorTheme.textColor1,
     );
 
-    return Container(
-      width: totalWidth,
-      height: 44,
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            width: 2,
-            color: colorTheme.greenColor,
-          ),
-        ),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          SizedBox(
-            width: hintWidth,
-            child: Text(
-              hintText,
-              maxLines: 1,
-              style: textStyle.copyWith(color: colorTheme.greyColor),
-            ),
-          ),
-          SizedBox(
-            width: hintWidth,
-            child: TextField(
-              maxLength: 7,
-              autofocus: true,
-              onChanged: (value) {
-                String newValue = value;
-                TextSelection selection = _textController.selection;
-                int cursorPosition = selection.baseOffset;
-
-                if (value.length > 3 && !value.contains(' ')) {
-                  newValue =
-                      '${value.substring(0, 3)} ${value.substring(3, value.length)}';
-                  cursorPosition++;
-                } else if (value.length == 4 && value.contains(' ')) {
-                  newValue = value.substring(0, 3);
-                  cursorPosition--;
-                }
-
-                _textController.value = TextEditingValue(
-                  text: newValue,
-                  selection: TextSelection.collapsed(offset: cursorPosition),
-                );
-
-                if (newValue.length == 7) {
-                  widget.onFilled(newValue.replaceAll(' ', ''));
-                  return;
-                }
-              },
-              controller: _textController,
-              style: textStyle,
-              keyboardType: TextInputType.phone,
-              cursorColor: colorTheme.greenColor,
-              decoration: InputDecoration(
-                counterText: '',
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(
-                    color: colorTheme.backgroundColor,
-                    width: 0,
-                  ),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(
-                    width: 0,
-                    color: colorTheme.backgroundColor,
-                  ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AnimatedBuilder(
+          animation: _shakeAnimation,
+          builder: (context, child) {
+            // Damped sine wave offset for crisp physical shake
+            final double offset = 10 *
+                (1 - _shakeAnimation.value) *
+                (1 - _shakeAnimation.value) *
+                (0.5 - (0.5 - _shakeAnimation.value).abs()) *
+                4 *
+                (0.5 - ((_shakeAnimation.value * 6) % 1.0));
+            return Transform.translate(
+              offset: Offset(offset, 0),
+              child: child,
+            );
+          },
+          child: Container(
+            width: totalWidth,
+            height: 44,
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  width: 2,
+                  color: otpError != null
+                      ? Colors.redAccent
+                      : colorTheme.greenColor,
                 ),
               ),
             ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: hintWidth,
+                  child: Text(
+                    hintText,
+                    maxLines: 1,
+                    style: textStyle.copyWith(
+                      color: otpError != null
+                          ? Colors.redAccent.withValues(alpha: 0.5)
+                          : colorTheme.greyColor,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: hintWidth,
+                  child: TextField(
+                    maxLength: 7,
+                    autofocus: true,
+                    autofillHints: const [AutofillHints.oneTimeCode],
+                    keyboardType: TextInputType.number,
+                    onChanged: (value) {
+                      if (otpError != null) {
+                        ref.read(otpErrorProvider.notifier).state = null;
+                      }
+
+                      String newValue = value;
+                      TextSelection selection = _textController.selection;
+                      int cursorPosition = selection.baseOffset;
+
+                      if (value.length > 3 && !value.contains(' ')) {
+                        newValue =
+                            '${value.substring(0, 3)} ${value.substring(3, value.length)}';
+                        cursorPosition++;
+                      } else if (value.length == 4 && value.contains(' ')) {
+                        newValue = value.substring(0, 3);
+                        cursorPosition--;
+                      }
+
+                      _textController.value = TextEditingValue(
+                        text: newValue,
+                        selection: TextSelection.collapsed(offset: cursorPosition),
+                      );
+
+                      if (newValue.length == 7) {
+                        widget.onFilled(newValue.replaceAll(' ', ''));
+                        return;
+                      }
+                    },
+                    controller: _textController,
+                    style: textStyle,
+                    cursorColor: otpError != null
+                        ? Colors.redAccent
+                        : colorTheme.greenColor,
+                    decoration: InputDecoration(
+                      counterText: '',
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: colorTheme.backgroundColor,
+                          width: 0,
+                        ),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          width: 0,
+                          color: colorTheme.backgroundColor,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (otpError != null) ...[
+          const SizedBox(height: 10),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline_rounded,
+                size: 16,
+                color: Colors.redAccent,
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  otpError,
+                  style: const TextStyle(
+                    color: Colors.redAccent,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
           ),
         ],
-      ),
+      ],
     );
   }
 }

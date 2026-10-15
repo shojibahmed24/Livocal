@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/auth/domain/auth_service.dart';
 import 'package:livocal/features/auth/views/user_details.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
+import 'package:livocal/shared/utils/snackbars.dart';
 
 import 'package:livocal/theme/theme.dart';
 
@@ -67,6 +68,8 @@ class ResendTimerController extends StateNotifier<int> {
   }
 }
 
+final otpErrorProvider = StateProvider<String?>((ref) => null);
+
 final verificationControllerProvider = Provider<VerificationController>(
   (ref) => VerificationController(ref),
 );
@@ -78,6 +81,7 @@ class VerificationController {
   String _verificationCode = '';
 
   void init(BuildContext context, String phoneNumber) async {
+    ref.read(otpErrorProvider.notifier).state = null;
     final resendTime = SharedPref.instance.getInt('resendTime');
     final resendTimestamp =
         int.parse(SharedPref.instance.getString('resendTimestamp') ?? '0') ~/
@@ -113,10 +117,12 @@ class VerificationController {
 
   void updateVerificationCode(String verificationCode) {
     _verificationCode = verificationCode;
+    ref.read(otpErrorProvider.notifier).state = null;
     ref.read(resendTimerControllerProvider.notifier).updateTimer();
   }
 
   void onResendPressed(BuildContext context, String phoneNumber) async {
+    ref.read(otpErrorProvider.notifier).state = null;
     await sendVerificationCode(context, phoneNumber);
   }
 
@@ -187,15 +193,24 @@ class VerificationController {
     final authController = ref.read(authControllerProvider);
     final colorTheme = Theme.of(context).custom.colorTheme;
 
+    if (_verificationCode.isEmpty) {
+      ref.read(otpErrorProvider.notifier).state =
+          'Verification session not initialized. Please request a new code.';
+      showSnackBar(
+        context: context,
+        content: 'Verification session missing. Please tap Resend code.',
+        type: SnacBarType.error,
+      );
+      return;
+    }
+
     return showDialog(
       barrierDismissible: false,
       context: context,
       builder: (context) {
         return FutureBuilder<bool>(
             future: authController.verifyOtp(
-              _verificationCode.isNotEmpty
-                  ? _verificationCode
-                  : 'auth_verif_1721013902',
+              _verificationCode,
               smsCode,
             ),
             builder: (context, snapshot) {
@@ -239,6 +254,8 @@ class VerificationController {
                     text = msgs[error.code];
                   }
                 }
+
+                ref.read(otpErrorProvider.notifier).state = text;
 
                 widget = Icon(
                   Icons.cancel,

@@ -143,7 +143,7 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
     return CallScaffold(
       peerName: widget.calleeDisplayName,
       peerAvatar: widget.callee.avatarUrl,
-      peerPhone: widget.callee.phoneNumber,
+      peerPhone: widget.callee.phone.getFormattedNumber(),
       statusText: statusText,
       badgeText: 'DTLS-SRTP Encrypted • Gemini Live 3.5 AI',
       badgeIcon: Icons.lock_outline_rounded,

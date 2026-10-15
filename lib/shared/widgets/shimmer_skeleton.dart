@@ -305,3 +305,45 @@ class StatusListShimmerSkeleton extends StatelessWidget {
   }
 }
 
+/// Shimmer skeleton for Starred Messages while loading from database.
+class StarredMessagesShimmerSkeleton extends StatelessWidget {
+  const StarredMessagesShimmerSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      itemCount: 5,
+      separatorBuilder: (_, __) => const Divider(height: 1),
+      itemBuilder: (_, __) {
+        return const Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
+          child: Row(
+            children: [
+              AppShimmer.circular(size: 40),
+              SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppShimmer.rectangular(width: double.infinity, height: 15),
+                    SizedBox(height: AppSpacing.xs),
+                    AppShimmer.rectangular(width: 110, height: 11),
+                  ],
+                ),
+              ),
+              SizedBox(width: AppSpacing.md),
+              AppShimmer.circular(size: 22),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+

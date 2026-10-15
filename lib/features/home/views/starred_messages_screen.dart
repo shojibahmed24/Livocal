@@ -1,10 +1,15 @@
+import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:livocal/features/chat/views/chat.dart';
 import 'package:livocal/shared/models/messages.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
+import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/shared/widgets/shimmer_skeleton.dart';
 import 'package:livocal/theme/app_colors.dart';
+import 'package:livocal/theme/app_tokens.dart';
 
 class StarredMessagesScreen extends ConsumerStatefulWidget {
   const StarredMessagesScreen({super.key});
@@ -56,6 +61,83 @@ class _StarredMessagesScreenState extends ConsumerState<StarredMessagesScreen> {
     _loadStarredMessages();
   }
 
+  void _confirmUnstarAll(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
+        title: const Text('Unstar all messages?'),
+        content: const Text(
+          'Are you sure you want to unstar all messages? This will remove all starred items from your list.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('CANCEL'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await SharedPref.instance.setStringList('starred_message_ids', []);
+              await _loadStarredMessages();
+              if (context.mounted) {
+                showSnackBar(
+                  context: context,
+                  content: 'All messages have been unstarred.',
+                  type: SnacBarType.info,
+                );
+              }
+            },
+            child: const Text('UNSTAR ALL'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _navigateToMessageChat(StoredMessage msg) async {
+    try {
+      final currentUid = fb.FirebaseAuth.instance.currentUser?.uid;
+      if (currentUid == null) return;
+
+      final self = await IsarDb.getUserById(currentUid);
+      final peerId = (msg.senderId == currentUid) ? msg.receiverId : msg.senderId;
+      final other = await IsarDb.getUserById(peerId);
+
+      if (self != null && other != null && mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ChatPage(
+              self: self,
+              other: other,
+              otherUserContactName: other.name,
+            ),
+          ),
+        );
+      } else if (mounted) {
+        showSnackBar(
+          context: context,
+          content: 'Could not locate contact conversation for this message.',
+          type: SnacBarType.error,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        showSnackBar(
+          context: context,
+          content: 'Error opening chat: $e',
+          type: SnacBarType.error,
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -65,31 +147,24 @@ class _StarredMessagesScreenState extends ConsumerState<StarredMessagesScreen> {
         title: const Text('Starred messages'),
         actions: [
           if (_starredMessages.isNotEmpty)
-            IconButton(
+            PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert),
-              onPressed: () {
-                showMenu<String>(
-                  context: context,
-                  position: const RelativeRect.fromLTRB(100, 80, 0, 0),
-                  items: [
-                    const PopupMenuItem(
-                      value: 'unstar_all',
-                      child: Text('Unstar all'),
-                    ),
-                  ],
-                ).then((value) async {
-                  if (value == 'unstar_all') {
-                    await SharedPref.instance
-                        .setStringList('starred_message_ids', []);
-                    _loadStarredMessages();
-                  }
-                });
+              onSelected: (value) {
+                if (value == 'unstar_all') {
+                  _confirmUnstarAll(context);
+                }
               },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'unstar_all',
+                  child: Text('Unstar all'),
+                ),
+              ],
             ),
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const StarredMessagesShimmerSkeleton()
           : _starredMessages.isEmpty
               ? Center(
                   child: Padding(
@@ -136,35 +211,86 @@ class _StarredMessagesScreenState extends ConsumerState<StarredMessagesScreen> {
                   ),
                 )
               : ListView.separated(
+                  physics: const BouncingScrollPhysics(),
                   itemCount: _starredMessages.length,
                   separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final msg = _starredMessages[index];
-                    return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      leading: const CircleAvatar(
-                        backgroundColor: AppColors.primary,
-                        child: Icon(Icons.star, color: Colors.white, size: 20),
-                      ),
-                      title: Text(
-                        msg.content.isNotEmpty
-                            ? msg.content
-                            : (msg.attachment?.fileName ?? 'Attachment'),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                      subtitle: Text(
-                        DateFormat('MMM d, h:mm a').format(msg.timestamp),
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.star, color: Colors.amber),
-                        tooltip: 'Unstar',
-                        onPressed: () => _unstarMessage(msg.messageId),
+                    return InkWell(
+                      onTap: () => _navigateToMessageChat(msg),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.md,
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.primary.withValues(alpha: 0.15),
+                              ),
+                              child: const Icon(
+                                Icons.star_rounded,
+                                color: Colors.amber,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    msg.content.isNotEmpty
+                                        ? msg.content
+                                        : (msg.attachment?.fileName ?? 'Attachment'),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500,
+                                      color: isDark ? Colors.white : Colors.black87,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        DateFormat('MMM d, h:mm a').format(msg.timestamp),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: isDark
+                                              ? AppColors.darkTextSecondary
+                                              : AppColors.lightTextSecondary,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Text('•', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                                      const SizedBox(width: 8),
+                                      const Text(
+                                        'Go to chat',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.star, color: Colors.amber),
+                              tooltip: 'Unstar',
+                              onPressed: () => _unstarMessage(msg.messageId),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   },

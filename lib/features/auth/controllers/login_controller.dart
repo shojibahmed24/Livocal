@@ -10,20 +10,43 @@ import 'package:livocal/theme/theme.dart';
 import '../../../shared/models/user.dart';
 import '../views/verification.dart';
 
-final defaultCountryProvider = Provider(
-  (ref) => Country(
-    phoneCode: '91',
-    countryCode: 'IN',
+Country _resolveDefaultCountry() {
+  try {
+    final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
+    final countryCode = deviceLocale.countryCode;
+    if (countryCode != null && countryCode.isNotEmpty) {
+      final match = countriesList.where(
+        (c) => c.countryCode.toUpperCase() == countryCode.toUpperCase(),
+      );
+      if (match.isNotEmpty) {
+        return match.first;
+      }
+    }
+  } catch (_) {}
+
+  // Default to Bangladesh (BD / +880) for Livocal core userbase
+  final bd = countriesList.where((c) => c.countryCode.toUpperCase() == 'BD');
+  if (bd.isNotEmpty) {
+    return bd.first;
+  }
+
+  return Country(
+    phoneCode: '880',
+    countryCode: 'BD',
     e164Sc: 0,
     geographic: true,
     level: 1,
-    name: 'India',
-    example: '9123456789',
-    displayName: 'India (IN) [+91]',
-    fullExampleWithPlusSign: '+919123456789',
-    displayNameNoCountryCode: 'India (IN)',
-    e164Key: '91-IN-0',
-  ),
+    name: 'Bangladesh',
+    example: '1712345678',
+    displayName: 'Bangladesh (BD) [+880]',
+    fullExampleWithPlusSign: '+8801712345678',
+    displayNameNoCountryCode: 'Bangladesh (BD)',
+    e164Key: '880-BD-0',
+  );
+}
+
+final defaultCountryProvider = Provider<Country>(
+  (ref) => _resolveDefaultCountry(),
 );
 
 final loginControllerProvider =

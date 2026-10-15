@@ -76,6 +76,9 @@ class User {
     );
   }
 
+  @ignore
+  String get phoneNumber => phone.getFormattedNumber();
+
   @override
   String toString() {
     return name;

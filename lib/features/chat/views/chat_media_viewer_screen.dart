@@ -8,6 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:livocal/features/chat/models/attachement.dart';
 import 'package:livocal/shared/models/messages.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
 
 class ChatMediaViewerScreen extends ConsumerStatefulWidget {
@@ -90,7 +91,7 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = AppColors.primary;
+    const primaryColor = AppColors.primary;
 
     return DefaultTabController(
       length: 3,
@@ -112,168 +113,218 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
             ? const Center(child: CircularProgressIndicator())
             : TabBarView(
                 children: [
-                  // Media Tab
-                  _mediaMessages.isEmpty
-                      ? _buildEmptyState(
-                          icon: Icons.photo_library_outlined,
-                          title: 'No media',
-                          subtitle: 'Photos and videos sent to ${widget.contactName} will appear here.',
-                        )
-                      : GridView.builder(
-                          padding: const EdgeInsets.all(4),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 4,
-                            mainAxisSpacing: 4,
-                          ),
-                          itemCount: _mediaMessages.length,
-                          itemBuilder: (context, index) {
-                            final msg = _mediaMessages[index];
-                            final fileUrl = msg.attachment?.url ?? '';
-                            final isLocal = fileUrl.startsWith('/') ||
-                                !fileUrl.startsWith('http');
-                            final file = File(fileUrl);
+                  // 1. Media Tab (Grid with CachedNetworkImage + Hero + Pull-to-refresh)
+                  RefreshIndicator(
+                    color: primaryColor,
+                    onRefresh: _loadAllMedia,
+                    child: _mediaMessages.isEmpty
+                        ? _buildEmptyState(
+                            icon: Icons.photo_library_outlined,
+                            title: 'No media',
+                            subtitle:
+                                'Photos and videos sent to ${widget.contactName} will appear here.',
+                          )
+                        : GridView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.all(4),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 4,
+                              mainAxisSpacing: 4,
+                            ),
+                            itemCount: _mediaMessages.length,
+                            itemBuilder: (context, index) {
+                              final msg = _mediaMessages[index];
+                              final fileUrl = msg.attachment?.url ?? '';
+                              final isLocal = fileUrl.startsWith('/') ||
+                                  !fileUrl.startsWith('http');
+                              final file = File(fileUrl);
+                              final heroTag = 'media_${msg.messageId}';
 
-                            return GestureDetector(
-                              onTap: () {
-                                if (msg.attachment != null) {
+                              return GestureDetector(
+                                onTap: () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => Scaffold(
-                                        backgroundColor: Colors.black,
-                                        appBar: AppBar(
-                                          backgroundColor: Colors.black,
-                                          iconTheme: const IconThemeData(color: Colors.white),
-                                          title: Text(widget.contactName, style: const TextStyle(color: Colors.white)),
-                                        ),
-                                        body: Center(
-                                          child: InteractiveViewer(
-                                            child: isLocal && file.existsSync()
-                                                ? Image.file(file)
-                                                : CachedNetworkImage(
-                                                    imageUrl: fileUrl,
-                                                    placeholder: (_, __) => const CircularProgressIndicator(color: Colors.white),
-                                                    errorWidget: (_, __, ___) => const Icon(Icons.broken_image, size: 64, color: Colors.white54),
-                                                  ),
-                                          ),
-                                        ),
+                                      builder: (_) => _FullScreenMediaViewer(
+                                        msg: msg,
+                                        contactName: widget.contactName,
+                                        heroTag: heroTag,
                                       ),
                                     ),
                                   );
-                                }
-                              },
-                              child: Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  isLocal && file.existsSync()
-                                      ? Image.file(file, fit: BoxFit.cover)
-                                      : Image.network(
-                                          fileUrl,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) => Container(
-                                            color: Colors.grey[800],
-                                            child: const Icon(Icons.broken_image, color: Colors.white54),
+                                },
+                                child: Hero(
+                                  tag: heroTag,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: Stack(
+                                      fit: StackFit.expand,
+                                      children: [
+                                        isLocal && file.existsSync()
+                                            ? Image.file(file, fit: BoxFit.cover)
+                                            : CachedNetworkImage(
+                                                imageUrl: fileUrl,
+                                                fit: BoxFit.cover,
+                                                fadeInDuration:
+                                                    const Duration(milliseconds: 200),
+                                                placeholder: (_, __) => Container(
+                                                  color: isDark
+                                                      ? Colors.white10
+                                                      : Colors.black12,
+                                                ),
+                                                errorWidget: (_, __, ___) =>
+                                                    Container(
+                                                  color: Colors.grey.shade900,
+                                                  child: const Icon(
+                                                    Icons.broken_image,
+                                                    color: Colors.white54,
+                                                  ),
+                                                ),
+                                              ),
+                                        if (msg.attachment?.type ==
+                                            AttachmentType.video)
+                                          const Center(
+                                            child: CircleAvatar(
+                                              radius: 16,
+                                              backgroundColor: Colors.black54,
+                                              child: Icon(Icons.play_arrow,
+                                                  color: Colors.white, size: 20),
+                                            ),
                                           ),
-                                        ),
-                                  if (msg.attachment?.type == AttachmentType.video)
-                                    const Center(
-                                      child: CircleAvatar(
-                                        radius: 16,
-                                        backgroundColor: Colors.black54,
-                                        child: Icon(Icons.play_arrow, color: Colors.white, size: 20),
-                                      ),
+                                      ],
                                     ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-
-                  // Docs Tab
-                  _docMessages.isEmpty
-                      ? _buildEmptyState(
-                          icon: Icons.insert_drive_file_outlined,
-                          title: 'No documents',
-                          subtitle: 'Documents and audio files shared in this chat will appear here.',
-                        )
-                      : ListView.separated(
-                          itemCount: _docMessages.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1),
-                          itemBuilder: (context, index) {
-                            final msg = _docMessages[index];
-                            final isAudio = msg.attachment?.type == AttachmentType.audio;
-                            return ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: isAudio
-                                    ? Colors.orange[800]
-                                    : primaryColor.withOpacity(0.2),
-                                child: Icon(
-                                  isAudio ? Icons.audiotrack : Icons.insert_drive_file,
-                                  color: isAudio ? Colors.white : primaryColor,
+                                  ),
                                 ),
-                              ),
-                              title: Text(
-                                msg.attachment?.fileName ?? 'Document',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontWeight: FontWeight.w500),
-                              ),
-                              subtitle: Text(
-                                '${_formatFileSize(msg.attachment?.fileSize)} • ${DateFormat('MMM d, yyyy').format(msg.timestamp)}',
-                                style: const TextStyle(fontSize: 12, color: Colors.grey),
-                              ),
-                            );
-                          },
-                        ),
+                              );
+                            },
+                          ),
+                  ),
 
-                  // Links Tab
-                  _linkMessages.isEmpty
-                      ? _buildEmptyState(
-                          icon: Icons.link_outlined,
-                          title: 'No links',
-                          subtitle: 'Links shared in this chat will appear here.',
-                        )
-                      : ListView.separated(
-                          itemCount: _linkMessages.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1),
-                          itemBuilder: (context, index) {
-                            final msg = _linkMessages[index];
-                            final urlRegex = RegExp(r'https?://[^\s]+');
-                            final match = urlRegex.firstMatch(msg.content);
-                            final url = match?.group(0) ?? '';
-
-                            return ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: primaryColor.withOpacity(0.15),
-                                child: Icon(Icons.link, color: primaryColor),
-                              ),
-                              title: Text(
-                                url,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: primaryColor,
-                                  decoration: TextDecoration.underline,
-                                  fontWeight: FontWeight.w500,
+                  // 2. Docs Tab (Pull-to-refresh)
+                  RefreshIndicator(
+                    color: primaryColor,
+                    onRefresh: _loadAllMedia,
+                    child: _docMessages.isEmpty
+                        ? _buildEmptyState(
+                            icon: Icons.insert_drive_file_outlined,
+                            title: 'No documents',
+                            subtitle:
+                                'Documents and audio files shared in this chat will appear here.',
+                          )
+                        : ListView.separated(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            itemCount: _docMessages.length,
+                            separatorBuilder: (_, __) => const Divider(height: 1),
+                            itemBuilder: (context, index) {
+                              final msg = _docMessages[index];
+                              final isAudio =
+                                  msg.attachment?.type == AttachmentType.audio;
+                              return ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: isAudio
+                                      ? Colors.orange.shade800
+                                      : primaryColor,
+                                  child: Icon(
+                                    isAudio
+                                        ? Icons.audiotrack
+                                        : Icons.insert_drive_file,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
                                 ),
-                              ),
-                              subtitle: Text(
-                                '${DateFormat('MMM d, yyyy').format(msg.timestamp)} • ${msg.content}',
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 12, color: Colors.grey),
-                              ),
-                              onTap: () async {
-                                final uri = Uri.tryParse(url);
-                                if (uri != null && await canLaunchUrl(uri)) {
-                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-                                }
-                              },
-                            );
-                          },
-                        ),
+                                title: Text(
+                                  msg.attachment?.fileName ?? 'File',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontWeight: FontWeight.w500),
+                                ),
+                                subtitle: Text(
+                                  '${_formatFileSize(msg.attachment?.fileSize)} • ${DateFormat('MMM d, yyyy').format(msg.timestamp)}',
+                                  style: const TextStyle(
+                                      fontSize: 12, color: Colors.grey),
+                                ),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.download_rounded),
+                                  onPressed: () {
+                                    showSnackBar(
+                                      context: context,
+                                      content:
+                                          'Opening ${msg.attachment?.fileName ?? 'file'}...',
+                                      type: SnacBarType.info,
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+
+                  // 3. Links Tab (Pull-to-refresh)
+                  RefreshIndicator(
+                    color: primaryColor,
+                    onRefresh: _loadAllMedia,
+                    child: _linkMessages.isEmpty
+                        ? _buildEmptyState(
+                            icon: Icons.link_rounded,
+                            title: 'No links',
+                            subtitle:
+                                'Links shared in this conversation will be listed here.',
+                          )
+                        : ListView.separated(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            itemCount: _linkMessages.length,
+                            separatorBuilder: (_, __) => const Divider(height: 1),
+                            itemBuilder: (context, index) {
+                              final msg = _linkMessages[index];
+                              final urlMatch = RegExp(r'https?://[^\s]+')
+                                  .firstMatch(msg.content);
+                              final url = urlMatch?.group(0) ?? '';
+
+                              return ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor:
+                                      primaryColor.withValues(alpha: 0.15),
+                                  child: const Icon(Icons.link,
+                                      color: primaryColor, size: 20),
+                                ),
+                                title: Text(
+                                  url,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.blueAccent,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  DateFormat('MMM d, h:mm a')
+                                      .format(msg.timestamp),
+                                  style: const TextStyle(
+                                      fontSize: 12, color: Colors.grey),
+                                ),
+                                onTap: () async {
+                                  final uri = Uri.tryParse(url);
+                                  if (uri != null) {
+                                    try {
+                                      await launchUrl(uri,
+                                          mode: LaunchMode.externalApplication);
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        showSnackBar(
+                                          context: context,
+                                          content: 'Could not open URL: $url',
+                                          type: SnacBarType.error,
+                                        );
+                                      }
+                                    }
+                                  }
+                                },
+                              );
+                            },
+                          ),
+                  ),
                 ],
               ),
       ),
@@ -285,14 +336,13 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
     required String title,
     required String subtitle,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 40),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 72, color: Colors.grey.withOpacity(0.4)),
+            Icon(icon, size: 72, color: Colors.grey.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             Text(
               title,
@@ -302,12 +352,72 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
-              ),
+              style: const TextStyle(fontSize: 13, color: Colors.grey),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Full-screen high-performance media viewer with Hero transition and InteractiveViewer
+class _FullScreenMediaViewer extends StatelessWidget {
+  final StoredMessage msg;
+  final String contactName;
+  final String heroTag;
+
+  const _FullScreenMediaViewer({
+    required this.msg,
+    required this.contactName,
+    required this.heroTag,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fileUrl = msg.attachment?.url ?? '';
+    final isLocal = fileUrl.startsWith('/') || !fileUrl.startsWith('http');
+    final file = File(fileUrl);
+    final dateStr = DateFormat('MMM d, yyyy • h:mm a').format(msg.timestamp);
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black.withValues(alpha: 0.85),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              contactName,
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+            ),
+            Text(
+              dateStr,
+              style: const TextStyle(color: Colors.white60, fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+      body: Center(
+        child: Hero(
+          tag: heroTag,
+          child: InteractiveViewer(
+            minScale: 0.8,
+            maxScale: 4.0,
+            child: isLocal && file.existsSync()
+                ? Image.file(file)
+                : CachedNetworkImage(
+                    imageUrl: fileUrl,
+                    placeholder: (_, __) => const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
+                    errorWidget: (_, __, ___) => const Center(
+                      child: Icon(Icons.broken_image, size: 64, color: Colors.white54),
+                    ),
+                  ),
+          ),
         ),
       ),
     );

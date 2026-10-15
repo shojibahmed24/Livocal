@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:livocal/features/auth/controllers/login_controller.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
-import 'package:livocal/shared/widgets/buttons.dart';
+import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/theme.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -203,12 +203,31 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 140, vertical: 12),
-            child: GreenElevatedButton(
-              onPressed: () => ref
-                  .read(loginControllerProvider.notifier)
-                  .onNextBtnPressed(context),
-              text: 'Next',
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 1,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24.0),
+                  ),
+                ),
+                onPressed: () => ref
+                    .read(loginControllerProvider.notifier)
+                    .onNextBtnPressed(context),
+                child: const Text(
+                  'Next',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 24),
