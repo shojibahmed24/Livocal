@@ -249,7 +249,7 @@ class CallController extends StateNotifier<CallControllerState> {
   }
 
   /// Initiates an outgoing call to [callee]
-  Future<CallSession> startOutgoingCall({
+  Future<CallSession?> startOutgoingCall({
     required User caller,
     required User callee,
     required String calleeDisplayName,
@@ -294,7 +294,12 @@ class CallController extends StateNotifier<CallControllerState> {
       hasApiKey: GeminiLiveTranslator.getSavedApiKey().isNotEmpty,
     );
 
-    await repo.createCall(session);
+    final callCreated = await repo.createCall(session);
+    if (!callCreated) {
+      debugPrint('[CallController] createCall failed in Firestore. Aborting outgoing call.');
+      state = state.copyWith(activeSession: null);
+      return null;
+    }
 
     // Always establish real WebRTC session and send high-priority FCM wake-up
     _webrtcClient.startOutgoingCall(session.callId);

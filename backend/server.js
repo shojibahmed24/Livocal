@@ -60,6 +60,7 @@ const DEFAULT_MODEL =
 const DEFAULT_VOICE = process.env.DEFAULT_VOICE?.trim() || 'Aoede';
 
 const app = express();
+app.set('trust proxy', 1); // Trust first-hop reverse proxy (Render / Cloud Run)
 app.use(helmet());
 
 // Secure CORS configuration: Restrict origins, allow mobile apps without Origin header
@@ -130,9 +131,11 @@ const apiLimiter = rateLimit({
 app.use('/api/', apiLimiter);
 
 // Specific rate limiter for push notification endpoints (prevent notification flooding)
+// Per-user rate limiting using authenticated UID (prevents collateral blocking behind reverse proxy)
 const pushLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 30, // max 30 push notifications per minute per IP
+  max: 30, // max 30 push notifications per minute per authenticated user
+  keyGenerator: (req) => req.user?.uid || req.ip,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many push notification requests. Please slow down.' },
@@ -208,16 +211,17 @@ app.post(
     }
 
     try {
-      // 0. Anti-Spam Relationship Check: Verify valid, active call session in Firestore
-      if (firestoreDb) {
-        const callDoc = await firestoreDb.collection('calls').doc(String(callId)).get();
-        if (!callDoc.exists) {
-          return res.status(403).json({ error: 'Forbidden: No active call record found for callId' });
-        }
-        const callData = callDoc.data();
-        if (callData.callerId !== callerUid || callData.calleeId !== targetUserId) {
-          return res.status(403).json({ error: 'Forbidden: Caller/callee mismatch with call session' });
-        }
+      // 0. Anti-Spam Relationship Check: Verify valid, active call session in Firestore (Fail-Closed)
+      if (!firestoreDb) {
+        return res.status(503).json({ error: 'Firestore database service is currently unavailable' });
+      }
+      const callDoc = await firestoreDb.collection('calls').doc(String(callId)).get();
+      if (!callDoc.exists) {
+        return res.status(403).json({ error: 'Forbidden: No active call record found for callId' });
+      }
+      const callData = callDoc.data();
+      if (callData.callerId !== callerUid || callData.calleeId !== targetUserId) {
+        return res.status(403).json({ error: 'Forbidden: Caller/callee mismatch with call session' });
       }
 
       // 1. Authoritative caller identification: Lock caller to req.user.uid
@@ -301,21 +305,22 @@ app.post(
     }
 
     try {
-      // 0. Anti-Spam Relationship Check: Verify verifiable message in Firestore sent by callerUid
-      if (firestoreDb) {
-        const msgDoc = await firestoreDb
-          .collection('chats')
-          .doc(receiverId)
-          .collection('messages')
-          .doc(String(messageId))
-          .get();
-        if (!msgDoc.exists) {
-          return res.status(403).json({ error: 'Forbidden: No verifiable message found in recipient inbox' });
-        }
-        const msgData = msgDoc.data();
-        if (msgData.senderId !== callerUid) {
-          return res.status(403).json({ error: 'Forbidden: Sender identity does not match message record' });
-        }
+      // 0. Anti-Spam Relationship Check: Verify verifiable message in Firestore sent by callerUid (Fail-Closed)
+      if (!firestoreDb) {
+        return res.status(503).json({ error: 'Firestore database service is currently unavailable' });
+      }
+      const msgDoc = await firestoreDb
+        .collection('chats')
+        .doc(receiverId)
+        .collection('messages')
+        .doc(String(messageId))
+        .get();
+      if (!msgDoc.exists) {
+        return res.status(403).json({ error: 'Forbidden: No verifiable message found in recipient inbox' });
+      }
+      const msgData = msgDoc.data();
+      if (msgData.senderId !== callerUid) {
+        return res.status(403).json({ error: 'Forbidden: Sender identity does not match message record' });
       }
 
       // 1. Authoritative author identification

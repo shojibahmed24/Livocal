@@ -35,26 +35,32 @@ service firebase.storage {
       allow update, delete: if false;
     }
 
-    // Deprecated legacy root attachments: Deny new uploads; read only if metadata proves ownership
+    // Deprecated legacy root attachments: Deny new uploads; allow authenticated read so existing media is not orphaned
     match /attachments/{fileName} {
-      allow create: if false;
-      allow read: if request.auth != null && resource.metadata != null && (
-        resource.metadata.senderId == request.auth.uid ||
-        resource.metadata.receiverId == request.auth.uid
-      );
-      allow update, delete: if false;
+      allow create, update, delete: if false;
+      allow read: if request.auth != null;
     }
 
-    // 3. Ephemeral Status Images (Max 10MB, strictly owner-owned)
-    match /statuses/{fileName} {
-      allow read: if request.auth != null;
+    // 3. Ephemeral Status Images (Max 10MB, strictly owner-owned & recipient authorized)
+    match /statuses/{userId}/{fileName} {
+      // Author can always read their status image; authorized recipients can read if in customMetadata.allowedUserIds
+      allow read: if request.auth != null && (
+        request.auth.uid == userId ||
+        (resource.metadata != null && resource.metadata.allowedUserIds != null && request.auth.uid in resource.metadata.allowedUserIds.split(','))
+      );
       allow create: if request.auth != null
-        && fileName.matches(request.auth.uid + '.*')
+        && request.auth.uid == userId
         && request.resource.size > 0
         && request.resource.size <= 10 * 1024 * 1024
         && request.resource.contentType.matches('^(image|video).*');
       allow update, delete: if request.auth != null
-        && fileName.matches(request.auth.uid + '.*');
+        && request.auth.uid == userId;
+    }
+
+    // Deprecated legacy root statuses: Deny new uploads
+    match /statuses/{fileName} {
+      allow create, update, delete: if false;
+      allow read: if request.auth != null;
     }
   }
 }

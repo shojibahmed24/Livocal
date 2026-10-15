@@ -168,8 +168,8 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
     const primaryColor = Color(0xFF00A884);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final sentBytes = SharedPref.instance.getInt('net_bytes_sent') ?? (34 * 1024 * 1024);
-    final recvBytes = SharedPref.instance.getInt('net_bytes_received') ?? (98 * 1024 * 1024);
+    final sentBytes = SharedPref.instance.getInt('net_bytes_sent') ?? 0;
+    final recvBytes = SharedPref.instance.getInt('net_bytes_received') ?? 0;
 
     return Scaffold(
       appBar: AppBar(
@@ -238,17 +238,19 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
                 builder: (ctx) => AlertDialog(
                   backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
                   title: const Text('Network Usage Details'),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('• WebRTC Calls: ${_formatBytes((sentBytes * 0.75).round())} sent • ${_formatBytes((recvBytes * 0.75).round())} received'),
-                      const SizedBox(height: 6),
-                      Text('• Messages & Statuses: ${_formatBytes((sentBytes * 0.15).round())} sent • ${_formatBytes((recvBytes * 0.15).round())} received'),
-                      const SizedBox(height: 6),
-                      Text('• Media & Attachments: ${_formatBytes((sentBytes * 0.10).round())} sent • ${_formatBytes((recvBytes * 0.10).round())} received'),
-                    ],
-                  ),
+                  content: (sentBytes == 0 && recvBytes == 0)
+                      ? const Text('No network usage recorded yet.')
+                      : Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('• Total Traffic: ${_formatBytes(sentBytes + recvBytes)}'),
+                            const SizedBox(height: 6),
+                            Text('• Sent: ${_formatBytes(sentBytes)}'),
+                            const SizedBox(height: 6),
+                            Text('• Received: ${_formatBytes(recvBytes)}'),
+                          ],
+                        ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),

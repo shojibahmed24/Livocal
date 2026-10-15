@@ -90,13 +90,45 @@ class StatusService {
       final statusId = 'status_${userId}_${now.millisecondsSinceEpoch}';
       final fileName = '${userId}_${now.millisecondsSinceEpoch}.jpg';
 
-      // 1. Upload to Firebase Storage under /statuses/{fileName}
-      final storageRef = _storage.ref().child('statuses/$fileName');
-      final metadata = SettableMetadata(contentType: 'image/jpeg');
+      // 1. Determine allowedUserIds for storage metadata
+      final privacySetting =
+          SharedPref.instance.getString('status_privacy') ?? 'contacts';
+      List<String> allowedRecipients = [];
+      try {
+        final contacts = await IsarDb.getContacts();
+        final registeredUids = contacts
+            .map((c) => c.userId)
+            .where((uid) => uid != null && uid.isNotEmpty)
+            .cast<String>()
+            .toSet()
+            .toList();
+
+        if (privacySetting == 'except') {
+          final excluded = SharedPref.instance.getStringList('status_privacy_excluded') ?? [];
+          allowedRecipients = registeredUids.where((u) => !excluded.contains(u)).toList();
+        } else if (privacySetting == 'only') {
+          final only = SharedPref.instance.getStringList('status_privacy_only') ?? [];
+          allowedRecipients = registeredUids.where((u) => only.contains(u)).toList();
+        } else {
+          allowedRecipients = registeredUids;
+        }
+      } catch (e) {
+        debugPrint('[StatusService] Error getting contacts for status metadata: $e');
+      }
+
+      // 2. Upload to Firebase Storage under /statuses/{userId}/{fileName} with allowedUserIds metadata
+      final storageRef = _storage.ref().child('statuses/$userId/$fileName');
+      final metadata = SettableMetadata(
+        contentType: 'image/jpeg',
+        customMetadata: {
+          'authorId': userId,
+          'allowedUserIds': allowedRecipients.join(','),
+        },
+      );
       final uploadTask = await storageRef.putFile(imageFile, metadata);
       final downloadUrl = await uploadTask.ref.getDownloadURL();
 
-      // 2. Create StatusModel
+      // 3. Create StatusModel
       final status = StatusModel(
         id: statusId,
         userId: userId,
@@ -106,9 +138,10 @@ class StatusService {
         mediaUrl: downloadUrl,
         colorValue: 0xFF000000,
         timestamp: now,
+        allowedUserIds: allowedRecipients,
       );
 
-      // 3. Save to Firestore
+      // 4. Save to Firestore
       await postStatus(status);
       return status;
     } catch (e) {

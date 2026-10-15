@@ -45,16 +45,18 @@ class CallRepository {
     return getPeerLanguageCode();
   }
 
-  /// Creates call document in Firestore (non-blocking if Firestore is offline/restricted)
-  Future<void> createCall(CallSession session) async {
+  /// Creates call document in Firestore
+  Future<bool> createCall(CallSession session) async {
     try {
       await firestore
           .collection('calls')
           .doc(session.callId)
           .set(session.toMap())
-          .timeout(const Duration(seconds: 3));
+          .timeout(const Duration(seconds: 5));
+      return true;
     } catch (e) {
       debugPrint('[CallRepository] createCall failed for ${session.callId}: $e');
+      return false;
     }
   }
 
