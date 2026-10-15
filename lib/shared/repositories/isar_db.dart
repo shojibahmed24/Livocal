@@ -232,11 +232,54 @@ class IsarDb {
     }
   }
 
-  static Stream<List<Message>> getChatStream(String chatId) {
+  static Future<void> purgeDisappearingMessages() async {
+    final setting = SharedPref.instance.getString('privacy_disappearing') ?? 'Off';
+    if (setting == 'Off') return;
+
+    Duration? duration;
+    if (setting == '24 hours') {
+      duration = const Duration(hours: 24);
+    } else if (setting == '7 days') {
+      duration = const Duration(days: 7);
+    } else if (setting == '90 days') {
+      duration = const Duration(days: 90);
+    }
+
+    if (duration == null) return;
+    final cutoff = DateTime.now().subtract(duration);
+    final starredIds = SharedPref.instance.getStringList('starred_message_ids') ?? [];
+
+    try {
+      final expired = await isar.storedMessages
+          .filter()
+          .timestampLessThan(cutoff)
+          .findAll();
+
+      final toDelete = expired
+          .where((m) => !starredIds.contains(m.messageId))
+          .map((m) => m.id)
+          .toList();
+
+      if (toDelete.isNotEmpty) {
+        await isar.writeTxn(() async {
+          await isar.storedMessages.deleteAll(toDelete);
+        });
+        debugPrint('[IsarDb] Purged ${toDelete.length} disappearing messages older than $setting');
+      }
+    } catch (e) {
+      debugPrint('[IsarDb] Error purging disappearing messages: $e');
+    }
+  }
+
+  static Stream<List<Message>> getChatStream(String chatId, {int limit = 100}) {
+    // Opportunistically run disappearing messages purge
+    purgeDisappearingMessages();
+
     return isar.storedMessages
         .filter()
         .chatIdEqualTo(chatId)
         .sortByTimestampDesc()
+        .limit(limit)
         .build()
         .watch(fireImmediately: true)
         .map((event) => event

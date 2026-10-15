@@ -15,6 +15,8 @@ class _AppAuthGuardState extends State<AppAuthGuard>
   bool _isLocked = false;
   bool _isAuthenticating = false;
   final LocalAuthentication _auth = LocalAuthentication();
+  final TextEditingController _pinController = TextEditingController();
+  String? _pinError;
 
   @override
   void initState() {
@@ -26,21 +28,27 @@ class _AppAuthGuardState extends State<AppAuthGuard>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _pinController.dispose();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    final fingerprintEnabled =
+        SharedPref.instance.getBool('privacy_fingerprint') ?? false;
+    final twoStepEnabled =
+        SharedPref.instance.getBool('two_step_enabled') ?? false;
+
     if (state == AppLifecycleState.paused) {
-      final fingerprintEnabled =
-          SharedPref.instance.getBool('privacy_fingerprint') ?? false;
-      if (fingerprintEnabled) {
+      if (fingerprintEnabled || twoStepEnabled) {
         setState(() {
           _isLocked = true;
+          _pinController.clear();
+          _pinError = null;
         });
       }
     } else if (state == AppLifecycleState.resumed) {
-      if (_isLocked && !_isAuthenticating) {
+      if (_isLocked && !_isAuthenticating && fingerprintEnabled) {
         _authenticate();
       }
     }
@@ -49,13 +57,18 @@ class _AppAuthGuardState extends State<AppAuthGuard>
   void _checkLockStatus() {
     final fingerprintEnabled =
         SharedPref.instance.getBool('privacy_fingerprint') ?? false;
-    if (fingerprintEnabled) {
+    final twoStepEnabled =
+        SharedPref.instance.getBool('two_step_enabled') ?? false;
+
+    if (fingerprintEnabled || twoStepEnabled) {
       setState(() {
         _isLocked = true;
       });
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _authenticate();
-      });
+      if (fingerprintEnabled) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _authenticate();
+        });
+      }
     } else {
       setState(() {
         _isLocked = false;
@@ -72,10 +85,12 @@ class _AppAuthGuardState extends State<AppAuthGuard>
       final isSupported = await _auth.isDeviceSupported();
 
       if (!canCheck && !isSupported) {
-        // Biometrics unavailable, unlock gracefully
+        // If two-step is enabled, rely on PIN instead
+        final twoStepEnabled =
+            SharedPref.instance.getBool('two_step_enabled') ?? false;
         if (mounted) {
           setState(() {
-            _isLocked = false;
+            _isLocked = twoStepEnabled;
             _isAuthenticating = false;
           });
         }
@@ -104,12 +119,30 @@ class _AppAuthGuardState extends State<AppAuthGuard>
     }
   }
 
+  void _verifyPin(String enteredPin) {
+    final savedPin = SharedPref.instance.getString('two_step_pin') ?? '';
+    if (enteredPin == savedPin) {
+      setState(() {
+        _isLocked = false;
+        _pinError = null;
+      });
+      _pinController.clear();
+    } else {
+      setState(() {
+        _pinError = 'Incorrect PIN. Please try again.';
+      });
+      _pinController.clear();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final fingerprintEnabled =
         SharedPref.instance.getBool('privacy_fingerprint') ?? false;
+    final twoStepEnabled =
+        SharedPref.instance.getBool('two_step_enabled') ?? false;
 
-    if (!fingerprintEnabled || !_isLocked) {
+    if ((!fingerprintEnabled && !twoStepEnabled) || !_isLocked) {
       return widget.child;
     }
 
@@ -120,8 +153,8 @@ class _AppAuthGuardState extends State<AppAuthGuard>
       backgroundColor: isDark ? const Color(0xFF121B22) : const Color(0xFFF0F2F5),
       body: SafeArea(
         child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -131,13 +164,13 @@ class _AppAuthGuardState extends State<AppAuthGuard>
                     color: primaryColor.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.fingerprint_rounded,
-                    size: 72,
+                  child: Icon(
+                    twoStepEnabled ? Icons.pin_outlined : Icons.fingerprint_rounded,
+                    size: 64,
                     color: primaryColor,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
                 Text(
                   'Livocal Locked',
                   style: TextStyle(
@@ -146,35 +179,82 @@ class _AppAuthGuardState extends State<AppAuthGuard>
                     color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 Text(
-                  'Touch the fingerprint sensor or authenticate to continue',
+                  twoStepEnabled
+                      ? 'Enter your 6-digit Two-Step Verification PIN to continue'
+                      : 'Touch the fingerprint sensor or authenticate to continue',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
                     color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
                   ),
                 ),
-                const SizedBox(height: 36),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 28,
-                      vertical: 14,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
+                if (twoStepEnabled) ...[
+                  const SizedBox(height: 28),
+                  SizedBox(
+                    width: 220,
+                    child: TextField(
+                      controller: _pinController,
+                      keyboardType: TextInputType.number,
+                      maxLength: 6,
+                      obscureText: true,
+                      textAlign: TextAlign.center,
+                      autofocus: true,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        letterSpacing: 8,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: '••••••',
+                        counterText: '',
+                        errorText: _pinError,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: primaryColor, width: 2),
+                        ),
+                      ),
+                      onChanged: (val) {
+                        if (val.length == 6) {
+                          _verifyPin(val);
+                        }
+                      },
                     ),
                   ),
-                  onPressed: _authenticate,
-                  icon: const Icon(Icons.lock_open_rounded),
-                  label: const Text(
-                    'Unlock Livocal',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    onPressed: () => _verifyPin(_pinController.text.trim()),
+                    child: const Text('SUBMIT PIN'),
                   ),
-                ),
+                ],
+                if (fingerprintEnabled) ...[
+                  const SizedBox(height: 24),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: primaryColor,
+                      side: const BorderSide(color: primaryColor),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    onPressed: _authenticate,
+                    icon: const Icon(Icons.fingerprint_rounded),
+                    label: const Text('Unlock with Biometrics'),
+                  ),
+                ],
               ],
             ),
           ),

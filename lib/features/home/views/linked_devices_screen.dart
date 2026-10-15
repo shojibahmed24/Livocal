@@ -1,62 +1,42 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/utils/snackbars.dart';
 
 class LinkedDevicesScreen extends StatelessWidget {
   final User user;
   const LinkedDevicesScreen({super.key, required this.user});
 
-  void _showLinkDeviceDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1F2C34)
-            : Colors.white,
-        title: const Row(
-          children: [
-            Icon(Icons.qr_code_scanner, color: Color(0xFF00A884)),
-            SizedBox(width: 10),
-            Text('Link a Device'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'To use Livocal on Web or Desktop:',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            const Text('1. Open livocal.web.app on your computer browser.'),
-            const SizedBox(height: 6),
-            const Text('2. Point your phone camera at the screen to capture the QR code.'),
-            const SizedBox(height: 16),
-            Center(
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.withOpacity(0.3)),
-                ),
-                child: const Icon(
-                  Icons.qr_code_2,
-                  size: 140,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
+  Future<void> _startQrScanner(BuildContext context) async {
+    try {
+      final cameras = await availableCameras();
+      if (cameras.isEmpty) {
+        if (context.mounted) {
+          showSnackBar(
+            context: context,
+            content: 'No camera available to scan QR code.',
+            type: SnacBarType.error,
+          );
+        }
+        return;
+      }
+
+      if (context.mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => DeviceQrScanScreen(cameras: cameras),
           ),
-        ],
-      ),
-    );
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        showSnackBar(
+          context: context,
+          content: 'Failed to initialize camera scanner: $e',
+          type: SnacBarType.error,
+        );
+      }
+    }
   }
 
   @override
@@ -112,20 +92,20 @@ class LinkedDevicesScreen extends StatelessWidget {
                   width: double.infinity,
                   height: 46,
                   child: ElevatedButton.icon(
-                    onPressed: () => _showLinkDeviceDialog(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00A884),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+                    onPressed: () => _startQrScanner(context),
                     icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
                     label: const Text(
                       'Link a device',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00A884),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
                       ),
                     ),
                   ),
@@ -134,36 +114,37 @@ class LinkedDevicesScreen extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
-          // Device status section
+          // Device status list
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              'DEVICE STATUS',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.8,
+                color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
+              ),
+            ),
+          ),
+
           Container(
             color: cardBg,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Device status',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
-                  ),
-                ),
-                const SizedBox(height: 8),
                 ListTile(
-                  contentPadding: EdgeInsets.zero,
                   leading: const CircleAvatar(
                     backgroundColor: Color(0xFF00A884),
-                    child: Icon(Icons.phone_android, color: Colors.white, size: 20),
+                    child: Icon(Icons.phone_android, color: Colors.white),
                   ),
                   title: const Text(
                     'This device (Primary)',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: const Text(
-                    'Active now • Android • End-to-End Encrypted',
+                    'Active now • Android • Authenticated Session',
                     style: TextStyle(color: Color(0xFF00A884), fontSize: 13),
                   ),
                   trailing: Container(
@@ -191,7 +172,7 @@ class LinkedDevicesScreen extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Your personal chats and live translations are end-to-end encrypted on all devices.',
+                    'Your personal chats and live translations are protected with authenticated encryption on all devices.',
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
@@ -202,9 +183,111 @@ class LinkedDevicesScreen extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 32),
         ],
       ),
+    );
+  }
+}
+
+class DeviceQrScanScreen extends StatefulWidget {
+  final List<CameraDescription> cameras;
+  const DeviceQrScanScreen({super.key, required this.cameras});
+
+  @override
+  State<DeviceQrScanScreen> createState() => _DeviceQrScanScreenState();
+}
+
+class _DeviceQrScanScreenState extends State<DeviceQrScanScreen> {
+  CameraController? _controller;
+  bool _isInit = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initCamera();
+  }
+
+  Future<void> _initCamera() async {
+    final backCamera = widget.cameras.firstWhere(
+      (c) => c.lensDirection == CameraLensDirection.back,
+      orElse: () => widget.cameras.first,
+    );
+
+    final controller = CameraController(
+      backCamera,
+      ResolutionPreset.high,
+      enableAudio: false,
+    );
+
+    try {
+      await controller.initialize();
+      if (mounted) {
+        setState(() {
+          _controller = controller;
+          _isInit = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('[DeviceQrScanScreen] Camera init error: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Scan QR code'),
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+      ),
+      backgroundColor: Colors.black,
+      body: _isInit && _controller != null
+          ? Stack(
+              children: [
+                Positioned.fill(
+                  child: CameraPreview(_controller!),
+                ),
+                // Semi-transparent overlay with viewfinder cutout
+                Positioned.fill(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 250,
+                        height: 250,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xFF00A884), width: 3),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          'Point camera at QR code on Livocal Web',
+                          style: TextStyle(color: Colors.white, fontSize: 14),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            )
+          : const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00A884)),
+              ),
+            ),
     );
   }
 }

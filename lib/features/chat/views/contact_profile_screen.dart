@@ -381,7 +381,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     leading: const Icon(Icons.lock_outline, color: Color(0xFF8696A0)),
                     title: const Text('Encryption'),
                     subtitle: const Text(
-                      'Messages and calls are end-to-end encrypted. Tap to verify.',
+                      'Messages and calls are private and encrypted. Tap to verify.',
                       style: TextStyle(fontSize: 12),
                     ),
                     trailing: const Icon(Icons.lock, color: Color(0xFF00A884), size: 18),
@@ -557,11 +557,11 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
           children: [
             Icon(Icons.lock, color: Color(0xFF00A884)),
             SizedBox(width: 8),
-            Text('End-to-End Encryption'),
+            Text('Private & Secure Messaging'),
           ],
         ),
         content: Text(
-          'Messages and calls with ${widget.contactName} are secured with end-to-end encryption. No third parties, not even Livocal or Google, can read or listen to them.',
+          'Messages and calls with ${widget.contactName} are protected with authenticated TLS and DTLS-SRTP encryption. Real-time voice translations are processed in ephemeral memory by Gemini Live API.',
         ),
         actions: [
           TextButton(

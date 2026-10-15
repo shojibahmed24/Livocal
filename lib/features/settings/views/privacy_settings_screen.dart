@@ -16,6 +16,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
   String _lastSeen = 'Everyone';
   String _profilePhoto = 'Everyone';
   String _about = 'Everyone';
+  String _statusPrivacy = 'contacts';
   bool _readReceipts = true;
   String _disappearingTimer = 'Off';
   bool _fingerprintLock = false;
@@ -26,6 +27,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
     _lastSeen = SharedPref.instance.getString('privacy_last_seen') ?? 'Everyone';
     _profilePhoto = SharedPref.instance.getString('privacy_profile_photo') ?? 'Everyone';
     _about = SharedPref.instance.getString('privacy_about') ?? 'Everyone';
+    _statusPrivacy = SharedPref.instance.getString('status_privacy') ?? 'contacts';
     _readReceipts = SharedPref.instance.getBool('privacy_read_receipts') ?? true;
     _disappearingTimer = SharedPref.instance.getString('privacy_disappearing') ?? 'Off';
     _fingerprintLock = SharedPref.instance.getBool('privacy_fingerprint') ?? false;
@@ -125,6 +127,33 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
               onSelected: (val) {
                 setState(() => _about = val);
                 SharedPref.instance.setString('privacy_about', val);
+              },
+            ),
+          ),
+          ListTile(
+            title: const Text('Status'),
+            subtitle: Text(
+              _statusPrivacy == 'contacts'
+                  ? 'My contacts'
+                  : (_statusPrivacy == 'except'
+                      ? 'My contacts except...'
+                      : 'Only share with...'),
+              style: const TextStyle(color: Colors.grey),
+            ),
+            onTap: () => _showRadioOptionDialog(
+              title: 'Status privacy',
+              options: ['My contacts', 'My contacts except...', 'Only share with...'],
+              currentValue: _statusPrivacy == 'contacts'
+                  ? 'My contacts'
+                  : (_statusPrivacy == 'except'
+                      ? 'My contacts except...'
+                      : 'Only share with...'),
+              onSelected: (val) {
+                final code = val == 'My contacts'
+                    ? 'contacts'
+                    : (val == 'My contacts except...' ? 'except' : 'only');
+                setState(() => _statusPrivacy = code);
+                SharedPref.instance.setString('status_privacy', code);
               },
             ),
           ),

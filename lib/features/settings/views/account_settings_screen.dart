@@ -35,31 +35,31 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
         backgroundColor: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF1F2C34)
             : Colors.white,
-        title: Text(_twoStepEnabled ? 'Disable Two-Step Verification' : 'Enable Two-Step Verification'),
+        title: Text(_twoStepEnabled
+            ? 'Disable Two-Step Verification'
+            : 'Enable Two-Step Verification'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               _twoStepEnabled
-                  ? 'Two-step verification adds an extra layer of security. Are you sure you want to disable it?'
-                  : 'Enter a 6-digit PIN which you will be asked for when registering your phone number with Livocal:',
+                  ? 'Enter your current 6-digit PIN to confirm disabling Two-Step Verification:'
+                  : 'Enter a 6-digit PIN which will be required to access and secure your Livocal account:',
               style: const TextStyle(fontSize: 14),
             ),
-            if (!_twoStepEnabled) ...[
-              const SizedBox(height: 16),
-              TextField(
-                controller: pinController,
-                keyboardType: TextInputType.number,
-                maxLength: 6,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  hintText: '• • • • • •',
-                  counterText: '',
-                  border: OutlineInputBorder(),
-                ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: pinController,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              obscureText: true,
+              decoration: const InputDecoration(
+                hintText: '• • • • • •',
+                counterText: '',
+                border: OutlineInputBorder(),
               ),
-            ],
+            ),
           ],
         ),
         actions: [
@@ -69,11 +69,12 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00A884),
+              backgroundColor: _twoStepEnabled ? Colors.redAccent : const Color(0xFF00A884),
               foregroundColor: Colors.white,
             ),
             onPressed: () async {
-              if (!_twoStepEnabled && pinController.text.length != 6) {
+              final enteredPin = pinController.text.trim();
+              if (enteredPin.length != 6) {
                 showSnackBar(
                   context: context,
                   content: 'Please enter a valid 6-digit PIN',
@@ -81,21 +82,43 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                 );
                 return;
               }
-              final newState = !_twoStepEnabled;
-              await SharedPref.instance.setBool('two_step_enabled', newState);
-              if (mounted) {
-                setState(() => _twoStepEnabled = newState);
-                Navigator.pop(ctx);
-                showSnackBar(
-                  context: context,
-                  content: newState
-                      ? 'Two-step verification enabled successfully'
-                      : 'Two-step verification disabled',
-                  type: SnacBarType.info,
-                );
+
+              if (_twoStepEnabled) {
+                final savedPin = SharedPref.instance.getString('two_step_pin') ?? '';
+                if (enteredPin != savedPin) {
+                  showSnackBar(
+                    context: context,
+                    content: 'Incorrect PIN. Verification failed.',
+                    type: SnacBarType.error,
+                  );
+                  return;
+                }
+                await SharedPref.instance.remove('two_step_pin');
+                await SharedPref.instance.setBool('two_step_enabled', false);
+                if (mounted) {
+                  setState(() => _twoStepEnabled = false);
+                  Navigator.pop(ctx);
+                  showSnackBar(
+                    context: context,
+                    content: 'Two-step verification disabled',
+                    type: SnacBarType.info,
+                  );
+                }
+              } else {
+                await SharedPref.instance.setString('two_step_pin', enteredPin);
+                await SharedPref.instance.setBool('two_step_enabled', true);
+                if (mounted) {
+                  setState(() => _twoStepEnabled = true);
+                  Navigator.pop(ctx);
+                  showSnackBar(
+                    context: context,
+                    content: 'Two-step verification PIN saved and activated',
+                    type: SnacBarType.info,
+                  );
+                }
               }
             },
-            child: Text(_twoStepEnabled ? 'DISABLE' : 'ENABLE'),
+            child: Text(_twoStepEnabled ? 'CONFIRM DISABLE' : 'ENABLE PIN'),
           ),
         ],
       ),

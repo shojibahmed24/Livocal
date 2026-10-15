@@ -1,7 +1,7 @@
 import 'package:isar/isar.dart';
 
-import '../../../features/chat/models/attachement.dart';
-import '../../../features/chat/models/message.dart';
+import 'package:livocal/features/chat/models/attachement.dart';
+import 'package:livocal/features/chat/models/message.dart';
 
 part 'messages.g.dart';
 

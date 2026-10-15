@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 
@@ -58,7 +59,7 @@ class _AppLanguageScreenState extends ConsumerState<AppLanguageScreen> {
             onChanged: (val) async {
               if (val != null) {
                 setState(() => _selectedLang = val);
-                await SharedPref.instance.setString('app_language', val);
+                await ref.read(appLocaleProvider.notifier).setLocale(val);
                 if (context.mounted) {
                   showSnackBar(
                     context: context,

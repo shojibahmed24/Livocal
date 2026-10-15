@@ -159,7 +159,7 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
                   ),
                   const SizedBox(width: 5),
                   Text(
-                    'End-to-end encrypted • Gemini Live 3.5 AI',
+                    'DTLS-SRTP Encrypted • Gemini Live 3.5 AI',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.65),
                       fontSize: 12,

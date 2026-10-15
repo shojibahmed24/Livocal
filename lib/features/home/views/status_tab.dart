@@ -439,7 +439,7 @@ class _StatusTabState extends ConsumerState<StatusTab>
               const Icon(Icons.lock, size: 12, color: Colors.grey),
               const SizedBox(width: 6),
               Text(
-                'Your status updates are end-to-end encrypted',
+                'Your status updates are private and encrypted',
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
             ],

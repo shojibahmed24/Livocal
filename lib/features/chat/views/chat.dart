@@ -796,11 +796,11 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
                               children: [
                                 Icon(Icons.lock, color: Color(0xFF00A884)),
                                 SizedBox(width: 8),
-                                Text('End-to-End Encryption'),
+                                Text('Private & Secure Messaging'),
                               ],
                             ),
                             content: const Text(
-                              'Your messages, voice calls, and media in Livocal are secured with end-to-end encryption. No third parties, not even Livocal, can read or listen to them.',
+                              'Your messages and media are protected with zero-trust authenticated access control and TLS encryption. Voice calls stream securely via DTLS-SRTP with ephemeral Gemini Live AI translation.',
                             ),
                             actions: [
                               TextButton(
@@ -822,7 +822,7 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
                               : const Color.fromARGB(148, 248, 236, 130),
                         ),
                         child: Text(
-                          '🔒 Messages and calls are end-to-end encrypted. No one outside this chat, not even Livocal, can read or listen to them. Tap to learn more.',
+                          '🔒 Messages and calls are private and encrypted. Protected with zero-trust access control. Tap to learn more.',
                           style: TextStyle(
                             fontSize: 12.5,
                             color: isDarkTheme

@@ -191,7 +191,7 @@ class HelpSettingsScreen extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.privacy_tip_outlined, color: primaryColor),
             title: const Text('Terms and Privacy Policy'),
-            subtitle: const Text('End-to-end encryption & zero-knowledge policy'),
+            subtitle: const Text('Private communication & zero-knowledge policy'),
             trailing: const Icon(Icons.chevron_right, color: Colors.grey),
             onTap: () {
               showDialog(
@@ -202,7 +202,7 @@ class HelpSettingsScreen extends StatelessWidget {
                   content: const SingleChildScrollView(
                     child: Text(
                       'Livocal values your privacy:\n\n'
-                      '1. End-to-End Encryption: Your 1-on-1 calls and messages are strictly private.\n\n'
+                      '1. Private Encryption: Your 1-on-1 calls and messages are strictly protected.\n\n'
                       '2. Gemini Live Translation: Voice streams are processed in ephemeral secure memory during active calls and are never stored or trained on.\n\n'
                       '3. Zero Phonebook Harvesting: Contact matching occurs via cryptographic hash lookups without uploading your unhashed address book.',
                       style: TextStyle(fontSize: 13, height: 1.4),

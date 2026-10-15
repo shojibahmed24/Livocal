@@ -33,6 +33,7 @@ import 'package:camera/camera.dart';
 import 'package:livocal/features/home/views/status_tab.dart';
 import 'package:livocal/shared/widgets/camera.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/features/home/views/linked_devices_screen.dart';
 import 'package:livocal/features/home/views/starred_messages_screen.dart';
@@ -587,15 +588,15 @@ class _HomePageState extends ConsumerState<HomePage>
           bottom: TabBar(
             controller: _tabController,
             labelStyle: textTheme.labelLarge,
-            tabs: const [
+            tabs: [
               Tab(
-                text: 'CHATS',
+                text: AppStrings.tr(ref, 'chats'),
               ),
               Tab(
-                text: 'STATUS',
+                text: AppStrings.tr(ref, 'status'),
               ),
               Tab(
-                text: 'CALLS',
+                text: AppStrings.tr(ref, 'calls'),
               ),
             ],
           ),
@@ -729,7 +730,7 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
                             style: TextStyle(color: colorTheme.greyColor),
                           ),
                           TextSpan(
-                            text: 'end-to-end encrypted',
+                            text: 'private and encrypted',
                             style: TextStyle(color: colorTheme.greenColor),
                           ),
                         ],

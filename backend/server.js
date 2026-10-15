@@ -3,7 +3,7 @@ import express from 'express';
 import { WebSocketServer, WebSocket } from 'ws';
 import dotenv from 'dotenv';
 import cors from 'cors';
-
+import { z } from 'zod';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { initializeApp, cert } from 'firebase-admin/app';
@@ -59,8 +59,63 @@ const DEFAULT_VOICE = process.env.DEFAULT_VOICE?.trim() || 'Aoede';
 
 const app = express();
 app.use(helmet());
-app.use(cors());
-app.use(express.json());
+
+// Secure CORS configuration: Restrict origins, allow mobile apps without Origin header
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+  : ['https://livocal.web.app', 'https://livocal.firebaseapp.com'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    return callback(new Error('CORS policy: Access denied'));
+  },
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}));
+
+app.use(express.json({ limit: '1mb' }));
+
+// Input Validation Schemas with Zod
+const CallNotifySchema = z.object({
+  targetUserId: z.string().min(1, 'targetUserId is required').max(128),
+  callId: z.string().min(1, 'callId is required').max(128),
+});
+
+const ChatMessageNotifySchema = z.object({
+  receiverId: z.string().min(1, 'receiverId is required').max(128),
+  messageId: z.string().min(1, 'messageId is required').max(128),
+  messageContent: z.string().max(5000).optional(),
+  authorId: z.string().max(128).optional(),
+});
+
+const MatchContactsSchema = z.object({
+  phoneNumbers: z.array(z.string().min(1).max(32)).min(1, 'At least 1 phone number required').max(500),
+});
+
+const TranslateSchema = z.object({
+  text: z.string().min(1, 'text is required').max(5000),
+  targetLang: z.string().min(2, 'targetLang is required').max(16),
+  sourceLang: z.string().max(16).optional(),
+});
+
+function validateBody(schema) {
+  return (req, res, next) => {
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`),
+      });
+    }
+    req.body = parsed.data;
+    next();
+  };
+}
 
 // Rate limit: 300 requests per 15 min per IP on API endpoints
 const apiLimiter = rateLimit({
@@ -116,175 +171,172 @@ app.get('/health', (req, res) => {
 
 app.get('/', (req, res) => {
   res.json({
-    service: 'Livocal Gemini Live Relay Gateway',
+    service: 'Livocal Live Relay Gateway',
     version: '1.0.0',
-    description: 'Zero-Trust Secure Audio Relay for Gemini Multimodal Live API',
-    endpoints: {
-      health: '/health',
-      websocket: '/ws/live-call',
-      callNotify: '/api/call/notify-incoming',
-    },
-    configured: Boolean(GEMINI_API_KEY),
-    firebaseAdmin: Boolean(firebaseApp),
+    status: 'online',
   });
 });
 
 // Send Full-Screen Incoming Call Wakeup Push via FCM
 // Anti-Phishing: Enforces callerId = req.user.uid and pulls verified name/phone from Firestore
-app.post('/api/call/notify-incoming', authenticateRequest, async (req, res) => {
-  if (!firebaseApp || !messagingService) {
-    return res.status(503).json({ error: 'Firebase Admin not initialized on server' });
-  }
+app.post(
+  '/api/call/notify-incoming',
+  authenticateRequest,
+  validateBody(CallNotifySchema),
+  async (req, res) => {
+    if (!firebaseApp || !messagingService) {
+      return res.status(503).json({ error: 'Firebase Admin not initialized on server' });
+    }
 
-  const { targetUserId, callId } = req.body;
-  if (!targetUserId || !callId) {
-    return res.status(400).json({ error: 'targetUserId and callId are required fields' });
-  }
+    const { targetUserId, callId } = req.body;
 
-  const callerUid = req.user.uid;
-  if (targetUserId === callerUid) {
-    return res.status(400).json({ error: 'Cannot send call notification to oneself' });
-  }
+    const callerUid = req.user.uid;
+    if (targetUserId === callerUid) {
+      return res.status(400).json({ error: 'Cannot send call notification to oneself' });
+    }
 
-  try {
-    // 1. Authoritative caller identification: Lock caller to req.user.uid
-    let verifiedCallerName = 'Livocal User';
-    let verifiedCallerNumber = req.user.phone_number || '';
+    try {
+      // 1. Authoritative caller identification: Lock caller to req.user.uid
+      let verifiedCallerName = 'Livocal User';
+      let verifiedCallerNumber = req.user.phone_number || '';
 
-    if (firestoreDb) {
-      try {
-        const callerDoc = await firestoreDb.collection('users').doc(callerUid).get();
-        if (callerDoc.exists) {
-          const data = callerDoc.data();
-          if (data.name && typeof data.name === 'string' && data.name.trim().length > 0) {
-            verifiedCallerName = data.name.trim();
+      if (firestoreDb) {
+        try {
+          const callerDoc = await firestoreDb.collection('users').doc(callerUid).get();
+          if (callerDoc.exists) {
+            const data = callerDoc.data();
+            if (data.name && typeof data.name === 'string' && data.name.trim().length > 0) {
+              verifiedCallerName = data.name.trim();
+            }
+            if (data.phone && data.phone.formattedNumber) {
+              verifiedCallerNumber = data.phone.formattedNumber;
+            } else if (data.phone && data.phone.number) {
+              verifiedCallerNumber = `${data.phone.code || ''}${data.phone.number}`;
+            }
           }
-          if (data.phone && data.phone.formattedNumber) {
-            verifiedCallerNumber = data.phone.formattedNumber;
-          } else if (data.phone && data.phone.number) {
-            verifiedCallerNumber = `${data.phone.code || ''}${data.phone.number}`;
-          }
+        } catch (profileErr) {
+          console.warn(`[CallNotify] Could not fetch caller profile for ${callerUid}:`, profileErr.message);
         }
-      } catch (profileErr) {
-        console.warn(`[CallNotify] Could not fetch caller profile for ${callerUid}:`, profileErr.message);
       }
-    }
 
-    // 2. Authoritative target lookup: Server fetches recipient's FCM token from fcmTokens collection
-    let token = null;
-    if (firestoreDb) {
-      const tokenDoc = await firestoreDb.collection('fcmTokens').doc(targetUserId).get();
-      if (tokenDoc.exists) {
-        token = tokenDoc.data().token;
+      // 2. Authoritative target lookup: Server fetches recipient's FCM token from fcmTokens collection
+      let token = null;
+      if (firestoreDb) {
+        const tokenDoc = await firestoreDb.collection('fcmTokens').doc(targetUserId).get();
+        if (tokenDoc.exists) {
+          token = tokenDoc.data().token;
+        }
       }
+
+      if (!token) {
+        return res.status(404).json({ error: 'Target user has no registered FCM push token' });
+      }
+
+      // High Priority Data Message for waking up Android / CallKit
+      const message = {
+        token,
+        data: {
+          type: 'INCOMING_CALL',
+          callId: String(callId),
+          callerId: String(callerUid),
+          callerName: String(verifiedCallerName),
+          callerNumber: String(verifiedCallerNumber),
+          timestamp: String(Date.now()),
+        },
+        android: {
+          priority: 'high',
+        },
+      };
+
+      const response = await messagingService.send(message);
+      res.json({ success: true, messageId: response });
+    } catch (err) {
+      console.error('FCM Call Notify Send Error:', err.message);
+      res.status(500).json({ error: 'Failed to send incoming call notification' });
     }
-
-    if (!token) {
-      return res.status(404).json({ error: 'Target user has no registered FCM push token' });
-    }
-
-    // High Priority Data Message for waking up Android / CallKit
-    const message = {
-      token,
-      data: {
-        type: 'INCOMING_CALL',
-        callId: String(callId),
-        callerId: String(callerUid),
-        callerName: String(verifiedCallerName),
-        callerNumber: String(verifiedCallerNumber),
-        timestamp: String(Date.now()),
-      },
-      android: {
-        priority: 'high',
-      },
-    };
-
-    const response = await messagingService.send(message);
-    res.json({ success: true, messageId: response });
-  } catch (err) {
-    console.error('FCM Call Notify Send Error:', err.message);
-    res.status(500).json({ error: err.message });
   }
-});
+);
 
 // Send Chat Message Push via FCM
 // Anti-Impersonation: Enforces authorId = req.user.uid and pulls verified name/avatar from Firestore
-app.post('/api/notify/chat-message', authenticateRequest, async (req, res) => {
-  if (!firebaseApp || !messagingService) {
-    return res.status(503).json({ error: 'Firebase Admin not initialized on server' });
-  }
+app.post(
+  '/api/notify/chat-message',
+  authenticateRequest,
+  validateBody(ChatMessageNotifySchema),
+  async (req, res) => {
+    if (!firebaseApp || !messagingService) {
+      return res.status(503).json({ error: 'Firebase Admin not initialized on server' });
+    }
 
-  const { receiverId, messageContent, messageId, authorId } = req.body;
-  if (!receiverId || !messageId) {
-    return res.status(400).json({ error: 'receiverId and messageId are required fields' });
-  }
+    const { receiverId, messageContent, messageId, authorId } = req.body;
 
-  const callerUid = req.user.uid;
-  if (authorId && authorId !== callerUid) {
-    return res.status(403).json({ error: 'Forbidden: Cannot send push notifications impersonating another user' });
-  }
+    const callerUid = req.user.uid;
+    if (authorId && authorId !== callerUid) {
+      return res.status(403).json({ error: 'Forbidden: Cannot send push notifications impersonating another user' });
+    }
 
-  try {
-    // 1. Authoritative author identification
-    let verifiedAuthorName = 'Livocal User';
-    let verifiedAuthorAvatar = '';
+    try {
+      // 1. Authoritative author identification
+      let verifiedAuthorName = 'Livocal User';
+      let verifiedAuthorAvatar = '';
 
-    if (firestoreDb) {
-      try {
-        const authorDoc = await firestoreDb.collection('users').doc(callerUid).get();
-        if (authorDoc.exists) {
-          const data = authorDoc.data();
-          if (data.name && typeof data.name === 'string' && data.name.trim().length > 0) {
-            verifiedAuthorName = data.name.trim();
+      if (firestoreDb) {
+        try {
+          const authorDoc = await firestoreDb.collection('users').doc(callerUid).get();
+          if (authorDoc.exists) {
+            const data = authorDoc.data();
+            if (data.name && typeof data.name === 'string' && data.name.trim().length > 0) {
+              verifiedAuthorName = data.name.trim();
+            }
+            if (data.avatarUrl && typeof data.avatarUrl === 'string') {
+              verifiedAuthorAvatar = data.avatarUrl;
+            }
           }
-          if (data.avatarUrl && typeof data.avatarUrl === 'string') {
-            verifiedAuthorAvatar = data.avatarUrl;
-          }
+        } catch (authorErr) {
+          console.warn(`[ChatNotify] Could not fetch author profile for ${callerUid}:`, authorErr.message);
         }
-      } catch (authorErr) {
-        console.warn(`[ChatNotify] Could not fetch author profile for ${callerUid}:`, authorErr.message);
       }
-    }
 
-    // 2. Authoritative target lookup: Server fetches recipient's FCM token from fcmTokens collection
-    let targetToken = null;
-    if (firestoreDb) {
-      const doc = await firestoreDb.collection('fcmTokens').doc(receiverId).get();
-      if (doc.exists) {
-        targetToken = doc.data().token;
+      // 2. Authoritative target lookup: Server fetches recipient's FCM token from fcmTokens collection
+      let targetToken = null;
+      if (firestoreDb) {
+        const doc = await firestoreDb.collection('fcmTokens').doc(receiverId).get();
+        if (doc.exists) {
+          targetToken = doc.data().token;
+        }
       }
+
+      if (!targetToken) {
+        return res.status(404).json({ error: 'Recipient has no registered FCM push token' });
+      }
+
+      const payload = {
+        token: targetToken,
+        notification: {
+          title: verifiedAuthorName,
+          body: String(messageContent || 'Sent a message').substring(0, 500),
+          imageUrl: verifiedAuthorAvatar || undefined,
+        },
+        data: {
+          type: 'CHAT_MESSAGE',
+          messageId: String(messageId),
+          authorName: String(verifiedAuthorName),
+          authorId: String(callerUid),
+          authorAvatar: String(verifiedAuthorAvatar),
+        },
+        android: {
+          priority: 'high',
+        },
+      };
+
+      const result = await messagingService.send(payload);
+      res.json({ success: true, messageId: result });
+    } catch (err) {
+      console.error('Chat FCM Error:', err.message);
+      res.status(500).json({ error: 'Failed to send chat notification' });
     }
-
-    if (!targetToken) {
-      return res.status(404).json({ error: 'Recipient has no registered FCM push token' });
-    }
-
-    const payload = {
-      token: targetToken,
-      notification: {
-        title: verifiedAuthorName,
-        body: String(messageContent || 'Sent a message').substring(0, 500),
-        imageUrl: verifiedAuthorAvatar || undefined,
-      },
-      data: {
-        type: 'CHAT_MESSAGE',
-        messageId: String(messageId),
-        authorName: String(verifiedAuthorName),
-        authorId: String(callerUid),
-        authorAvatar: String(verifiedAuthorAvatar),
-      },
-      android: {
-        priority: 'high',
-      },
-    };
-
-    const result = await messagingService.send(payload);
-    res.json({ success: true, messageId: result });
-  } catch (err) {
-    console.error('Chat FCM Error:', err.message);
-    res.status(500).json({ error: err.message });
   }
-});
+);
 
 // Secure ICE Servers endpoint (Provides STUN / TURN servers)
 app.get('/api/webrtc/ice-servers', authenticateRequest, (req, res) => {
@@ -308,101 +360,107 @@ app.get('/api/webrtc/ice-servers', authenticateRequest, (req, res) => {
  * Securely matches user's local phonebook against registered users in Firestore.
  * Prevents client-side scraping of /users collection while enabling instant contact discovery.
  */
-app.post('/api/contacts/match', apiLimiter, authenticateRequest, async (req, res) => {
-  try {
-    const { phoneNumbers } = req.body;
-    if (!Array.isArray(phoneNumbers) || phoneNumbers.length === 0) {
-      return res.status(400).json({ error: 'phoneNumbers must be a non-empty array' });
-    }
+app.post(
+  '/api/contacts/match',
+  apiLimiter,
+  authenticateRequest,
+  validateBody(MatchContactsSchema),
+  async (req, res) => {
+    try {
+      const { phoneNumbers } = req.body;
 
-    if (!firestoreDb) {
-      return res.status(503).json({ error: 'Firestore database service is currently unavailable' });
-    }
-
-    const sanitizedNumbers = phoneNumbers
-      .slice(0, 500)
-      .map((p) => String(p).trim().replace(/[\s\-\(\)\+]/g, ''))
-      .filter((n) => n.length >= 6);
-
-    const lookupSet = new Set(sanitizedNumbers);
-    const snap = await firestoreDb.collection('users').get();
-    const matches = [];
-
-    snap.forEach((doc) => {
-      const data = doc.data();
-      const phone = data.phone;
-      if (!phone) return;
-
-      const raw = (phone.rawNumber || '').replace(/[\s\-\(\)\+]/g, '');
-      const num = (phone.number || '').replace(/[\s\-\(\)\+]/g, '');
-      const code = (phone.code || '').replace(/[\s\-\(\)\+]/g, '');
-      const codeNum = code + num;
-
-      if (lookupSet.has(raw) || lookupSet.has(num) || lookupSet.has(codeNum)) {
-        matches.push({
-          id: data.id || doc.id,
-          name: data.name || '',
-          avatarUrl: data.avatarUrl || '',
-          phone: data.phone,
-          activityStatus: data.activityStatus || 'offline',
-        });
+      if (!firestoreDb) {
+        return res.status(503).json({ error: 'Firestore database service is currently unavailable' });
       }
-    });
 
-    res.json({ matches });
-  } catch (err) {
-    console.error('[Contacts] Error matching contacts:', err);
-    res.status(500).json({ error: 'Internal error matching contacts' });
+      const sanitizedNumbers = phoneNumbers
+        .slice(0, 500)
+        .map((p) => String(p).trim().replace(/[\s\-\(\)\+]/g, ''))
+        .filter((n) => n.length >= 6);
+
+      const lookupSet = new Set(sanitizedNumbers);
+      const snap = await firestoreDb.collection('users').get();
+      const matches = [];
+
+      snap.forEach((doc) => {
+        const data = doc.data();
+        const phone = data.phone;
+        if (!phone) return;
+
+        const raw = (phone.rawNumber || '').replace(/[\s\-\(\)\+]/g, '');
+        const num = (phone.number || '').replace(/[\s\-\(\)\+]/g, '');
+        const code = (phone.code || '').replace(/[\s\-\(\)\+]/g, '');
+        const codeNum = code + num;
+
+        if (lookupSet.has(raw) || lookupSet.has(num) || lookupSet.has(codeNum)) {
+          matches.push({
+            id: data.id || doc.id,
+            name: data.name || '',
+            avatarUrl: data.avatarUrl || '',
+            phone: data.phone,
+            activityStatus: data.activityStatus || 'offline',
+          });
+        }
+      });
+
+      res.json({ matches });
+    } catch (err) {
+      console.error('[Contacts] Error matching contacts:', err);
+      res.status(500).json({ error: 'Internal error matching contacts' });
+    }
   }
-});
+);
 
 /**
  * POST /api/translate
- * Real-time text translation using Gemini REST API.
+ * Real-time text translation using Gemini REST API with Zod validation.
  */
-app.post('/api/translate', apiLimiter, authenticateRequest, async (req, res) => {
-  const { text, sourceLang, targetLang } = req.body;
-  if (!text || !targetLang) {
-    return res.status(400).json({ error: 'text and targetLang are required' });
-  }
+app.post(
+  '/api/translate',
+  apiLimiter,
+  authenticateRequest,
+  validateBody(TranslateSchema),
+  async (req, res) => {
+    const { text, sourceLang, targetLang } = req.body;
 
-  if (!GEMINI_API_KEY) {
-    return res.status(503).json({ error: 'Gemini API key is not configured on the relay server' });
-  }
-
-  try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-    const prompt = `Translate the following text from ${sourceLang || 'auto'} to ${targetLang}. Output strictly the direct translated text only, without quotes, notes, or preamble:\n\n${text}`;
-
-    const apiRes = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [{ text: prompt }]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 500,
-        }
-      })
-    });
-
-    if (!apiRes.ok) {
-      const errText = await apiRes.text();
-      return res.status(apiRes.status).json({ error: `Gemini API error: ${errText}` });
+    if (!GEMINI_API_KEY) {
+      return res.status(503).json({ error: 'Gemini API key is not configured on the relay server' });
     }
 
-    const data = await apiRes.json();
-    const candidate = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
-    res.json({ translatedText: candidate });
-  } catch (err) {
-    console.error('[Translate] API error:', err);
-    res.status(500).json({ error: err.message });
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+      const prompt = `Translate the following text from ${sourceLang || 'auto'} to ${targetLang}. Output strictly the direct translated text only, without quotes, notes, or preamble:\n\n${text}`;
+
+      const apiRes = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: prompt }]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 500,
+          }
+        })
+      });
+
+      if (!apiRes.ok) {
+        console.error('[Translate] Gemini API HTTP status:', apiRes.status);
+        return res.status(502).json({ error: 'Upstream translation provider error' });
+      }
+
+      const data = await apiRes.json();
+      const candidate = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+      res.json({ translatedText: candidate });
+    } catch (err) {
+      console.error('[Translate] API error:', err);
+      res.status(500).json({ error: 'Translation request failed' });
+    }
   }
-});
+);
 
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws/live-call' });

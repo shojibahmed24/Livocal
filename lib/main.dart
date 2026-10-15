@@ -14,6 +14,7 @@ import 'features/auth/views/welcome.dart';
 
 import 'features/home/views/base.dart';
 import 'package:livocal/shared/widgets/app_auth_guard.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'firebase_options.dart';
 
 import 'package:livocal/features/calls/services/gemini_live_translator.dart';
@@ -50,6 +51,7 @@ void main() async {
 
   try {
     await IsarDb.init();
+    await IsarDb.purgeDisappearingMessages();
   } catch (e, st) {
     debugPrint("IsarDb init error: $e\n$st");
   }
@@ -74,18 +76,28 @@ class Livocal extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+    final locale = ref.watch(appLocaleProvider);
     return MaterialApp(
       title: "Livocal",
       initialRoute: '/',
       theme: ref.read(lightThemeProvider),
       darkTheme: ref.read(darkThemeProvider),
       themeMode: themeMode,
+      locale: locale,
+      supportedLocales: const [
+        Locale('en'),
+        Locale('bn'),
+      ],
       debugShowCheckedModeBanner: false,
       home: StreamBuilder<auth.User?>(
         stream: ref.read(authRepositoryProvider).auth.authStateChanges(),
         builder: (BuildContext context, snapshot) {
+          final firebaseUser = snapshot.data;
+          if (firebaseUser == null) {
+            return const WelcomePage();
+          }
           final user = getCurrentUser();
-          if (user != null) {
+          if (user != null && user.id == firebaseUser.uid) {
             return AppAuthGuard(
               child: HomePage(user: user),
             );
