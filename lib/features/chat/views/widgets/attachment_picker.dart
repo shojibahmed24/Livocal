@@ -1,143 +1,125 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:livocal/theme/app_colors.dart';
+import 'package:livocal/theme/design_tokens.dart';
 import 'package:livocal/theme/theme.dart';
 
 import '../../controllers/chat_controller.dart';
-import 'package:livocal/shared/utils/snackbars.dart';
 import 'buttons.dart';
 
-class AttachmentPicker extends ConsumerStatefulWidget {
+class AttachmentPicker extends ConsumerWidget {
   const AttachmentPicker({super.key});
 
   @override
-  ConsumerState<AttachmentPicker> createState() => _AttachmentPickerState();
-}
-
-class _AttachmentPickerState extends ConsumerState<AttachmentPicker> {
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colorTheme = Theme.of(context).custom.colorTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Material(
       color: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 32.0,
-        ),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16.0),
-          color: Theme.of(context).brightness == Brightness.dark
-              ? colorTheme.appBarColor
-              : colorTheme.backgroundColor,
-        ),
-        child: GridView.count(
-          crossAxisCount: 3,
-          physics: const BouncingScrollPhysics(),
-          shrinkWrap: true,
-          children: [
-            LabelledButton(
-              onTap: () async {
-                Navigator.pop(context);
-                ref
-                    .read(chatControllerProvider.notifier)
-                    .pickDocuments(context);
-              },
-              backgroundColor: Colors.deepPurpleAccent,
-              label: 'Document',
-              child: const Icon(
-                Icons.insert_page_break,
-                size: 28,
-                color: Colors.white,
+      child: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.md,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.large),
+            color: isDark ? colorTheme.appBarColor : colorTheme.backgroundColor,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
               ),
-            ),
-            LabelledButton(
-              onTap: () async {
-                Navigator.pop(context);
-                ref
-                    .read(chatControllerProvider.notifier)
-                    .navigateToCameraView(context);
-              },
-              label: 'Camera',
-              backgroundColor: Colors.redAccent[400],
-              child: const Icon(
-                Icons.camera_alt_rounded,
-                size: 28,
-                color: Colors.white,
-              ),
-            ),
-            LabelledButton(
-              onTap: () async {
-                Navigator.pop(context);
-                ref
-                    .read(chatControllerProvider.notifier)
-                    .pickAttachmentsFromGallery(context);
-              },
-              label: 'Gallery',
-              backgroundColor: Colors.purple[400],
-              child: const Icon(
-                Icons.photo_size_select_actual_rounded,
-                size: 28,
-                color: Colors.white,
-              ),
-            ),
-            if (Platform.isAndroid) ...[
-              LabelledButton(
-                onTap: () async {
-                  Navigator.pop(context);
-                  ref
-                      .read(chatControllerProvider.notifier)
-                      .pickAudioFiles(context);
-                },
-                label: 'Audio',
-                backgroundColor: Colors.orange[900],
-                child: const Icon(
-                  Icons.headphones_rounded,
-                  size: 28,
-                  color: Colors.white,
-                ),
-              )
             ],
-            LabelledButton(
-              onTap: () {
-                Navigator.pop(context);
-                showSnackBar(
-                  context: context,
-                  content: 'Tap the \$ icon in the message bar to send USD payments',
-                  type: SnacBarType.info,
-                );
-              },
-              label: 'Payment',
-              backgroundColor: Colors.teal[600],
-              child: const CircleAvatar(
-                radius: 14,
-                backgroundColor: Colors.white,
-                child: Icon(
-                  Icons.attach_money_rounded,
-                  size: 18,
-                  color: Colors.teal,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white24 : Colors.black12,
+                  borderRadius: BorderRadius.circular(AppRadius.small),
                 ),
               ),
-            ),
-            LabelledButton(
-              onTap: () async {
-                Navigator.pop(context);
-                showSnackBar(
-                  context: context,
-                  content: 'Select contact from the Contacts tab to start a conversation',
-                  type: SnacBarType.info,
-                );
-              },
-              label: 'Contact',
-              backgroundColor: Colors.blue[600],
-              child: const Icon(
-                Icons.person,
-                size: 28,
-                color: Colors.white,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  LabelledButton(
+                    onTap: () async {
+                      HapticFeedback.lightImpact();
+                      Navigator.pop(context);
+                      ref
+                          .read(chatControllerProvider.notifier)
+                          .pickDocuments(context);
+                    },
+                    backgroundColor: const Color(0xFF6750A4),
+                    label: 'Document',
+                    child: const Icon(
+                      Icons.description_rounded,
+                      size: 26,
+                      color: Colors.white,
+                    ),
+                  ),
+                  LabelledButton(
+                    onTap: () async {
+                      HapticFeedback.lightImpact();
+                      Navigator.pop(context);
+                      ref
+                          .read(chatControllerProvider.notifier)
+                          .navigateToCameraView(context);
+                    },
+                    label: 'Camera',
+                    backgroundColor: const Color(0xFFB3261E),
+                    child: const Icon(
+                      Icons.camera_alt_rounded,
+                      size: 26,
+                      color: Colors.white,
+                    ),
+                  ),
+                  LabelledButton(
+                    onTap: () async {
+                      HapticFeedback.lightImpact();
+                      Navigator.pop(context);
+                      ref
+                          .read(chatControllerProvider.notifier)
+                          .pickAttachmentsFromGallery(context);
+                    },
+                    label: 'Gallery',
+                    backgroundColor: const Color(0xFF9C27B0),
+                    child: const Icon(
+                      Icons.photo_library_rounded,
+                      size: 26,
+                      color: Colors.white,
+                    ),
+                  ),
+                  LabelledButton(
+                    onTap: () async {
+                      HapticFeedback.lightImpact();
+                      Navigator.pop(context);
+                      ref
+                          .read(chatControllerProvider.notifier)
+                          .pickAudioFiles(context);
+                    },
+                    label: 'Audio',
+                    backgroundColor: const Color(0xFFE65100),
+                    child: const Icon(
+                      Icons.headphones_rounded,
+                      size: 26,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+              const SizedBox(height: AppSpacing.xs),
+            ],
+          ),
         ),
       ),
     );

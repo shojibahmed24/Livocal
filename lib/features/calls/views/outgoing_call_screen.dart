@@ -1,11 +1,11 @@
 import 'dart:async';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/calls/controllers/call_controller.dart';
 import 'package:livocal/features/calls/models/call_model.dart';
 import 'package:livocal/features/calls/views/active_call_screen.dart';
+import 'package:livocal/features/calls/views/widgets/call_scaffold.dart';
 import 'package:livocal/features/calls/views/widgets/language_picker_sheet.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/theme/app_colors.dart';
@@ -33,7 +33,6 @@ class OutgoingCallScreen extends ConsumerStatefulWidget {
 class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ringController;
-  Timer? _ringbackTimer;
   bool _navigated = false;
 
   @override
@@ -43,10 +42,7 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
       vsync: this,
       duration: const Duration(milliseconds: 2200),
     )..repeat();
-
-    _ringbackTimer = Timer.periodic(const Duration(milliseconds: 2000), (_) {
-      HapticFeedback.lightImpact();
-    });
+    // Note: Timer haptic spam removed; ringback tone & network state handle feedback.
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
@@ -75,7 +71,6 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
 
   @override
   void dispose() {
-    _ringbackTimer?.cancel();
     _ringController.dispose();
     super.dispose();
   }
@@ -83,6 +78,7 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
   Future<void> _endCall() async {
     if (_navigated) return;
     _navigated = true;
+    HapticFeedback.heavyImpact();
     await ref.read(callControllerProvider.notifier).endCall(
           recordAsMissed: false,
         );
@@ -144,339 +140,246 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
         statusText = 'Calling...';
     }
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0B141A),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF0A221E),
-              Color(0xFF0B141A),
-              Color(0xFF070D11),
-            ],
+    return CallScaffold(
+      peerName: widget.calleeDisplayName,
+      peerAvatar: widget.callee.avatarUrl,
+      peerPhone: widget.callee.phoneNumber,
+      statusText: statusText,
+      badgeText: 'DTLS-SRTP Encrypted • Gemini Live 3.5 AI',
+      badgeIcon: Icons.lock_outline_rounded,
+      pulseAnimation: _ringController,
+      middleWidget: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFF18252D).withValues(alpha: 0.95),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.45),
+            ),
           ),
-        ),
-        child: SafeArea(
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(height: 16),
-              // Encryption & Gemini Live Badge
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.lock_outline_rounded,
-                    size: 13,
-                    color: Colors.white54,
+                  Icon(
+                    Icons.translate_rounded,
+                    color: AppColors.primary,
+                    size: 16,
                   ),
-                  const SizedBox(width: 5),
+                  SizedBox(width: 6),
                   Text(
-                    'DTLS-SRTP Encrypted • Gemini Live 3.5 AI',
+                    'LIVE VOICE TRANSLATION PAIR (N × N)',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.65),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                      color: AppColors.primary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.7,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              Text(
-                widget.calleeDisplayName,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                statusText,
-                style: const TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const Spacer(),
-              // Pulsing Concentric Avatar Rings
-              SizedBox(
-                width: 240,
-                height: 240,
-                child: AnimatedBuilder(
-                  animation: _ringController,
-                  builder: (context, child) {
-                    return Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        for (int i = 0; i < 3; i++)
-                          Builder(
-                            builder: (context) {
-                              final progress =
-                                  (_ringController.value + (i * 0.33)) % 1.0;
-                              final size = 120.0 + (progress * 115.0);
-                              final opacity = (1.0 - progress) * 0.35;
-                              return Container(
-                                width: size,
-                                height: size,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: AppColors.primary
-                                        .withOpacity(opacity),
-                                    width: 2.0,
-                                  ),
-                                  color: AppColors.primary
-                                      .withOpacity(opacity * 0.25),
-                                ),
-                              );
-                            },
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () async {
+                        final picked = await showUniversalLanguagePicker(
+                          context,
+                          title: 'Your Language',
+                          selectedCode: myLang.code,
+                        );
+                        if (picked != null && mounted) {
+                          await ref
+                              .read(callControllerProvider.notifier)
+                              .setMyLanguage(picked.code);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F191F),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.25),
                           ),
-                        child!,
-                      ],
-                    );
-                  },
-                  child: CircleAvatar(
-                    radius: 60,
-                    backgroundColor: AppColors.darkSurface,
-                    backgroundImage: widget.callee.avatarUrl.isNotEmpty
-                        ? CachedNetworkImageProvider(widget.callee.avatarUrl)
-                        : null,
-                    child: widget.callee.avatarUrl.isEmpty
-                        ? const Icon(
-                            Icons.person_rounded,
-                            size: 56,
-                            color: Colors.white70,
-                          )
-                        : null,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              // Universal Language Pair Selector Pill
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF18252D).withOpacity(0.95),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: AppColors.primary.withOpacity(0.45),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.translate_rounded,
-                            color: AppColors.primary,
-                            size: 16,
-                          ),
-                          SizedBox(width: 6),
-                          Text(
-                            'LIVE VOICE TRANSLATION PAIR (N × N)',
-                            style: TextStyle(
-                              color: AppColors.primary,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.7,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(12),
-                              onTap: () async {
-                                final picked =
-                                    await showUniversalLanguagePicker(
-                                  context,
-                                  title: 'Select Your Language',
-                                  selectedCode: myLang.code,
-                                );
-                                if (picked != null && mounted) {
-                                  await ref
-                                      .read(callControllerProvider.notifier)
-                                      .setMyLanguage(picked.code);
-                                }
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.black26,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Column(
-                                  children: [
-                                    const Text(
-                                      'You Speak & Hear',
-                                      style: TextStyle(
-                                        color: Colors.white54,
-                                        fontSize: 10,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 3),
-                                    Text(
-                                      '${myLang.flagEmoji} ${myLang.nativeName}',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'YOU SPEAK',
+                              style: TextStyle(
+                                color: Colors.white54,
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              ref
-                                  .read(callControllerProvider.notifier)
-                                  .swapLanguages();
-                            },
-                            icon: const Icon(
-                              Icons.swap_horiz_rounded,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                          Expanded(
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(12),
-                              onTap: () async {
-                                final picked =
-                                    await showUniversalLanguagePicker(
-                                  context,
-                                  title: 'Select Peer Language',
-                                  selectedCode: peerLang.code,
-                                );
-                                if (picked != null && mounted) {
-                                  await ref
-                                      .read(callControllerProvider.notifier)
-                                      .setPeerLanguage(picked.code);
-                                }
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.black26,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Column(
-                                  children: [
-                                    const Text(
-                                      'Peer Speaks & Hears',
-                                      style: TextStyle(
-                                        color: Colors.white54,
-                                        fontSize: 10,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 3),
-                                    Text(
-                                      '${peerLang.flagEmoji} ${peerLang.nativeName}',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${myLang.flagEmoji} ${myLang.nativeName}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Bottom Call Control Bar
-              Container(
-                margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF18252D),
-                  borderRadius: BorderRadius.circular(32),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _DialControlButton(
-                      icon: callState.isSpeakerphoneOn
-                          ? Icons.volume_up_rounded
-                          : Icons.hearing_rounded,
-                      label: 'Speaker',
-                      isActive: callState.isSpeakerphoneOn,
-                      onTap: () => ref
-                          .read(callControllerProvider.notifier)
-                          .toggleSpeakerphone(),
-                    ),
-                    _DialControlButton(
-                      icon: callState.isMuted
-                          ? Icons.mic_off_rounded
-                          : Icons.mic_rounded,
-                      label: 'Mute',
-                      isActive: callState.isMuted,
-                      onTap: () => ref
-                          .read(callControllerProvider.notifier)
-                          .toggleMute(),
-                    ),
-                    GestureDetector(
-                      onTap: _endCall,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 58,
-                            height: 58,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFE53935),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.call_end_rounded,
-                              color: Colors.white,
-                              size: 28,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'End',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        ref.read(callControllerProvider.notifier).swapLanguages();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.swap_horiz_rounded,
+                          color: AppColors.primary,
+                          size: 18,
+                        ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  Expanded(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () async {
+                        final picked = await showUniversalLanguagePicker(
+                          context,
+                          title: 'Peer Language',
+                          selectedCode: peerLang.code,
+                        );
+                        if (picked != null && mounted) {
+                          await ref
+                              .read(callControllerProvider.notifier)
+                              .setPeerLanguage(picked.code);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F191F),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'PEER HEARS',
+                              style: TextStyle(
+                                color: Colors.white54,
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${peerLang.flagEmoji} ${peerLang.nativeName}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
+        ),
+      ),
+      bottomWidget: Container(
+        margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF18252D),
+          borderRadius: BorderRadius.circular(32),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _DialControlButton(
+              icon: callState.isSpeakerphoneOn
+                  ? Icons.volume_up_rounded
+                  : Icons.hearing_rounded,
+              label: 'Speaker',
+              isActive: callState.isSpeakerphoneOn,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                ref.read(callControllerProvider.notifier).toggleSpeakerphone();
+              },
+            ),
+            _DialControlButton(
+              icon: callState.isMuted
+                  ? Icons.mic_off_rounded
+                  : Icons.mic_rounded,
+              label: 'Mute',
+              isActive: callState.isMuted,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                ref.read(callControllerProvider.notifier).toggleMute();
+              },
+            ),
+            GestureDetector(
+              onTap: _endCall,
+              child: const Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundColor: Color(0xFFE53935),
+                    child: Icon(
+                      Icons.call_end_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'End',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -507,7 +410,7 @@ class _DialControlButton extends StatelessWidget {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: isActive ? Colors.white : Colors.white.withOpacity(0.1),
+              color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(

@@ -10,6 +10,11 @@ class AppRadius {
   static const double radiusXl = 24.0;
   static const double radiusFull = 999.0;
 
+  static const double small = radiusSm;
+  static const double medium = radiusMd;
+  static const double large = radiusLg;
+  static const double extraLarge = radiusXl;
+
   static const BorderRadius xs = BorderRadius.all(Radius.circular(radiusXs));
   static const BorderRadius sm = BorderRadius.all(Radius.circular(radiusSm));
   static const BorderRadius md = BorderRadius.all(Radius.circular(radiusMd));
@@ -31,6 +36,12 @@ class AppSpacing {
   static const double lg = 16.0;
   static const double xl = 24.0;
   static const double xxl = 32.0;
+
+  static const double extraSmall = xs;
+  static const double small = sm;
+  static const double medium = md;
+  static const double large = lg;
+  static const double extraLarge = xl;
 
   // Convenient vertical spacing widgets
   static const verticalXs = SizedBox(height: xs);

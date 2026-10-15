@@ -1,11 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/calls/controllers/call_controller.dart';
 import 'package:livocal/features/calls/models/call_model.dart';
 import 'package:livocal/features/calls/services/webrtc_call_client.dart';
 import 'package:livocal/features/calls/views/widgets/language_picker_sheet.dart';
-import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/theme/theme.dart';
 
 class ActiveCallScreen extends ConsumerStatefulWidget {
@@ -54,7 +54,16 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
     final peerLang = callState.peerLanguage;
     final peerName = session?.peerName ?? 'AI Interpreter Call';
     final peerAvatar = session?.peerAvatar ?? '';
-    final formattedTime = timeFromSeconds(callState.elapsedSeconds, true);
+    final totalSec = callState.elapsedSeconds;
+    final timerMins = (totalSec ~/ 60).toString().padLeft(2, '0');
+    final timerSecs = (totalSec % 60).toString().padLeft(2, '0');
+    final formattedTime = totalSec >= 3600
+        ? '${(totalSec ~/ 3600).toString().padLeft(2, '0')}:$timerMins:$timerSecs'
+        : '$timerMins:$timerSecs';
+
+    final dynamicLanguageIndicator = callState.translationEnabled && myLang.code != peerLang.code
+        ? '${myLang.nativeName} ⇄ ${peerLang.nativeName}'
+        : (callState.translationEnabled ? '${myLang.nativeName} (Direct)' : 'Direct Voice');
 
     return PopScope(
       canPop: false,
@@ -110,10 +119,11 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                '$formattedTime • HD 16kHz/24kHz PCM (AEC)',
+                                '$formattedTime • $dynamicLanguageIndicator',
                                 style: TextStyle(
                                   color: colorTheme.greyColor,
                                   fontSize: 12,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
@@ -170,6 +180,43 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                           ),
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          controller.retryWebRtc();
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white24,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.refresh_rounded,
+                                size: 14,
+                                color: Colors.white,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'Retry',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -200,19 +247,69 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: Text(
-                            callState.geminiState.label,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                            ),
+                          child: Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  callState.geminiState.label,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                              if (callState.geminiState ==
+                                  GeminiLiveState.error) ...[
+                                const SizedBox(width: 8),
+                                InkWell(
+                                  onTap: () {
+                                    HapticFeedback.lightImpact();
+                                    controller.retryTranslation();
+                                  },
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber.shade800,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.refresh_rounded,
+                                          size: 13,
+                                          color: Colors.white,
+                                        ),
+                                        SizedBox(width: 3),
+                                        Text(
+                                          'Retry',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
                         Switch.adaptive(
                           value: callState.translationEnabled,
                           activeColor: colorTheme.greenColor,
-                          onChanged: controller.toggleTranslationEnabled,
+                          onChanged: (val) {
+                            HapticFeedback.lightImpact();
+                            controller.toggleTranslationEnabled(val);
+                          },
                         ),
                       ],
                     ),
@@ -452,13 +549,14 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                     ),
                     _CallControlButton(
                       icon: Icons.translate_rounded,
-                      label: '${myLang.codeUpper}⇄${peerLang.codeUpper}',
+                      label: callState.translationEnabled ? 'Translate On' : 'Translate Off',
                       isActive: callState.translationEnabled,
                       activeColor: const Color(0xFF53BDEC),
-                      onTap: controller.swapLanguages,
+                      onTap: () => controller.toggleTranslationEnabled(!callState.translationEnabled),
                     ),
                     InkWell(
                       onTap: () async {
+                        HapticFeedback.heavyImpact();
                         await controller.endCall();
                         if (context.mounted) Navigator.of(context).pop();
                       },
@@ -668,7 +766,10 @@ class _CallControlButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
       borderRadius: BorderRadius.circular(24),
       child: Column(
         mainAxisSize: MainAxisSize.min,

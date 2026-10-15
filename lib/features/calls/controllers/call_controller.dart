@@ -806,6 +806,34 @@ class CallController extends StateNotifier<CallControllerState> {
     }
   }
 
+  Future<void> retryTranslation() async {
+    debugPrint('[CallController] User triggered retryTranslation');
+    state = state.copyWith(geminiState: GeminiLiveState.connecting);
+    await _geminiTranslator.disconnect();
+    final ok = await _geminiTranslator.connect(
+      langA: state.myLanguage,
+      langB: state.peerLanguage,
+      bidirectional: state.isBidirectionalSingleDevice,
+    );
+    if (!ok) {
+      state = state.copyWith(geminiState: GeminiLiveState.error);
+      _webrtcClient.setMicrophoneMute(state.isMuted);
+      _webrtcClient.setRemoteAudioVolume(1.0);
+      setAudioMode(CallAudioMode.originalOnly);
+    } else {
+      state = state.copyWith(geminiState: GeminiLiveState.listening);
+      if (state.translationEnabled) {
+        setAudioMode(CallAudioMode.translatedOnly);
+        _webrtcClient.setMicrophoneMute(true);
+      }
+    }
+  }
+
+  Future<void> retryWebRtc() async {
+    debugPrint('[CallController] User triggered retryWebRtc');
+    await _webrtcClient.restartIce();
+  }
+
   Future<void> endCall({bool recordAsMissed = false}) async {
     final current = state.activeSession;
     final duration = state.elapsedSeconds;
