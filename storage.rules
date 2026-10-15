@@ -35,9 +35,13 @@ service firebase.storage {
       allow update, delete: if false;
     }
 
-    // Deprecated legacy root attachments: Deny new uploads; read permitted only if authenticated user is the sender/receiver or filename matches caller UID
+    // Deprecated legacy root attachments: Deny new uploads; read/delete permitted only if authenticated user is the sender/receiver or filename matches caller UID
     match /attachments/{fileName} {
-      allow create, update, delete: if false;
+      allow create, update: if false;
+      allow delete: if request.auth != null && (
+        (resource.metadata != null && resource.metadata.senderId == request.auth.uid) ||
+        fileName.matches(request.auth.uid + '.*')
+      );
       allow read: if request.auth != null && (
         (resource.metadata != null && (
           resource.metadata.senderId == request.auth.uid ||
@@ -63,9 +67,13 @@ service firebase.storage {
         && request.auth.uid == userId;
     }
 
-    // Deprecated legacy root statuses: Deny new uploads; read permitted only for the author
+    // Deprecated legacy root statuses: Deny new uploads; read/delete permitted only for the author
     match /statuses/{fileName} {
-      allow create, update, delete: if false;
+      allow create, update: if false;
+      allow delete: if request.auth != null && (
+        (resource.metadata != null && resource.metadata.authorId == request.auth.uid) ||
+        fileName.matches(request.auth.uid + '.*')
+      );
       allow read: if request.auth != null && (
         (resource.metadata != null && resource.metadata.authorId == request.auth.uid) ||
         fileName.matches(request.auth.uid + '.*')

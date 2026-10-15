@@ -84,8 +84,65 @@ class WebRtcCallClient {
     }
   }
 
+  Timer? _rtpStatsTimer;
+  int _lastRtpBytesSent = 0;
+  int _lastRtpBytesReceived = 0;
+
+  void _startRtpStatsTracking() {
+    _stopRtpStatsTracking();
+    _lastRtpBytesSent = 0;
+    _lastRtpBytesReceived = 0;
+    _rtpStatsTimer = Timer.periodic(const Duration(seconds: 4), (_) async {
+      if (_peerConnection == null) return;
+      try {
+        final reports = await _peerConnection!.getStats();
+        int totalSent = 0;
+        int totalReceived = 0;
+        for (final report in reports) {
+          if (report.type == 'outbound-rtp') {
+            final bs = report.values['bytesSent'];
+            if (bs != null) {
+              totalSent += int.tryParse(bs.toString()) ?? 0;
+            }
+          } else if (report.type == 'inbound-rtp') {
+            final br = report.values['bytesReceived'];
+            if (br != null) {
+              totalReceived += int.tryParse(br.toString()) ?? 0;
+            }
+          }
+        }
+
+        if (_lastRtpBytesSent == 0 && totalSent > 0) {
+          _lastRtpBytesSent = totalSent;
+        } else if (totalSent > _lastRtpBytesSent) {
+          final delta = totalSent - _lastRtpBytesSent;
+          NetworkTracker.recordBytesSent(delta);
+          _lastRtpBytesSent = totalSent;
+        }
+
+        if (_lastRtpBytesReceived == 0 && totalReceived > 0) {
+          _lastRtpBytesReceived = totalReceived;
+        } else if (totalReceived > _lastRtpBytesReceived) {
+          final delta = totalReceived - _lastRtpBytesReceived;
+          NetworkTracker.recordBytesReceived(delta);
+          _lastRtpBytesReceived = totalReceived;
+        }
+      } catch (_) {}
+    });
+  }
+
+  void _stopRtpStatsTracking() {
+    _rtpStatsTimer?.cancel();
+    _rtpStatsTimer = null;
+  }
+
   void _updateState(WebRtcCallState state) {
     _currentState = state;
+    if (state == WebRtcCallState.connected) {
+      _startRtpStatsTracking();
+    } else if (state == WebRtcCallState.closed || state == WebRtcCallState.failed) {
+      _stopRtpStatsTracking();
+    }
     if (!_stateController.isClosed) {
       _stateController.add(state);
     }
@@ -431,6 +488,7 @@ class WebRtcCallClient {
   /// Clean up and end call session
   Future<void> endCall() async {
     _updateState(WebRtcCallState.closed);
+    _stopRtpStatsTracking();
 
     await _callDocSubscription?.cancel();
     _callDocSubscription = null;

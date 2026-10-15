@@ -6,10 +6,12 @@ import cors from 'cors';
 import { z } from 'zod';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import crypto from 'crypto';
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
+import { getStorage } from 'firebase-admin/storage';
 
 dotenv.config();
 
@@ -17,6 +19,7 @@ let firebaseApp = null;
 let messagingService = null;
 let firestoreDb = null;
 let authService = null;
+let storageService = null;
 
 let serviceAccount = null;
 
@@ -47,6 +50,7 @@ if (serviceAccount) {
     messagingService = getMessaging(firebaseApp);
     firestoreDb = getFirestore(firebaseApp);
     authService = getAuth(firebaseApp);
+    storageService = getStorage(firebaseApp);
     console.log('[Firebase Admin] Successfully initialized with project:', serviceAccount.project_id);
   } catch (err) {
     console.error('[Firebase Admin] Error initializing:', err.message);
@@ -188,7 +192,124 @@ app.get('/', (req, res) => {
     service: 'Livocal Live Relay Gateway',
     version: '1.0.0',
     status: 'online',
+    privacyPolicy: '/privacy-policy',
   });
+});
+
+// Hosted Public Privacy Policy Page for Google Play & App Store Compliance
+app.get(['/privacy-policy', '/privacy'], (req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Livocal - Privacy Policy</title>
+  <style>
+    :root {
+      --primary: #00A884;
+      --bg: #0b141a;
+      --surface: #111b21;
+      --card: #202c33;
+      --text: #e9edef;
+      --text-muted: #8696a0;
+      --border: #222e35;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 24px 16px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px 24px;
+    }
+    h1 { color: var(--primary); font-size: 28px; margin-bottom: 8px; }
+    .updated { color: var(--text-muted); font-size: 14px; margin-bottom: 24px; }
+    h2 { font-size: 20px; color: #00d7a7; margin-top: 28px; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+    p, li { font-size: 15px; color: var(--text); margin-bottom: 12px; }
+    ul { padding-left: 20px; margin-bottom: 16px; }
+    li { margin-bottom: 6px; }
+    .badge {
+      display: inline-block;
+      background: rgba(0, 168, 132, 0.15);
+      color: var(--primary);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 0;
+      border-left: 4px solid var(--primary);
+    }
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--border); text-align: center; color: var(--text-muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="badge">Official Compliance Document</div>
+    <h1>Livocal Privacy Policy</h1>
+    <div class="updated">Last updated: October 2026 | Effective immediately</div>
+
+    <p>Welcome to <strong>Livocal</strong> ("we", "our", or "the App"). We are committed to safeguarding your privacy and ensuring your communications remain secure, private, and confidential.</p>
+
+    <h2>1. Zero-Retention Real-Time Voice Translation</h2>
+    <div class="card">
+      <p><strong>Strict Ephemeral Processing:</strong> During live cross-lingual calls, spoken audio is streamed ephemerally in-memory through our secure gateway to Google Gemini Live API for instant speech translation.</p>
+      <ul>
+        <li>Audio frames are processed entirely in volatile RAM and are <strong>never written to persistent disk storage</strong>.</li>
+        <li>Voice data is <strong>never used for AI model training</strong> or profiling.</li>
+        <li>When both participants speak the same language, the AI interpreter is automatically bypassed for 100% direct peer-to-peer WebRTC audio.</li>
+      </ul>
+    </div>
+
+    <h2>2. Information We Collect and Process</h2>
+    <ul>
+      <li><strong>Account Credentials:</strong> Your verified phone number, processed via Firebase Authentication for secure SMS OTP login.</li>
+      <li><strong>Profile Information:</strong> Optional display name, about text, and avatar photo stored securely in Cloud Firestore and Firebase Storage.</li>
+      <li><strong>Contacts (Zero Harvesting):</strong> When you look up friends on Livocal, contact phone numbers are normalized and hashed on-device. We <em>do not</em> store, upload, or sell your personal address book.</li>
+      <li><strong>Messages & Media:</strong> Messages and attachments are strictly scoped to the chat participants. Legacy media and ephemeral statuses are access-restricted.</li>
+      <li><strong>Ephemeral Status Updates:</strong> Status stories are automatically purged and deleted after 24 hours.</li>
+    </ul>
+
+    <h2>3. Device Permissions & Purpose</h2>
+    <ul>
+      <li><strong>Microphone:</strong> Required to capture voice for live calls and audio voice notes.</li>
+      <li><strong>Camera & Photo Library:</strong> Required for capturing and sharing photos, videos, and updating your profile picture.</li>
+      <li><strong>Contacts:</strong> Optional permission used solely to identify which of your contacts are already registered on Livocal.</li>
+      <li><strong>Notifications:</strong> Required to alert you of incoming voice calls and chat messages when the app is in the background or device is locked.</li>
+    </ul>
+
+    <h2>4. Security Standards</h2>
+    <p>All network traffic between Livocal and backend services is encrypted using <strong>TLS 1.3</strong>. Peer-to-peer audio streams use <strong>DTLS-SRTP</strong> encryption. App security PINs are protected using hardware-backed keychains (Android Keystore / iOS Keychain).</p>
+
+    <h2>5. Data Deletion and Account Removal</h2>
+    <p>You have full ownership of your data. You may delete individual messages, clear chat histories, or permanently delete your account at any time via <strong>Settings &gt; Account &gt; Delete my account</strong>. Deleting your account irreversibly erases your profile, messages, attachments, and authentication records.</p>
+
+    <h2>6. Contact Us</h2>
+    <p>If you have any questions or privacy inquiries regarding Livocal, please contact our Data Protection Officer at:</p>
+    <p><strong>Email:</strong> <a href="mailto:support@livocal.app">support@livocal.app</a></p>
+
+    <footer>
+      &copy; 2026 Livocal. All rights reserved. Built for secure global voice communication.
+    </footer>
+  </div>
+</body>
+</html>`);
 });
 
 // Send Full-Screen Incoming Call Wakeup Push via FCM
@@ -385,14 +506,29 @@ app.post(
   }
 );
 
-// Secure ICE Servers endpoint (Provides STUN / TURN servers)
+// Secure ICE Servers endpoint (Provides STUN / TURN servers with Ephemeral HMAC-SHA1 support)
 app.get('/api/webrtc/ice-servers', authenticateRequest, (req, res) => {
   const iceServers = [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
     { urls: 'stun:stun2.l.google.com:19302' },
   ];
-  if (process.env.TURN_URL && process.env.TURN_USERNAME && process.env.TURN_CREDENTIAL) {
+
+  if (process.env.TURN_URL && process.env.TURN_SECRET) {
+    // RFC 5766 / Coturn REST API Ephemeral Time-Limited TURN Credentials (HMAC-SHA1)
+    const ttlSeconds = parseInt(process.env.TURN_TTL_SECONDS || '86400', 10);
+    const expiry = Math.floor(Date.now() / 1000) + ttlSeconds;
+    const username = `${expiry}:${req.user.uid}`;
+    const hmac = crypto.createHmac('sha1', process.env.TURN_SECRET);
+    hmac.update(username);
+    const credential = hmac.digest('base64');
+
+    iceServers.push({
+      urls: process.env.TURN_URL,
+      username,
+      credential,
+    });
+  } else if (process.env.TURN_URL && process.env.TURN_USERNAME && process.env.TURN_CREDENTIAL) {
     iceServers.push({
       urls: process.env.TURN_URL,
       username: process.env.TURN_USERNAME,
@@ -400,6 +536,91 @@ app.get('/api/webrtc/ice-servers', authenticateRequest, (req, res) => {
     });
   }
   res.json({ iceServers });
+});
+
+// Admin endpoint to backfill metadata and prune expired legacy statuses (>24h old)
+app.post('/api/admin/cleanup-legacy-storage', authenticateRequest, async (req, res) => {
+  const adminSecret = process.env.ADMIN_SECRET;
+  const authAdminSecret = req.headers['x-admin-secret'];
+  const isAdmin = (adminSecret && authAdminSecret === adminSecret) || req.user?.admin === true;
+  if (!isAdmin) {
+    return res.status(403).json({ error: 'Forbidden: Admin authorization required' });
+  }
+
+  if (!storageService) {
+    return res.status(503).json({ error: 'Firebase Storage service is not initialized' });
+  }
+
+  try {
+    const bucket = storageService.bucket();
+    const stats = {
+      legacyStatusesScanned: 0,
+      expiredStatusesDeleted: 0,
+      statusesBackfilled: 0,
+      legacyAttachmentsScanned: 0,
+      attachmentsBackfilled: 0,
+    };
+
+    // 1. Process legacy statuses
+    const [statusFiles] = await bucket.getFiles({ prefix: 'statuses/' });
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+
+    for (const file of statusFiles) {
+      const parts = file.name.split('/');
+      // Legacy format: statuses/{fileName} (depth == 2)
+      if (parts.length === 2 && parts[1]) {
+        stats.legacyStatusesScanned++;
+        const [meta] = await file.getMetadata();
+        const created = new Date(meta.timeCreated).getTime();
+
+        // Expired status: statuses are strictly ephemeral (24 hours)
+        if (created < oneDayAgo) {
+          await file.delete();
+          stats.expiredStatusesDeleted++;
+        } else {
+          // If created within 24h, backfill authorId if filename starts with userId
+          const fileName = parts[1];
+          const authorMatch = fileName.match(/^([a-zA-Z0-9_-]+)[_.].*/);
+          if (authorMatch && (!meta.metadata || !meta.metadata.authorId)) {
+            await file.setMetadata({
+              metadata: {
+                ...(meta.metadata || {}),
+                authorId: authorMatch[1],
+              },
+            });
+            stats.statusesBackfilled++;
+          }
+        }
+      }
+    }
+
+    // 2. Process legacy attachments
+    const [attachFiles] = await bucket.getFiles({ prefix: 'attachments/' });
+    for (const file of attachFiles) {
+      const parts = file.name.split('/');
+      // Legacy format: attachments/{fileName} (depth == 2)
+      if (parts.length === 2 && parts[1]) {
+        stats.legacyAttachmentsScanned++;
+        const [meta] = await file.getMetadata();
+        const fileName = parts[1];
+        const senderMatch = fileName.match(/^([a-zA-Z0-9_-]+)[_.].*/);
+        if (senderMatch && (!meta.metadata || !meta.metadata.senderId)) {
+          await file.setMetadata({
+            metadata: {
+              ...(meta.metadata || {}),
+              senderId: senderMatch[1],
+            },
+          });
+          stats.attachmentsBackfilled++;
+        }
+      }
+    }
+
+    res.json({ success: true, stats });
+  } catch (err) {
+    console.error('Storage cleanup error:', err.message);
+    res.status(500).json({ error: 'Failed to process legacy storage cleanup', details: err.message });
+  }
 });
 
 /**

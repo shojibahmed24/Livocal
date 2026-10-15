@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 
 class HelpSettingsScreen extends StatelessWidget {
@@ -209,6 +211,23 @@ class HelpSettingsScreen extends StatelessWidget {
                     ),
                   ),
                   actions: [
+                    TextButton(
+                      onPressed: () async {
+                        final uri = Uri.parse(AppConfig.privacyPolicyUrl);
+                        try {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        } catch (e) {
+                          if (context.mounted) {
+                            showSnackBar(
+                              context: context,
+                              content: 'Could not open privacy policy URL: $uri',
+                              type: SnacBarType.error,
+                            );
+                          }
+                        }
+                      },
+                      child: const Text('OPEN ONLINE POLICY', style: TextStyle(color: Color(0xFF00A884))),
+                    ),
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),
                       child: const Text('I UNDERSTAND'),

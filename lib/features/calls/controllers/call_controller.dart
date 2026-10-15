@@ -224,10 +224,11 @@ class CallController extends StateNotifier<CallControllerState> {
     );
 
     if (state.activeSession != null) {
+      final isIncoming = state.activeSession!.isIncoming;
       await repo.updateCallLanguages(
         state.activeSession!.callId,
-        callerLangCode: newMyLang,
-        calleeLangCode: newPeerLang,
+        callerLangCode: isIncoming ? newPeerLang : newMyLang,
+        calleeLangCode: isIncoming ? newMyLang : newPeerLang,
       );
     }
 
@@ -332,22 +333,71 @@ class CallController extends StateNotifier<CallControllerState> {
       }
     });
 
-    // Listen for remote callee accepting, rejecting, or hanging up via Firestore
+    // Listen for remote callee accepting, rejecting, language sync, or hanging up via Firestore
     _firestoreCallSub =
         repo.watchCallSession(session.callId, caller.id).listen((remote) {
-      if (remote == null || state.activeSession == null) return;
-      if (remote.status == CallStateStatus.connected &&
-          state.activeSession!.status != CallStateStatus.connected) {
-        acceptAndConnectCall();
-      } else if (remote.status == CallStateStatus.rejected ||
-          remote.status == CallStateStatus.ended ||
-          remote.status == CallStateStatus.busy ||
-          remote.status == CallStateStatus.missed) {
-        endCall(recordAsMissed: remote.status == CallStateStatus.missed);
-      }
+      if (remote == null) return;
+      _handleRemoteCallUpdate(remote);
     });
 
     return session;
+  }
+
+  /// Centralized bidirectional listener for remote call updates (Caller and Callee)
+  void _handleRemoteCallUpdate(CallSession remote) {
+    if (state.activeSession == null) return;
+
+    // 1. Remote call state transitions
+    if (remote.status == CallStateStatus.connected &&
+        state.activeSession!.status != CallStateStatus.connected) {
+      acceptAndConnectCall();
+    } else if (remote.status == CallStateStatus.rejected ||
+        remote.status == CallStateStatus.ended ||
+        remote.status == CallStateStatus.busy ||
+        remote.status == CallStateStatus.missed) {
+      endCall(recordAsMissed: remote.status == CallStateStatus.missed);
+      return;
+    }
+
+    // 2. Bidirectional language synchronization:
+    // For Caller (!isIncoming): remote peer is Callee -> remote.calleeLangCode
+    // For Callee (isIncoming): remote peer is Caller -> remote.callerLangCode
+    final isCaller = !state.activeSession!.isIncoming;
+    final remotePeerLang = isCaller ? remote.calleeLangCode : remote.callerLangCode;
+
+    if (remotePeerLang.isNotEmpty && remotePeerLang != state.peerLangCode) {
+      debugPrint('[CallController] Remote peer language updated to $remotePeerLang. Synchronizing...');
+      state = state.copyWith(peerLangCode: remotePeerLang);
+      CallRepository.setPeerLanguageCode(remotePeerLang);
+
+      // Dynamically re-evaluate translation bypass vs audio routing if active
+      if (state.activeSession?.status == CallStateStatus.connected) {
+        final langA = CallLanguageRegistry.fromCode(state.myLangCode);
+        final langB = CallLanguageRegistry.fromCode(remotePeerLang);
+
+        if (langA.code == langB.code) {
+          debugPrint('[CallController] Bypass activated: Both users speak ${langA.code}. Disconnecting Gemini.');
+          _geminiTranslator.disconnect();
+          setAudioMode(CallAudioMode.originalOnly);
+          _webrtcClient.setRemoteAudioVolume(1.0);
+        } else if (state.translationEnabled) {
+          if (!_geminiTranslator.isConnected) {
+            _geminiTranslator.connect(
+              langA: langA,
+              langB: langB,
+              bidirectional: state.isBidirectionalSingleDevice,
+            );
+          } else {
+            _geminiTranslator.updateLanguagePair(
+              newLangA: langA,
+              newLangB: langB,
+              bidirectional: state.isBidirectionalSingleDevice,
+            );
+          }
+          setAudioMode(CallAudioMode.translatedOnly);
+        }
+      }
+    }
   }
 
   Future<void> _notifyRemoteCallee(CallSession session) async {
@@ -468,19 +518,14 @@ class CallController extends StateNotifier<CallControllerState> {
       }
     }
 
-    // Listen for remote call termination (Caller or Callee ending the call)
+    // Listen for remote call updates (Caller or Callee ending the call, changing languages, etc.)
     if (_firestoreCallSub == null) {
       final ownUser = getCurrentUser();
       _firestoreCallSub = repo
           .watchCallSession(current.callId, ownUser?.id ?? current.calleeId)
           .listen((remote) {
-        if (remote == null || state.activeSession == null) return;
-        if (remote.status == CallStateStatus.ended ||
-            remote.status == CallStateStatus.rejected ||
-            remote.status == CallStateStatus.busy ||
-            remote.status == CallStateStatus.missed) {
-          endCall(recordAsMissed: remote.status == CallStateStatus.missed);
-        }
+        if (remote == null) return;
+        _handleRemoteCallUpdate(remote);
       });
     }
 
@@ -489,6 +534,20 @@ class CallController extends StateNotifier<CallControllerState> {
       repo.updateCallLanguages(current.callId, calleeLangCode: state.myLangCode);
       if (current.callerLangCode.isNotEmpty && current.callerLangCode != state.peerLangCode) {
         state = state.copyWith(peerLangCode: current.callerLangCode);
+        CallRepository.setPeerLanguageCode(current.callerLangCode);
+      }
+    } else {
+      // Caller syncing Callee's language code from remote call doc snapshot
+      try {
+        final callDoc = await repo.firestore.collection('calls').doc(current.callId).get();
+        final remoteCalleeLang = callDoc.data()?['calleeLangCode'] as String?;
+        if (remoteCalleeLang != null && remoteCalleeLang.isNotEmpty && remoteCalleeLang != state.peerLangCode) {
+          debugPrint('[CallController] Caller detected remote calleeLangCode: $remoteCalleeLang on connect. Syncing...');
+          state = state.copyWith(peerLangCode: remoteCalleeLang);
+          CallRepository.setPeerLanguageCode(remoteCalleeLang);
+        }
+      } catch (e) {
+        debugPrint('[CallController] Error checking initial calleeLangCode: $e');
       }
     }
 

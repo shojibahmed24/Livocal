@@ -37,4 +37,7 @@ class AppConfig {
 
   static String get translateUrl =>
       '$relayHttpBaseUrl/api/translate';
+
+  static String get privacyPolicyUrl =>
+      '$relayHttpBaseUrl/privacy-policy';
 }
