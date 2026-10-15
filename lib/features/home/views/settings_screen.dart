@@ -1,13 +1,16 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:livocal/features/auth/domain/auth_service.dart';
 import 'package:livocal/features/calls/services/gemini_live_translator.dart';
 import 'package:livocal/features/home/views/profile_edit_screen.dart';
+import 'package:livocal/features/settings/views/qr_code_screen.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/shared/widgets/settings_row.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/app_tokens.dart';
 import 'package:livocal/theme/theme.dart';
@@ -52,6 +55,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               title: const Text('System default'),
               value: ThemeMode.system,
               groupValue: currentTheme,
+              activeColor: AppColors.primary,
               onChanged: (mode) {
                 if (mode != null) {
                   ref.read(themeModeProvider.notifier).setThemeMode(mode);
@@ -63,6 +67,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               title: const Text('Light'),
               value: ThemeMode.light,
               groupValue: currentTheme,
+              activeColor: AppColors.primary,
               onChanged: (mode) {
                 if (mode != null) {
                   ref.read(themeModeProvider.notifier).setThemeMode(mode);
@@ -74,6 +79,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               title: const Text('Dark'),
               value: ThemeMode.dark,
               groupValue: currentTheme,
+              activeColor: AppColors.primary,
               onChanged: (mode) {
                 if (mode != null) {
                   ref.read(themeModeProvider.notifier).setThemeMode(mode);
@@ -105,7 +111,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         content: const Text(
-          'Are you sure you want to log out? Your local messages and credentials will be cleared.',
+          'Are you sure you want to log out? Your local messages and credentials will be safely preserved in local storage.',
         ),
         actions: [
           TextButton(
@@ -276,7 +282,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
       body: ListView(
         children: [
-          // User Profile Header Tile
+          // User Profile Header Tile with Real QR Code Access
           InkWell(
             onTap: () async {
               final updated = await Navigator.push<User>(
@@ -295,7 +301,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 children: [
                   CircleAvatar(
                     radius: 32,
-                    backgroundColor: Colors.grey[700],
+                    backgroundColor: AppColors.primary,
                     backgroundImage: _currentUser.avatarUrl.isNotEmpty
                         ? CachedNetworkImageProvider(_currentUser.avatarUrl)
                         : null,
@@ -343,26 +349,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ],
                     ),
                   ),
-                  const Icon(Icons.qr_code_2, color: AppColors.primary),
+                  IconButton(
+                    icon: const Icon(Icons.qr_code_2_rounded, color: AppColors.primary, size: 28),
+                    tooltip: 'View QR Code',
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => QrCodeScreen(user: _currentUser),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
           ),
-          const Divider(thickness: 0.5),
+          const Divider(thickness: 0.5, height: 1),
 
-          // Gemini Live Translation
-          ListTile(
-            leading: const Icon(Icons.auto_awesome, color: AppColors.primary),
-            title: const Text('Gemini Live Voice Translation'),
-            subtitle: const Text('API key, live models & AI voice settings'),
-            onTap: _showGeminiConfigDialog,
-          ),
-
-          // Account
-          ListTile(
-            leading: const Icon(Icons.key_outlined),
-            title: const Text('Account'),
-            subtitle: const Text('Security notifications, change number'),
+          // Section 1: Account & Privacy
+          const SettingsSectionHeader(title: 'Account & Privacy'),
+          SettingsRow(
+            icon: Icons.key_rounded,
+            title: 'Account',
+            subtitle: 'Security notifications, two-step verification, change number',
             onTap: () {
               Navigator.push(
                 context,
@@ -372,12 +383,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               );
             },
           ),
-
-          // Privacy
-          ListTile(
-            leading: const Icon(Icons.lock_outline),
-            title: const Text('Privacy'),
-            subtitle: const Text('Block contacts, disappearing messages'),
+          SettingsRow(
+            icon: Icons.lock_outline_rounded,
+            title: 'Privacy',
+            subtitle: 'Block contacts, disappearing messages, biometric lock',
             onTap: () {
               Navigator.push(
                 context,
@@ -388,21 +397,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
           ),
 
-          // Chats & Theme
-          ListTile(
-            leading: const Icon(Icons.chat_outlined),
-            title: const Text('Chats'),
-            subtitle: Text(
-              'Theme: ${ref.watch(themeModeProvider).name.toUpperCase()}, wallpapers, chat history',
-            ),
+          // Section 2: Preferences
+          const SettingsSectionHeader(title: 'Preferences'),
+          SettingsRow(
+            icon: Icons.palette_outlined,
+            title: 'Chats & Theme',
+            subtitle:
+                'Theme: ${ref.watch(themeModeProvider).name.toUpperCase()}, wallpapers, chat history',
             onTap: _showThemeSelectionDialog,
           ),
-
-          // Notifications
-          ListTile(
-            leading: const Icon(Icons.notifications_none),
-            title: const Text('Notifications'),
-            subtitle: const Text('Message, group & call tones'),
+          SettingsRow(
+            icon: Icons.notifications_none_rounded,
+            title: 'Notifications',
+            subtitle: 'Message, group & incoming call tones, vibration',
             onTap: () {
               Navigator.push(
                 context,
@@ -412,12 +419,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               );
             },
           ),
-
-          // Storage and Data
-          ListTile(
-            leading: const Icon(Icons.data_usage_outlined),
-            title: const Text('Storage and data'),
-            subtitle: const Text('Network usage, local Isar cache'),
+          SettingsRow(
+            icon: Icons.data_usage_rounded,
+            title: 'Storage and data',
+            subtitle: 'Network usage, cache cleaner, media auto-download',
             onTap: () {
               Navigator.push(
                 context,
@@ -427,12 +432,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               );
             },
           ),
-
-          // App Language
-          ListTile(
-            leading: const Icon(Icons.language_outlined),
-            title: const Text('App language'),
-            subtitle: const Text('English (device language) / বাংলা'),
+          SettingsRow(
+            icon: Icons.language_rounded,
+            title: 'App language',
+            subtitle: 'English (device language), বাংলা, हिन्दी, العربية...',
             onTap: () {
               Navigator.push(
                 context,
@@ -443,11 +446,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
           ),
 
-          // Help
-          ListTile(
-            leading: const Icon(Icons.help_outline),
-            title: const Text('Help'),
-            subtitle: const Text('Help centre, contact us, privacy policy'),
+          // Section 3: Advanced & AI Engine (moved from top for clean system-app feel)
+          const SettingsSectionHeader(title: 'Advanced & AI Engine'),
+          SettingsRow(
+            icon: Icons.auto_awesome_rounded,
+            title: 'Gemini Live Voice Engine',
+            subtitle: 'API key, neural voice presets & speech model config',
+            iconColor: const Color(0xFF53BDEC),
+            onTap: _showGeminiConfigDialog,
+          ),
+
+          // Section 4: Support & Community
+          const SettingsSectionHeader(title: 'Support & Community'),
+          SettingsRow(
+            icon: Icons.help_outline_rounded,
+            title: 'Help',
+            subtitle: 'Help centre, contact us, terms & privacy policy',
             onTap: () {
               Navigator.push(
                 context,
@@ -457,11 +471,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               );
             },
           ),
-
-          // Invite a friend
-          ListTile(
-            leading: const Icon(Icons.people_outline),
-            title: const Text('Invite a friend'),
+          SettingsRow(
+            icon: Icons.people_outline_rounded,
+            title: 'Invite a friend',
+            subtitle: 'Share Livocal with contacts & family',
             onTap: () {
               Share.share(
                 'Join me on Livocal — the next-generation chat app with live speech-to-speech AI voice translation! Download here: https://github.com/shojibahmed24/Livocal',
@@ -469,19 +482,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
           ),
 
-          const Divider(thickness: 0.5),
-
-          // Log out
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.redAccent),
-            title: const Text(
-              'Log out',
-              style: TextStyle(
-                color: Colors.redAccent,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            subtitle: const Text('Clear local cache and sign out'),
+          // Section 5: Session
+          const SettingsSectionHeader(title: 'Session'),
+          SettingsRow(
+            icon: Icons.logout_rounded,
+            title: 'Log out',
+            subtitle: 'Clear local credentials and sign out',
+            isDestructive: true,
             onTap: _showLogoutDialog,
           ),
 

@@ -10,6 +10,7 @@ import 'package:livocal/features/status/views/status_view_screen.dart';
 import 'package:livocal/features/status/views/text_status_composer_screen.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/shared/widgets/shimmer_skeleton.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/app_tokens.dart';
 import 'package:livocal/theme/theme.dart';
@@ -28,12 +29,15 @@ class _StatusTabState extends ConsumerState<StatusTab>
   bool get wantKeepAlive => true;
 
   void _openTextStatusComposer() async {
-    await Navigator.push<bool>(
+    final posted = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (_) => TextStatusComposerScreen(user: widget.user),
       ),
     );
+    if (posted == true && mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _pickAndUploadPhotoStatus(ImageSource source) async {
@@ -103,6 +107,7 @@ class _StatusTabState extends ConsumerState<StatusTab>
         );
 
         if (mounted) {
+          setState(() {});
           showSnackBar(
             context: context,
             content: 'Status uploaded successfully',
@@ -172,283 +177,411 @@ class _StatusTabState extends ConsumerState<StatusTab>
     return DateFormat('h:mm a').format(dt);
   }
 
+  Widget _buildStatusAvatar({
+    required String name,
+    required String avatarUrl,
+    required bool isViewed,
+    required bool isDark,
+    double radius = 25,
+  }) {
+    final ringColor = isViewed
+        ? (isDark ? Colors.white38 : Colors.grey.shade400)
+        : AppColors.primary;
+    final borderWidth = isViewed ? 2.0 : 2.5;
+
+    return Container(
+      padding: const EdgeInsets.all(2.5),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: ringColor, width: borderWidth),
+      ),
+      child: CircleAvatar(
+        radius: radius,
+        backgroundColor: const Color(0xFF1F2C34),
+        backgroundImage: avatarUrl.isNotEmpty
+            ? CachedNetworkImageProvider(avatarUrl)
+            : null,
+        child: avatarUrl.isEmpty
+            ? Text(
+                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                style: TextStyle(
+                  fontSize: radius * 0.8,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              )
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: isDark
+          ? const Color(0xFF1F2C34).withValues(alpha: 0.5)
+          : Colors.grey.shade100,
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+          color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusTile({
+    required StatusModel status,
+    required bool isViewed,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      leading: _buildStatusAvatar(
+        name: status.userName,
+        avatarUrl: status.userAvatar,
+        isViewed: isViewed,
+        isDark: isDark,
+      ),
+      title: Text(
+        status.userName,
+        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+      ),
+      subtitle: Text(
+        _formatTime(status.timestamp),
+        style: const TextStyle(fontSize: 13, color: Colors.grey),
+      ),
+      onTap: onTap,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
     final textTheme = Theme.of(context).custom.textTheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = AppColors.primary;
+    const primaryColor = AppColors.primary;
+    final viewedStatusIds = StatusService.getViewedStatusIds();
 
-    return ListView(
-      children: [
-        // Realtime My Status Stream
-        StreamBuilder<StatusModel?>(
-          stream: StatusService.getMyStatusStream(widget.user.id),
-          builder: (context, snapshot) {
-            final myStatus = snapshot.data ?? StatusService.getMyLocalStatus();
+    return RefreshIndicator(
+      onRefresh: () async {
+        setState(() {});
+      },
+      child: ListView(
+        children: [
+          // Realtime My Status Stream
+          StreamBuilder<StatusModel?>(
+            stream: StatusService.getMyStatusStream(widget.user.id),
+            builder: (context, snapshot) {
+              final myStatus = snapshot.data ?? StatusService.getMyLocalStatus();
 
-            return ListTile(
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              leading: GestureDetector(
-                onTap: () {
+              return ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                leading: GestureDetector(
+                  onTap: () async {
+                    if (myStatus != null) {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => StatusViewScreen.single(status: myStatus),
+                        ),
+                      );
+                      if (mounted) setState(() {});
+                    } else {
+                      _showAddStatusOptions();
+                    }
+                  },
+                  child: Stack(
+                    children: [
+                      _buildStatusAvatar(
+                        name: widget.user.name,
+                        avatarUrl: widget.user.avatarUrl,
+                        isViewed: myStatus == null,
+                        isDark: isDark,
+                        radius: 26,
+                      ),
+                      if (myStatus == null)
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            width: 20,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              color: primaryColor,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Theme.of(context).scaffoldBackgroundColor,
+                                width: 2,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.add,
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                title: Text(
+                  'My status',
+                  style: textTheme.titleMedium.copyWith(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  myStatus != null
+                      ? 'Today, ${_formatTime(myStatus.timestamp)}'
+                      : 'Tap to add status update',
+                  style: TextStyle(
+                    color: myStatus != null ? primaryColor : Colors.grey,
+                    fontSize: 13,
+                  ),
+                ),
+                trailing: myStatus != null
+                    ? IconButton(
+                        icon: const Icon(Icons.more_horiz, color: Colors.grey),
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: context,
+                            backgroundColor:
+                                isDark ? const Color(0xFF1F2C34) : Colors.white,
+                            builder: (ctx) => Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ListTile(
+                                  leading: const Icon(Icons.visibility),
+                                  title: const Text('View status'),
+                                  onTap: () async {
+                                    Navigator.pop(ctx);
+                                    await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            StatusViewScreen.single(status: myStatus),
+                                      ),
+                                    );
+                                    if (mounted) setState(() {});
+                                  },
+                                ),
+                                ListTile(
+                                  leading: const Icon(Icons.add),
+                                  title: const Text('Add new status'),
+                                  onTap: () {
+                                    Navigator.pop(ctx);
+                                    _showAddStatusOptions();
+                                  },
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      )
+                    : null,
+                onTap: () async {
                   if (myStatus != null) {
-                    Navigator.push(
+                    await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => StatusViewScreen(status: myStatus),
+                        builder: (_) => StatusViewScreen.single(status: myStatus),
                       ),
                     );
+                    if (mounted) setState(() {});
                   } else {
                     _showAddStatusOptions();
                   }
                 },
-                child: Stack(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(2.5),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: myStatus != null
-                            ? Border.all(color: primaryColor, width: 2.5)
-                            : null,
-                      ),
-                      child: CircleAvatar(
-                        radius: 26,
-                        backgroundColor: Colors.grey[700],
-                        backgroundImage: widget.user.avatarUrl.isNotEmpty
-                            ? CachedNetworkImageProvider(widget.user.avatarUrl)
-                            : null,
-                        child: widget.user.avatarUrl.isEmpty
-                            ? Text(
-                                widget.user.name.isNotEmpty
-                                    ? widget.user.name[0].toUpperCase()
-                                    : '?',
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              )
-                            : null,
-                      ),
-                    ),
-                    if (myStatus == null)
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: primaryColor,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Theme.of(context).scaffoldBackgroundColor,
-                              width: 2,
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.add,
-                            size: 14,
-                            color: Colors.white,
-                          ),
+              );
+            },
+          ),
+
+          // Contacts Status Updates Stream
+          StreamBuilder<List<StatusModel>>(
+            stream: StatusService.getRecentStatusesStream(widget.user.id),
+            builder: (context, snapshot) {
+              // 1. Shimmer Skeleton while loading (avoids "No recent updates" flash!)
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 110,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white12 : Colors.black12,
+                          borderRadius: BorderRadius.circular(4),
                         ),
                       ),
-                  ],
-                ),
-              ),
-              title: Text(
-                'My status',
-                style: textTheme.titleMedium.copyWith(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(
-                myStatus != null
-                    ? 'Today, ${_formatTime(myStatus.timestamp)}'
-                    : 'Tap to add status update',
-                style: TextStyle(
-                  color: myStatus != null ? primaryColor : Colors.grey,
-                  fontSize: 13,
-                ),
-              ),
-              trailing: myStatus != null
-                  ? IconButton(
-                      icon: const Icon(Icons.more_horiz, color: Colors.grey),
-                      onPressed: () {
-                        showModalBottomSheet(
-                          context: context,
-                          backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
-                          builder: (ctx) => Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ListTile(
-                                leading: const Icon(Icons.visibility),
-                                title: const Text('View status'),
-                                onTap: () {
-                                  Navigator.pop(ctx);
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          StatusViewScreen(status: myStatus),
-                                    ),
-                                  );
-                                },
-                              ),
-                              ListTile(
-                                leading: const Icon(Icons.add),
-                                title: const Text('Add new status'),
-                                onTap: () {
-                                  Navigator.pop(ctx);
-                                  _showAddStatusOptions();
-                                },
-                              ),
-                            ],
+                      const SizedBox(height: 8),
+                      const StatusListShimmerSkeleton(),
+                    ],
+                  ),
+                );
+              }
+
+              // 2. Error state with Retry button
+              if (snapshot.hasError) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.cloud_off_rounded,
+                          size: 48,
+                          color: Colors.red.shade300,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          "Couldn't load status updates",
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton.icon(
+                          onPressed: () => setState(() {}),
+                          icon: const Icon(Icons.refresh_rounded, size: 18),
+                          label: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              final allStatuses = snapshot.data ?? [];
+              if (allStatuses.isEmpty) {
+                return Column(
+                  children: [
+                    _buildSectionHeader('Recent updates', isDark),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.motion_photos_on_outlined,
+                            size: 64,
+                            color: Colors.grey.withValues(alpha: 0.4),
                           ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'No recent updates',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Status updates from your contacts will appear here. They disappear after 24 hours.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 13, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              }
+
+              final recentUpdates = allStatuses
+                  .where((s) => !viewedStatusIds.contains(s.id))
+                  .toList();
+              final viewedUpdates = allStatuses
+                  .where((s) => viewedStatusIds.contains(s.id))
+                  .toList();
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Section: Recent Updates (Unviewed statuses with green ring)
+                  if (recentUpdates.isNotEmpty) ...[
+                    _buildSectionHeader('Recent updates', isDark),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: recentUpdates.length,
+                      itemBuilder: (context, idx) {
+                        final status = recentUpdates[idx];
+                        return _buildStatusTile(
+                          status: status,
+                          isViewed: false,
+                          isDark: isDark,
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => StatusViewScreen(
+                                  statuses: recentUpdates,
+                                  initialIndex: idx,
+                                ),
+                              ),
+                            );
+                            if (mounted) setState(() {});
+                          },
                         );
                       },
-                    )
-                  : null,
-              onTap: () {
-                if (myStatus != null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => StatusViewScreen(status: myStatus),
-                    ),
-                  );
-                } else {
-                  _showAddStatusOptions();
-                }
-              },
-            );
-          },
-        ),
-
-        // Section Divider Header
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          color: isDark
-              ? const Color(0xFF1F2C34).withOpacity(0.5)
-              : Colors.grey[200],
-          child: const Text(
-            'Recent updates',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
-            ),
-          ),
-        ),
-
-        // Stream of recent statuses from other contacts
-        StreamBuilder<List<StatusModel>>(
-          stream: StatusService.getRecentStatusesStream(widget.user.id),
-          builder: (context, snapshot) {
-            final statuses = snapshot.data ?? [];
-            if (statuses.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.motion_photos_on_outlined,
-                      size: 64,
-                      color: Colors.grey.withOpacity(0.4),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'No recent updates',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Status updates from your contacts will appear here. They disappear after 24 hours.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 13, color: Colors.grey),
                     ),
                   ],
-                ),
-              );
-            }
 
-            return ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: statuses.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final status = statuses[index];
-                return ListTile(
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  leading: Container(
-                    padding: const EdgeInsets.all(2.5),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: primaryColor, width: 2.5),
-                    ),
-                    child: CircleAvatar(
-                      radius: 24,
-                      backgroundColor: Colors.grey[700],
-                      backgroundImage: status.userAvatar.isNotEmpty
-                          ? CachedNetworkImageProvider(status.userAvatar)
-                          : null,
-                      child: status.userAvatar.isEmpty
-                          ? Text(
-                              status.userName.isNotEmpty
-                                  ? status.userName[0].toUpperCase()
-                                  : '?',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                  // Section: Viewed Updates (Viewed statuses with grey ring)
+                  if (viewedUpdates.isNotEmpty) ...[
+                    _buildSectionHeader('Viewed updates', isDark),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: viewedUpdates.length,
+                      itemBuilder: (context, idx) {
+                        final status = viewedUpdates[idx];
+                        return _buildStatusTile(
+                          status: status,
+                          isViewed: true,
+                          isDark: isDark,
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => StatusViewScreen(
+                                  statuses: viewedUpdates,
+                                  initialIndex: idx,
+                                ),
                               ),
-                            )
-                          : null,
+                            );
+                            if (mounted) setState(() {});
+                          },
+                        );
+                      },
                     ),
-                  ),
-                  title: Text(
-                    status.userName,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(
-                    _formatTime(status.timestamp),
-                    style: const TextStyle(fontSize: 13, color: Colors.grey),
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => StatusViewScreen(status: status),
-                      ),
-                    );
-                  },
-                );
-              },
-            );
-          },
-        ),
-
-        const SizedBox(height: 24),
-        Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.privacy_tip_outlined, size: 13, color: Colors.grey),
-              const SizedBox(width: 6),
-              Text(
-                'Your status updates are protected by your privacy settings',
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-              ),
-            ],
+                  ],
+                ],
+              );
+            },
           ),
-        ),
-        const SizedBox(height: 32),
-      ],
+
+          const SizedBox(height: 24),
+          Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.privacy_tip_outlined, size: 13, color: Colors.grey),
+                const SizedBox(width: 6),
+                Text(
+                  'Your status updates are protected by your privacy settings',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
+        ],
+      ),
     );
   }
 }
+

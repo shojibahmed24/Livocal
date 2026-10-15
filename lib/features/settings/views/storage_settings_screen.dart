@@ -277,7 +277,7 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
             title: const Text('Use less data for calls'),
             subtitle: const Text('Optimizes Opus codec audio bitrate during low network connectivity'),
             value: _lessDataForCalls,
-            activeColor: primaryColor,
+            activeTrackColor: AppColors.primary,
             onChanged: (val) {
               setState(() => _lessDataForCalls = val);
               SharedPref.instance.setBool('storage_less_data_calls', val);

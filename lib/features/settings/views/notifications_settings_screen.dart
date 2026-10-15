@@ -82,7 +82,6 @@ class _NotificationsSettingsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Theme.of(context).colorScheme.primary;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -102,6 +101,7 @@ class _NotificationsSettingsScreenState
                   ),
                 ],
               ).then((value) {
+                if (!mounted) return;
                 if (value == 'reset') {
                   setState(() {
                     _conversationTones = true;
@@ -119,11 +119,13 @@ class _NotificationsSettingsScreenState
                   SharedPref.instance.setBool('notif_reactions', true);
                   SharedPref.instance.setString('notif_call_ringtone', 'Default (Livocal)');
                   SharedPref.instance.setString('notif_call_vibrate', 'Default');
-                  showSnackBar(
-                    context: context,
-                    content: 'Notification settings reset to defaults',
-                    type: SnacBarType.info,
-                  );
+                  if (context.mounted) {
+                    showSnackBar(
+                      context: context,
+                      content: 'Notification settings reset to defaults',
+                      type: SnacBarType.info,
+                    );
+                  }
                 }
               });
             },
@@ -136,7 +138,7 @@ class _NotificationsSettingsScreenState
             title: const Text('Conversation tones'),
             subtitle: const Text('Play sounds for incoming and outgoing messages'),
             value: _conversationTones,
-            activeColor: primaryColor,
+            activeTrackColor: AppColors.primary,
             onChanged: (val) {
               setState(() => _conversationTones = val);
               SharedPref.instance.setBool('notif_conv_tones', val);
@@ -184,7 +186,7 @@ class _NotificationsSettingsScreenState
             title: const Text('Use high priority notifications'),
             subtitle: const Text('Show previews of notifications at the top of the screen'),
             value: _highPriority,
-            activeColor: primaryColor,
+            activeTrackColor: AppColors.primary,
             onChanged: (val) {
               setState(() => _highPriority = val);
               SharedPref.instance.setBool('notif_high_priority', val);
@@ -194,7 +196,7 @@ class _NotificationsSettingsScreenState
             title: const Text('Reaction notifications'),
             subtitle: const Text('Show notifications for reactions to messages you send'),
             value: _reactionNotifications,
-            activeColor: primaryColor,
+            activeTrackColor: AppColors.primary,
             onChanged: (val) {
               setState(() => _reactionNotifications = val);
               SharedPref.instance.setBool('notif_reactions', val);

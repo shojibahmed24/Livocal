@@ -206,4 +206,23 @@ class StatusService {
           return <StatusModel>[];
         });
   }
+
+  static Set<String> getViewedStatusIds() {
+    try {
+      final list = SharedPref.instance.getStringList('viewed_status_ids') ?? [];
+      return list.toSet();
+    } catch (_) {
+      return <String>{};
+    }
+  }
+
+  static Future<void> markStatusAsViewed(String statusId) async {
+    if (statusId.isEmpty) return;
+    try {
+      final set = getViewedStatusIds()..add(statusId);
+      await SharedPref.instance.setStringList('viewed_status_ids', set.toList());
+    } catch (e) {
+      debugPrint('[StatusService] markStatusAsViewed error: $e');
+    }
+  }
 }

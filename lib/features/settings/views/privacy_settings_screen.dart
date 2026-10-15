@@ -72,7 +72,6 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Theme.of(context).colorScheme.primary;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -164,7 +163,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
               'If turned off, you won\'t send or receive Read receipts (blue ticks).',
             ),
             value: _readReceipts,
-            activeColor: primaryColor,
+            activeTrackColor: AppColors.primary,
             onChanged: (val) {
               setState(() => _readReceipts = val);
               SharedPref.instance.setBool('privacy_read_receipts', val);
@@ -221,7 +220,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
             title: const Text('Fingerprint lock'),
             subtitle: const Text('Require biometric authentication to open Livocal'),
             value: _fingerprintLock,
-            activeColor: primaryColor,
+            activeTrackColor: AppColors.primary,
             onChanged: (val) async {
               try {
                 final auth = LocalAuthentication();

@@ -267,3 +267,41 @@ class ChatBubbleShimmerSkeleton extends StatelessWidget {
     );
   }
 }
+
+/// Shimmer skeleton for the Status Tab while status updates load from Firestore.
+class StatusListShimmerSkeleton extends StatelessWidget {
+  const StatusListShimmerSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      itemCount: 4,
+      separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
+      itemBuilder: (_, __) {
+        return const Padding(
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          child: Row(
+            children: [
+              AppShimmer.circular(size: 52),
+              SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppShimmer.rectangular(width: 140, height: 16),
+                    SizedBox(height: AppSpacing.xs),
+                    AppShimmer.rectangular(width: 90, height: 12),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+

@@ -93,6 +93,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
 
               if (_twoStepEnabled) {
                 final isCorrect = await SecurePinService.verifyPin(enteredPin);
+                if (!mounted) return;
                 if (!isCorrect) {
                   showSnackBar(
                     context: context,
@@ -102,26 +103,28 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                   return;
                 }
                 await SecurePinService.disablePin();
-                if (mounted) {
-                  setState(() => _twoStepEnabled = false);
+                if (!mounted) return;
+                if (ctx.mounted) {
                   Navigator.pop(ctx);
-                  showSnackBar(
-                    context: context,
-                    content: 'Two-step verification disabled',
-                    type: SnacBarType.info,
-                  );
                 }
+                setState(() => _twoStepEnabled = false);
+                showSnackBar(
+                  context: context,
+                  content: 'Two-step verification disabled',
+                  type: SnacBarType.info,
+                );
               } else {
                 await SecurePinService.setPin(enteredPin);
-                if (mounted) {
-                  setState(() => _twoStepEnabled = true);
+                if (!mounted) return;
+                if (ctx.mounted) {
                   Navigator.pop(ctx);
-                  showSnackBar(
-                    context: context,
-                    content: 'Two-step verification PIN saved in secure storage',
-                    type: SnacBarType.info,
-                  );
                 }
+                setState(() => _twoStepEnabled = true);
+                showSnackBar(
+                  context: context,
+                  content: 'Two-step verification PIN saved in secure storage',
+                  type: SnacBarType.info,
+                );
               }
             },
             child: Text(_twoStepEnabled ? 'CONFIRM DISABLE' : 'ENABLE PIN'),
@@ -196,7 +199,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
               'Show security notifications when encryption keys change for any contact.',
             ),
             value: _securityNotifications,
-            activeColor: primaryColor,
+            activeTrackColor: AppColors.primary,
             onChanged: (val) async {
               setState(() => _securityNotifications = val);
               await SharedPref.instance.setBool('sec_notifications', val);
