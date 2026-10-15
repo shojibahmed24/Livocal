@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:http/http.dart' as http;
 import 'gemini_live_translator.dart';
+import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
 enum WebRtcCallState {
@@ -63,7 +64,7 @@ class WebRtcCallClient {
     try {
       final idToken = await GeminiLiveTranslator.getAuthToken();
       final res = await http.get(
-        Uri.parse('https://livocal-relay.onrender.com/api/webrtc/ice-servers'),
+        Uri.parse(AppConfig.iceServersUrl),
         headers: {
           if (idToken != null) 'Authorization': 'Bearer $idToken',
         },

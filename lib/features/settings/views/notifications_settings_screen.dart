@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
@@ -64,6 +65,8 @@ class _NotificationsSettingsScreenState
                   activeColor: const Color(0xFF00A884),
                   onChanged: (val) {
                     if (val != null) {
+                      SystemSound.play(SystemSoundType.click);
+                      HapticFeedback.selectionClick();
                       onSelected(val);
                       Navigator.pop(ctx);
                     }

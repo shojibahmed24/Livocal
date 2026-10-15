@@ -632,6 +632,24 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
   int unreadCount = 0;
   int prevMsgCount = 0;
   final bannerKey = GlobalKey();
+  int _messageLimit = 100;
+  bool _isLoadingMore = false;
+
+  void _onScroll() {
+    if (scrollController.hasClients &&
+        scrollController.position.pixels >=
+            scrollController.position.maxScrollExtent - 250 &&
+        !_isLoadingMore) {
+      _isLoadingMore = true;
+      _messageLimit += 50;
+      setState(() {
+        messageStream = IsarDb.getChatStream(chatId, limit: _messageLimit);
+      });
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) _isLoadingMore = false;
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -639,14 +657,16 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
     other = ref.read(chatControllerProvider.notifier).other;
     chatId = getChatId(self.id, other.id);
 
-    messageStream = IsarDb.getChatStream(chatId);
+    messageStream = IsarDb.getChatStream(chatId, limit: _messageLimit);
     scrollController = ScrollController();
+    scrollController.addListener(_onScroll);
 
     super.initState();
   }
 
   @override
-  void dispose() async {
+  void dispose() {
+    scrollController.removeListener(_onScroll);
     scrollController.dispose();
     super.dispose();
   }

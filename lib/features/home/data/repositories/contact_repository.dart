@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_contacts/flutter_contacts.dart' show FlutterContacts;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/models/contact.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
@@ -104,7 +105,7 @@ class ContactsRepository {
         final idToken = await auth.FirebaseAuth.instance.currentUser?.getIdToken();
         if (idToken != null && allNormalized.isNotEmpty) {
           final response = await http.post(
-            Uri.parse('https://livocal-relay.onrender.com/api/contacts/match'),
+            Uri.parse(AppConfig.matchContactsUrl),
             headers: {
               'Content-Type': 'application/json',
               'Authorization': 'Bearer $idToken',

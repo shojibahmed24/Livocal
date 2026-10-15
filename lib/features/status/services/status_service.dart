@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:livocal/features/status/models/status_model.dart';
+import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
 class StatusService {
@@ -12,10 +13,34 @@ class StatusService {
 
   static Future<void> postStatus(StatusModel status) async {
     try {
-      // 1. Post to Firestore collection 'statuses'
-      await _firestore.collection('statuses').doc(status.id).set(status.toMap());
+      // 1. Populate privacy and allowedUserIds based on user's privacy setting
+      final privacySetting =
+          SharedPref.instance.getString('status_privacy') ?? 'My contacts';
+      List<String> allowedRecipients = List<String>.from(status.allowedUserIds);
 
-      // 2. Cache my status locally in SharedPref
+      if (allowedRecipients.isEmpty) {
+        try {
+          final contacts = await IsarDb.getContacts();
+          final registeredUids = contacts
+              .map((c) => c.userId)
+              .where((uid) => uid != null && uid.isNotEmpty)
+              .cast<String>()
+              .toSet()
+              .toList();
+          allowedRecipients = registeredUids;
+        } catch (e) {
+          debugPrint('[StatusService] Error getting contacts for status privacy: $e');
+        }
+      }
+
+      final payload = status.toMap();
+      payload['privacy'] = privacySetting;
+      payload['allowedUserIds'] = allowedRecipients;
+
+      // 2. Post to Firestore collection 'statuses'
+      await _firestore.collection('statuses').doc(status.id).set(payload);
+
+      // 3. Cache my status locally in SharedPref
       final myStatusMap = {
         'id': status.id,
         'userId': status.userId,
@@ -25,6 +50,8 @@ class StatusService {
         'mediaUrl': status.mediaUrl,
         'colorValue': status.colorValue,
         'timestamp': status.timestamp.toIso8601String(),
+        'privacy': privacySetting,
+        'allowedUserIds': allowedRecipients,
       };
       await SharedPref.instance.setString('my_last_status', jsonEncode(myStatusMap));
     } catch (e) {
@@ -129,7 +156,11 @@ class StatusService {
           for (final doc in snap.docs) {
             final st = StatusModel.fromMap(doc.data(), doc.id);
             if (st.userId != currentUserId && !st.isExpired) {
-              list.add(st);
+              // Privacy enforcement: only show if current user is in allowedUserIds
+              if (st.allowedUserIds.contains(currentUserId) ||
+                  st.allowedUserIds.isEmpty) {
+                list.add(st);
+              }
             }
           }
           return list;

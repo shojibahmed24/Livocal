@@ -12,6 +12,7 @@ import 'package:livocal/shared/utils/shared_pref.dart';
 import '../../features/chat/models/message.dart';
 import '../../features/calls/services/call_kit_service.dart';
 import '../../features/calls/services/gemini_live_translator.dart';
+import 'package:livocal/shared/constants/app_config.dart';
 
 final pushNotificationsRepoProvider = Provider(
   (ref) => PushNotificationsRepo(FirebaseMessaging.instance, ref),
@@ -55,8 +56,7 @@ class PushNotificationsRepo {
   }
 
   Future<void> sendPushNotification(Message message) async {
-    const String url =
-        'https://livocal-relay.onrender.com/api/notify/chat-message';
+    final String url = AppConfig.chatNotifyMessageUrl;
     final idToken = await GeminiLiveTranslator.getAuthToken();
     final Map<String, String> headers = {
       "Content-Type": "application/json",

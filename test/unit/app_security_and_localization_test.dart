@@ -1,16 +1,20 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
+import 'package:livocal/shared/utils/secure_pin_service.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
 void main() {
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({});
     await SharedPref.init();
   });
 
-  group('AppLocalizations & Strings Tests', () {
+  group('AppLocalizations & Multilingual Strings Tests', () {
     test('English dictionary contains key system translations', () {
       expect(AppStrings.get('chats', 'en'), equals('CHATS'));
       expect(AppStrings.get('status', 'en'), equals('STATUS'));
@@ -25,24 +29,81 @@ void main() {
       expect(AppStrings.get('settings', 'bn'), equals('সেটিংস'));
     });
 
+    test('Hindi dictionary contains key system translations', () {
+      expect(AppStrings.get('chats', 'hi'), equals('चैट'));
+      expect(AppStrings.get('status', 'hi'), equals('स्टेटस'));
+      expect(AppStrings.get('calls', 'hi'), equals('कॉल'));
+      expect(AppStrings.get('settings', 'hi'), equals('सेटिंग्स'));
+    });
+
+    test('Arabic dictionary contains key system translations', () {
+      expect(AppStrings.get('chats', 'ar'), equals('الدردشات'));
+      expect(AppStrings.get('status', 'ar'), equals('الحالة'));
+      expect(AppStrings.get('calls', 'ar'), equals('المكالمات'));
+      expect(AppStrings.get('settings', 'ar'), equals('الإعدادات'));
+    });
+
+    test('Spanish dictionary contains key system translations', () {
+      expect(AppStrings.get('chats', 'es'), equals('CHATS'));
+      expect(AppStrings.get('status', 'es'), equals('ESTADOS'));
+      expect(AppStrings.get('calls', 'es'), equals('LLAMADAS'));
+      expect(AppStrings.get('settings', 'es'), equals('Ajustes'));
+    });
+
+    test('French dictionary contains key system translations', () {
+      expect(AppStrings.get('chats', 'fr'), equals('DISCUSSIONS'));
+      expect(AppStrings.get('status', 'fr'), equals('STATUT'));
+      expect(AppStrings.get('calls', 'fr'), equals('APPELS'));
+      expect(AppStrings.get('settings', 'fr'), equals('Paramètres'));
+    });
+
+    test('German dictionary contains key system translations', () {
+      expect(AppStrings.get('chats', 'de'), equals('CHATS'));
+      expect(AppStrings.get('status', 'de'), equals('STATUS'));
+      expect(AppStrings.get('calls', 'de'), equals('ANRUFE'));
+      expect(AppStrings.get('settings', 'de'), equals('Einstellungen'));
+    });
+
     test('Unknown keys gracefully return fallback', () {
       expect(AppStrings.get('non_existent_key_xyz', 'bn'), equals('non_existent_key_xyz'));
     });
   });
 
-  group('Two-Step PIN Verification Storage Tests', () {
-    test('Two-step PIN can be set, checked, and disabled in SharedPref', () async {
+  group('Hardware-Backed SecurePinService Tests', () {
+    test('PIN lifecycle: set, check, verify, disable, and auto-clean plaintext', () async {
+      await SecurePinService.disablePin();
+      expect(await SecurePinService.isPinSet(), isFalse);
+
+      await SecurePinService.setPin('654321');
+      expect(await SecurePinService.isPinSet(), isTrue);
+      expect(await SecurePinService.verifyPin('654321'), isTrue);
+      expect(await SecurePinService.verifyPin('111111'), isFalse);
       expect(SharedPref.instance.getString('two_step_pin'), isNull);
 
-      await SharedPref.instance.setString('two_step_pin', '123456');
-      expect(SharedPref.instance.getString('two_step_pin'), equals('123456'));
+      await SecurePinService.disablePin();
+      expect(await SecurePinService.isPinSet(), isFalse);
+      expect(await SecurePinService.verifyPin('654321'), isFalse);
+    });
 
-      final currentPin = SharedPref.instance.getString('two_step_pin');
-      expect(currentPin == '123456', isTrue);
-      expect(currentPin == '999999', isFalse);
+    test('Legacy migration: plaintext PIN in SharedPref is migrated to Keystore and purged', () async {
+      await SecurePinService.disablePin();
+      await SharedPref.instance.setString('two_step_pin', '987654');
 
-      await SharedPref.instance.remove('two_step_pin');
+      expect(await SecurePinService.isPinSet(), isTrue);
+      expect(await SecurePinService.verifyPin('987654'), isTrue);
       expect(SharedPref.instance.getString('two_step_pin'), isNull);
+    });
+  });
+
+  group('Centralized AppConfig Tests', () {
+    test('Default relay endpoints resolve properly', () {
+      expect(AppConfig.relayHttpBaseUrl, contains('https://livocal-relay.onrender.com'));
+      expect(AppConfig.relayWsBaseUrl, contains('wss://livocal-relay.onrender.com'));
+      expect(AppConfig.callNotifyIncomingUrl, endsWith('/api/call/notify-incoming'));
+      expect(AppConfig.chatNotifyMessageUrl, endsWith('/api/notify/chat-message'));
+      expect(AppConfig.matchContactsUrl, endsWith('/api/contacts/match'));
+      expect(AppConfig.iceServersUrl, endsWith('/api/webrtc/ice-servers'));
+      expect(AppConfig.liveCallWsUrl, endsWith('/ws/live-call'));
     });
   });
 }

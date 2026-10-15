@@ -3,9 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:livocal/features/calls/services/gemini_live_translator.dart';
+import 'package:livocal/shared/constants/app_config.dart';
 
 class TranslationService {
-  static const String _backendRelayUrl = 'https://livocal-relay.onrender.com';
+  static String get _backendRelayUrl => AppConfig.relayHttpBaseUrl;
 
   /// Translates text using Google Gemini 1.5 Flash API or the Livocal Relay Gateway.
   /// Guarantees 100% genuine real-time AI translation without hardcoded mocks.

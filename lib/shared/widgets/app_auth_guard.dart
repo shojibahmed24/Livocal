@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:livocal/shared/utils/secure_pin_service.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
 class AppAuthGuard extends StatefulWidget {
@@ -14,6 +15,7 @@ class _AppAuthGuardState extends State<AppAuthGuard>
     with WidgetsBindingObserver {
   bool _isLocked = false;
   bool _isAuthenticating = false;
+  bool _twoStepEnabled = false;
   final LocalAuthentication _auth = LocalAuthentication();
   final TextEditingController _pinController = TextEditingController();
   String? _pinError;
@@ -36,11 +38,9 @@ class _AppAuthGuardState extends State<AppAuthGuard>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     final fingerprintEnabled =
         SharedPref.instance.getBool('privacy_fingerprint') ?? false;
-    final twoStepEnabled =
-        SharedPref.instance.getBool('two_step_enabled') ?? false;
 
     if (state == AppLifecycleState.paused) {
-      if (fingerprintEnabled || twoStepEnabled) {
+      if (fingerprintEnabled || _twoStepEnabled) {
         setState(() {
           _isLocked = true;
           _pinController.clear();
@@ -48,31 +48,32 @@ class _AppAuthGuardState extends State<AppAuthGuard>
         });
       }
     } else if (state == AppLifecycleState.resumed) {
+      _checkLockStatus();
       if (_isLocked && !_isAuthenticating && fingerprintEnabled) {
         _authenticate();
       }
     }
   }
 
-  void _checkLockStatus() {
+  Future<void> _checkLockStatus() async {
     final fingerprintEnabled =
         SharedPref.instance.getBool('privacy_fingerprint') ?? false;
-    final twoStepEnabled =
-        SharedPref.instance.getBool('two_step_enabled') ?? false;
+    final twoStep = await SecurePinService.isPinSet();
 
-    if (fingerprintEnabled || twoStepEnabled) {
+    if (mounted) {
       setState(() {
-        _isLocked = true;
+        _twoStepEnabled = twoStep;
+        if (fingerprintEnabled || twoStep) {
+          _isLocked = true;
+        } else {
+          _isLocked = false;
+        }
       });
       if (fingerprintEnabled) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _authenticate();
         });
       }
-    } else {
-      setState(() {
-        _isLocked = false;
-      });
     }
   }
 
@@ -85,12 +86,9 @@ class _AppAuthGuardState extends State<AppAuthGuard>
       final isSupported = await _auth.isDeviceSupported();
 
       if (!canCheck && !isSupported) {
-        // If two-step is enabled, rely on PIN instead
-        final twoStepEnabled =
-            SharedPref.instance.getBool('two_step_enabled') ?? false;
         if (mounted) {
           setState(() {
-            _isLocked = twoStepEnabled;
+            _isLocked = _twoStepEnabled;
             _isAuthenticating = false;
           });
         }
@@ -119,19 +117,21 @@ class _AppAuthGuardState extends State<AppAuthGuard>
     }
   }
 
-  void _verifyPin(String enteredPin) {
-    final savedPin = SharedPref.instance.getString('two_step_pin') ?? '';
-    if (enteredPin == savedPin) {
-      setState(() {
-        _isLocked = false;
-        _pinError = null;
-      });
-      _pinController.clear();
-    } else {
-      setState(() {
-        _pinError = 'Incorrect PIN. Please try again.';
-      });
-      _pinController.clear();
+  Future<void> _verifyPin(String enteredPin) async {
+    final isValid = await SecurePinService.verifyPin(enteredPin);
+    if (mounted) {
+      if (isValid) {
+        setState(() {
+          _isLocked = false;
+          _pinError = null;
+        });
+        _pinController.clear();
+      } else {
+        setState(() {
+          _pinError = 'Incorrect PIN. Please try again.';
+        });
+        _pinController.clear();
+      }
     }
   }
 
@@ -139,10 +139,8 @@ class _AppAuthGuardState extends State<AppAuthGuard>
   Widget build(BuildContext context) {
     final fingerprintEnabled =
         SharedPref.instance.getBool('privacy_fingerprint') ?? false;
-    final twoStepEnabled =
-        SharedPref.instance.getBool('two_step_enabled') ?? false;
 
-    if ((!fingerprintEnabled && !twoStepEnabled) || !_isLocked) {
+    if ((!fingerprintEnabled && !_twoStepEnabled) || !_isLocked) {
       return widget.child;
     }
 
@@ -165,7 +163,7 @@ class _AppAuthGuardState extends State<AppAuthGuard>
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    twoStepEnabled ? Icons.pin_outlined : Icons.fingerprint_rounded,
+                    _twoStepEnabled ? Icons.pin_outlined : Icons.fingerprint_rounded,
                     size: 64,
                     color: primaryColor,
                   ),
@@ -181,7 +179,7 @@ class _AppAuthGuardState extends State<AppAuthGuard>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  twoStepEnabled
+                  _twoStepEnabled
                       ? 'Enter your 6-digit Two-Step Verification PIN to continue'
                       : 'Touch the fingerprint sensor or authenticate to continue',
                   textAlign: TextAlign.center,
@@ -190,7 +188,7 @@ class _AppAuthGuardState extends State<AppAuthGuard>
                     color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
                   ),
                 ),
-                if (twoStepEnabled) ...[
+                if (_twoStepEnabled) ...[
                   const SizedBox(height: 28),
                   SizedBox(
                     width: 220,

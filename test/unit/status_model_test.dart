@@ -44,5 +44,29 @@ void main() {
 
       expect(expiredStatus.isExpired, isTrue);
     });
+
+    test('StatusModel preserves privacy and allowedUserIds across serialization', () {
+      final status = StatusModel(
+        id: 'status_priv',
+        userId: 'user_789',
+        userName: 'Alice',
+        userAvatar: '',
+        text: 'Private Status',
+        colorValue: 0xFF00A884,
+        timestamp: DateTime.now(),
+        privacy: 'My contacts',
+        allowedUserIds: ['user_1', 'user_2'],
+      );
+
+      final map = status.toMap();
+      expect(map['privacy'], equals('My contacts'));
+      expect(map['allowedUserIds'], equals(['user_1', 'user_2']));
+
+      final fromMap = StatusModel.fromMap(map, 'status_priv');
+      expect(fromMap.privacy, equals('My contacts'));
+      expect(fromMap.allowedUserIds, contains('user_1'));
+      expect(fromMap.allowedUserIds, contains('user_2'));
+      expect(fromMap.allowedUserIds.contains('user_3'), isFalse);
+    });
   });
 }

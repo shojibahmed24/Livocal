@@ -876,7 +876,7 @@ wss.on('connection', (clientWs, req) => {
             JSON.stringify({
               type: 'error',
               code: 'GEMINI_UPSTREAM_ERROR',
-              message: String(err?.message || err),
+              message: 'Translation service error occurred. Please try again.',
             })
           );
         }
@@ -901,7 +901,7 @@ wss.on('connection', (clientWs, req) => {
         JSON.stringify({
           type: 'error',
           code: 'CONNECTION_FAILED',
-          message: String(err),
+          message: 'Failed to establish connection with translation service.',
         })
       );
     }

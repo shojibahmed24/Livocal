@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/features/calls/models/call_model.dart';
+import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
 class GeminiModelPreset {
@@ -176,8 +177,7 @@ CRITICAL OPERATING RULES:
   }
 
   static const String prefRelayUrl = 'gemini_live_relay_url';
-  static const String defaultRelayUrl =
-      'wss://livocal-relay.onrender.com/ws/live-call';
+  static String get defaultRelayUrl => AppConfig.liveCallWsUrl;
 
   static String getSavedRelayUrl() =>
       SharedPref.instance.getString(prefRelayUrl)?.trim() ?? defaultRelayUrl;

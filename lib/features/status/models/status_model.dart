@@ -10,6 +10,9 @@ class StatusModel {
   final int colorValue;
   final DateTime timestamp;
 
+  final String privacy;
+  final List<String> allowedUserIds;
+
   const StatusModel({
     required this.id,
     required this.userId,
@@ -19,6 +22,8 @@ class StatusModel {
     this.mediaUrl,
     required this.colorValue,
     required this.timestamp,
+    this.privacy = 'My contacts',
+    this.allowedUserIds = const [],
   });
 
   Map<String, dynamic> toMap() {
@@ -31,6 +36,8 @@ class StatusModel {
       'mediaUrl': mediaUrl,
       'colorValue': colorValue,
       'timestamp': Timestamp.fromDate(timestamp),
+      'privacy': privacy,
+      'allowedUserIds': allowedUserIds,
     };
   }
 
@@ -53,6 +60,11 @@ class StatusModel {
           ? map['colorValue']
           : (int.tryParse(map['colorValue']?.toString() ?? '') ?? 0xFF00A884),
       timestamp: ts,
+      privacy: map['privacy'] ?? 'My contacts',
+      allowedUserIds: (map['allowedUserIds'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
     );
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/auth/domain/auth_service.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/utils/secure_pin_service.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 
@@ -23,8 +24,14 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     super.initState();
     _securityNotifications =
         SharedPref.instance.getBool('sec_notifications') ?? true;
-    _twoStepEnabled =
-        SharedPref.instance.getBool('two_step_enabled') ?? false;
+    _checkTwoStepStatus();
+  }
+
+  Future<void> _checkTwoStepStatus() async {
+    final enabled = await SecurePinService.isPinSet();
+    if (mounted) {
+      setState(() => _twoStepEnabled = enabled);
+    }
   }
 
   void _showTwoStepDialog() {
@@ -84,8 +91,8 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
               }
 
               if (_twoStepEnabled) {
-                final savedPin = SharedPref.instance.getString('two_step_pin') ?? '';
-                if (enteredPin != savedPin) {
+                final isCorrect = await SecurePinService.verifyPin(enteredPin);
+                if (!isCorrect) {
                   showSnackBar(
                     context: context,
                     content: 'Incorrect PIN. Verification failed.',
@@ -93,8 +100,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                   );
                   return;
                 }
-                await SharedPref.instance.remove('two_step_pin');
-                await SharedPref.instance.setBool('two_step_enabled', false);
+                await SecurePinService.disablePin();
                 if (mounted) {
                   setState(() => _twoStepEnabled = false);
                   Navigator.pop(ctx);
@@ -105,14 +111,13 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                   );
                 }
               } else {
-                await SharedPref.instance.setString('two_step_pin', enteredPin);
-                await SharedPref.instance.setBool('two_step_enabled', true);
+                await SecurePinService.setPin(enteredPin);
                 if (mounted) {
                   setState(() => _twoStepEnabled = true);
                   Navigator.pop(ctx);
                   showSnackBar(
                     context: context,
-                    content: 'Two-step verification PIN saved and activated',
+                    content: 'Two-step verification PIN saved in secure storage',
                     type: SnacBarType.info,
                   );
                 }

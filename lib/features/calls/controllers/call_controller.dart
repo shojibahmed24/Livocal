@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/utils/abc.dart';
 
 import 'package:flutter/foundation.dart';
@@ -341,8 +342,7 @@ class CallController extends StateNotifier<CallControllerState> {
   Future<void> _notifyRemoteCallee(CallSession session) async {
     try {
       final idToken = await GeminiLiveTranslator.getAuthToken();
-      final url = Uri.parse(
-          'https://livocal-relay.onrender.com/api/call/notify-incoming');
+      final url = Uri.parse(AppConfig.callNotifyIncomingUrl);
       await http.post(
         url,
         headers: {
