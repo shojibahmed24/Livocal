@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:livocal/theme/app_colors.dart';
-import 'package:livocal/theme/design_tokens.dart';
 
 class CallScaffold extends StatelessWidget {
   final String peerName;
