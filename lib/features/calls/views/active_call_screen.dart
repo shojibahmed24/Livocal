@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/calls/controllers/call_controller.dart';
 import 'package:livocal/features/calls/models/call_model.dart';
+import 'package:livocal/features/calls/services/webrtc_call_client.dart';
 import 'package:livocal/features/calls/views/widgets/language_picker_sheet.dart';
 import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/theme/theme.dart';
@@ -136,6 +137,42 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                   ],
                 ),
               ),
+
+              if (callState.webrtcState == WebRtcCallState.disconnected ||
+                  callState.webrtcState == WebRtcCallState.failed)
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade900.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          callState.webrtcState == WebRtcCallState.disconnected
+                              ? 'Network connection lost. Reconnecting...'
+                              : 'Call connection lost. Disconnecting in 10s...',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
               // 2. Gemini Live AI Status + Dynamic N x N Any-Language Switcher HUD
               Container(
@@ -321,7 +358,9 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                   child: callState.transcripts.isEmpty
                       ? Center(
                           child: Text(
-                            'Speak in ${myLang.nativeName} or ${peerLang.nativeName} — live translated subtitles will appear here.',
+                            callState.translationEnabled
+                                ? 'Speak in ${myLang.nativeName} or ${peerLang.nativeName} — live translated subtitles will appear here.'
+                                : 'Direct voice call active (Zero AI latency). Turn on translation above for live bilingual subtitles.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: colorTheme.greyColor,

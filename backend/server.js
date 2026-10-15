@@ -808,6 +808,11 @@ wss.on('connection', (clientWs, req) => {
                 'Backend GEMINI_API_KEY is not configured yet. Please configure GEMINI_API_KEY in the backend server .env file.',
             })
           );
+          setTimeout(() => {
+            try {
+              clientWs.close(4403, 'MISSING_API_KEY');
+            } catch (_) {}
+          }, 50);
           return;
         }
 

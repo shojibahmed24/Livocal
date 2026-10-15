@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
@@ -215,20 +216,37 @@ class IsarDb {
 
   static Future<void> deleteMessageForEveryoneOnFirestore(
     String messageId,
-    String chatId,
+    String receiverId,
   ) async {
+    final updateData = {
+      'content': '🚫 This message was deleted',
+      'attachment': null,
+      'deletedForEveryone': true,
+    };
+
+    // 1. Update in recipient inbox: chats/{receiverId}/messages/{messageId}
     try {
       await FirebaseFirestore.instance
           .collection('chats')
-          .doc(chatId)
+          .doc(receiverId)
           .collection('messages')
           .doc(messageId)
-          .update({
-        'content': '🚫 This message was deleted',
-        'attachment': null,
-      });
+          .update(updateData);
     } catch (e) {
-      debugPrint('Firestore deleteMessage error: $e');
+      debugPrint('Firestore deleteMessage receiver error: $e');
+    }
+
+    // 2. Also update in sender inbox if stored there
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUid != null && currentUid != receiverId) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('chats')
+            .doc(currentUid)
+            .collection('messages')
+            .doc(messageId)
+            .update(updateData);
+      } catch (_) {}
     }
   }
 

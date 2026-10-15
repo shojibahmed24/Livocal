@@ -38,6 +38,7 @@ class CallControllerState {
   final List<LiveTranscriptEntry> transcripts;
   final List<CallHistoryRecord> callHistory;
   final bool hasApiKey;
+  final WebRtcCallState webrtcState;
 
   const CallControllerState({
     this.activeSession,
@@ -54,6 +55,7 @@ class CallControllerState {
     this.transcripts = const [],
     this.callHistory = const [],
     this.hasApiKey = false,
+    this.webrtcState = WebRtcCallState.idle,
   });
 
   CallLanguage get myLanguage => CallLanguageRegistry.fromCode(myLangCode);
@@ -75,6 +77,7 @@ class CallControllerState {
     List<LiveTranscriptEntry>? transcripts,
     List<CallHistoryRecord>? callHistory,
     bool? hasApiKey,
+    WebRtcCallState? webrtcState,
   }) {
     return CallControllerState(
       activeSession:
@@ -93,6 +96,7 @@ class CallControllerState {
       transcripts: transcripts ?? this.transcripts,
       callHistory: callHistory ?? this.callHistory,
       hasApiKey: hasApiKey ?? this.hasApiKey,
+      webrtcState: webrtcState ?? this.webrtcState,
     );
   }
 }
@@ -105,6 +109,7 @@ class CallController extends StateNotifier<CallControllerState> {
 
   Timer? _callDurationTimer;
   Timer? _callTimeoutTimer;
+  Timer? _networkDropTimer;
   StreamSubscription<Uint8List>? _micStreamSub;
   StreamSubscription<double>? _micRmsSub;
   StreamSubscription<Uint8List>? _geminiAudioSub;
@@ -113,6 +118,7 @@ class CallController extends StateNotifier<CallControllerState> {
   StreamSubscription<bool>? _geminiInterruptedSub;
   StreamSubscription<CallSession?>? _firestoreCallSub;
   StreamSubscription<Uint8List>? _webrtcRemoteTranslatedAudioSub;
+  StreamSubscription<WebRtcCallState>? _webrtcStateSub;
 
   CallController({required this.repo})
       : super(
@@ -478,13 +484,51 @@ class CallController extends StateNotifier<CallControllerState> {
       });
     }
 
+    // Exchange languages and auto-sync peer language code
+    if (current.isIncoming) {
+      repo.updateCallLanguages(current.callId, calleeLangCode: state.myLangCode);
+      if (current.callerLangCode.isNotEmpty && current.callerLangCode != state.peerLangCode) {
+        state = state.copyWith(peerLangCode: current.callerLangCode);
+      }
+    }
+
+    // Subscribe to WebRTC connection state to detect network drops & reconnect
+    _webrtcStateSub?.cancel();
+    _webrtcStateSub = _webrtcClient.stateStream.listen((wState) {
+      debugPrint('[CallController] WebRtcCallState changed to $wState');
+      state = state.copyWith(webrtcState: wState);
+      if (wState == WebRtcCallState.connected) {
+        _networkDropTimer?.cancel();
+        _networkDropTimer = null;
+      } else if (wState == WebRtcCallState.disconnected) {
+        debugPrint('[CallController] WebRTC disconnected, triggering ICE restart and starting 10s timer');
+        _webrtcClient.restartIce();
+        _networkDropTimer?.cancel();
+        _networkDropTimer = Timer(const Duration(seconds: 10), () {
+          if (state.webrtcState == WebRtcCallState.disconnected && state.activeSession != null) {
+            debugPrint('[CallController] WebRTC disconnected for >10s. Auto hanging up.');
+            endCall();
+          }
+        });
+      } else if (wState == WebRtcCallState.failed) {
+        debugPrint('[CallController] WebRTC connection failed, starting 10s timer');
+        _networkDropTimer?.cancel();
+        _networkDropTimer = Timer(const Duration(seconds: 10), () {
+          if (state.webrtcState == WebRtcCallState.failed && state.activeSession != null) {
+            debugPrint('[CallController] WebRTC connection failed for >10s. Auto hanging up.');
+            endCall();
+          }
+        });
+      }
+    });
+
     // 1. Start call duration timer
     _callDurationTimer?.cancel();
     _callDurationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       state = state.copyWith(elapsedSeconds: state.elapsedSeconds + 1);
     });
 
-    final isSameLanguage = myLang.code == peerLang.code;
+    final isSameLanguage = state.myLangCode == state.peerLangCode;
     final shouldTranslate = state.translationEnabled && !isSameLanguage;
 
     if (!shouldTranslate) {
@@ -541,6 +585,12 @@ class CallController extends StateNotifier<CallControllerState> {
     _geminiStateSub = _geminiTranslator.stateStream.listen((gState) {
       _audioPipeline.setAiSpeakingState(gState == GeminiLiveState.speaking);
       state = state.copyWith(geminiState: gState);
+      if (gState == GeminiLiveState.error) {
+        // Fallback to original audio so participants are not left in silence!
+        _webrtcClient.setMicrophoneMute(state.isMuted);
+        _webrtcClient.setRemoteAudioVolume(1.0);
+        setAudioMode(CallAudioMode.originalOnly);
+      }
     });
 
     _geminiAudioSub =
@@ -579,6 +629,30 @@ class CallController extends StateNotifier<CallControllerState> {
       langB: peerLang,
       bidirectional: state.isBidirectionalSingleDevice,
     );
+
+    if (!connectedWs) {
+      debugPrint('[CallController] Gemini connection failed/missing key. Falling back to direct WebRTC audio.');
+      _webrtcClient.setMicrophoneMute(state.isMuted);
+      _webrtcClient.setRemoteAudioVolume(1.0);
+      setAudioMode(CallAudioMode.originalOnly);
+
+      final fallbackBubble = LiveTranscriptEntry(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        speakerId: 'system',
+        speakerName: 'AI Offline — Direct Voice Active',
+        isSelf: false,
+        sourceLangCode: myLang.code,
+        targetLangCode: peerLang.code,
+        originalText: 'AI Interpreter unavailable (missing key/relay). Connected via direct WebRTC voice.',
+        translatedText: 'এআই ইন্টারপ্রেটার অনুপলব্ধ। সরাসরি ভয়েস কলে সংযুক্ত করা হয়েছে।',
+        timestamp: DateTime.now(),
+      );
+      state = state.copyWith(
+        geminiState: GeminiLiveState.error,
+        transcripts: [...state.transcripts, fallbackBubble],
+      );
+      return;
+    }
 
     // Play a pleasant connection chime through the 24kHz PCM stream
     final chime = GeminiLiveTranslator.generateTestVoiceTonePcm24k(durationMs: 360);
@@ -646,19 +720,29 @@ class CallController extends StateNotifier<CallControllerState> {
     state = state.copyWith(translationEnabled: enabled);
     if (!enabled) {
       setAudioMode(CallAudioMode.originalOnly);
+      _webrtcClient.setMicrophoneMute(state.isMuted);
+      _webrtcClient.setRemoteAudioVolume(1.0);
       await _geminiTranslator.disconnect();
     } else {
       if (state.myLangCode != state.peerLangCode) {
         setAudioMode(CallAudioMode.translatedOnly);
+        _webrtcClient.setMicrophoneMute(true);
         if (!_geminiTranslator.isConnected) {
-          await _geminiTranslator.connect(
+          final ok = await _geminiTranslator.connect(
             langA: state.myLanguage,
             langB: state.peerLanguage,
             bidirectional: state.isBidirectionalSingleDevice,
           );
+          if (!ok) {
+            _webrtcClient.setMicrophoneMute(state.isMuted);
+            _webrtcClient.setRemoteAudioVolume(1.0);
+            setAudioMode(CallAudioMode.originalOnly);
+          }
         }
       } else {
         setAudioMode(CallAudioMode.originalOnly);
+        _webrtcClient.setMicrophoneMute(state.isMuted);
+        _webrtcClient.setRemoteAudioVolume(1.0);
       }
     }
   }
@@ -708,6 +792,8 @@ class CallController extends StateNotifier<CallControllerState> {
     _callDurationTimer = null;
     _callTimeoutTimer?.cancel();
     _callTimeoutTimer = null;
+    _networkDropTimer?.cancel();
+    _networkDropTimer = null;
 
     await _micStreamSub?.cancel();
     await _micRmsSub?.cancel();
@@ -718,6 +804,8 @@ class CallController extends StateNotifier<CallControllerState> {
     await _firestoreCallSub?.cancel();
     await _webrtcRemoteTranslatedAudioSub?.cancel();
     _webrtcRemoteTranslatedAudioSub = null;
+    await _webrtcStateSub?.cancel();
+    _webrtcStateSub = null;
 
     await _webrtcClient.endCall();
     await _geminiTranslator.disconnect();

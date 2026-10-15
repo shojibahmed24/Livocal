@@ -348,6 +348,19 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
     });
   }
 
+  Future<void> retrySendMessage(Message message) async {
+    try {
+      await ref
+          .read(firebaseFirestoreRepositoryProvider)
+          .sendMessage(message.copyWith(status: MessageStatus.sent));
+      await IsarDb.updateMessage(message.id, status: MessageStatus.sent);
+      ref.read(pushNotificationsRepoProvider).sendPushNotification(message);
+    } catch (e) {
+      debugPrint('[ChatController] Retry sending message failed: $e');
+      await IsarDb.updateMessage(message.id, status: MessageStatus.pending);
+    }
+  }
+
   void sendMessageWithAttachments(Message message) async {
     if (_other != null) await IsarDb.saveUser(_other!);
     if ({

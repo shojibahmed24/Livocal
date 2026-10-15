@@ -283,7 +283,18 @@ class WebRtcCallClient {
     }
   }
 
+  Future<void> restartIce() async {
+    if (_peerConnection == null) return;
+    try {
+      debugPrint('[WebRtcCallClient] Triggering ICE restart');
+      await _peerConnection!.restartIce();
+    } catch (e) {
+      debugPrint('[WebRtcCallClient] restartIce failed: $e');
+    }
+  }
+
   Future<void> _createPeerConnection() async {
+    await refreshIceServers();
     _peerConnection = await createPeerConnection(_iceConfiguration);
 
     if (_localStream == null) {

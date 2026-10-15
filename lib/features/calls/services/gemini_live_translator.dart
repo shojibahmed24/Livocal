@@ -201,6 +201,7 @@ CRITICAL OPERATING RULES:
     required CallLanguage langA,
     required CallLanguage langB,
     bool bidirectional = true,
+    bool forceDirect = false,
   }) async {
     _langA = langA;
     _langB = langB;
@@ -215,8 +216,8 @@ CRITICAL OPERATING RULES:
     final relayUrl = getSavedRelayUrl();
     final apiKey = getSavedApiKey();
 
-    // 1. Try Backend Relay Server first (Zero-Trust Architecture)
-    if (relayUrl.isNotEmpty) {
+    // 1. Try Backend Relay Server first (Zero-Trust Architecture) unless forced direct
+    if (!forceDirect && relayUrl.isNotEmpty) {
       try {
         debugPrint('Connecting to Gemini Live Backend Relay: $relayUrl');
         final idToken = await getAuthToken();
@@ -244,7 +245,18 @@ CRITICAL OPERATING RULES:
           onDone: () {
             _isConnected = false;
             _setupCompleted = false;
+            final code = _ws?.closeCode;
+            debugPrint('Relay WS closed (code: $code)');
             if (!_disposed) {
+              if (code == 4403) {
+                debugPrint('[GeminiLiveTranslator] Relay rejected with code 4403 (MISSING_API_KEY)');
+                _stateController.add(GeminiLiveState.error);
+                if (apiKey.isNotEmpty) {
+                  debugPrint('Attempting auto-fallback to direct Gemini endpoint with saved API key');
+                  connect(langA: _langA, langB: _langB, forceDirect: true);
+                  return;
+                }
+              }
               _stateController.add(GeminiLiveState.disconnected);
             }
           },
@@ -276,9 +288,9 @@ CRITICAL OPERATING RULES:
         return true;
       } catch (relayErr) {
         debugPrint('Backend Relay connection attempt failed: $relayErr');
-        // If relay failed and no direct API key is set, keep state ready for user
+        // If relay failed and no direct API key is set, set error state
         if (apiKey.isEmpty) {
-          _stateController.add(GeminiLiveState.ready);
+          _stateController.add(GeminiLiveState.error);
           return false;
         }
       }
@@ -286,7 +298,7 @@ CRITICAL OPERATING RULES:
 
     // 2. Direct Fallback to Google Live endpoint if API key exists locally
     if (apiKey.isEmpty) {
-      _stateController.add(GeminiLiveState.ready);
+      _stateController.add(GeminiLiveState.error);
       return false;
     }
 
@@ -483,8 +495,16 @@ CRITICAL OPERATING RULES:
           _stateController.add(GeminiLiveState.listening);
           return;
         } else if (eventType == 'error') {
-          debugPrint('Backend Relay Error: ${data['message']}');
+          final errCode = data['code']?.toString();
+          debugPrint('Backend Relay Error: ${data['message']} (code: $errCode)');
           _stateController.add(GeminiLiveState.error);
+          if (errCode == 'MISSING_API_KEY') {
+            final savedKey = getSavedApiKey();
+            if (savedKey.isNotEmpty) {
+              debugPrint('MISSING_API_KEY received: falling back to direct API key');
+              connect(langA: _langA, langB: _langB, forceDirect: true);
+            }
+          }
           return;
         }
       }

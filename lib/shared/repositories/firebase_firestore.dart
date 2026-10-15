@@ -69,6 +69,7 @@ class FirebaseFirestoreRepo {
           .timeout(const Duration(seconds: 4));
     } catch (e) {
       debugPrint('[FirebaseFirestoreRepo] sendMessage failed for ${message.id}: $e');
+      rethrow;
     }
   }
 
@@ -119,18 +120,35 @@ class FirebaseFirestoreRepo {
 
           final isSystemMessage = docData['action'] != null;
           if (isSystemMessage) {
-            // Ephemeral delivery receipt signals are cleaned up after updating local state
-            docChange.doc.reference.delete();
-            final msg = SystemMessage.fromMap(docData);
-            switch (msg.action) {
-              case MessageAction.statusUpdate:
-                IsarDb.updateMessage(
-                  msg.targetId,
-                  status: MessageStatus.fromValue(msg.update),
-                );
-                break;
+            var deviceId = SharedPref.instance.getString('client_device_id');
+            if (deviceId == null || deviceId.isEmpty) {
+              deviceId = 'dev_${DateTime.now().millisecondsSinceEpoch}';
+              SharedPref.instance.setString('client_device_id', deviceId);
+            }
+
+            final processedBy = List<dynamic>.from(docData['processedBy'] ?? []);
+            if (!processedBy.contains(deviceId)) {
+              final msg = SystemMessage.fromMap(docData);
+              switch (msg.action) {
+                case MessageAction.statusUpdate:
+                  IsarDb.updateMessage(
+                    msg.targetId,
+                    status: MessageStatus.fromValue(msg.update),
+                  );
+                  break;
+              }
+              docChange.doc.reference.update({
+                'processedBy': FieldValue.arrayUnion([deviceId]),
+              }).catchError((_) {});
             }
             continue;
+          }
+
+          // Check if message was deleted for everyone (reflect in local storage & UI)
+          if (docData['deletedForEveryone'] == true ||
+              docData['content'] == '🚫 This message was deleted') {
+            final msgId = docData['id']?.toString() ?? docChange.doc.id;
+            await IsarDb.deleteMessageForEveryone(msgId);
           }
 
           // Real messages are preserved so multi-device sync and message history never get lost

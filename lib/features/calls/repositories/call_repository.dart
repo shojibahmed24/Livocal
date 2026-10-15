@@ -80,17 +80,18 @@ class CallRepository {
 
   Future<void> updateCallLanguages(
     String callId, {
-    required String callerLangCode,
-    required String calleeLangCode,
+    String? callerLangCode,
+    String? calleeLangCode,
   }) async {
     try {
+      final updates = <String, dynamic>{};
+      if (callerLangCode != null) updates['callerLangCode'] = callerLangCode;
+      if (calleeLangCode != null) updates['calleeLangCode'] = calleeLangCode;
+      if (updates.isEmpty) return;
       await firestore
           .collection('calls')
           .doc(callId)
-          .update({
-            'callerLangCode': callerLangCode,
-            'calleeLangCode': calleeLangCode,
-          })
+          .update(updates)
           .timeout(const Duration(seconds: 3));
     } catch (e) {
       debugPrint('[CallRepository] updateCallLanguages failed for $callId: $e');

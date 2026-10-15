@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_emoji/flutter_emoji.dart';
@@ -128,6 +129,30 @@ class _MessageCardState extends State<MessageCard>
                     }
                   },
                 ),
+                if (isSender && widget.message.status == MessageStatus.pending)
+                  ListTile(
+                    leading: const Icon(Icons.refresh_rounded, color: Colors.green),
+                    title: const Text('Resend message'),
+                    onTap: () async {
+                      Navigator.pop(ctx);
+                      try {
+                        await FirebaseFirestore.instance
+                            .collection('chats')
+                            .doc(widget.message.receiverId)
+                            .collection('messages')
+                            .doc(widget.message.id)
+                            .set(widget.message.copyWith(status: MessageStatus.sent).toMap());
+                        await IsarDb.updateMessage(widget.message.id, status: MessageStatus.sent);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Message sent')),
+                          );
+                        }
+                      } catch (e) {
+                        debugPrint('Resend failed: $e');
+                      }
+                    },
+                  ),
                 if (isSender && !isDeleted)
                   ListTile(
                     leading: const Icon(Icons.delete_forever, color: Colors.red),
@@ -137,14 +162,10 @@ class _MessageCardState extends State<MessageCard>
                     ),
                     onTap: () async {
                       Navigator.pop(ctx);
-                      final chatId = getChatId(
-                        widget.message.senderId,
-                        widget.message.receiverId,
-                      );
                       await IsarDb.deleteMessageForEveryone(widget.message.id);
                       await IsarDb.deleteMessageForEveryoneOnFirestore(
                         widget.message.id,
-                        chatId,
+                        widget.message.receiverId,
                       );
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
