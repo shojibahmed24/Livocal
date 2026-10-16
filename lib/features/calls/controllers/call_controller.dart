@@ -622,10 +622,20 @@ class CallController extends StateNotifier<CallControllerState> {
       }
     });
 
-    // 1. Start call duration timer
+    // 1. Start call duration timer with in-call 60s heartbeat metering
     _callDurationTimer?.cancel();
     _callDurationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      state = state.copyWith(elapsedSeconds: state.elapsedSeconds + 1);
+      final newElapsed = state.elapsedSeconds + 1;
+      state = state.copyWith(elapsedSeconds: newElapsed);
+
+      // Trigger 60s heartbeat pulse for translated calls (caller pays)
+      if (newElapsed > 0 && newElapsed % 60 == 0) {
+        final session = state.activeSession;
+        if (session != null && !session.isIncoming && session.isTranslatedCall) {
+          final minuteIndex = newElapsed ~/ 60;
+          _processInCallHeartbeatDeduction(minuteIndex, newElapsed);
+        }
+      }
     });
 
     final isSameLanguage = state.myLangCode == state.peerLangCode;
@@ -875,6 +885,62 @@ class CallController extends StateNotifier<CallControllerState> {
     await _webrtcClient.restartIce();
   }
 
+  bool _lowBalanceAlerted = false;
+
+  /// In-call 60s heartbeat pulse: deducts 1 minute for translated calls.
+  /// Warns user at 2 minutes remaining, and auto-disconnects if balance is exhausted.
+  Future<void> _processInCallHeartbeatDeduction(int minuteIndex, int durationSeconds) async {
+    final session = state.activeSession;
+    if (session == null) return;
+
+    final wRepo = walletRepo ?? (ref != null ? ref!.read(walletRepositoryProvider) : null);
+    if (wRepo == null) return;
+
+    final result = await wRepo.deductMinute(
+      callId: session.callId,
+      callerId: session.callerId,
+      calleeId: session.calleeId,
+      isTranslatedCall: session.isTranslatedCall,
+      durationSeconds: durationSeconds,
+      minuteIndex: minuteIndex,
+    );
+
+    if (result.lowBalanceWarning && !_lowBalanceAlerted) {
+      _lowBalanceAlerted = true;
+      final warningBubble = LiveTranscriptEntry(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        speakerId: 'system',
+        speakerName: 'Livocal Billing',
+        isSelf: true,
+        sourceLangCode: 'en',
+        targetLangCode: 'bn',
+        originalText: '⚠️ Low Balance Warning: You have ${result.remainingMinutes} minute(s) remaining.',
+        translatedText: '⚠️ সতর্কবার্তা: আপনার অ্যাকাউন্টে আর মাত্র ${result.remainingMinutes} মিনিট বাকি আছে।',
+        timestamp: DateTime.now(),
+      );
+      state = state.copyWith(transcripts: [...state.transcripts, warningBubble]);
+    }
+
+    if (result.exhausted) {
+      final exhaustedBubble = LiveTranscriptEntry(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        speakerId: 'system',
+        speakerName: 'Livocal Billing',
+        isSelf: true,
+        sourceLangCode: 'en',
+        targetLangCode: 'bn',
+        originalText: '🛑 Minutes Exhausted: Your call balance has reached 0 minutes. Call disconnected.',
+        translatedText: '🛑 আপনার মিনিট শেষ হয়ে গেছে। কলটি সমাপ্ত করা হচ্ছে।',
+        timestamp: DateTime.now(),
+      );
+      state = state.copyWith(
+        transcripts: [...state.transcripts, exhaustedBubble],
+        error: 'MINUTES_EXHAUSTED',
+      );
+      await endCall(recordAsMissed: false);
+    }
+  }
+
   Future<void> endCall({bool recordAsMissed = false}) async {
     final current = state.activeSession;
     final duration = state.elapsedSeconds;
@@ -885,6 +951,18 @@ class CallController extends StateNotifier<CallControllerState> {
         current.callId,
         recordAsMissed ? CallStateStatus.missed : CallStateStatus.ended,
       );
+
+      // Finalize call billing record if caller in translated call
+      if (!current.isIncoming && current.isTranslatedCall) {
+        final totalMinutesBilled = (duration + 59) ~/ 60;
+        final wRepo = walletRepo ?? (ref != null ? ref!.read(walletRepositoryProvider) : null);
+        wRepo?.finalizeCallBilling(
+          callId: current.callId,
+          totalDurationSeconds: duration,
+          totalMinutesBilled: totalMinutesBilled,
+          isTranslatedCall: true,
+        );
+      }
 
       final record = CallHistoryRecord(
         callId: current.callId,
@@ -916,6 +994,7 @@ class CallController extends StateNotifier<CallControllerState> {
   }
 
   Future<void> _cleanupActiveResources() async {
+    _lowBalanceAlerted = false;
     _callDurationTimer?.cancel();
     _callDurationTimer = null;
     _callTimeoutTimer?.cancel();

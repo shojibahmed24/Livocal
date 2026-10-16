@@ -722,6 +722,157 @@ app.get('/api/wallet/balance', authenticateRequest, async (req, res) => {
   }
 });
 
+// In-call 60s Heartbeat Minute Metering endpoint (Authoritative atomic transaction)
+app.post('/api/wallet/deduct-minute', authenticateRequest, async (req, res) => {
+  const callerUid = req.user.uid;
+  const { callId, callerId, calleeId, isTranslatedCall, durationSeconds, minuteIndex } = req.body || {};
+
+  // Security: only authenticated caller can deduct from their own wallet
+  if (callerId && callerId !== callerUid) {
+    return res.status(403).json({ error: 'Forbidden: Caller ID mismatch' });
+  }
+
+  // Free local call bypass: Same-language or non-translated calls are 100% free!
+  if (!isTranslatedCall) {
+    return res.json({
+      success: true,
+      deducted: 0,
+      isTranslatedCall: false,
+      remainingMinutes: null,
+      message: 'FREE_LOCAL_CALL',
+    });
+  }
+
+  if (!firestoreDb) {
+    return res.status(503).json({ error: 'Firestore database service is currently unavailable' });
+  }
+
+  try {
+    const walletRef = firestoreDb.collection('users').doc(callerUid).collection('wallet').doc('current');
+
+    const result = await firestoreDb.runTransaction(async (t) => {
+      const snap = await t.get(walletRef);
+      if (!snap.exists) {
+        return { status: 404, error: 'Wallet not found' };
+      }
+
+      const data = snap.data();
+      const now = new Date();
+      const trialActive = data.trialActive && (!data.trialExpiresAt || new Date(data.trialExpiresAt) > now);
+      const usableTrial = trialActive ? (data.trialMinutes || 0) : 0;
+      const usableBalance = data.balanceMinutes || 0;
+      const totalEffective = usableTrial + usableBalance;
+
+      if (totalEffective <= 0) {
+        return {
+          status: 402,
+          success: false,
+          exhausted: true,
+          remainingMinutes: 0,
+          message: 'Minutes exhausted. Call disconnected.',
+        };
+      }
+
+      let newTrial = data.trialMinutes || 0;
+      let newBalance = data.balanceMinutes || 0;
+
+      // Deduct from trial minutes first; if depleted, deduct from purchased balance
+      if (trialActive && newTrial > 0) {
+        newTrial -= 1;
+      } else if (newBalance > 0) {
+        newBalance -= 1;
+      }
+
+      const newTotalUsed = (data.totalMinutesUsed || 0) + 1;
+      const remainingMinutes = (trialActive ? newTrial : 0) + newBalance;
+
+      t.update(walletRef, {
+        trialMinutes: newTrial,
+        balanceMinutes: newBalance,
+        totalMinutesUsed: newTotalUsed,
+        updatedAt: now.toISOString(),
+      });
+
+      // Audit ledger record in call_billing_records
+      const billingRef = firestoreDb.collection('call_billing_records').doc();
+      const geminiCostUsd = 0.035; // Gemini 3.5 Live audio cost per minute (~$0.035)
+      const retailBdt = 20.0;     // Freelancer retail price per minute (~৳20)
+      const usdToBdt = 120.0;
+      const costBdt = geminiCostUsd * usdToBdt; // ~4.2 BDT
+      const netProfitBdt = retailBdt - costBdt; // ~15.8 BDT per minute (~79% profit margin)
+
+      t.set(billingRef, {
+        recordId: billingRef.id,
+        callId: callId || 'unknown',
+        callerId: callerUid,
+        calleeId: calleeId || '',
+        isTranslatedCall: true,
+        durationSeconds: durationSeconds || 60,
+        minuteIndex: minuteIndex || newTotalUsed,
+        geminiCostUsd,
+        retailBdt,
+        costBdt,
+        netProfitBdt,
+        remainingMinutesAfter: remainingMinutes,
+        timestamp: now.toISOString(),
+      });
+
+      return {
+        status: 200,
+        success: true,
+        deducted: 1,
+        remainingMinutes,
+        lowBalanceWarning: remainingMinutes === 2 || remainingMinutes === 1,
+        exhausted: remainingMinutes <= 0,
+      };
+    });
+
+    if (result.status !== 200) {
+      return res.status(result.status).json(result);
+    }
+
+    console.log(`[SaaS Billing] Deducted 1 min from ${callerUid} for call ${callId}. Remaining: ${result.remainingMinutes}`);
+    return res.json(result);
+  } catch (err) {
+    console.error('[SaaS Billing] Error deducting minute:', err.message);
+    return res.status(500).json({ error: 'Failed to process minute deduction', message: err.message });
+  }
+});
+
+// Finalize call billing record on hang-up
+app.post('/api/wallet/call-end', authenticateRequest, async (req, res) => {
+  const callerUid = req.user.uid;
+  const { callId, totalDurationSeconds, totalMinutesBilled, isTranslatedCall } = req.body || {};
+
+  if (!firestoreDb) {
+    return res.status(503).json({ error: 'Firestore service unavailable' });
+  }
+
+  try {
+    const summaryRef = firestoreDb.collection('call_summaries').doc(callId || `call_${Date.now()}`);
+    const geminiCostUsd = isTranslatedCall ? (totalMinutesBilled || 0) * 0.035 : 0;
+    const retailBdt = isTranslatedCall ? (totalMinutesBilled || 0) * 20.0 : 0;
+    const netProfitBdt = isTranslatedCall ? retailBdt - (geminiCostUsd * 120.0) : 0;
+
+    await summaryRef.set({
+      callId,
+      callerId: callerUid,
+      totalDurationSeconds: totalDurationSeconds || 0,
+      totalMinutesBilled: totalMinutesBilled || 0,
+      isTranslatedCall: !!isTranslatedCall,
+      geminiCostUsd,
+      retailBdt,
+      netProfitBdt,
+      endedAt: new Date().toISOString(),
+    }, { merge: true });
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.warn('[SaaS Billing] Error saving call summary:', err.message);
+    return res.json({ success: false, error: err.message });
+  }
+});
+
 // Admin endpoint to backfill metadata and prune expired legacy statuses (>24h old)
 app.post('/api/admin/cleanup-legacy-storage', authenticateRequest, async (req, res) => {
   const adminSecret = process.env.ADMIN_SECRET;

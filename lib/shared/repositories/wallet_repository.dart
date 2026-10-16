@@ -115,4 +115,138 @@ class WalletRepository {
 
     return UserWallet.newTrial();
   }
+
+  /// Deducts 1 minute for an active translated call via backend transaction.
+  /// If [isTranslatedCall] is false, this is a free call and immediately returns success without deduction.
+  Future<MinuteDeductionResult> deductMinute({
+    required String callId,
+    required String callerId,
+    String? calleeId,
+    required bool isTranslatedCall,
+    required int durationSeconds,
+    required int minuteIndex,
+  }) async {
+    if (!isTranslatedCall) {
+      return const MinuteDeductionResult(
+        success: true,
+        deducted: 0,
+        remainingMinutes: 999,
+        message: 'FREE_LOCAL_CALL',
+      );
+    }
+
+    try {
+      final currentUser = fb.FirebaseAuth.instance.currentUser;
+      final idToken = await currentUser?.getIdToken();
+      if (idToken != null) {
+        final url = Uri.parse(AppConfig.walletDeductMinuteUrl);
+        final response = await http.post(
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $idToken',
+          },
+          body: jsonEncode({
+            'callId': callId,
+            'callerId': callerId,
+            'calleeId': calleeId ?? '',
+            'isTranslatedCall': true,
+            'durationSeconds': durationSeconds,
+            'minuteIndex': minuteIndex,
+          }),
+        ).timeout(const Duration(seconds: 10));
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          return MinuteDeductionResult(
+            success: true,
+            deducted: data['deducted'] as int? ?? 1,
+            remainingMinutes: data['remainingMinutes'] as int? ?? 0,
+            lowBalanceWarning: data['lowBalanceWarning'] as bool? ?? false,
+            exhausted: data['exhausted'] as bool? ?? false,
+            message: data['message'] as String?,
+          );
+        } else if (response.statusCode == 402) {
+          final data = jsonDecode(response.body);
+          return MinuteDeductionResult(
+            success: false,
+            deducted: 0,
+            remainingMinutes: 0,
+            exhausted: true,
+            message: data['message'] as String? ?? 'Minutes exhausted',
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('[WalletRepository] deductMinute error: $e');
+    }
+
+    // Fallback: check local Firestore wallet
+    try {
+      final wallet = await getWallet(callerId);
+      final hasMin = wallet.hasMinutes;
+      final remaining = wallet.effectiveRemainingMinutes;
+      return MinuteDeductionResult(
+        success: hasMin,
+        deducted: hasMin ? 1 : 0,
+        remainingMinutes: remaining,
+        lowBalanceWarning: remaining <= 2 && remaining > 0,
+        exhausted: !hasMin,
+      );
+    } catch (_) {
+      return const MinuteDeductionResult(
+        success: true,
+        remainingMinutes: 1,
+      );
+    }
+  }
+
+  /// Finalizes call billing record on hang up.
+  Future<void> finalizeCallBilling({
+    required String callId,
+    required int totalDurationSeconds,
+    required int totalMinutesBilled,
+    required bool isTranslatedCall,
+  }) async {
+    try {
+      final currentUser = fb.FirebaseAuth.instance.currentUser;
+      final idToken = await currentUser?.getIdToken();
+      if (idToken != null) {
+        final url = Uri.parse(AppConfig.walletCallEndUrl);
+        await http.post(
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $idToken',
+          },
+          body: jsonEncode({
+            'callId': callId,
+            'totalDurationSeconds': totalDurationSeconds,
+            'totalMinutesBilled': totalMinutesBilled,
+            'isTranslatedCall': isTranslatedCall,
+          }),
+        ).timeout(const Duration(seconds: 8));
+      }
+    } catch (e) {
+      debugPrint('[WalletRepository] finalizeCallBilling error: $e');
+    }
+  }
+}
+
+class MinuteDeductionResult {
+  final bool success;
+  final int deducted;
+  final int remainingMinutes;
+  final bool lowBalanceWarning;
+  final bool exhausted;
+  final String? message;
+
+  const MinuteDeductionResult({
+    required this.success,
+    this.deducted = 0,
+    this.remainingMinutes = 0,
+    this.lowBalanceWarning = false,
+    this.exhausted = false,
+    this.message,
+  });
 }

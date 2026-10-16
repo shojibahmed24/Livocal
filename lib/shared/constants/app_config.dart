@@ -52,4 +52,10 @@ class AppConfig {
 
   static String get walletBalanceUrl =>
       '$relayHttpBaseUrl/api/wallet/balance';
+
+  static String get walletDeductMinuteUrl =>
+      '$relayHttpBaseUrl/api/wallet/deduct-minute';
+
+  static String get walletCallEndUrl =>
+      '$relayHttpBaseUrl/api/wallet/call-end';
 }

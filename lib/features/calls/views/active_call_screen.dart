@@ -72,6 +72,27 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
       },
     );
 
+    ref.listen<CallSession?>(
+      callControllerProvider.select((s) => s.activeSession),
+      (prev, next) {
+        if (next == null && mounted) {
+          final error = ref.read(callControllerProvider).error;
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
+          if (error == 'MINUTES_EXHAUSTED') {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('আপনার মিনিট শেষ হয়ে গেছে। কথা চালিয়ে যেতে রিচার্জ করুন।'),
+                backgroundColor: Colors.redAccent,
+                duration: Duration(seconds: 4),
+              ),
+            );
+          }
+        }
+      },
+    );
+
     final myLang = callState.myLanguage;
     final peerLang = callState.peerLanguage;
     final peerName = session?.peerName ?? 'AI Interpreter Call';
