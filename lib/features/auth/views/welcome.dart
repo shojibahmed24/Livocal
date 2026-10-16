@@ -95,26 +95,58 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
     }
 
     if (!mounted) return;
-    final isBn = ref.read(appLocaleProvider).languageCode == 'bn';
+    bool isBnSelected = ref.read(appLocaleProvider).languageCode == 'bn';
     await showAppDialog(
       context: context,
-      title: isBn ? 'ব্যবহারের শর্তাবলী (Terms)' : 'Terms of Service',
+      title: 'Terms of Service',
       icon: Icons.description_outlined,
       iconColor: AppColors.primary,
-      contentText: isBn
-          ? 'Livocal ব্যবহার করার মাধ্যমে আপনি নিম্নলিখিত শর্তাবলী মেনে নিচ্ছেন:\n\n'
-            '১. আপনার অ্যাকাউন্টের তথ্যের সুরক্ষার দায়িত্ব আপনার নিজের।\n'
-            '২. যোগাযোগের গোপনীয়তাকে শ্রদ্ধা করুন এবং যেকোনো প্রকার হয়রানি থেকে বিরত থাকুন।\n'
-            '৩. লাইভ ভয়েস অনুবাদ সুবিধাটি এআই ইনফারেন্সের মাধ্যমে দুই ভাষার মধ্যে সংযোগ স্থাপন করতে সহায়তা করে।\n'
-            '৪. Livocal কখনোই আপনার ব্যক্তিগত কন্টাক্ট বা মেসেজ ডেটা তৃতীয় পক্ষের কাছে বিক্রি করে না।'
-          : 'By using Livocal, you agree to:\n\n'
-            '1. Accept responsibility for your account activity.\n'
-            '2. Respect communication privacy and refrain from harassment.\n'
-            '3. Understand that real-time voice translation uses AI inference to assist cross-language communication.\n'
-            '4. Acknowledge that Livocal does not sell your private contact or message data to third parties.',
+      content: StatefulBuilder(
+        builder: (ctx, setContentState) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  ChoiceChip(
+                    label: const Text('English', style: TextStyle(fontSize: 12)),
+                    selected: !isBnSelected,
+                    onSelected: (val) => setContentState(() => isBnSelected = !val),
+                    selectedColor: AppColors.primary.withValues(alpha: 0.15),
+                  ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: const Text('বাংলা', style: TextStyle(fontSize: 12)),
+                    selected: isBnSelected,
+                    onSelected: (val) => setContentState(() => isBnSelected = val),
+                    selectedColor: AppColors.primary.withValues(alpha: 0.15),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                isBnSelected
+                    ? 'Livocal ব্যবহার করার মাধ্যমে আপনি নিম্নলিখিত শর্তাবলী মেনে নিচ্ছেন:\n\n'
+                      '১. আপনার অ্যাকাউন্টের তথ্যের সুরক্ষার দায়িত্ব আপনার নিজের।\n\n'
+                      '২. যোগাযোগের গোপনীয়তাকে শ্রদ্ধা করুন এবং যেকোনো প্রকার হয়রানি থেকে বিরত থাকুন।\n\n'
+                      '৩. লাইভ ভয়েস অনুবাদ সুবিধাটি এআই ইনফারেন্সের মাধ্যমে দুই ভাষার মধ্যে সংযোগ স্থাপন করতে সহায়তা করে।\n\n'
+                      '৪. Livocal কখনোই আপনার ব্যক্তিগত কন্টাক্ট বা মেসেজ ডেটা তৃতীয় পক্ষের কাছে বিক্রি করে না।'
+                    : 'By using Livocal, you agree to:\n\n'
+                      '1. Accept responsibility for your account activity.\n\n'
+                      '2. Respect communication privacy and refrain from harassment.\n\n'
+                      '3. Understand that real-time voice translation uses AI inference to assist cross-language communication.\n\n'
+                      '4. Acknowledge that Livocal does not sell your private contact or message data to third parties.',
+                style: const TextStyle(fontSize: 13.5, height: 1.45),
+              ),
+            ],
+          );
+        },
+      ),
       actions: [
         AppDialogAction(
-          label: isBn ? 'বন্ধ করুন' : 'Close',
+          label: 'Close',
           isPrimary: true,
           onPressed: () => Navigator.pop(context),
         ),

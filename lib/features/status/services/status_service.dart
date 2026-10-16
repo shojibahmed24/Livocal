@@ -211,7 +211,8 @@ class StatusService {
     try {
       final list = SharedPref.instance.getStringList('viewed_status_ids') ?? [];
       return list.toSet();
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('[StatusService] getViewedStatusIds error: $e\n$st');
       return <String>{};
     }
   }

@@ -26,21 +26,6 @@ class FirebaseAuthRepository implements AuthenticationRepository {
     String verificationID,
     String smsCode,
   ) async {
-    if (verificationID == 'auth_verif_1721013902' ||
-        verificationID.startsWith('mock_') ||
-        smsCode == '786400') {
-      if (smsCode == '786400') {
-        if (auth.currentUser == null) {
-          try {
-            await auth.signInAnonymously();
-          } catch (e) {
-            debugPrint('signInAnonymously fallback: $e');
-          }
-        }
-        return true;
-      }
-    }
-
     try {
       PhoneAuthCredential credential = PhoneAuthProvider.credential(
         verificationId: verificationID,
@@ -49,18 +34,8 @@ class FirebaseAuthRepository implements AuthenticationRepository {
 
       final userCred = await auth.signInWithCredential(credential);
       return userCred.user != null;
-    } catch (e) {
-      debugPrint('verifyOtp error: $e');
-      if (smsCode == '786400') {
-        if (auth.currentUser == null) {
-          try {
-            await auth.signInAnonymously();
-          } catch (e, st) {
-            debugPrint('[AuthRepository] fallback signInAnonymously error: $e\n$st');
-          }
-        }
-        return true;
-      }
+    } catch (e, st) {
+      debugPrint('[AuthRepository] verifyOtp error: $e\n$st');
       return false;
     }
   }
@@ -72,16 +47,6 @@ class FirebaseAuthRepository implements AuthenticationRepository {
     String phoneNumber,
     void Function(String code) onCodeSent,
   ) async {
-    final cleanPhone = phoneNumber.replaceAll(RegExp(r'\s+|-'), '');
-    if (cleanPhone == '+8801721013902' || cleanPhone.endsWith('1721013902')) {
-      final authId = 'auth_verif_1721013902';
-      onCodeSent(authId);
-      if (context.mounted) {
-        Navigator.pop(context);
-      }
-      return;
-    }
-
     try {
       await auth.verifyPhoneNumber(
         phoneNumber: phoneNumber,

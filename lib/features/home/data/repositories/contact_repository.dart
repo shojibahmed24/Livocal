@@ -104,68 +104,75 @@ class ContactsRepository {
       try {
         final idToken = await auth.FirebaseAuth.instance.currentUser?.getIdToken();
         if (idToken != null && allNormalized.isNotEmpty) {
-          final response = await http.post(
-            Uri.parse(AppConfig.matchContactsUrl),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $idToken',
-            },
-            body: jsonEncode({
-              'phoneNumbers': allNormalized.toList(),
-            }),
-          ).timeout(const Duration(seconds: 10));
+          final allList = allNormalized.toList();
+          for (int i = 0; i < allList.length; i += 500) {
+            final batch = allList.sublist(
+              i,
+              (i + 500 > allList.length) ? allList.length : i + 500,
+            );
+            final response = await http.post(
+              Uri.parse(AppConfig.matchContactsUrl),
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $idToken',
+              },
+              body: jsonEncode({
+                'phoneNumbers': batch,
+              }),
+            ).timeout(const Duration(seconds: 12));
 
-          if (response.statusCode == 200) {
-            final data = jsonDecode(response.body);
-            final matches = data['matches'] as List<dynamic>? ?? [];
-            for (final m in matches) {
-              final map = m as Map<String, dynamic>;
-              final userId = map['id'] as String?;
-              if (userId == null) continue;
-              final phoneData = map['phone'] as Map<String, dynamic>?;
-              final rawNumber = phoneData?['rawNumber'] as String? ?? '';
-              final code = phoneData?['code'] as String? ?? '';
-              final number = phoneData?['number'] as String? ?? '';
-              final avatarUrl = map['avatarUrl'] as String? ?? '';
-              final name = map['name'] as String? ?? '';
+            if (response.statusCode == 200) {
+              final data = jsonDecode(response.body);
+              final matches = data['matches'] as List<dynamic>? ?? [];
+              for (final m in matches) {
+                final map = m as Map<String, dynamic>;
+                final userId = map['id'] as String?;
+                if (userId == null) continue;
+                final phoneData = map['phone'] as Map<String, dynamic>?;
+                final rawNumber = phoneData?['rawNumber'] as String? ?? '';
+                final code = phoneData?['code'] as String? ?? '';
+                final number = phoneData?['number'] as String? ?? '';
+                final avatarUrl = map['avatarUrl'] as String? ?? '';
+                final name = map['name'] as String? ?? '';
 
-              final entry = _FirestoreUser(
-                userId: userId,
-                avatarUrl: avatarUrl,
-                name: name,
-              );
+                final entry = _FirestoreUser(
+                  userId: userId,
+                  avatarUrl: avatarUrl,
+                  name: name,
+                );
 
-              // Cache user in local Isar database so we have it for chats/calls
-              await IsarDb.saveUser(User(
-                id: userId,
-                name: name,
-                avatarUrl: avatarUrl,
-                phone: Phone(
-                  code: code,
-                  number: number,
-                  formattedNumber: rawNumber.isNotEmpty ? rawNumber : '$code$number',
-                ),
-                activityStatus: UserActivityStatus.online,
-              ));
+                // Cache user in local Isar database so we have it for chats/calls
+                await IsarDb.saveUser(User(
+                  id: userId,
+                  name: name,
+                  avatarUrl: avatarUrl,
+                  phone: Phone(
+                    code: code,
+                    number: number,
+                    formattedNumber: rawNumber.isNotEmpty ? rawNumber : '$code$number',
+                  ),
+                  activityStatus: UserActivityStatus.online,
+                ));
 
-              final normalizedRaw = _normalize(rawNumber);
-              final normalizedCodeNum = _normalize('$code$number');
+                final normalizedRaw = _normalize(rawNumber);
+                final normalizedCodeNum = _normalize('$code$number');
 
-              if (normalizedRaw.isNotEmpty) {
-                registeredByPhone[normalizedRaw] = entry;
-                if (normalizedRaw.startsWith('+')) {
-                  registeredByPhone[normalizedRaw.substring(1)] = entry;
+                if (normalizedRaw.isNotEmpty) {
+                  registeredByPhone[normalizedRaw] = entry;
+                  if (normalizedRaw.startsWith('+')) {
+                    registeredByPhone[normalizedRaw.substring(1)] = entry;
+                  }
+                }
+                if (normalizedCodeNum.isNotEmpty && normalizedCodeNum != normalizedRaw) {
+                  registeredByPhone[normalizedCodeNum] = entry;
+                  if (normalizedCodeNum.startsWith('+')) {
+                    registeredByPhone[normalizedCodeNum.substring(1)] = entry;
+                  }
                 }
               }
-              if (normalizedCodeNum.isNotEmpty && normalizedCodeNum != normalizedRaw) {
-                registeredByPhone[normalizedCodeNum] = entry;
-                if (normalizedCodeNum.startsWith('+')) {
-                  registeredByPhone[normalizedCodeNum.substring(1)] = entry;
-                }
-              }
+            } else {
+              debugPrint('[ContactsRepository] /api/contacts/match returned status: ${response.statusCode}');
             }
-          } else {
-            debugPrint('[ContactsRepository] /api/contacts/match returned status: ${response.statusCode}');
           }
         }
       } catch (e) {

@@ -158,8 +158,9 @@ class RingtoneManager {
       _getSynthBytes(name, isCall: isCall);
 
   Uint8List _getSynthBytes(String name, {required bool isCall}) {
-    if (_synthCache.containsKey(name)) {
-      return _synthCache[name]!;
+    final cacheKey = '${name}_$isCall';
+    if (_synthCache.containsKey(cacheKey)) {
+      return _synthCache[cacheKey]!;
     }
 
     const sampleRate = 22050;
@@ -221,7 +222,7 @@ class RingtoneManager {
     }
 
     final bytes = _createWavContainer(samples, sampleRate);
-    _synthCache[name] = bytes;
+    _synthCache[cacheKey] = bytes;
     return bytes;
   }
 

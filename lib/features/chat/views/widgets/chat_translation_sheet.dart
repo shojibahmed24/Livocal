@@ -65,6 +65,7 @@ class _ChatTranslationSheetContentState
         });
       }
     } catch (e) {
+      debugPrint('[ChatTranslationSheet] _translateText error: $e');
       if (mounted) {
         setState(() {
           _isTranslating = false;
@@ -103,7 +104,7 @@ class _ChatTranslationSheetContentState
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.4),
+                  color: Colors.grey.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -113,7 +114,7 @@ class _ChatTranslationSheetContentState
               children: [
                 CircleAvatar(
                   radius: 20,
-                  backgroundColor: primaryColor.withOpacity(0.15),
+                  backgroundColor: primaryColor.withValues(alpha: 0.15),
                   child: Icon(Icons.translate_rounded, color: primaryColor, size: 22),
                 ),
                 const SizedBox(width: 12),
@@ -134,7 +135,8 @@ class _ChatTranslationSheetContentState
                 ),
                 Switch(
                   value: _liveTranslationEnabled,
-                  activeColor: primaryColor,
+                  activeTrackColor: primaryColor,
+                  activeThumbColor: Colors.white,
                   onChanged: (val) {
                     setState(() {
                       _liveTranslationEnabled = val;
@@ -162,7 +164,7 @@ class _ChatTranslationSheetContentState
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                      border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -207,7 +209,7 @@ class _ChatTranslationSheetContentState
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                      border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(

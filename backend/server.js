@@ -204,10 +204,10 @@ app.get(['/privacy-policy', '/privacy'], (req, res) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Livocal - Privacy Policy</title>
+  <title>Livocal - Privacy Policy | গোপনীয়তা নীতি</title>
   <style>
     :root {
-      --primary: #00A884;
+      --primary: #00B386;
       --bg: #0b141a;
       --surface: #111b21;
       --card: #202c33;
@@ -231,6 +231,34 @@ app.get(['/privacy-policy', '/privacy'], (req, res) => {
       border-radius: 12px;
       padding: 32px 24px;
     }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .lang-switch {
+      display: flex;
+      gap: 8px;
+    }
+    .lang-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .lang-btn.active {
+      background: var(--primary);
+      color: #0b141a;
+      border-color: var(--primary);
+    }
     h1 { color: var(--primary); font-size: 28px; margin-bottom: 8px; }
     .updated { color: var(--text-muted); font-size: 14px; margin-bottom: 24px; }
     h2 { font-size: 20px; color: #00d7a7; margin-top: 28px; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
@@ -239,13 +267,12 @@ app.get(['/privacy-policy', '/privacy'], (req, res) => {
     li { margin-bottom: 6px; }
     .badge {
       display: inline-block;
-      background: rgba(0, 168, 132, 0.15);
+      background: rgba(0, 179, 134, 0.15);
       color: var(--primary);
       padding: 4px 10px;
       border-radius: 6px;
       font-size: 12px;
       font-weight: 600;
-      margin-bottom: 16px;
     }
     .card {
       background: var(--card);
@@ -261,53 +288,117 @@ app.get(['/privacy-policy', '/privacy'], (req, res) => {
 </head>
 <body>
   <div class="container">
-    <div class="badge">Official Compliance Document</div>
-    <h1>Livocal Privacy Policy</h1>
-    <div class="updated">Last updated: October 2026 | Effective immediately</div>
-
-    <p>Welcome to <strong>Livocal</strong> ("we", "our", or "the App"). We are committed to safeguarding your privacy and ensuring your communications remain secure, private, and confidential.</p>
-
-    <h2>1. Zero-Retention Real-Time Voice Translation</h2>
-    <div class="card">
-      <p><strong>Strict Ephemeral Processing:</strong> During live cross-lingual calls, spoken audio is streamed ephemerally in-memory through our secure gateway to Google Gemini Live API for instant speech translation.</p>
-      <ul>
-        <li>Audio frames are processed entirely in volatile RAM and are <strong>never written to persistent disk storage</strong>.</li>
-        <li>Voice data is <strong>never used for AI model training</strong> or profiling.</li>
-        <li>When both participants speak the same language, the AI interpreter is automatically bypassed for 100% direct peer-to-peer WebRTC audio.</li>
-      </ul>
+    <div class="top-bar">
+      <div class="badge">Official Compliance Document</div>
+      <div class="lang-switch">
+        <button id="btn-en" class="lang-btn active" onclick="setLang('en')">English</button>
+        <button id="btn-bn" class="lang-btn" onclick="setLang('bn')">বাংলা</button>
+      </div>
     </div>
 
-    <h2>2. Information We Collect and Process</h2>
-    <ul>
-      <li><strong>Account Credentials:</strong> Your verified phone number, processed via Firebase Authentication for secure SMS OTP login.</li>
-      <li><strong>Profile Information:</strong> Optional display name, about text, and avatar photo stored securely in Cloud Firestore and Firebase Storage.</li>
-      <li><strong>Contacts (Zero Harvesting):</strong> When you look up friends on Livocal, contact phone numbers are normalized and hashed on-device. We <em>do not</em> store, upload, or sell your personal address book.</li>
-      <li><strong>Messages & Media:</strong> Messages and attachments are strictly scoped to the chat participants. Legacy media and ephemeral statuses are access-restricted.</li>
-      <li><strong>Ephemeral Status Updates:</strong> Status stories are automatically purged and deleted after 24 hours.</li>
-    </ul>
+    <!-- English Content -->
+    <div id="content-en">
+      <h1>Livocal Privacy Policy</h1>
+      <div class="updated">Last updated: October 2026 | Effective immediately</div>
 
-    <h2>3. Device Permissions & Purpose</h2>
-    <ul>
-      <li><strong>Microphone:</strong> Required to capture voice for live calls and audio voice notes.</li>
-      <li><strong>Camera & Photo Library:</strong> Required for capturing and sharing photos, videos, and updating your profile picture.</li>
-      <li><strong>Contacts:</strong> Optional permission used solely to identify which of your contacts are already registered on Livocal.</li>
-      <li><strong>Notifications:</strong> Required to alert you of incoming voice calls and chat messages when the app is in the background or device is locked.</li>
-    </ul>
+      <p>Welcome to <strong>Livocal</strong> ("we", "our", or "the App"). We are committed to safeguarding your privacy and ensuring your communications remain secure, private, and confidential.</p>
 
-    <h2>4. Security Standards</h2>
-    <p>All network traffic between Livocal and backend services is encrypted using <strong>TLS 1.3</strong>. Peer-to-peer audio streams use <strong>DTLS-SRTP</strong> encryption. App security PINs are protected using hardware-backed keychains (Android Keystore / iOS Keychain).</p>
+      <h2>1. Zero-Retention Real-Time Voice Translation</h2>
+      <div class="card">
+        <p><strong>Strict Ephemeral Processing:</strong> During live cross-lingual calls, spoken audio is streamed ephemerally in-memory through our secure gateway to Google Gemini Live API for instant speech translation.</p>
+        <ul>
+          <li>Audio frames are processed entirely in volatile RAM and are <strong>never written to persistent disk storage</strong>.</li>
+          <li>Voice data is <strong>never used for AI model training</strong> or profiling.</li>
+          <li>When both participants speak the same language, the AI interpreter is automatically bypassed for 100% direct peer-to-peer WebRTC audio.</li>
+        </ul>
+      </div>
 
-    <h2>5. Data Deletion and Account Removal</h2>
-    <p>You have full ownership of your data. You may delete individual messages, clear chat histories, or permanently delete your account at any time via <strong>Settings &gt; Account &gt; Delete my account</strong>. Deleting your account irreversibly erases your profile, messages, attachments, and authentication records.</p>
+      <h2>2. Information We Collect and Process</h2>
+      <ul>
+        <li><strong>Account Credentials:</strong> Your verified phone number, processed via Firebase Authentication for secure SMS OTP login.</li>
+        <li><strong>Profile Information:</strong> Optional display name, about text, and avatar photo stored securely in Cloud Firestore and Firebase Storage.</li>
+        <li><strong>Contacts (Zero Harvesting):</strong> When you look up friends on Livocal, contact phone numbers are normalized and hashed on-device. We <em>do not</em> store, upload, or sell your personal address book.</li>
+        <li><strong>Messages & Media:</strong> Messages and attachments are strictly scoped to the chat participants. Legacy media and ephemeral statuses are access-restricted.</li>
+        <li><strong>Ephemeral Status Updates:</strong> Status stories are automatically purged and deleted after 24 hours.</li>
+      </ul>
 
-    <h2>6. Contact Us</h2>
-    <p>If you have any questions or privacy inquiries regarding Livocal, please contact our Data Protection Officer at:</p>
-    <p><strong>Email:</strong> <a href="mailto:support@livocal.app">support@livocal.app</a></p>
+      <h2>3. Device Permissions & Purpose</h2>
+      <ul>
+        <li><strong>Microphone:</strong> Required to capture voice for live calls and audio voice notes.</li>
+        <li><strong>Camera & Photo Library:</strong> Required for capturing and sharing photos, videos, and updating your profile picture.</li>
+        <li><strong>Contacts:</strong> Optional permission used solely to identify which of your contacts are already registered on Livocal.</li>
+        <li><strong>Notifications:</strong> Required to alert you of incoming voice calls and chat messages when the app is in the background or device is locked.</li>
+      </ul>
+
+      <h2>4. Security Standards</h2>
+      <p>All network traffic between Livocal and backend services is encrypted using <strong>TLS 1.3</strong>. Peer-to-peer audio streams use <strong>DTLS-SRTP</strong> encryption. App security PINs are protected using hardware-backed keychains (Android Keystore / iOS Keychain).</p>
+
+      <h2>5. Data Deletion and Account Removal</h2>
+      <p>You have full ownership of your data. You may delete individual messages, clear chat histories, or permanently delete your account at any time via <strong>Settings &gt; Account &gt; Delete my account</strong>. Deleting your account irreversibly erases your profile, messages, attachments, and authentication records.</p>
+
+      <h2>6. Contact Us</h2>
+      <p>If you have any questions or privacy inquiries regarding Livocal, please contact our Data Protection Officer at:</p>
+      <p><strong>Email:</strong> <a href="mailto:support@livocal.app">support@livocal.app</a></p>
+    </div>
+
+    <!-- Bengali Content -->
+    <div id="content-bn" style="display: none;">
+      <h1>Livocal গোপনীয়তা নীতি</h1>
+      <div class="updated">সর্বশেষ আপডেট: অক্টোবর ২০২৬ | অবিলম্বে কার্যকর</div>
+
+      <p><strong>Livocal</strong> ("আমরা", "আমাদের", বা "অ্যাপ") এ আপনাকে স্বাগতম। আমরা আপনার ব্যক্তিগত তথ্যের গোপনীয়তা রক্ষা করতে এবং আপনার প্রতিটি যোগাযোগ সম্পূর্ণরূপে সুরক্ষিত, ব্যক্তিগত এবং গোপনীয় রাখতে প্রতিশ্রুতিবদ্ধ।</p>
+
+      <h2>১. ক্ষণস্থায়ী লাইভ ভয়েস অনুবাদ (জিরো-ডাটা রিটেনশন)</h2>
+      <div class="card">
+        <p><strong>সম্পূর্ণ ক্ষণস্থায়ী প্রসেসিং:</strong> লাইভ দ্বিভাষিক কলের সময়, ব্যবহারকারীর কথ্য অডিও তাৎক্ষণিক অনুবাদের জন্য Google Gemini Multimodal Live API-এর মাধ্যমে শুধুমাত্র ক্ষণস্থায়ী সুরক্ষিত র‍্যামে (RAM) প্রক্রিয়া করা হয়।</p>
+        <ul>
+          <li>কথোপকথনের অডিও ফ্রেম কখনোই <strong>কোনো স্থায়ী ডিস্ক স্টোরেজে সংরক্ষণ বা রেকর্ড করা হয় না</strong>।</li>
+          <li>আপনার ভয়েস ডেটা কখনোই <strong>এআই মডেল প্রশিক্ষণ বা প্রোফাইলিং-এ ব্যবহার করা হয় না</strong>।</li>
+          <li>কলের উভয় পক্ষ একই ভাষায় কথা বললে, এআই অনুবাদক স্বয়ংক্রিয়ভাবে বাইপাস হয়ে ১০০% সরাসরি P2P WebRTC সংযোগে চলে।</li>
+        </ul>
+      </div>
+
+      <h2>২. যে সকল তথ্য আমরা সংগ্রহ ও প্রক্রিয়া করি</h2>
+      <ul>
+        <li><strong>অ্যাকাউন্ট প্রমাণীকরণ:</strong> আপনার যাচাইকৃত ফোন নম্বর, যা Firebase Authentication-এর মাধ্যমে সুরক্ষিত SMS OTP লগইনে ব্যবহৃত হয়।</li>
+        <li><strong>প্রোফাইল তথ্য:</strong> আপনার ডিসপ্লে নাম, স্ট্যাটাস বায়ো এবং প্রোফাইল ছবি যা Cloud Firestore ও Firebase Storage-এ সুরক্ষিত থাকে।</li>
+        <li><strong>কন্টাক্ট তালিকা (জিরো হার্ভেস্টিং):</strong> বন্ধুদের খুঁজে পেতে ফোনের কন্টাক্ট নম্বর ডিভাইসে হ্যাশ করে যাচাই করা হয়। আপনার সম্পূর্ণ অ্যাড্রেস বুক সার্ভারে আপলোড বা কারো কাছে বিক্রি করা হয় না।</li>
+        <li><strong>মেসেজ ও মিডিয়া:</strong> চ্যাট মেসেজ এবং ফাইল শুধুমাত্র চ্যাট অংশগ্রহণকারীদের মধ্যেই সীমাবদ্ধ থাকে।</li>
+        <li><strong>২৪-ঘণ্টার স্ট্যাটাস:</strong> যেকোনো স্ট্যাটাস পোস্ট প্রকাশের ২৪ ঘণ্টা পর স্বয়ংক্রিয়ভাবে স্থায়ীভাবে মুছে ফেলা হয়।</li>
+      </ul>
+
+      <h2>৩. ডিভাইসের অনুমতিসমূহ ও ব্যবহারের উদ্দেশ্য</h2>
+      <ul>
+        <li><strong>মাইক্রোফোন:</strong> লাইভ ভয়েস কল এবং অডিও ভয়েস নোট রেকর্ডিংয়ের জন্য প্রয়োজন।</li>
+        <li><strong>ক্যামেরা ও গ্যালারি:</strong> ছবি তোলা, ভিডিও পাঠানো এবং প্রোফাইল ছবি পরিবর্তনের জন্য প্রয়োজন।</li>
+        <li><strong>কন্টাক্টস:</strong> আপনার পরিচিতদের মধ্যে কারা Livocal ব্যবহার করছেন তা শনাক্ত করতে ঐচ্ছিক অনুমতি।</li>
+        <li><strong>নোটিফিকেশন:</strong> অ্যাপ বন্ধ থাকলে বা স্ক্রিন লক থাকলে ইনকামিং কল ও বার্তার অ্যালার্ট প্রদানের জন্য প্রয়োজন।</li>
+      </ul>
+
+      <h2>৪. নিরাপত্তা মানদণ্ড</h2>
+      <p>অ্যাপ এবং সার্ভারের মধ্যকার সমস্ত যোগাযোগ <strong>TLS 1.3</strong> দ্বারা এনক্রিপ্ট করা। সরাসরি অডিও স্ট্রিমগুলো <strong>DTLS-SRTP</strong> এনক্রিপশন ব্যবহার করে। অ্যাপ সিকিউরিটি পিন ডিভাইসের হার্ডওয়্যার-সমর্থিত Keystore/Keychain দ্বারা সুরক্ষিত।</p>
+
+      <h2>৫. অ্যাকাউন্ট ও ডেটা অপসারণ</h2>
+      <p>আপনার তথ্যের সম্পূর্ণ নিয়ন্ত্রণ আপনার হাতে। আপনি যেকোনো সময় নির্দিষ্ট বার্তা মুছতে, চ্যাট হিস্ট্রি পরিষ্কার করতে বা <strong>Settings &gt; Account &gt; Delete my account</strong> থেকে আপনার অ্যাকাউন্ট স্থায়ীভাবে মুছে ফেলতে পারেন।</p>
+
+      <h2>৬. যোগাযোগ</h2>
+      <p>গোপনীয়তা সংক্রান্ত যেকোনো জিজ্ঞাসা বা প্রশ্নের জন্য আমাদের ডেটা সুরক্ষা কর্মকর্তার সাথে যোগাযোগ করুন:</p>
+      <p><strong>ইমেইল:</strong> <a href="mailto:support@livocal.app">support@livocal.app</a></p>
+    </div>
 
     <footer>
-      &copy; 2026 Livocal. All rights reserved. Built for secure global voice communication.
+      &copy; 2026 Livocal. All rights reserved. সুরক্ষিত বৈশ্বিক যোগাযোগের জন্য নিবেদিত।
     </footer>
   </div>
+
+  <script>
+    function setLang(lang) {
+      document.getElementById('content-en').style.display = lang === 'en' ? 'block' : 'none';
+      document.getElementById('content-bn').style.display = lang === 'bn' ? 'block' : 'none';
+      document.getElementById('btn-en').className = 'lang-btn ' + (lang === 'en' ? 'active' : '');
+      document.getElementById('btn-bn').className = 'lang-btn ' + (lang === 'bn' ? 'active' : '');
+    }
+  </script>
 </body>
 </html>`);
 });
@@ -642,7 +733,7 @@ app.post(
       }
 
       const sanitizedNumbers = phoneNumbers
-        .slice(0, 50)
+        .slice(0, 500)
         .map((p) => String(p).trim().replace(/[\s\-\(\)\+]/g, ''))
         .filter((n) => n.length >= 6);
 

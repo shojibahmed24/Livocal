@@ -12,6 +12,7 @@ import 'package:livocal/shared/utils/shared_pref.dart';
 import '../../features/chat/models/message.dart';
 import '../../features/calls/services/call_kit_service.dart';
 import '../../features/calls/services/gemini_live_translator.dart';
+import '../../features/calls/services/ringtone_manager.dart';
 import 'package:livocal/shared/constants/app_config.dart';
 
 final pushNotificationsRepoProvider = Provider(
@@ -43,6 +44,12 @@ class PushNotificationsRepo {
 
     FirebaseMessaging.onBackgroundMessage(_handleBackgroundMessage);
     FirebaseMessaging.onMessageOpenedApp.listen(onMessageOpenedApp);
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      debugPrint('[PushNotificationsRepo] Foreground notification received: ${message.data}');
+      if (message.data['type'] != 'INCOMING_CALL') {
+        RingtoneManager().playMessageNotificationTone();
+      }
+    });
     instance.onTokenRefresh.listen((token) => handleTokenRefresh(token, ref));
 
     try {

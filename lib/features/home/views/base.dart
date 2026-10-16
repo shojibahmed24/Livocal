@@ -11,6 +11,7 @@ import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'package:livocal/features/calls/views/calls_tab.dart';
 import 'package:livocal/features/calls/views/incoming_call_screen.dart';
 import 'package:livocal/features/calls/services/call_kit_service.dart';
+import 'package:livocal/features/calls/services/ringtone_manager.dart';
 import 'package:livocal/features/chat/models/attachement.dart';
 import 'package:livocal/features/chat/models/message.dart';
 import 'package:livocal/features/chat/models/recent_chat.dart';
@@ -87,7 +88,11 @@ class _HomePageState extends ConsumerState<HomePage>
 
     messageListener = firestore.getChatStream(widget.user.id).listen(
       (messages) async {
+        bool hasIncoming = false;
         for (final message in messages) {
+          if (message.senderId != widget.user.id) {
+            hasIncoming = true;
+          }
           message.status = MessageStatus.delivered;
           firestore.sendSystemMessage(
             message: SystemMessage(
@@ -113,6 +118,10 @@ class _HomePageState extends ConsumerState<HomePage>
               },
             );
           }
+        }
+
+        if (hasIncoming) {
+          RingtoneManager().playMessageNotificationTone();
         }
 
         IsarDb.addMessages(messages);

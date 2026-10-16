@@ -27,6 +27,11 @@ service cloud.firestore {
       allow create: if isAuthenticated() && request.auth.uid == userId && request.resource.data.id == request.auth.uid;
       allow update: if isAuthenticated() && request.auth.uid == userId && request.resource.data.id == resource.data.id;
       allow delete: if isAuthenticated() && request.auth.uid == userId;
+
+      // Companion Linked Devices (Web, Desktop, Companion apps)
+      match /linked_devices/{deviceId} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
     }
 
     // 2. Chat Inboxes & Realtime Message Queue

@@ -77,6 +77,7 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
         });
       }
     } catch (e) {
+      debugPrint('[ChatMediaViewer] _loadData error: $e');
       if (mounted) setState(() => _isLoading = false);
     }
   }

@@ -51,6 +51,7 @@ class _StarredMessagesScreenState extends ConsumerState<StarredMessagesScreen> {
         });
       }
     } catch (e) {
+      debugPrint('[StarredMessages] _loadStarredMessages error: $e');
       if (mounted) setState(() => _isLoading = false);
     }
   }
