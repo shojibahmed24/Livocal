@@ -43,6 +43,11 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Android signing secrets — NEVER commit
+key.properties
+*.jks
+*.keystore
+
 
 # Firebase
 # lib/firebase_options.dart
