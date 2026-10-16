@@ -62,6 +62,7 @@ class _TextStatusComposerScreenState extends State<TextStatusComposerScreen> {
         Navigator.pop(context, true);
       }
     } catch (e) {
+      debugPrint('TextStatusComposer post status error: $e');
       if (mounted) {
         setState(() => _isPosting = false);
         showSnackBar(

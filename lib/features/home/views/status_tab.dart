@@ -110,6 +110,7 @@ class _StatusTabState extends ConsumerState<StatusTab>
         }
       }
     } catch (e) {
+      debugPrint('StatusTab upload status error: $e');
       if (mounted) {
         showSnackBar(
           context: context,

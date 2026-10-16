@@ -126,6 +126,7 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
         );
       }
     } catch (e) {
+      debugPrint('StorageSettingsScreen clearCache error: $e');
       if (mounted) {
         showSnackBar(
           context: context,

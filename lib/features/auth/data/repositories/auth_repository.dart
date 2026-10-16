@@ -96,6 +96,7 @@ class FirebaseAuthRepository implements AuthenticationRepository {
         },
       );
     } catch (e) {
+      debugPrint('AuthRepository.verifyPhoneNumber error: $e');
       if (context.mounted) {
         Navigator.pop(context);
         showSnackBar(

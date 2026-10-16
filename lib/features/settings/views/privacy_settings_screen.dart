@@ -290,6 +290,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
                     }
                   }
                 } catch (e) {
+                  debugPrint('PrivacySettingsScreen biometric auth error: $e');
                   if (context.mounted) {
                     showSnackBar(
                       context: context,

@@ -1005,6 +1005,7 @@ wss.on('connection', (clientWs, req) => {
         try {
           msg = JSON.parse(data.toString('utf8'));
         } catch (jsonErr) {
+          console.warn('[Gemini Live Relay] Malformed JSON payload received:', jsonErr.message);
           if (clientWs.readyState === WebSocket.OPEN) {
             clientWs.send(
               JSON.stringify({
@@ -1123,7 +1124,9 @@ wss.on('connection', (clientWs, req) => {
           setTimeout(() => {
             try {
               clientWs.close(4403, 'MISSING_API_KEY');
-            } catch (_) {}
+            } catch (closeErr) {
+              console.warn('[Gemini Live Relay] Could not close client WebSocket after MISSING_API_KEY:', closeErr.message);
+            }
           }, 50);
           return;
         }

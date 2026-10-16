@@ -139,7 +139,9 @@ class FirebaseFirestoreRepo {
               }
               docChange.doc.reference.update({
                 'processedBy': FieldValue.arrayUnion([deviceId]),
-              }).catchError((_) {});
+              }).catchError((e) {
+                debugPrint('FirebaseFirestoreRepo update processedBy error: $e');
+              });
             }
             continue;
           }

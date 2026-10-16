@@ -75,6 +75,7 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
         );
       }
     } catch (e) {
+      debugPrint('WelcomeScreen._openUrl error: $e');
       if (mounted) {
         showSnackBar(
           context: context,

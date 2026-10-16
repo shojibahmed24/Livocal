@@ -33,6 +33,7 @@ class LinkedDevicesScreen extends StatelessWidget {
         );
       }
     } catch (e) {
+      debugPrint('LinkedDevicesScreen camera init error: $e');
       if (context.mounted) {
         showSnackBar(
           context: context,
@@ -73,6 +74,7 @@ class LinkedDevicesScreen extends StatelessWidget {
                 );
               }
             } catch (e) {
+              debugPrint('LinkedDevicesScreen disconnect device error: $e');
               if (context.mounted) {
                 showSnackBar(
                   context: context,
@@ -392,6 +394,7 @@ class _DeviceQrScanScreenState extends State<DeviceQrScanScreen> {
         );
       }
     } catch (e) {
+      debugPrint('DeviceQrScanScreen link companion device error: $e');
       if (mounted) {
         setState(() => _isLinking = false);
         showSnackBar(

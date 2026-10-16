@@ -96,6 +96,7 @@ class HelpSettingsScreen extends StatelessWidget {
                 );
               }
             } catch (e) {
+              debugPrint('HelpSettingsScreen sendFeedback error: $e');
               dialogStateSetter?.call(() => isSubmitting = false);
               if (context.mounted) {
                 showSnackBar(
@@ -247,6 +248,7 @@ class HelpSettingsScreen extends StatelessWidget {
                         await launchUrl(uri,
                             mode: LaunchMode.externalApplication);
                       } catch (e) {
+                        debugPrint('HelpSettingsScreen launch privacy URL error: $e');
                         if (context.mounted) {
                           showSnackBar(
                             context: context,

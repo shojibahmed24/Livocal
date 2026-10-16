@@ -320,6 +320,7 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
                                       await launchUrl(uri,
                                           mode: LaunchMode.externalApplication);
                                     } catch (e) {
+                                      debugPrint('ChatMediaViewerScreen.launchUrl error: $e');
                                       if (context.mounted) {
                                         showSnackBar(
                                           context: context,

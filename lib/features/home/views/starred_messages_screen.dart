@@ -123,6 +123,7 @@ class _StarredMessagesScreenState extends ConsumerState<StarredMessagesScreen> {
         );
       }
     } catch (e) {
+      debugPrint('StarredMessagesScreen navigateToChat error: $e');
       if (mounted) {
         showSnackBar(
           context: context,
