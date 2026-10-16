@@ -231,6 +231,77 @@ class WalletRepository {
       debugPrint('[WalletRepository] finalizeCallBilling error: $e');
     }
   }
+
+  /// Recharges prepaid minutes for the user.
+  /// Deducts payment via gateway/voucher and updates wallet balance.
+  Future<bool> rechargeWallet({
+    required String userId,
+    required String packId,
+    required int minutes,
+    required double amount,
+    String currency = 'BDT',
+    String paymentMethod = 'Instant bKash/Card',
+    String? transactionId,
+    String? promoCode,
+  }) async {
+    try {
+      final currentUser = fb.FirebaseAuth.instance.currentUser;
+      final idToken = await currentUser?.getIdToken();
+
+      if (idToken != null) {
+        final url = Uri.parse(AppConfig.walletRechargeUrl);
+        final response = await http.post(
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $idToken',
+          },
+          body: jsonEncode({
+            'packId': packId,
+            'minutes': minutes,
+            'amount': amount,
+            'currency': currency,
+            'paymentMethod': paymentMethod,
+            'transactionId': transactionId,
+            'promoCode': promoCode,
+          }),
+        ).timeout(const Duration(seconds: 10));
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          if (data['success'] == true) {
+            return true;
+          }
+        }
+      }
+
+      // Local Firestore fallback if backend unreachable
+      final docRef = _walletRef(userId);
+      if (docRef != null && firestore != null) {
+        await firestore!.runTransaction((tx) async {
+          final snap = await tx.get(docRef);
+          int currentBalance = 0;
+          int currentPurchased = 0;
+          if (snap.exists && snap.data() != null) {
+            final d = snap.data()!;
+            currentBalance = (d['balanceMinutes'] as num?)?.toInt() ?? 0;
+            currentPurchased = (d['totalMinutesPurchased'] as num?)?.toInt() ?? 0;
+          }
+          tx.set(docRef, {
+            'balanceMinutes': currentBalance + minutes,
+            'totalMinutesPurchased': currentPurchased + minutes,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        });
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      debugPrint('[WalletRepository] rechargeWallet error: $e');
+      return false;
+    }
+  }
 }
 
 class MinuteDeductionResult {

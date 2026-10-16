@@ -3,11 +3,15 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:livocal/features/calls/controllers/call_controller.dart';
 import 'package:livocal/features/calls/views/outgoing_call_screen.dart';
+import 'package:livocal/features/calls/views/widgets/minute_recharge_sheet.dart';
 import 'package:livocal/features/chat/views/chat.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/models/user_wallet.dart';
 import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/repositories/wallet_repository.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
 
@@ -404,6 +408,76 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
               ),
               const SizedBox(height: 16),
             ],
+
+            // Live SaaS Billing Call Indicator & Balance Chip
+            Consumer(
+              builder: (context, ref, _) {
+                final callState = ref.watch(callControllerProvider);
+                final walletAsync = ref.watch(walletStreamProvider(widget.currentUser.id));
+                final wallet = walletAsync.value ?? UserWallet.newTrial();
+                final isSameLang = callState.myLanguage.code == callState.peerLanguage.code;
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSameLang
+                        ? AppColors.primary.withOpacity(0.1)
+                        : (wallet.hasMinutes ? const Color(0xFF06B6D4).withOpacity(0.1) : Colors.amber.withOpacity(0.1)),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSameLang
+                          ? AppColors.primary.withOpacity(0.3)
+                          : (wallet.hasMinutes ? const Color(0xFF06B6D4).withOpacity(0.3) : Colors.amber.withOpacity(0.4)),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isSameLang ? Icons.record_voice_over_rounded : Icons.translate_rounded,
+                        color: isSameLang
+                            ? AppColors.primary
+                            : (wallet.hasMinutes ? const Color(0xFF06B6D4) : Colors.amber),
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          isSameLang
+                              ? '🗣️ ফ্রি লোকাল কল (Same Language - কোনো মিনিট কাটবে না)'
+                              : '🤖 AI অনুবাদ কল (১ মি./মি.) • ব্যালেন্স: ${wallet.effectiveRemainingMinutes} মি.',
+                          style: TextStyle(
+                            color: isSameLang
+                                ? (isDark ? Colors.green[200] : Colors.green[800])
+                                : (wallet.hasMinutes
+                                    ? (isDark ? Colors.cyan[200] : Colors.cyan[900])
+                                    : (isDark ? Colors.amber[200] : Colors.amber[900])),
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      if (!isSameLang && !wallet.hasMinutes)
+                        InkWell(
+                          onTap: () => showMinuteRechargeSheet(context, user: widget.currentUser),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 4),
+                            child: Text(
+                              'রিচার্জ',
+                              style: TextStyle(
+                                color: Colors.amber,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11.5,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
 
             // Action Buttons
             Row(

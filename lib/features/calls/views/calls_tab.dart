@@ -6,8 +6,11 @@ import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/features/calls/views/outgoing_call_screen.dart';
 import 'package:livocal/features/calls/views/widgets/language_picker_sheet.dart';
 import 'package:livocal/features/calls/views/widgets/direct_dial_sheet.dart';
+import 'package:livocal/features/calls/views/widgets/minute_recharge_sheet.dart';
 import 'package:livocal/features/home/views/contacts.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/models/user_wallet.dart';
+import 'package:livocal/shared/repositories/wallet_repository.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/theme.dart';
 
@@ -100,6 +103,99 @@ class _CallsTabState extends ConsumerState<CallsTab>
     return ListView(
       padding: const EdgeInsets.only(bottom: 92),
       children: [
+        // Freelancer Prepaid Minute Wallet & Trial Badge
+        Consumer(
+          builder: (context, ref, _) {
+            final walletAsync = ref.watch(walletStreamProvider(widget.user.id));
+            final wallet = walletAsync.value ?? UserWallet.newTrial();
+            final isTrial = wallet.trialActive && !wallet.isTrialExpired;
+            final isExhausted = !wallet.hasMinutes;
+
+            return Container(
+              margin: const EdgeInsets.fromLTRB(14, 12, 14, 2),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: isExhausted
+                    ? Colors.amber.withOpacity(0.12)
+                    : (isTrial ? const Color(0xFF0D2820) : const Color(0xFF131F2E)),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isExhausted
+                      ? Colors.amber.withOpacity(0.5)
+                      : (isTrial ? AppColors.primary.withOpacity(0.4) : const Color(0xFF06B6D4).withOpacity(0.4)),
+                  width: 1.2,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: (isExhausted ? Colors.amber : (isTrial ? AppColors.primary : const Color(0xFF06B6D4)))
+                          .withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      isExhausted ? Icons.warning_amber_rounded : (isTrial ? Icons.timer_outlined : Icons.diamond_outlined),
+                      color: isExhausted ? Colors.amber : (isTrial ? AppColors.primary : const Color(0xFF06B6D4)),
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isTrial
+                              ? '⏱️ ট্রায়াল: ${wallet.trialMinutes} মিনিট বাকি'
+                              : (isExhausted
+                                  ? '⚠️ ব্যালেন্স শেষ (০ মিনিট)'
+                                  : '💎 ব্যালেন্স: ${wallet.balanceMinutes} মিনিট'),
+                          style: TextStyle(
+                            color: isExhausted ? Colors.amber[200] : Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13.5,
+                          ),
+                        ),
+                        Text(
+                          isTrial
+                              ? '${wallet.daysRemainingInTrial} দিন অবশিষ্ট • লোকাল কল ফ্রি'
+                              : (isExhausted
+                                  ? 'অনুবাদ কলের জন্য রিচার্জ করুন • লোকাল কল ফ্রি'
+                                  : 'অনুবাদিত কল প্রতি মিনিটে ১ মিনিট • লোকাল কল ফ্রি'),
+                          style: TextStyle(
+                            color: isExhausted ? Colors.amber[300] : Colors.white60,
+                            fontSize: 10.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isExhausted ? Colors.amber[700] : AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 0,
+                    ),
+                    onPressed: () => showMinuteRechargeSheet(context, user: widget.user),
+                    child: Text(
+                      isExhausted ? 'রিচার্জ' : '+ রিচার্জ',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+
         // Universal N x N Live Translation Hub Card
         Container(
           margin: const EdgeInsets.fromLTRB(14, 14, 14, 10),

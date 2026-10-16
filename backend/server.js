@@ -7,11 +7,16 @@ import { z } from 'zod';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import crypto from 'crypto';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -65,7 +70,12 @@ const DEFAULT_VOICE = process.env.DEFAULT_VOICE?.trim() || 'Aoede';
 
 const app = express();
 app.set('trust proxy', 1); // Trust first-hop reverse proxy (Render / Cloud Run)
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false,
+}));
+
+// Admin Control Room Web Dashboard static files
+app.use('/admin', express.static(path.join(__dirname, 'public/admin')));
 
 // Secure CORS configuration: Restrict origins, allow mobile apps without Origin header
 const allowedOrigins = process.env.ALLOWED_ORIGINS
@@ -870,6 +880,341 @@ app.post('/api/wallet/call-end', authenticateRequest, async (req, res) => {
   } catch (err) {
     console.warn('[SaaS Billing] Error saving call summary:', err.message);
     return res.json({ success: false, error: err.message });
+  }
+});
+
+// Freelancer SaaS Minute Recharge Endpoint (Packs, Voucher, or Direct top-up)
+app.post('/api/wallet/recharge', authenticateRequest, async (req, res) => {
+  const callerUid = req.user.uid;
+  const { packId, minutes, amount, currency, paymentMethod, transactionId, promoCode } = req.body || {};
+
+  if (!firestoreDb) {
+    return res.status(503).json({ error: 'Firestore service unavailable' });
+  }
+
+  const minutesToAdd = parseInt(minutes, 10);
+  if (isNaN(minutesToAdd) || minutesToAdd <= 0) {
+    return res.status(400).json({ error: 'Invalid minutes amount' });
+  }
+
+  try {
+    const walletRef = firestoreDb.collection('users').doc(callerUid).collection('wallet').doc('current');
+    const txId = transactionId || `tx_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    const txRef = firestoreDb.collection('recharge_transactions').doc(txId);
+
+    const updatedWallet = await firestoreDb.runTransaction(async (transaction) => {
+      const walletDoc = await transaction.get(walletRef);
+      const nowIso = new Date().toISOString();
+
+      let currentData = walletDoc.exists ? walletDoc.data() : {
+        balanceMinutes: 0,
+        trialMinutes: 0,
+        trialActive: false,
+        trialExpiresAt: nowIso,
+        totalMinutesUsed: 0,
+        totalMinutesPurchased: 0,
+        currency: currency || 'BDT',
+        createdAt: nowIso,
+      };
+
+      const newBalance = (currentData.balanceMinutes || 0) + minutesToAdd;
+      const newPurchased = (currentData.totalMinutesPurchased || 0) + minutesToAdd;
+
+      const walletUpdate = {
+        ...currentData,
+        balanceMinutes: newBalance,
+        totalMinutesPurchased: newPurchased,
+        updatedAt: nowIso,
+      };
+
+      transaction.set(walletRef, walletUpdate, { merge: true });
+
+      transaction.set(txRef, {
+        transactionId: txId,
+        userId: callerUid,
+        userPhone: req.user.phone_number || currentData.phone || '',
+        packId: packId || 'custom',
+        minutesAdded: minutesToAdd,
+        amountPaid: Number(amount) || 0,
+        currency: currency || 'BDT',
+        paymentMethod: paymentMethod || 'Instant Card/bKash',
+        promoCode: promoCode || null,
+        status: 'completed',
+        createdAt: nowIso,
+      });
+
+      return walletUpdate;
+    });
+
+    console.log(`[SaaS Billing] Recharged ${minutesToAdd} minutes for user ${callerUid}. New balance: ${updatedWallet.balanceMinutes} mins.`);
+    return res.json({ success: true, wallet: updatedWallet, transactionId: txId });
+  } catch (err) {
+    console.error('[SaaS Billing] Error processing wallet recharge:', err.message);
+    return res.status(500).json({ error: 'Failed to process recharge', message: err.message });
+  }
+});
+
+// Admin Authorization Middleware
+const authenticateAdmin = async (req, res, next) => {
+  const configuredSecret = process.env.ADMIN_SECRET || 'livocal_admin_secret_2026';
+  const providedSecret = req.headers['x-admin-secret'] || req.query.admin_secret;
+
+  if (providedSecret && providedSecret === configuredSecret) {
+    return next();
+  }
+
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ') && authService) {
+    const token = authHeader.substring(7).trim();
+    try {
+      const decoded = await authService.verifyIdToken(token);
+      if (decoded.admin === true || decoded.uid === process.env.SUPER_ADMIN_UID) {
+        req.adminUser = decoded;
+        return next();
+      }
+    } catch (_) {}
+  }
+
+  return res.status(403).json({ error: 'Forbidden: Admin credentials or x-admin-secret required' });
+};
+
+// Admin metrics overview endpoint
+app.get('/api/admin/metrics', authenticateAdmin, async (req, res) => {
+  if (!firestoreDb) {
+    return res.status(503).json({ error: 'Firestore service unavailable' });
+  }
+
+  try {
+    // 1. Aggregate call billing records
+    const billingSnap = await firestoreDb.collection('call_billing_records').limit(1000).get();
+    let totalBilledMinutes = 0;
+    let totalRetailBdt = 0;
+    let totalGeminiCostUsd = 0;
+
+    billingSnap.forEach((doc) => {
+      const data = doc.data();
+      totalBilledMinutes += 1;
+      totalRetailBdt += (Number(data.retailRateBdt) || 20.0);
+      totalGeminiCostUsd += (Number(data.geminiCostUsd) || 0.035);
+    });
+
+    const totalGeminiCostBdt = totalGeminiCostUsd * 120.0;
+    const netProfitBdt = totalRetailBdt - totalGeminiCostBdt;
+    const profitMarginPercent = totalRetailBdt > 0 ? ((netProfitBdt / totalRetailBdt) * 100).toFixed(1) : '79.0';
+
+    // 2. Aggregate recharge transactions
+    const rechargesSnap = await firestoreDb.collection('recharge_transactions').limit(1000).get();
+    let totalRechargeRevenueBdt = 0;
+    let totalPaidMinutesPurchased = 0;
+
+    rechargesSnap.forEach((doc) => {
+      const data = doc.data();
+      totalRechargeRevenueBdt += (Number(data.amountPaid) || 0);
+      totalPaidMinutesPurchased += (Number(data.minutesAdded) || 0);
+    });
+
+    // 3. User count
+    const usersSnap = await firestoreDb.collection('users').limit(1000).get();
+    const totalUsers = usersSnap.size;
+
+    return res.json({
+      success: true,
+      metrics: {
+        totalUsers,
+        totalBilledMinutes,
+        totalRetailBdt,
+        totalGeminiCostUsd: Number(totalGeminiCostUsd.toFixed(4)),
+        totalGeminiCostBdt: Math.round(totalGeminiCostBdt),
+        netProfitBdt: Math.round(netProfitBdt),
+        profitMarginPercent: `${profitMarginPercent}%`,
+        totalRechargeRevenueBdt,
+        totalPaidMinutesPurchased,
+        activeRatePerMinuteBdt: 20.0,
+        geminiCostPerMinuteUsd: 0.035,
+      },
+      updatedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error('[Admin] Error calculating metrics:', err.message);
+    return res.status(500).json({ error: 'Failed to compute admin metrics', message: err.message });
+  }
+});
+
+// Admin list wallets
+app.get('/api/admin/wallets', authenticateAdmin, async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
+
+  try {
+    const search = (req.query.search || '').trim().toLowerCase();
+    const usersSnap = await firestoreDb.collection('users').limit(100).get();
+    const walletsList = [];
+
+    for (const userDoc of usersSnap.docs) {
+      const uData = userDoc.data();
+      const phone = uData.phone?.formattedNumber || uData.phone?.number || '';
+      const name = uData.name || 'Anonymous';
+
+      if (search && !phone.toLowerCase().includes(search) && !name.toLowerCase().includes(search) && !userDoc.id.includes(search)) {
+        continue;
+      }
+
+      const walletDoc = await firestoreDb.collection('users').doc(userDoc.id).collection('wallet').doc('current').get();
+      const wData = walletDoc.exists ? walletDoc.data() : null;
+
+      walletsList.push({
+        userId: userDoc.id,
+        name,
+        phone,
+        balanceMinutes: wData ? (wData.balanceMinutes || 0) : 0,
+        trialMinutes: wData ? (wData.trialMinutes || 0) : 20,
+        trialActive: wData ? (wData.trialActive ?? true) : true,
+        trialExpiresAt: wData?.trialExpiresAt || null,
+        totalMinutesUsed: wData ? (wData.totalMinutesUsed || 0) : 0,
+        updatedAt: wData?.updatedAt || null,
+      });
+    }
+
+    return res.json({ success: true, count: walletsList.length, wallets: walletsList });
+  } catch (err) {
+    console.error('[Admin] Error fetching wallets:', err.message);
+    return res.status(500).json({ error: 'Failed to fetch wallets' });
+  }
+});
+
+// Admin Call Billing Ledger
+app.get('/api/admin/billing-ledger', authenticateAdmin, async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
+
+  try {
+    const ledgerSnap = await firestoreDb.collection('call_billing_records')
+      .orderBy('timestamp', 'desc')
+      .limit(100)
+      .get();
+
+    const records = [];
+    ledgerSnap.forEach((doc) => {
+      records.push({ id: doc.id, ...doc.data() });
+    });
+
+    return res.json({ success: true, count: records.length, records });
+  } catch (err) {
+    console.error('[Admin] Error fetching billing ledger:', err.message);
+    return res.status(500).json({ error: 'Failed to fetch ledger' });
+  }
+});
+
+// Admin Recharge History
+app.get('/api/admin/recharges', authenticateAdmin, async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
+
+  try {
+    const snap = await firestoreDb.collection('recharge_transactions')
+      .orderBy('createdAt', 'desc')
+      .limit(100)
+      .get();
+
+    const recharges = [];
+    snap.forEach((doc) => {
+      recharges.push({ id: doc.id, ...doc.data() });
+    });
+
+    return res.json({ success: true, count: recharges.length, recharges });
+  } catch (err) {
+    console.error('[Admin] Error fetching recharges:', err.message);
+    return res.status(500).json({ error: 'Failed to fetch recharges' });
+  }
+});
+
+// Admin Manual Top-up endpoint
+app.post('/api/admin/wallet/topup', authenticateAdmin, async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
+
+  const { phone, userId, minutes, amount, notes, adminName } = req.body || {};
+  const minutesToAdd = parseInt(minutes, 10);
+  if (isNaN(minutesToAdd) || minutesToAdd <= 0) {
+    return res.status(400).json({ error: 'Valid minutes amount required' });
+  }
+
+  try {
+    let targetUid = userId;
+
+    if (!targetUid && phone) {
+      const cleanPhone = phone.trim().replace(/[\s\-\(\)]/g, '');
+      const userQuery = await firestoreDb.collection('users')
+        .where('phone.number', '==', cleanPhone)
+        .limit(1)
+        .get();
+
+      if (!userQuery.empty) {
+        targetUid = userQuery.docs[0].id;
+      } else {
+        const altQuery = await firestoreDb.collection('users')
+          .where('phone.formattedNumber', '==', cleanPhone)
+          .limit(1)
+          .get();
+        if (!altQuery.empty) {
+          targetUid = altQuery.docs[0].id;
+        }
+      }
+    }
+
+    if (!targetUid) {
+      return res.status(404).json({ error: 'User not found with the provided phone or ID' });
+    }
+
+    const walletRef = firestoreDb.collection('users').doc(targetUid).collection('wallet').doc('current');
+    const txId = `adm_tx_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const txRef = firestoreDb.collection('recharge_transactions').doc(txId);
+
+    const nowIso = new Date().toISOString();
+
+    const updatedWallet = await firestoreDb.runTransaction(async (transaction) => {
+      const doc = await transaction.get(walletRef);
+      let data = doc.exists ? doc.data() : {
+        balanceMinutes: 0,
+        trialMinutes: 0,
+        trialActive: false,
+        trialExpiresAt: nowIso,
+        totalMinutesUsed: 0,
+        totalMinutesPurchased: 0,
+        currency: 'BDT',
+        createdAt: nowIso,
+      };
+
+      const newBalance = (data.balanceMinutes || 0) + minutesToAdd;
+      const newPurchased = (data.totalMinutesPurchased || 0) + minutesToAdd;
+
+      const updated = {
+        ...data,
+        balanceMinutes: newBalance,
+        totalMinutesPurchased: newPurchased,
+        updatedAt: nowIso,
+      };
+
+      transaction.set(walletRef, updated, { merge: true });
+
+      transaction.set(txRef, {
+        transactionId: txId,
+        userId: targetUid,
+        userPhone: phone || data.phone || '',
+        packId: 'admin_topup',
+        minutesAdded: minutesToAdd,
+        amountPaid: Number(amount) || 0,
+        currency: 'BDT',
+        paymentMethod: 'Admin Manual Credit',
+        notes: notes || `Credited by ${adminName || 'SuperAdmin'}`,
+        status: 'completed',
+        createdAt: nowIso,
+      });
+
+      return updated;
+    });
+
+    console.log(`[Admin] Successfully topped up ${minutesToAdd} minutes for user ${targetUid}`);
+    return res.json({ success: true, userId: targetUid, wallet: updatedWallet, transactionId: txId });
+  } catch (err) {
+    console.error('[Admin] Error performing topup:', err.message);
+    return res.status(500).json({ error: 'Top-up failed', message: err.message });
   }
 });
 
