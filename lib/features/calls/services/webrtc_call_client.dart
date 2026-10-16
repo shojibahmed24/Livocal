@@ -19,7 +19,7 @@ enum WebRtcCallState {
 }
 
 class WebRtcCallClient {
-  final FirebaseFirestore firestore;
+  final FirebaseFirestore? firestore;
 
   RTCPeerConnection? _peerConnection;
   MediaStream? _localStream;
@@ -49,7 +49,15 @@ class WebRtcCallClient {
   String? _currentCallId;
 
   WebRtcCallClient({FirebaseFirestore? firestore})
-      : firestore = firestore ?? FirebaseFirestore.instance;
+      : firestore = firestore ?? _safeFirestore();
+
+  static FirebaseFirestore? _safeFirestore() {
+    try {
+      return FirebaseFirestore.instance;
+    } catch (_) {
+      return null;
+    }
+  }
 
   static Map<String, dynamic> _iceConfiguration = {
     'iceServers': [
@@ -193,58 +201,60 @@ class WebRtcCallClient {
       await _peerConnection!.setLocalDescription(offer);
 
       // Save Offer to Firestore call document
-      await firestore.collection('calls').doc(callId).set({
-        'offer': {
-          'sdp': offer.sdp,
-          'type': offer.type,
-        },
-      }, SetOptions(merge: true));
+      if (firestore != null) {
+        await firestore!.collection('calls').doc(callId).set({
+          'offer': {
+            'sdp': offer.sdp,
+            'type': offer.type,
+          },
+        }, SetOptions(merge: true));
 
-      // Listen for Answer from callee
-      _callDocSubscription = firestore
-          .collection('calls')
-          .doc(callId)
-          .snapshots()
-          .listen((snapshot) async {
-        if (!snapshot.exists) return;
-        final data = snapshot.data();
-        if (data == null) return;
+        // Listen for Answer from callee
+        _callDocSubscription = firestore!
+            .collection('calls')
+            .doc(callId)
+            .snapshots()
+            .listen((snapshot) async {
+          if (!snapshot.exists) return;
+          final data = snapshot.data();
+          if (data == null) return;
 
-        if (data.containsKey('answer') &&
-            _peerConnection != null &&
-            await _peerConnection?.getRemoteDescription() == null) {
-          final answerMap = data['answer'] as Map<String, dynamic>;
-          final answer = RTCSessionDescription(
-            answerMap['sdp'],
-            answerMap['type'],
-          );
-          await _peerConnection!.setRemoteDescription(answer);
-          debugPrint('Caller successfully set remote answer description');
-          await _drainPendingCandidates();
-        }
-      });
+          if (data.containsKey('answer') &&
+              _peerConnection != null &&
+              await _peerConnection?.getRemoteDescription() == null) {
+            final answerMap = data['answer'] as Map<String, dynamic>;
+            final answer = RTCSessionDescription(
+              answerMap['sdp'],
+              answerMap['type'],
+            );
+            await _peerConnection!.setRemoteDescription(answer);
+            debugPrint('Caller successfully set remote answer description');
+            await _drainPendingCandidates();
+          }
+        });
 
-      // Listen for Callee ICE Candidates
-      _remoteCandidatesSubscription = firestore
-          .collection('calls')
-          .doc(callId)
-          .collection('calleeCandidates')
-          .snapshots()
-          .listen((snapshot) async {
-        for (final change in snapshot.docChanges) {
-          if (change.type == DocumentChangeType.added) {
-            final data = change.doc.data();
-            if (data != null && _peerConnection != null) {
-              final candidate = RTCIceCandidate(
-                data['candidate'],
-                data['sdpMid'],
-                data['sdpMLineIndex'],
-              );
-              await _addOrQueueCandidate(candidate);
+        // Listen for Callee ICE Candidates
+        _remoteCandidatesSubscription = firestore!
+            .collection('calls')
+            .doc(callId)
+            .collection('calleeCandidates')
+            .snapshots()
+            .listen((snapshot) async {
+          for (final change in snapshot.docChanges) {
+            if (change.type == DocumentChangeType.added) {
+              final data = change.doc.data();
+              if (data != null && _peerConnection != null) {
+                final candidate = RTCIceCandidate(
+                  data['candidate'],
+                  data['sdpMid'],
+                  data['sdpMLineIndex'],
+                );
+                await _addOrQueueCandidate(candidate);
+              }
             }
           }
-        }
-      });
+        });
+      }
     } catch (e) {
       debugPrint('Error starting outgoing WebRTC call: $e');
       _updateState(WebRtcCallState.failed);
@@ -280,34 +290,36 @@ class WebRtcCallClient {
       await _peerConnection!.setLocalDescription(answer);
 
       // Save Answer to Firestore
-      await firestore.collection('calls').doc(callId).set({
-        'answer': {
-          'sdp': answer.sdp,
-          'type': answer.type,
-        },
-      }, SetOptions(merge: true));
+      if (firestore != null) {
+        await firestore!.collection('calls').doc(callId).set({
+          'answer': {
+            'sdp': answer.sdp,
+            'type': answer.type,
+          },
+        }, SetOptions(merge: true));
 
-      // Listen for Caller ICE Candidates
-      _remoteCandidatesSubscription = firestore
-          .collection('calls')
-          .doc(callId)
-          .collection('callerCandidates')
-          .snapshots()
-          .listen((snapshot) async {
-        for (final change in snapshot.docChanges) {
-          if (change.type == DocumentChangeType.added) {
-            final data = change.doc.data();
-            if (data != null && _peerConnection != null) {
-              final candidate = RTCIceCandidate(
-                data['candidate'],
-                data['sdpMid'],
-                data['sdpMLineIndex'],
-              );
-              await _addOrQueueCandidate(candidate);
+        // Listen for Caller ICE Candidates
+        _remoteCandidatesSubscription = firestore!
+            .collection('calls')
+            .doc(callId)
+            .collection('callerCandidates')
+            .snapshots()
+            .listen((snapshot) async {
+          for (final change in snapshot.docChanges) {
+            if (change.type == DocumentChangeType.added) {
+              final data = change.doc.data();
+              if (data != null && _peerConnection != null) {
+                final candidate = RTCIceCandidate(
+                  data['candidate'],
+                  data['sdpMid'],
+                  data['sdpMLineIndex'],
+                );
+                await _addOrQueueCandidate(candidate);
+              }
             }
           }
-        }
-      });
+        });
+      }
     } catch (e) {
       debugPrint('Error answering WebRTC call: $e');
       _updateState(WebRtcCallState.failed);
@@ -369,12 +381,12 @@ class WebRtcCallClient {
 
     // ICE Candidate gathering
     _peerConnection!.onIceCandidate = (RTCIceCandidate candidate) async {
-      if (_currentCallId == null) return;
+      if (_currentCallId == null || firestore == null) return;
       final collectionName =
           _isCaller ? 'callerCandidates' : 'calleeCandidates';
 
       try {
-        await firestore
+        await firestore!
             .collection('calls')
             .doc(_currentCallId)
             .collection(collectionName)

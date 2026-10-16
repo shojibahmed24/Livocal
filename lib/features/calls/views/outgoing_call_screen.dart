@@ -6,6 +6,7 @@ import 'package:livocal/features/calls/controllers/call_controller.dart';
 import 'package:livocal/features/calls/models/call_model.dart';
 import 'package:livocal/features/calls/views/active_call_screen.dart';
 import 'package:livocal/features/calls/views/widgets/call_scaffold.dart';
+import 'package:livocal/features/calls/views/widgets/insufficient_minutes_sheet.dart';
 import 'package:livocal/features/calls/views/widgets/language_picker_sheet.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/theme/app_colors.dart';
@@ -16,6 +17,7 @@ class OutgoingCallScreen extends ConsumerStatefulWidget {
   final String calleeDisplayName;
   final String? overrideMyLangCode;
   final String? overridePeerLangCode;
+  final bool? initialTranslationEnabled;
 
   const OutgoingCallScreen({
     super.key,
@@ -24,6 +26,7 @@ class OutgoingCallScreen extends ConsumerStatefulWidget {
     required this.calleeDisplayName,
     this.overrideMyLangCode,
     this.overridePeerLangCode,
+    this.initialTranslationEnabled,
   });
 
   @override
@@ -52,19 +55,52 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
             calleeDisplayName: widget.calleeDisplayName,
             overrideMyLangCode: widget.overrideMyLangCode,
             overridePeerLangCode: widget.overridePeerLangCode,
+            translationEnabled: widget.initialTranslationEnabled,
           );
       if (session == null && mounted) {
         _navigated = true;
-        if (Navigator.of(context).canPop()) {
-          Navigator.of(context).pop();
+        final callState = ref.read(callControllerProvider);
+        if (callState.error == 'INSUFFICIENT_MINUTES') {
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
+          InsufficientMinutesSheet.show(
+            context,
+            onRechargePressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Recharge packs coming soon. Select Call Without Translation to call for free.'),
+                  backgroundColor: AppColors.primary,
+                ),
+              );
+            },
+            onCallWithoutTranslation: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => OutgoingCallScreen(
+                    caller: widget.caller,
+                    callee: widget.callee,
+                    calleeDisplayName: widget.calleeDisplayName,
+                    overrideMyLangCode: widget.overrideMyLangCode,
+                    overridePeerLangCode: widget.overridePeerLangCode,
+                    initialTranslationEnabled: false,
+                  ),
+                ),
+              );
+            },
+          );
+        } else {
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to initiate call. Please check your network connection.'),
+              backgroundColor: Colors.redAccent,
+              duration: Duration(seconds: 3),
+            ),
+          );
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to initiate call. Please check your network connection.'),
-            backgroundColor: Colors.redAccent,
-            duration: Duration(seconds: 3),
-          ),
-        );
       }
     });
   }
@@ -140,13 +176,18 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
         statusText = 'Calling...';
     }
 
+    final isTranslatedCall = callState.translationEnabled &&
+        (myLang.code.toLowerCase().trim() != peerLang.code.toLowerCase().trim());
+
     return CallScaffold(
       peerName: widget.calleeDisplayName,
       peerAvatar: widget.callee.avatarUrl,
       peerPhone: widget.callee.phone.getFormattedNumber(),
       statusText: statusText,
-      badgeText: 'DTLS-SRTP Encrypted • Gemini Live 3.5 AI',
-      badgeIcon: Icons.lock_outline_rounded,
+      badgeText: isTranslatedCall
+          ? 'AI Translated Call • Gemini Live 3.5'
+          : 'Free Direct Call • DTLS-SRTP Encrypted',
+      badgeIcon: isTranslatedCall ? Icons.translate_rounded : Icons.lock_outline_rounded,
       pulseAnimation: _ringController,
       middleWidget: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -156,25 +197,28 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
             color: const Color(0xFF18252D).withValues(alpha: 0.95),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.45),
+              color: (isTranslatedCall ? AppColors.primary : Colors.tealAccent)
+                  .withValues(alpha: 0.45),
             ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Row(
+              Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.translate_rounded,
-                    color: AppColors.primary,
+                    isTranslatedCall ? Icons.translate_rounded : Icons.phone_in_talk_rounded,
+                    color: isTranslatedCall ? AppColors.primary : Colors.tealAccent,
                     size: 16,
                   ),
-                  SizedBox(width: 6),
+                  const SizedBox(width: 6),
                   Text(
-                    'LIVE VOICE TRANSLATION PAIR (N × N)',
+                    isTranslatedCall
+                        ? 'LIVE VOICE TRANSLATION PAIR (N × N)'
+                        : 'DIRECT AUDIO CALL (FREE)',
                     style: TextStyle(
-                      color: AppColors.primary,
+                      color: isTranslatedCall ? AppColors.primary : Colors.tealAccent,
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.7,

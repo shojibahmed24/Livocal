@@ -20,21 +20,24 @@ final walletStreamProvider = StreamProvider.family<UserWallet, String>((ref, use
 });
 
 class WalletRepository {
-  final FirebaseFirestore firestore;
-  final Ref ref;
+  final FirebaseFirestore? firestore;
+  final Ref? ref;
 
   WalletRepository({
-    required this.firestore,
-    required this.ref,
+    this.firestore,
+    this.ref,
   });
 
-  DocumentReference<Map<String, dynamic>> _walletRef(String userId) {
-    return firestore.collection('users').doc(userId).collection('wallet').doc('current');
+  DocumentReference<Map<String, dynamic>>? _walletRef(String userId) {
+    if (firestore == null) return null;
+    return firestore!.collection('users').doc(userId).collection('wallet').doc('current');
   }
 
   /// Streams realtime wallet balance & trial state for the authenticated user.
   Stream<UserWallet> watchWallet(String userId) {
-    return _walletRef(userId).snapshots().map((snapshot) {
+    final docRef = _walletRef(userId);
+    if (docRef == null) return const Stream.empty();
+    return docRef.snapshots().map((snapshot) {
       if (!snapshot.exists || snapshot.data() == null) {
         return UserWallet.newTrial();
       }
@@ -45,9 +48,12 @@ class WalletRepository {
   /// Retrieves current snapshot of the user's wallet.
   Future<UserWallet> getWallet(String userId) async {
     try {
-      final doc = await _walletRef(userId).get();
-      if (doc.exists && doc.data() != null) {
-        return UserWallet.fromMap(doc.data()!);
+      final docRef = _walletRef(userId);
+      if (docRef != null) {
+        final doc = await docRef.get();
+        if (doc.exists && doc.data() != null) {
+          return UserWallet.fromMap(doc.data()!);
+        }
       }
       return await initializeOrGetWallet(userId: userId);
     } catch (e) {
@@ -96,9 +102,12 @@ class WalletRepository {
 
     // Direct Firestore fallback read
     try {
-      final doc = await _walletRef(userId).get();
-      if (doc.exists && doc.data() != null) {
-        return UserWallet.fromMap(doc.data()!);
+      final docRef = _walletRef(userId);
+      if (docRef != null) {
+        final doc = await docRef.get();
+        if (doc.exists && doc.data() != null) {
+          return UserWallet.fromMap(doc.data()!);
+        }
       }
     } catch (e) {
       debugPrint('[WalletRepository] Firestore fallback read error: $e');

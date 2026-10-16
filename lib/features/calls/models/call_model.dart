@@ -173,6 +173,13 @@ class CallSession {
   CallLanguage get myLanguage => CallLanguageRegistry.fromCode(myLangCode);
   CallLanguage get peerLanguage => CallLanguageRegistry.fromCode(peerLangCode);
 
+  /// Whether this call requires live AI translation between different languages.
+  /// If both users speak the same language or translation is turned off,
+  /// this is a Free Local Call (no minute deductions).
+  bool get isTranslatedCall =>
+      translationEnabled &&
+      (callerLangCode.toLowerCase().trim() != calleeLangCode.toLowerCase().trim());
+
   CallSession copyWith({
     String? callerLangCode,
     String? calleeLangCode,
@@ -213,6 +220,7 @@ class CallSession {
         'callerLangCode': callerLangCode,
         'calleeLangCode': calleeLangCode,
         'translationEnabled': translationEnabled,
+        'isTranslatedCall': isTranslatedCall,
         'status': status.value,
         'createdAt': createdAt.millisecondsSinceEpoch,
         'connectedAt': connectedAt?.millisecondsSinceEpoch,
@@ -273,6 +281,11 @@ class CallHistoryRecord {
     required this.myLangCode,
     required this.peerLangCode,
   });
+
+  /// Whether this history record represents an AI translated call.
+  bool get isTranslatedCall =>
+      translationEnabled &&
+      (myLangCode.toLowerCase().trim() != peerLangCode.toLowerCase().trim());
 
   Map<String, dynamic> toMap() => {
         'callId': callId,

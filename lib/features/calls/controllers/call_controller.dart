@@ -16,11 +16,12 @@ import 'package:livocal/features/calls/services/call_kit_service.dart';
 import 'package:livocal/features/calls/services/gemini_live_translator.dart';
 import 'package:livocal/features/calls/services/webrtc_call_client.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/repositories/wallet_repository.dart';
 
 final callControllerProvider =
     StateNotifierProvider<CallController, CallControllerState>((ref) {
   final repo = ref.read(callRepositoryProvider);
-  return CallController(repo: repo);
+  return CallController(repo: repo, ref: ref);
 });
 
 class CallControllerState {
@@ -39,6 +40,7 @@ class CallControllerState {
   final List<CallHistoryRecord> callHistory;
   final bool hasApiKey;
   final WebRtcCallState webrtcState;
+  final String? error;
 
   const CallControllerState({
     this.activeSession,
@@ -56,6 +58,7 @@ class CallControllerState {
     this.callHistory = const [],
     this.hasApiKey = false,
     this.webrtcState = WebRtcCallState.idle,
+    this.error,
   });
 
   CallLanguage get myLanguage => CallLanguageRegistry.fromCode(myLangCode);
@@ -78,6 +81,8 @@ class CallControllerState {
     List<CallHistoryRecord>? callHistory,
     bool? hasApiKey,
     WebRtcCallState? webrtcState,
+    String? error,
+    bool clearError = false,
   }) {
     return CallControllerState(
       activeSession:
@@ -97,12 +102,15 @@ class CallControllerState {
       callHistory: callHistory ?? this.callHistory,
       hasApiKey: hasApiKey ?? this.hasApiKey,
       webrtcState: webrtcState ?? this.webrtcState,
+      error: clearError ? null : (error ?? this.error),
     );
   }
 }
 
 class CallController extends StateNotifier<CallControllerState> {
   final CallRepository repo;
+  final Ref? ref;
+  final WalletRepository? walletRepo;
   final CallAudioPipeline _audioPipeline = CallAudioPipeline();
   final GeminiLiveTranslator _geminiTranslator = GeminiLiveTranslator();
   final WebRtcCallClient _webrtcClient = WebRtcCallClient();
@@ -120,7 +128,7 @@ class CallController extends StateNotifier<CallControllerState> {
   StreamSubscription<Uint8List>? _webrtcRemoteTranslatedAudioSub;
   StreamSubscription<WebRtcCallState>? _webrtcStateSub;
 
-  CallController({required this.repo})
+  CallController({required this.repo, this.ref, this.walletRepo})
       : super(
           CallControllerState(
             myLangCode: CallRepository.getMyLanguageCode(),
@@ -129,25 +137,29 @@ class CallController extends StateNotifier<CallControllerState> {
             hasApiKey: GeminiLiveTranslator.getSavedApiKey().isNotEmpty,
           ),
         ) {
-    CallKitService().init(
-      onAccept: (callId) {
-        acceptAndConnectCall(callId: callId);
-      },
-      onDecline: (callId) {
-        endCall();
-      },
-    );
-    FlutterCallkitIncoming.activeCalls().then((calls) {
-      if (calls is List && calls.isNotEmpty) {
-        final activeCall = calls.first;
-        final callId = activeCall['id'] as String?;
-        if (callId != null && callId.isNotEmpty) {
+    try {
+      CallKitService().init(
+        onAccept: (callId) {
           acceptAndConnectCall(callId: callId);
+        },
+        onDecline: (callId) {
+          endCall();
+        },
+      );
+      FlutterCallkitIncoming.activeCalls().then((calls) {
+        if (calls is List && calls.isNotEmpty) {
+          final activeCall = calls.first;
+          final callId = activeCall['id'] as String?;
+          if (callId != null && callId.isNotEmpty) {
+            acceptAndConnectCall(callId: callId);
+          }
         }
-      }
-    }).catchError((err, st) {
-      debugPrint('[CallController] FlutterCallkitIncoming.activeCalls error: $err\n$st');
-    });
+      }).catchError((err, st) {
+        debugPrint('[CallController] FlutterCallkitIncoming.activeCalls error: $err\n$st');
+      });
+    } catch (e) {
+      debugPrint('[CallController] CallKit init suppressed in test/headless environment: $e');
+    }
   }
 
   CallLanguage get myLang => state.myLanguage;
@@ -262,8 +274,12 @@ class CallController extends StateNotifier<CallControllerState> {
     required String calleeDisplayName,
     String? overrideMyLangCode,
     String? overridePeerLangCode,
+    bool? translationEnabled,
   }) async {
     await _cleanupActiveResources();
+
+    // Clear any previous error
+    state = state.copyWith(clearError: true);
 
     final myLang = overrideMyLangCode ?? state.myLangCode;
     final inferredPeerLang = overridePeerLangCode ??
@@ -271,6 +287,30 @@ class CallController extends StateNotifier<CallControllerState> {
 
     await CallRepository.setMyLanguageCode(myLang);
     await CallRepository.setPeerLanguageCode(inferredPeerLang);
+
+    final effectiveTranslation = translationEnabled ?? state.translationEnabled;
+
+    // Pre-call gatekeeper check:
+    // Only translated calls (where translation is enabled AND languages differ) require minutes!
+    // Same-language or direct voice calls are 100% Free!
+    final isTranslated = effectiveTranslation &&
+        (myLang.toLowerCase().trim() != inferredPeerLang.toLowerCase().trim());
+
+    if (isTranslated) {
+      final wRepo = walletRepo ?? (ref != null ? ref!.read(walletRepositoryProvider) : null);
+      if (wRepo != null) {
+        final wallet = await wRepo.getWallet(caller.id);
+        if (!wallet.hasMinutes) {
+          debugPrint(
+              '[CallController] Outgoing translated call blocked: Insufficient minutes (balance: ${wallet.effectiveRemainingMinutes})');
+          state = state.copyWith(
+            error: 'INSUFFICIENT_MINUTES',
+            activeSession: null,
+          );
+          return null;
+        }
+      }
+    }
 
     final session = CallSession(
       callId: const Uuid().v4(),
@@ -284,7 +324,7 @@ class CallController extends StateNotifier<CallControllerState> {
       calleePhone: callee.phone.getFormattedNumber(),
       callerLangCode: myLang,
       calleeLangCode: inferredPeerLang,
-      translationEnabled: state.translationEnabled,
+      translationEnabled: effectiveTranslation,
       status: CallStateStatus.dialing,
       isIncoming: false,
       createdAt: DateTime.now(),
@@ -294,6 +334,7 @@ class CallController extends StateNotifier<CallControllerState> {
       activeSession: session,
       myLangCode: myLang,
       peerLangCode: inferredPeerLang,
+      translationEnabled: effectiveTranslation,
       elapsedSeconds: 0,
       transcripts: [],
       isMuted: false,
@@ -474,8 +515,8 @@ class CallController extends StateNotifier<CallControllerState> {
     var current = state.activeSession;
     if (current == null && callId != null && callId.isNotEmpty) {
       try {
-        final doc = await repo.firestore.collection('calls').doc(callId).get();
-        if (doc.exists && doc.data() != null) {
+        final doc = await repo.firestore?.collection('calls').doc(callId).get();
+        if (doc != null && doc.exists && doc.data() != null) {
           final ownUser = getCurrentUser();
           current = CallSession.fromMap(doc.data()!, ownId: ownUser?.id ?? '');
           state = state.copyWith(activeSession: current);
@@ -508,8 +549,8 @@ class CallController extends StateNotifier<CallControllerState> {
     if (current.isIncoming) {
       try {
         final doc =
-            await repo.firestore.collection('calls').doc(current.callId).get();
-        final offerData = doc.data()?['offer'];
+            await repo.firestore?.collection('calls').doc(current.callId).get();
+        final offerData = doc?.data()?['offer'];
         if (offerData != null && offerData is Map<String, dynamic>) {
           await _webrtcClient.answerIncomingCall(current.callId, offerData);
         }
@@ -539,8 +580,8 @@ class CallController extends StateNotifier<CallControllerState> {
     } else {
       // Caller syncing Callee's language code from remote call doc snapshot
       try {
-        final callDoc = await repo.firestore.collection('calls').doc(current.callId).get();
-        final remoteCalleeLang = callDoc.data()?['calleeLangCode'] as String?;
+        final callDoc = await repo.firestore?.collection('calls').doc(current.callId).get();
+        final remoteCalleeLang = callDoc?.data()?['calleeLangCode'] as String?;
         if (remoteCalleeLang != null && remoteCalleeLang.isNotEmpty && remoteCalleeLang != state.peerLangCode) {
           debugPrint('[CallController] Caller detected remote calleeLangCode: $remoteCalleeLang on connect. Syncing...');
           state = state.copyWith(peerLangCode: remoteCalleeLang);

@@ -496,7 +496,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
                       ),
                     ],
                   ),
-                  if (record.translationEnabled) ...[
+                  if (record.isTranslatedCall) ...[
                     const SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -511,6 +511,26 @@ class _CallsTabState extends ConsumerState<CallsTab>
                         '🌐 $pairBadge',
                         style: const TextStyle(
                           color: AppColors.primary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ] else ...[
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.teal.withOpacity(0.14),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        '🗣️ Free Call',
+                        style: TextStyle(
+                          color: Colors.teal,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),

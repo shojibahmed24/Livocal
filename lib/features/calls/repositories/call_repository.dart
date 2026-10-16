@@ -15,9 +15,9 @@ class CallRepository {
   static const String prefPeerLang = 'call_peer_preferred_lang_code';
   static const String prefCallHistory = 'call_history_records_v1';
 
-  final FirebaseFirestore firestore;
+  final FirebaseFirestore? firestore;
 
-  CallRepository({required this.firestore});
+  CallRepository({this.firestore});
 
   static String getMyLanguageCode() =>
       SharedPref.instance.getString(prefMyLang) ?? 'bn';
@@ -47,8 +47,9 @@ class CallRepository {
 
   /// Creates call document in Firestore
   Future<bool> createCall(CallSession session) async {
+    if (firestore == null) return true;
     try {
-      await firestore
+      await firestore!
           .collection('calls')
           .doc(session.callId)
           .set(session.toMap())
@@ -61,6 +62,7 @@ class CallRepository {
   }
 
   Future<void> updateCallStatus(String callId, CallStateStatus status) async {
+    if (firestore == null) return;
     try {
       final updates = <String, dynamic>{
         'status': status.value,
@@ -68,7 +70,7 @@ class CallRepository {
       if (status == CallStateStatus.connected) {
         updates['connectedAt'] = DateTime.now().millisecondsSinceEpoch;
       }
-      await firestore
+      await firestore!
           .collection('calls')
           .doc(callId)
           .update(updates)
@@ -83,12 +85,13 @@ class CallRepository {
     String? callerLangCode,
     String? calleeLangCode,
   }) async {
+    if (firestore == null) return;
     try {
       final updates = <String, dynamic>{};
       if (callerLangCode != null) updates['callerLangCode'] = callerLangCode;
       if (calleeLangCode != null) updates['calleeLangCode'] = calleeLangCode;
       if (updates.isEmpty) return;
-      await firestore
+      await firestore!
           .collection('calls')
           .doc(callId)
           .update(updates)
@@ -102,8 +105,9 @@ class CallRepository {
     String callId,
     LiveTranscriptEntry entry,
   ) async {
+    if (firestore == null) return;
     try {
-      await firestore
+      await firestore!
           .collection('calls')
           .doc(callId)
           .collection('transcripts')
@@ -116,7 +120,8 @@ class CallRepository {
   }
 
   Stream<CallSession?> watchCallSession(String callId, String ownId) {
-    return firestore
+    if (firestore == null) return const Stream.empty();
+    return firestore!
         .collection('calls')
         .doc(callId)
         .snapshots()
@@ -131,7 +136,8 @@ class CallRepository {
   }
 
   Stream<CallSession?> watchIncomingCalls(String ownId) {
-    return firestore
+    if (firestore == null) return const Stream.empty();
+    return firestore!
         .collection('calls')
         .where('calleeId', isEqualTo: ownId)
         .snapshots()
@@ -161,7 +167,8 @@ class CallRepository {
     String callId,
     String ownId,
   ) {
-    return firestore
+    if (firestore == null) return const Stream.empty();
+    return firestore!
         .collection('calls')
         .doc(callId)
         .collection('transcripts')
