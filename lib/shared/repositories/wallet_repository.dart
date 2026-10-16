@@ -302,6 +302,51 @@ class WalletRepository {
       return false;
     }
   }
+
+  /// Submits real manual bKash/Nagad payment request with TrxID for admin verification.
+  Future<bool> submitPaymentRequest({
+    required String packId,
+    required int minutes,
+    required double amount,
+    required String senderPhone,
+    required String trxId,
+    String paymentMethod = 'bKash',
+    String? promoCode,
+  }) async {
+    try {
+      final currentUser = fb.FirebaseAuth.instance.currentUser;
+      final idToken = await currentUser?.getIdToken();
+
+      if (idToken != null) {
+        final url = Uri.parse(AppConfig.walletPaymentRequestUrl);
+        final response = await http.post(
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $idToken',
+          },
+          body: jsonEncode({
+            'packId': packId,
+            'minutes': minutes,
+            'amount': amount,
+            'senderPhone': senderPhone,
+            'trxId': trxId,
+            'paymentMethod': paymentMethod,
+            'promoCode': promoCode,
+          }),
+        ).timeout(const Duration(seconds: 10));
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          return data['success'] == true;
+        }
+      }
+      return false;
+    } catch (e) {
+      debugPrint('[WalletRepository] submitPaymentRequest error: $e');
+      return false;
+    }
+  }
 }
 
 class MinuteDeductionResult {

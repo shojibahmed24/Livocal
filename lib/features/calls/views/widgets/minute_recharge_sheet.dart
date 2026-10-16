@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/models/user_wallet.dart';
@@ -43,11 +44,21 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
   String _selectedPaymentMethod = 'bKash / Nagad';
   bool _isProcessing = false;
   final TextEditingController _promoController = TextEditingController();
+  final TextEditingController _senderPhoneController = TextEditingController();
+  final TextEditingController _trxIdController = TextEditingController();
   bool _showPromoField = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _senderPhoneController.text = widget.user.phoneNumber;
+  }
 
   @override
   void dispose() {
     _promoController.dispose();
+    _senderPhoneController.dispose();
+    _trxIdController.dispose();
     super.dispose();
   }
 
@@ -64,6 +75,27 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
   }
 
   Future<void> _processRecharge() async {
+    final senderPhone = _senderPhoneController.text.trim();
+    final trxId = _trxIdController.text.trim();
+
+    if (senderPhone.isEmpty) {
+      showSnackBar(
+        context: context,
+        content: 'অনুগ্রহ করে টাকা পাঠানোর ফোন নম্বরটি লিখুন।',
+        type: SnacBarType.error,
+      );
+      return;
+    }
+
+    if (trxId.isEmpty) {
+      showSnackBar(
+        context: context,
+        content: 'অনুগ্রহ করে bKash / Nagad ট্রানজেকশন আইডি (TrxID) লিখুন।',
+        type: SnacBarType.error,
+      );
+      return;
+    }
+
     setState(() {
       _isProcessing = true;
     });
@@ -79,12 +111,12 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
     final totalMinutes = _selectedPackMinutes + bonusMinutes;
 
     final repo = ref.read(walletRepositoryProvider);
-    final success = await repo.rechargeWallet(
-      userId: widget.user.id,
+    final success = await repo.submitPaymentRequest(
       packId: _selectedPackId,
       minutes: totalMinutes,
       amount: _selectedPackAmount,
-      currency: 'BDT',
+      senderPhone: senderPhone,
+      trxId: trxId,
       paymentMethod: _selectedPaymentMethod,
       promoCode: promo.isNotEmpty ? promo : null,
     );
@@ -100,13 +132,13 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
       widget.onRecharged?.call();
       showSnackBar(
         context: context,
-        content: 'অভিনন্দন! $totalMinutes মিনিট সফলভাবে রিচার্জ হয়েছে।',
+        content: 'পেমেন্ট রিকোয়েস্ট জমা হয়েছে! অ্যাডমিন অনুমোদন করলেই $totalMinutes মিনিট যোগ হবে।',
         type: SnacBarType.info,
       );
     } else {
       showSnackBar(
         context: context,
-        content: 'রিচার্জ ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।',
+        content: 'পেমেন্ট রিকোয়েস্ট জমা দেওয়া যায়নি। TrxID ইতিমধ্যে জমা হয়েছে অথবা সার্ভার ত্রুটি।',
         type: SnacBarType.error,
       );
     }
@@ -448,6 +480,146 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                       ),
                     ],
                   ),
+                const SizedBox(height: 14),
+
+                // Real bKash / Nagad Payment Instructions Box
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: primaryColor.withOpacity(0.35)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.verified_user_rounded, color: AppColors.primary, size: 18),
+                          const SizedBox(width: 8),
+                          Text(
+                            'রিয়েল পেমেন্ট নির্দেশিকা (Real Payment Verification)',
+                            style: TextStyle(
+                              color: textColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      // Payment Number Card
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'bKash / Nagad পার্সোনাল / মার্চেন্ট নম্বর:',
+                                  style: TextStyle(
+                                    color: isDark ? Colors.white60 : Colors.black54,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                const Text(
+                                  '01721013902',
+                                  style: TextStyle(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    letterSpacing: 1.0,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            TextButton.icon(
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                backgroundColor: primaryColor.withOpacity(0.12),
+                              ),
+                              icon: const Icon(Icons.copy_rounded, size: 16, color: AppColors.primary),
+                              label: const Text(
+                                'কপি করুন',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              onPressed: () {
+                                Clipboard.setData(const ClipboardData(text: '01721013902'));
+                                showSnackBar(
+                                  context: context,
+                                  content: 'নম্বর 01721013902 ক্লিপবোর্ডে কপি করা হয়েছে!',
+                                  type: SnacBarType.info,
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        '১. আপনার bKash বা Nagad অ্যাপে গিয়ে Send Money বা পেমেন্ট করুন ৳${_selectedPackAmount.toStringAsFixed(0)}।\n২. সফল ট্রানজেকশনের পর নিচের ঘরে আপনার নম্বর ও TrxID লিখুন:',
+                        style: TextStyle(
+                          color: isDark ? Colors.white70 : Colors.black87,
+                          fontSize: 11.5,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      // Sender Phone Field
+                      TextField(
+                        controller: _senderPhoneController,
+                        keyboardType: TextInputType.phone,
+                        style: TextStyle(color: textColor, fontSize: 13),
+                        decoration: InputDecoration(
+                          labelText: 'আপনার টাকা পাঠানোর ফোন নম্বর (Sender Number)',
+                          labelStyle: TextStyle(color: isDark ? Colors.white60 : Colors.black54, fontSize: 12),
+                          prefixIcon: const Icon(Icons.phone_android_rounded, size: 18),
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          filled: true,
+                          fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.black12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // TrxID Field
+                      TextField(
+                        controller: _trxIdController,
+                        textCapitalization: TextCapitalization.characters,
+                        style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.bold),
+                        decoration: InputDecoration(
+                          labelText: 'bKash / Nagad TrxID (Transaction ID)',
+                          labelStyle: TextStyle(color: isDark ? Colors.white60 : Colors.black54, fontSize: 12),
+                          hintText: 'e.g. BKA8X92K4L',
+                          hintStyle: TextStyle(color: isDark ? Colors.white30 : Colors.black38, fontSize: 12),
+                          prefixIcon: const Icon(Icons.tag_rounded, size: 18),
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          filled: true,
+                          fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.black12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -475,7 +647,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
                     )
                   : Text(
-                      '৳${_selectedPackAmount.toStringAsFixed(0)} দিয়ে $_selectedPackMinutes মিনিট রিচার্জ করুন',
+                      '৳${_selectedPackAmount.toStringAsFixed(0)} পেমেন্ট ভেরিফিকেশন জমা দিন',
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,

@@ -61,4 +61,7 @@ class AppConfig {
 
   static String get walletRechargeUrl =>
       '$relayHttpBaseUrl/api/wallet/recharge';
+
+  static String get walletPaymentRequestUrl =>
+      '$relayHttpBaseUrl/api/wallet/payment-request';
 }

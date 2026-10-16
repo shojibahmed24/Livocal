@@ -8,6 +8,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import crypto from 'crypto';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
@@ -35,7 +36,17 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     console.error('[Firebase Admin] Error parsing FIREBASE_SERVICE_ACCOUNT env:', e.message);
   }
 } else {
-  console.warn('[Firebase Admin] Warning: FIREBASE_SERVICE_ACCOUNT environment variable is not set. Disk key fallbacks are disabled for production security.');
+  const localKeyPath = path.join(__dirname, 'serviceAccountKey.json');
+  if (fs.existsSync(localKeyPath)) {
+    try {
+      serviceAccount = JSON.parse(fs.readFileSync(localKeyPath, 'utf8'));
+      console.log('[Firebase Admin] Successfully loaded credentials from local serviceAccountKey.json');
+    } catch (e) {
+      console.error('[Firebase Admin] Error reading local serviceAccountKey.json:', e.message);
+    }
+  } else {
+    console.warn('[Firebase Admin] Warning: Neither FIREBASE_SERVICE_ACCOUNT env nor serviceAccountKey.json found.');
+  }
 }
 
 // Whitelist of valid Gemini 3.5 Live Translation voices
@@ -981,25 +992,7 @@ const authenticateAdmin = async (req, res, next) => {
 // Admin metrics overview endpoint
 app.get('/api/admin/metrics', authenticateAdmin, async (req, res) => {
   if (!firestoreDb) {
-    // Local development & demonstration fallback when Firebase Admin credentials are not on disk
-    return res.json({
-      success: true,
-      demoMode: true,
-      metrics: {
-        totalUsers: 194,
-        totalBilledMinutes: 3820,
-        totalRetailBdt: 76400,
-        totalGeminiCostUsd: 133.7,
-        totalGeminiCostBdt: 16044,
-        netProfitBdt: 60356,
-        profitMarginPercent: '79.0%',
-        totalRechargeRevenueBdt: 94200,
-        totalPaidMinutesPurchased: 5800,
-        activeRatePerMinuteBdt: 20.0,
-        geminiCostPerMinuteUsd: 0.035,
-      },
-      updatedAt: new Date().toISOString(),
-    });
+    return res.status(503).json({ error: 'Firestore database service is currently unavailable' });
   }
 
   try {
@@ -1018,7 +1011,7 @@ app.get('/api/admin/metrics', authenticateAdmin, async (req, res) => {
 
     const totalGeminiCostBdt = totalGeminiCostUsd * 120.0;
     const netProfitBdt = totalRetailBdt - totalGeminiCostBdt;
-    const profitMarginPercent = totalRetailBdt > 0 ? ((netProfitBdt / totalRetailBdt) * 100).toFixed(1) : '79.0';
+    const profitMarginPercent = totalRetailBdt > 0 ? ((netProfitBdt / totalRetailBdt) * 100).toFixed(1) : '0.0';
 
     // 2. Aggregate recharge transactions
     const rechargesSnap = await firestoreDb.collection('recharge_transactions').limit(1000).get();
@@ -1060,59 +1053,7 @@ app.get('/api/admin/metrics', authenticateAdmin, async (req, res) => {
 
 // Admin list wallets
 app.get('/api/admin/wallets', authenticateAdmin, async (req, res) => {
-  if (!firestoreDb) {
-    return res.json({
-      success: true,
-      demoMode: true,
-      count: 4,
-      wallets: [
-        {
-          userId: 'user_dev_8801721013902',
-          name: 'Freelancer Tanvir (Upwork)',
-          phone: '+8801721013902',
-          balanceMinutes: 180,
-          trialMinutes: 0,
-          trialActive: false,
-          trialExpiresAt: '2026-10-10T12:00:00.000Z',
-          totalMinutesUsed: 142,
-          updatedAt: new Date().toISOString(),
-        },
-        {
-          userId: 'user_dev_8801833445566',
-          name: 'Graphic Pro Shanto',
-          phone: '+8801833445566',
-          balanceMinutes: 500,
-          trialMinutes: 0,
-          trialActive: false,
-          trialExpiresAt: '2026-09-25T12:00:00.000Z',
-          totalMinutesUsed: 310,
-          updatedAt: new Date().toISOString(),
-        },
-        {
-          userId: 'user_dev_8801303456776',
-          name: 'Shojib (New Freelancer)',
-          phone: '+8801303456776',
-          balanceMinutes: 0,
-          trialMinutes: 14,
-          trialActive: true,
-          trialExpiresAt: new Date(Date.now() + 10 * 86400000).toISOString(),
-          totalMinutesUsed: 6,
-          updatedAt: new Date().toISOString(),
-        },
-        {
-          userId: 'user_dev_8801911223344',
-          name: 'Web Dev Agency',
-          phone: '+8801911223344',
-          balanceMinutes: 320,
-          trialMinutes: 0,
-          trialActive: false,
-          trialExpiresAt: '2026-08-15T12:00:00.000Z',
-          totalMinutesUsed: 640,
-          updatedAt: new Date().toISOString(),
-        },
-      ],
-    });
-  }
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
 
   try {
     const search = (req.query.search || '').trim().toLowerCase();
@@ -1153,51 +1094,7 @@ app.get('/api/admin/wallets', authenticateAdmin, async (req, res) => {
 
 // Admin Call Billing Ledger
 app.get('/api/admin/billing-ledger', authenticateAdmin, async (req, res) => {
-  if (!firestoreDb) {
-    return res.json({
-      success: true,
-      demoMode: true,
-      count: 3,
-      records: [
-        {
-          id: 'rec_call_9812_m1',
-          callId: 'call_live_upwork_us',
-          timestamp: new Date().toISOString(),
-          callerId: 'user_dev_8801721013902',
-          calleeId: 'phone_+14155552671',
-          minuteIndex: 1,
-          durationSeconds: 60,
-          geminiCostUsd: 0.035,
-          retailRateBdt: 20.0,
-          netProfitBdt: 15.8,
-        },
-        {
-          id: 'rec_call_9812_m2',
-          callId: 'call_live_upwork_us',
-          timestamp: new Date(Date.now() - 60000).toISOString(),
-          callerId: 'user_dev_8801721013902',
-          calleeId: 'phone_+14155552671',
-          minuteIndex: 2,
-          durationSeconds: 120,
-          geminiCostUsd: 0.035,
-          retailRateBdt: 20.0,
-          netProfitBdt: 15.8,
-        },
-        {
-          id: 'rec_call_9813_m1',
-          callId: 'call_live_germany_client',
-          timestamp: new Date(Date.now() - 300000).toISOString(),
-          callerId: 'user_dev_8801833445566',
-          calleeId: 'phone_+4930123456',
-          minuteIndex: 1,
-          durationSeconds: 60,
-          geminiCostUsd: 0.035,
-          retailRateBdt: 20.0,
-          netProfitBdt: 15.8,
-        },
-      ],
-    });
-  }
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
 
   try {
     const ledgerSnap = await firestoreDb.collection('call_billing_records')
@@ -1219,45 +1116,7 @@ app.get('/api/admin/billing-ledger', authenticateAdmin, async (req, res) => {
 
 // Admin Recharge History
 app.get('/api/admin/recharges', authenticateAdmin, async (req, res) => {
-  if (!firestoreDb) {
-    return res.json({
-      success: true,
-      demoMode: true,
-      count: 3,
-      recharges: [
-        {
-          transactionId: 'trx_bkash_9812a',
-          userId: 'user_dev_8801721013902',
-          userPhone: '+8801721013902',
-          packId: 'pro_180',
-          minutesAdded: 180,
-          amountPaid: 3000,
-          paymentMethod: 'bKash Instant',
-          createdAt: new Date(Date.now() - 3600000).toISOString(),
-        },
-        {
-          transactionId: 'trx_card_4129b',
-          userId: 'user_dev_8801833445566',
-          userPhone: '+8801833445566',
-          packId: 'agency_500',
-          minutesAdded: 500,
-          amountPaid: 7200,
-          paymentMethod: 'Mastercard',
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-        },
-        {
-          transactionId: 'trx_adm_topup_1',
-          userId: 'user_dev_8801303456776',
-          userPhone: '+8801303456776',
-          packId: 'starter_60',
-          minutesAdded: 60,
-          amountPaid: 1200,
-          paymentMethod: 'Admin Manual Credit',
-          createdAt: new Date(Date.now() - 172800000).toISOString(),
-        },
-      ],
-    });
-  }
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
 
   try {
     const snap = await firestoreDb.collection('recharge_transactions')
@@ -1277,6 +1136,172 @@ app.get('/api/admin/recharges', authenticateAdmin, async (req, res) => {
   }
 });
 
+// Freelancer submits payment request with real bKash / Nagad TrxID
+app.post('/api/wallet/payment-request', authenticateRequest, async (req, res) => {
+  const userId = req.user.uid;
+  const { packId, minutes, amount, senderPhone, trxId, paymentMethod, promoCode } = req.body || {};
+
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
+
+  if (!trxId || !trxId.trim()) {
+    return res.status(400).json({ error: 'Transaction ID (TrxID) is required' });
+  }
+  if (!senderPhone || !senderPhone.trim()) {
+    return res.status(400).json({ error: 'Sender phone number is required' });
+  }
+
+  try {
+    const cleanTrx = trxId.trim().toUpperCase();
+    const reqId = `pay_${cleanTrx}`;
+    const reqRef = firestoreDb.collection('payment_requests').doc(reqId);
+
+    const existing = await reqRef.get();
+    if (existing.exists) {
+      return res.status(409).json({ error: 'This Transaction ID (TrxID) has already been submitted' });
+    }
+
+    const paymentData = {
+      id: reqId,
+      userId,
+      userPhone: req.user.phone_number || '',
+      senderPhone: senderPhone.trim(),
+      trxId: cleanTrx,
+      packId: packId || 'custom',
+      minutes: parseInt(minutes, 10) || 0,
+      amount: Number(amount) || 0,
+      currency: 'BDT',
+      paymentMethod: paymentMethod || 'bKash',
+      promoCode: promoCode || null,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    await reqRef.set(paymentData);
+    console.log(`[Payment] Real payment request submitted: ${cleanTrx} by ${userId} for ৳${amount}`);
+
+    return res.json({ success: true, payment: paymentData });
+  } catch (err) {
+    console.error('[Payment] Error submitting payment request:', err.message);
+    return res.status(500).json({ error: 'Failed to submit payment request', message: err.message });
+  }
+});
+
+// Admin list payment verification requests
+app.get('/api/admin/payment-requests', authenticateAdmin, async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
+
+  try {
+    const snap = await firestoreDb.collection('payment_requests')
+      .orderBy('createdAt', 'desc')
+      .limit(100)
+      .get();
+
+    const requests = [];
+    snap.forEach(doc => requests.push({ id: doc.id, ...doc.data() }));
+
+    return res.json({ success: true, count: requests.length, requests });
+  } catch (err) {
+    console.error('[Admin] Error fetching payment requests:', err.message);
+    return res.status(500).json({ error: 'Failed to fetch payment requests' });
+  }
+});
+
+// Admin Approve or Reject payment request
+app.post('/api/admin/payment-request/action', authenticateAdmin, async (req, res) => {
+  const { requestId, action, notes, adminName } = req.body || {};
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
+
+  if (!requestId || !action) {
+    return res.status(400).json({ error: 'requestId and action (approve/reject) are required' });
+  }
+
+  try {
+    const reqRef = firestoreDb.collection('payment_requests').doc(requestId);
+    const reqDoc = await reqRef.get();
+    if (!reqDoc.exists) {
+      return res.status(404).json({ error: 'Payment request not found' });
+    }
+
+    const pData = reqDoc.data();
+    if (pData.status !== 'pending') {
+      return res.status(400).json({ error: `Payment request is already ${pData.status}` });
+    }
+
+    const nowIso = new Date().toISOString();
+
+    if (action === 'approve') {
+      const targetUid = pData.userId;
+      const minutesToAdd = Number(pData.minutes) || 0;
+      const walletRef = firestoreDb.collection('users').doc(targetUid).collection('wallet').doc('current');
+      const txRef = firestoreDb.collection('recharge_transactions').doc(`tx_${pData.trxId}`);
+
+      await firestoreDb.runTransaction(async (transaction) => {
+        const wDoc = await transaction.get(walletRef);
+        let wData = wDoc.exists ? wDoc.data() : {
+          balanceMinutes: 0,
+          trialMinutes: 0,
+          trialActive: false,
+          trialExpiresAt: nowIso,
+          totalMinutesUsed: 0,
+          totalMinutesPurchased: 0,
+          currency: 'BDT',
+          createdAt: nowIso,
+        };
+
+        const newBalance = (wData.balanceMinutes || 0) + minutesToAdd;
+        const newPurchased = (wData.totalMinutesPurchased || 0) + minutesToAdd;
+
+        transaction.set(walletRef, {
+          ...wData,
+          balanceMinutes: newBalance,
+          totalMinutesPurchased: newPurchased,
+          updatedAt: nowIso,
+        }, { merge: true });
+
+        transaction.set(txRef, {
+          transactionId: `tx_${pData.trxId}`,
+          userId: targetUid,
+          userPhone: pData.userPhone || '',
+          packId: pData.packId || 'custom',
+          minutesAdded: minutesToAdd,
+          amountPaid: Number(pData.amount) || 0,
+          currency: 'BDT',
+          paymentMethod: pData.paymentMethod || 'bKash',
+          trxId: pData.trxId,
+          status: 'completed',
+          approvedBy: adminName || 'Admin',
+          createdAt: nowIso,
+        });
+
+        transaction.update(reqRef, {
+          status: 'approved',
+          approvedAt: nowIso,
+          approvedBy: adminName || 'Admin',
+          notes: notes || 'Verified and approved',
+        });
+      });
+
+      console.log(`[Admin] Payment ${requestId} APPROVED. ${minutesToAdd} mins credited to ${targetUid}.`);
+      return res.json({ success: true, status: 'approved', minutesCredited: minutesToAdd });
+    } else if (action === 'reject') {
+      await reqRef.update({
+        status: 'rejected',
+        rejectedAt: nowIso,
+        rejectedBy: adminName || 'Admin',
+        notes: notes || 'Payment rejected by admin',
+      });
+      console.log(`[Admin] Payment ${requestId} REJECTED.`);
+      return res.json({ success: true, status: 'rejected' });
+    } else {
+      return res.status(400).json({ error: 'Invalid action. Must be approve or reject' });
+    }
+  } catch (err) {
+    console.error('[Admin] Error processing payment action:', err.message);
+    return res.status(500).json({ error: 'Failed to process payment action', message: err.message });
+  }
+});
+
 // Admin Manual Top-up endpoint
 app.post('/api/admin/wallet/topup', authenticateAdmin, async (req, res) => {
   const { phone, userId, minutes, amount, notes, adminName } = req.body || {};
@@ -1285,21 +1310,7 @@ app.post('/api/admin/wallet/topup', authenticateAdmin, async (req, res) => {
     return res.status(400).json({ error: 'Valid minutes amount required' });
   }
 
-  if (!firestoreDb) {
-    return res.json({
-      success: true,
-      demoMode: true,
-      userId: userId || `user_dev_${(phone || 'anon').replace(/[^\d]/g, '')}`,
-      wallet: {
-        balanceMinutes: 180 + minutesToAdd,
-        trialMinutes: 0,
-        trialActive: false,
-        totalMinutesPurchased: minutesToAdd,
-        updatedAt: new Date().toISOString(),
-      },
-      transactionId: `adm_mock_tx_${Date.now()}`,
-    });
-  }
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
 
   try {
     let targetUid = userId;
