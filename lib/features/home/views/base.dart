@@ -24,6 +24,7 @@ import 'package:livocal/features/home/views/contacts.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/repositories/push_notifications.dart';
+import 'package:livocal/shared/repositories/wallet_repository.dart';
 import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/time_ticker.dart';
@@ -85,6 +86,12 @@ class _HomePageState extends ConsumerState<HomePage>
     firestore.setActivityStatus(
       userId: widget.user.id,
       statusValue: UserActivityStatus.online.value,
+    );
+
+    // Initialize or verify SaaS minute wallet & 14-day 20-min trial
+    ref.read(walletRepositoryProvider).initializeOrGetWallet(
+      userId: widget.user.id,
+      phone: widget.user.phoneNumber,
     );
 
     messageListener = firestore.getChatStream(widget.user.id).listen(

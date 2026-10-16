@@ -32,6 +32,12 @@ service cloud.firestore {
       match /linked_devices/{deviceId} {
         allow read, write: if isAuthenticated() && request.auth.uid == userId;
       }
+
+      // SaaS Freelancer Minute Wallet (Owner can read balance; writes strictly server-only)
+      match /wallet/{walletId} {
+        allow read: if isAuthenticated() && request.auth.uid == userId;
+        allow write: if false;
+      }
     }
 
     // 2. Chat Inboxes & Realtime Message Queue
@@ -116,6 +122,20 @@ service cloud.firestore {
     match /feedback/{feedbackId} {
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
       allow read, update, delete: if false;
+    }
+
+    // 7. Device Fingerprints (Trial fraud protection - Server Admin SDK only)
+    match /device_fingerprints/{fingerprintId} {
+      allow read, write: if false;
+    }
+
+    // 8. Call Billing Records (Immutable ledger of translated call minute deductions)
+    match /call_billing_records/{recordId} {
+      allow read: if isAuthenticated() && (
+        resource.data.callerId == request.auth.uid ||
+        resource.data.calleeId == request.auth.uid
+      );
+      allow write: if false;
     }
   }
 }

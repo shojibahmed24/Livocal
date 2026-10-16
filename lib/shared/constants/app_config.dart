@@ -46,4 +46,10 @@ class AppConfig {
 
   static String get missingContactsHelpUrl =>
       '$relayHttpBaseUrl/help/missing-contacts';
+
+  static String get walletInitOrGetUrl =>
+      '$relayHttpBaseUrl/api/wallet/init-or-get';
+
+  static String get walletBalanceUrl =>
+      '$relayHttpBaseUrl/api/wallet/balance';
 }

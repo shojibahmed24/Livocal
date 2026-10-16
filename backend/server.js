@@ -629,6 +629,99 @@ app.get('/api/webrtc/ice-servers', authenticateRequest, (req, res) => {
   res.json({ iceServers });
 });
 
+// ==========================================
+// SaaS Freelancer Wallet & Trial Management
+// ==========================================
+
+// Initializes user wallet with 14-day 20-min trial if device is clean, or returns existing wallet
+app.post('/api/wallet/init-or-get', authenticateRequest, async (req, res) => {
+  const userId = req.user.uid;
+  const { deviceId, phone } = req.body || {};
+
+  if (!firestoreDb) {
+    return res.status(503).json({ error: 'Firestore database service is currently unavailable' });
+  }
+
+  try {
+    const walletDocRef = firestoreDb.collection('users').doc(userId).collection('wallet').doc('current');
+    const walletSnap = await walletDocRef.get();
+
+    if (walletSnap.exists) {
+      return res.json({ success: true, wallet: walletSnap.data() });
+    }
+
+    // New wallet required: Check hardware device fingerprint to prevent trial fraud
+    let grantTrial = true;
+    const cleanDeviceId = deviceId && String(deviceId).trim();
+
+    if (cleanDeviceId) {
+      const fingerprintRef = firestoreDb.collection('device_fingerprints').doc(cleanDeviceId);
+      const fingerprintSnap = await fingerprintRef.get();
+
+      if (fingerprintSnap.exists) {
+        // Device has already claimed trial on this or another phone number
+        grantTrial = false;
+        console.log(`[SaaS Billing] Device ${cleanDeviceId} already claimed trial. Denying trial minutes for uid ${userId}.`);
+      } else {
+        // Mark device fingerprint as claimed
+        await fingerprintRef.set({
+          firstUid: userId,
+          firstPhone: phone || req.user.phone_number || '',
+          trialGrantedAt: new Date().toISOString(),
+          isBlacklisted: false,
+        });
+      }
+    }
+
+    const now = new Date();
+    const trialDays = 14;
+    const trialMinutes = grantTrial ? 20 : 0;
+    const expiresAt = new Date(now.getTime() + (grantTrial ? trialDays * 86400000 : 0));
+
+    const newWallet = {
+      balanceMinutes: 0,
+      trialMinutes,
+      trialActive: grantTrial,
+      trialExpiresAt: expiresAt.toISOString(),
+      totalMinutesUsed: 0,
+      totalMinutesPurchased: 0,
+      currency: 'BDT',
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+    };
+
+    await walletDocRef.set(newWallet);
+    console.log(`[SaaS Billing] Initialized wallet for uid ${userId}: grantTrial=${grantTrial}, trialMinutes=${trialMinutes}`);
+
+    return res.json({ success: true, wallet: newWallet });
+  } catch (err) {
+    console.error('[SaaS Billing] Error initializing wallet:', err.message);
+    return res.status(500).json({ error: 'Failed to initialize wallet', message: err.message });
+  }
+});
+
+// Retrieves current wallet balance
+app.get('/api/wallet/balance', authenticateRequest, async (req, res) => {
+  const userId = req.user.uid;
+
+  if (!firestoreDb) {
+    return res.status(503).json({ error: 'Firestore database service is currently unavailable' });
+  }
+
+  try {
+    const walletSnap = await firestoreDb.collection('users').doc(userId).collection('wallet').doc('current').get();
+
+    if (!walletSnap.exists) {
+      return res.status(404).json({ error: 'Wallet not found' });
+    }
+
+    return res.json({ success: true, wallet: walletSnap.data() });
+  } catch (err) {
+    console.error('[SaaS Billing] Error fetching wallet balance:', err.message);
+    return res.status(500).json({ error: 'Failed to fetch wallet balance', message: err.message });
+  }
+});
+
 // Admin endpoint to backfill metadata and prune expired legacy statuses (>24h old)
 app.post('/api/admin/cleanup-legacy-storage', authenticateRequest, async (req, res) => {
   const adminSecret = process.env.ADMIN_SECRET;
