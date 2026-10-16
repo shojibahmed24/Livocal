@@ -137,5 +137,17 @@ service cloud.firestore {
       );
       allow write: if false;
     }
+
+    // 9. Recharge Transactions (User can read their own, writes server-only)
+    match /recharge_transactions/{txId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    // 10. Payment Requests (Users can read their own submissions, writes server-only)
+    match /payment_requests/{reqId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
   }
 }
