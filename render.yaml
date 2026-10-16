@@ -20,3 +20,10 @@ services:
         sync: false
       - key: RELAY_API_SECRET
         sync: false
+      - key: TURN_URL
+        sync: false
+      - key: TURN_SECRET
+        sync: false
+      - key: ADMIN_SECRET
+        sync: false
+

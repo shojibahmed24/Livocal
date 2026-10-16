@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
 /// Centralized utility for recording and querying authentic network data traffic (sent & received).
@@ -12,7 +13,7 @@ class NetworkTracker {
       final current = SharedPref.instance.getInt(keySent) ?? 0;
       SharedPref.instance.setInt(keySent, current + bytes);
     } catch (e) {
-      // Ignore transient storage errors while recording
+      debugPrint('NetworkTracker.recordBytesSent error: $e');
     }
   }
 
@@ -23,7 +24,7 @@ class NetworkTracker {
       final current = SharedPref.instance.getInt(keyRecv) ?? 0;
       SharedPref.instance.setInt(keyRecv, current + bytes);
     } catch (e) {
-      // Ignore transient storage errors while recording
+      debugPrint('NetworkTracker.recordBytesReceived error: $e');
     }
   }
 

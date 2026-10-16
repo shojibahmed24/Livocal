@@ -66,6 +66,15 @@ android {
     }
 }
 
+gradle.taskGraph.whenReady { taskGraph ->
+    def isReleaseBuild = taskGraph.allTasks.any { task ->
+        task.name.equalsIgnoreCase("assembleRelease") || task.name.equalsIgnoreCase("bundleRelease")
+    }
+    if (isReleaseBuild && !keystorePropertiesFile.exists()) {
+        throw new GradleException("Release build attempted without 'key.properties'. Create 'android/key.properties' with signing configuration (keyAlias, keyPassword, storeFile, storePassword) to sign production release builds.")
+    }
+}
+
 flutter {
     source '../..'
 }

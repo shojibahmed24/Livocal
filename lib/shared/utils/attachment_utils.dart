@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -15,6 +16,7 @@ Future<List<File>?> pickMultimedia() async {
     final List<XFile> media = await picker.pickMultipleMedia();
     return media.isNotEmpty ? media.map((e) => File(e.path)).toList() : null;
   } catch (e) {
+    debugPrint('pickMultimedia error: $e');
     return null;
   }
 }
@@ -54,6 +56,7 @@ Future<List<File>?> pickFiles({
         .toList();
     return validFiles.isNotEmpty ? validFiles : null;
   } catch (e) {
+    debugPrint('pickFiles error: $e');
     return null;
   }
 }

@@ -60,6 +60,7 @@ class _HomePageState extends ConsumerState<HomePage>
   late List<Widget> _floatingButtons;
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
+  bool _isFirstChatStreamEmission = true;
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
@@ -120,7 +121,11 @@ class _HomePageState extends ConsumerState<HomePage>
           }
         }
 
-        if (hasIncoming) {
+        final isInitialEmission = _isFirstChatStreamEmission;
+        _isFirstChatStreamEmission = false;
+
+        // Only play message notification tone for new messages arriving after app launch
+        if (hasIncoming && !isInitialEmission) {
           RingtoneManager().playMessageNotificationTone();
         }
 

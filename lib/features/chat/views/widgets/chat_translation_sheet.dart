@@ -247,7 +247,7 @@ class _ChatTranslationSheetContentState
               title: const Text('Auto-translate incoming messages', style: TextStyle(fontSize: 14)),
               subtitle: const Text('Automatically displays translations below received messages', style: TextStyle(fontSize: 12)),
               value: _autoTranslateIncoming,
-              activeColor: AppColors.primary,
+              fillColor: WidgetStateProperty.resolveWith((states) => states.contains(WidgetState.selected) ? AppColors.primary : null),
               onChanged: (val) => setState(() => _autoTranslateIncoming = val ?? true),
             ),
             CheckboxListTile(
@@ -255,7 +255,7 @@ class _ChatTranslationSheetContentState
               title: const Text('Live Voice Note Transcription', style: TextStyle(fontSize: 14)),
               subtitle: const Text('Transcribe and translate incoming audio voice messages', style: TextStyle(fontSize: 12)),
               value: _autoTranscribeVoiceNotes,
-              activeColor: AppColors.primary,
+              fillColor: WidgetStateProperty.resolveWith((states) => states.contains(WidgetState.selected) ? AppColors.primary : null),
               onChanged: (val) => setState(() => _autoTranscribeVoiceNotes = val ?? true),
             ),
             const Divider(height: 20),

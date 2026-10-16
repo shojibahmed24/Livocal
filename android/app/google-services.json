@@ -33,35 +33,6 @@
           ]
         }
       }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:729373303752:android:26471128ca42c3a19856fd",
-        "android_client_info": {
-          "package_name": "com.livocal.vocal"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "729373303752-r3tf78aach112bislj8735ev4pfrk09e.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyCwlQsJhaQF30xjFV6xgm84k34kOz0Rj_0"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "729373303752-r3tf78aach112bislj8735ev4pfrk09e.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
     }
   ],
   "configuration_version": "1"

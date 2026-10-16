@@ -159,6 +159,7 @@ class StatusService {
       if (status.isExpired) return null;
       return status;
     } catch (e) {
+      debugPrint('StatusService.getMyLocalStatus error: $e');
       return null;
     }
   }
