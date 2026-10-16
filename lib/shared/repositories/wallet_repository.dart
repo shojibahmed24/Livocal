@@ -303,15 +303,16 @@ class WalletRepository {
     }
   }
 
-  /// Submits real manual bKash/Nagad payment request with TrxID for admin verification.
-  Future<bool> submitPaymentRequest({
+  /// Submits real payment verification request (bKash/Nagad or Crypto USDT/Binance Pay)
+  Future<PaymentSubmissionResult> submitPaymentRequest({
     required String packId,
-    required int minutes,
-    required double amount,
-    required String senderPhone,
+    required String senderIdentifier,
     required String trxId,
     String paymentMethod = 'bKash',
     String? promoCode,
+    String? senderPhone,
+    int? minutes,
+    double? amount,
   }) async {
     try {
       final currentUser = fb.FirebaseAuth.instance.currentUser;
@@ -327,26 +328,54 @@ class WalletRepository {
           },
           body: jsonEncode({
             'packId': packId,
-            'minutes': minutes,
-            'amount': amount,
-            'senderPhone': senderPhone,
+            'senderIdentifier': senderIdentifier,
+            'senderPhone': senderPhone ?? senderIdentifier,
             'trxId': trxId,
             'paymentMethod': paymentMethod,
             'promoCode': promoCode,
+            'minutes': minutes,
+            'amount': amount,
           }),
         ).timeout(const Duration(seconds: 10));
 
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          return data['success'] == true;
+        final data = jsonDecode(response.body);
+        if (response.statusCode == 200 && data['success'] == true) {
+          return PaymentSubmissionResult(
+            success: true,
+            message: 'পেমেন্ট রিকোয়েস্ট সফলভাবে জমা হয়েছে।',
+            paymentData: data['payment'] is Map<String, dynamic> ? data['payment'] : null,
+          );
+        } else {
+          return PaymentSubmissionResult(
+            success: false,
+            message: data['error']?.toString() ?? 'পেমেন্ট রিকোয়েস্ট প্রক্রিয়াকরণ করা যায়নি।',
+          );
         }
       }
-      return false;
+      return const PaymentSubmissionResult(
+        success: false,
+        message: 'ইউজার লগইন সেশন মেয়াদোত্তীর্ণ। পুনরায় লগইন করুন।',
+      );
     } catch (e) {
       debugPrint('[WalletRepository] submitPaymentRequest error: $e');
-      return false;
+      return PaymentSubmissionResult(
+        success: false,
+        message: 'নেটওয়ার্ক সংযোগ ত্রুটি: $e',
+      );
     }
   }
+}
+
+class PaymentSubmissionResult {
+  final bool success;
+  final String? message;
+  final Map<String, dynamic>? paymentData;
+
+  const PaymentSubmissionResult({
+    required this.success,
+    this.message,
+    this.paymentData,
+  });
 }
 
 class MinuteDeductionResult {

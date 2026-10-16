@@ -894,23 +894,111 @@ app.post('/api/wallet/call-end', authenticateRequest, async (req, res) => {
   }
 });
 
-// Freelancer SaaS Minute Recharge Endpoint (Packs, Voucher, or Direct top-up)
-app.post('/api/wallet/recharge', authenticateRequest, async (req, res) => {
-  const callerUid = req.user.uid;
+// Official SaaS Minute Packs & Server-Side Pricing (Source of Truth)
+const OFFICIAL_PACKS = {
+  'starter_60': {
+    id: 'starter_60',
+    name: 'স্টার্টার প্যাক (Starter Pack)',
+    baseMinutes: 60,
+    priceBdt: 1200,
+    priceUsdt: 10,
+  },
+  'pro_180': {
+    id: 'pro_180',
+    name: 'ফ্রিল্যান্সার প্রো (Freelancer Pro)',
+    baseMinutes: 180,
+    priceBdt: 3000,
+    priceUsdt: 25,
+  },
+  'agency_500': {
+    id: 'agency_500',
+    name: 'এজেন্সি প্যাক (Agency / Heavy Pack)',
+    baseMinutes: 500,
+    priceBdt: 7200,
+    priceUsdt: 60,
+  },
+};
+
+// Official Promo Codes & Bonuses (Server-side single-use verification)
+const OFFICIAL_PROMOS = {
+  'LIVOCAL2026': { bonusMinutes: 20, description: 'New Year 2026 Promo' },
+  'FREELANCERPRO': { bonusMinutes: 30, description: 'Freelancer Community Bonus' },
+};
+
+// Dynamic or environment-provided Admin Secret
+let effectiveAdminSecret = process.env.ADMIN_SECRET;
+if (!effectiveAdminSecret) {
+  effectiveAdminSecret = crypto.randomBytes(32).toString('hex');
+  console.warn('⚠️ [SECURITY WARNING] process.env.ADMIN_SECRET is not set in environment!');
+  console.warn(`🔑 Generated dynamic one-time Admin Secret for this session: ${effectiveAdminSecret}`);
+}
+
+const safeCompareSecrets = (provided, target) => {
+  if (typeof provided !== 'string' || typeof target !== 'string') return false;
+  const providedBuf = Buffer.from(provided, 'utf8');
+  const targetBuf = Buffer.from(target, 'utf8');
+  if (providedBuf.length !== targetBuf.length) return false;
+  return crypto.timingSafeEqual(providedBuf, targetBuf);
+};
+
+// Admin Authorization Middleware (Strict: Headers only, No query params, Timing-safe)
+const authenticateAdmin = async (req, res, next) => {
+  const providedSecret = req.headers['x-admin-secret'];
+
+  if (providedSecret && safeCompareSecrets(providedSecret, effectiveAdminSecret)) {
+    return next();
+  }
+
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ') && authService) {
+    const token = authHeader.substring(7).trim();
+    try {
+      const decoded = await authService.verifyIdToken(token);
+      if (decoded.admin === true || decoded.uid === process.env.SUPER_ADMIN_UID) {
+        req.adminUser = decoded;
+        return next();
+      }
+    } catch (err) {
+      console.warn('[AdminAuth] Bearer token verification failed:', err.message);
+    }
+  }
+
+  return res.status(403).json({ error: 'Forbidden: Valid Admin credentials or x-admin-secret header required' });
+};
+
+// Direct client wallet crediting is STRICTLY BLOCKED for P0 security.
+// Only authenticated Admin or verified payment callback can invoke this endpoint directly.
+app.post('/api/wallet/recharge', authenticateAdmin, async (req, res) => {
+  const targetUid = req.body.userId || req.body.uid;
   const { packId, minutes, amount, currency, paymentMethod, transactionId, promoCode } = req.body || {};
+
+  if (!targetUid) {
+    return res.status(400).json({ error: 'target userId is required' });
+  }
 
   if (!firestoreDb) {
     return res.status(503).json({ error: 'Firestore service unavailable' });
   }
 
-  const minutesToAdd = parseInt(minutes, 10);
+  // Server-side pack validation
+  let minutesToAdd = 0;
+  let amountPaid = Number(amount) || 0;
+  let packName = 'custom';
+  if (packId && OFFICIAL_PACKS[packId]) {
+    minutesToAdd = OFFICIAL_PACKS[packId].baseMinutes;
+    packName = OFFICIAL_PACKS[packId].name;
+    if (!amountPaid) amountPaid = OFFICIAL_PACKS[packId].priceBdt;
+  } else {
+    minutesToAdd = parseInt(minutes, 10);
+  }
+
   if (isNaN(minutesToAdd) || minutesToAdd <= 0) {
     return res.status(400).json({ error: 'Invalid minutes amount' });
   }
 
   try {
-    const walletRef = firestoreDb.collection('users').doc(callerUid).collection('wallet').doc('current');
-    const txId = transactionId || `tx_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    const walletRef = firestoreDb.collection('users').doc(targetUid).collection('wallet').doc('current');
+    const txId = transactionId || `adm_tx_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
     const txRef = firestoreDb.collection('recharge_transactions').doc(txId);
 
     const updatedWallet = await firestoreDb.runTransaction(async (transaction) => {
@@ -942,13 +1030,13 @@ app.post('/api/wallet/recharge', authenticateRequest, async (req, res) => {
 
       transaction.set(txRef, {
         transactionId: txId,
-        userId: callerUid,
-        userPhone: req.user.phone_number || currentData.phone || '',
+        userId: targetUid,
+        userPhone: currentData.phone || '',
         packId: packId || 'custom',
         minutesAdded: minutesToAdd,
-        amountPaid: Number(amount) || 0,
+        amountPaid,
         currency: currency || 'BDT',
-        paymentMethod: paymentMethod || 'Instant Card/bKash',
+        paymentMethod: paymentMethod || 'Admin Direct Credit',
         promoCode: promoCode || null,
         status: 'completed',
         createdAt: nowIso,
@@ -957,37 +1045,13 @@ app.post('/api/wallet/recharge', authenticateRequest, async (req, res) => {
       return walletUpdate;
     });
 
-    console.log(`[SaaS Billing] Recharged ${minutesToAdd} minutes for user ${callerUid}. New balance: ${updatedWallet.balanceMinutes} mins.`);
+    console.log(`[SaaS Billing] Admin recharged ${minutesToAdd} minutes for user ${targetUid}. New balance: ${updatedWallet.balanceMinutes} mins.`);
     return res.json({ success: true, wallet: updatedWallet, transactionId: txId });
   } catch (err) {
     console.error('[SaaS Billing] Error processing wallet recharge:', err.message);
     return res.status(500).json({ error: 'Failed to process recharge', message: err.message });
   }
 });
-
-// Admin Authorization Middleware
-const authenticateAdmin = async (req, res, next) => {
-  const configuredSecret = process.env.ADMIN_SECRET || 'livocal_admin_secret_2026';
-  const providedSecret = req.headers['x-admin-secret'] || req.query.admin_secret;
-
-  if (providedSecret && providedSecret === configuredSecret) {
-    return next();
-  }
-
-  const authHeader = req.headers['authorization'];
-  if (authHeader && authHeader.startsWith('Bearer ') && authService) {
-    const token = authHeader.substring(7).trim();
-    try {
-      const decoded = await authService.verifyIdToken(token);
-      if (decoded.admin === true || decoded.uid === process.env.SUPER_ADMIN_UID) {
-        req.adminUser = decoded;
-        return next();
-      }
-    } catch (_) {}
-  }
-
-  return res.status(403).json({ error: 'Forbidden: Admin credentials or x-admin-secret required' });
-};
 
 // Admin metrics overview endpoint
 app.get('/api/admin/metrics', authenticateAdmin, async (req, res) => {
@@ -1136,49 +1200,100 @@ app.get('/api/admin/recharges', authenticateAdmin, async (req, res) => {
   }
 });
 
-// Freelancer submits payment request with real bKash / Nagad TrxID
+// Freelancer submits payment verification request (bKash, Nagad, Binance Pay, USDT TRC20/BEP20)
 app.post('/api/wallet/payment-request', authenticateRequest, async (req, res) => {
   const userId = req.user.uid;
-  const { packId, minutes, amount, senderPhone, trxId, paymentMethod, promoCode } = req.body || {};
+  const {
+    packId,
+    senderIdentifier, // phone number OR Binance ID OR USDT wallet address
+    senderPhone,      // backward compatibility for bKash/Nagad
+    trxId,            // TrxID, TxHash, or Binance Order ID
+    paymentMethod,    // 'bKash', 'Nagad', 'Binance_Pay', 'Crypto_USDT_TRC20', 'Crypto_USDT_BEP20'
+    promoCode,
+  } = req.body || {};
 
   if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
 
-  if (!trxId || !trxId.trim()) {
-    return res.status(400).json({ error: 'Transaction ID (TrxID) is required' });
-  }
-  if (!senderPhone || !senderPhone.trim()) {
-    return res.status(400).json({ error: 'Sender phone number is required' });
+  // 1. Server-side pack validation (Never trust client minutes/amount)
+  const selectedPack = OFFICIAL_PACKS[packId];
+  if (!selectedPack) {
+    return res.status(400).json({ error: 'Invalid packId. Must be starter_60, pro_180, or agency_500' });
   }
 
+  // 2. Validate TrxID / TxHash
+  if (!trxId || !trxId.trim()) {
+    return res.status(400).json({ error: 'Transaction ID / TxHash is required' });
+  }
+  const cleanTrx = trxId.trim();
+
+  // 3. Validate sender identifier
+  const identifier = (senderIdentifier || senderPhone || '').trim();
+  if (!identifier) {
+    return res.status(400).json({ error: 'Sender phone number, Binance ID, or crypto wallet address is required' });
+  }
+
+  // 4. Validate payment method & determine currency and amount
+  const validMethods = ['bKash', 'Nagad', 'Binance_Pay', 'Crypto_USDT_TRC20', 'Crypto_USDT_BEP20'];
+  const method = validMethods.includes(paymentMethod) ? paymentMethod : 'bKash';
+
+  const isCrypto = method === 'Binance_Pay' || method.startsWith('Crypto_USDT');
+  const currency = isCrypto ? 'USDT' : 'BDT';
+  const expectedAmount = isCrypto ? selectedPack.priceUsdt : selectedPack.priceBdt;
+
+  // 5. Server-side promo code validation (single-use per user)
+  let bonusMinutes = 0;
+  let validatedPromo = null;
+  if (promoCode && typeof promoCode === 'string' && promoCode.trim()) {
+    const cleanPromo = promoCode.trim().toUpperCase();
+    if (OFFICIAL_PROMOS[cleanPromo]) {
+      // Check if user has already redeemed this promo
+      const promoRef = firestoreDb.collection('users').doc(userId).collection('redeemed_promos').doc(cleanPromo);
+      const promoDoc = await promoRef.get();
+      if (promoDoc.exists) {
+        return res.status(400).json({ error: `Promo code ${cleanPromo} has already been used on your account.` });
+      }
+      bonusMinutes = OFFICIAL_PROMOS[cleanPromo].bonusMinutes;
+      validatedPromo = cleanPromo;
+    } else {
+      return res.status(400).json({ error: `Invalid or expired promo code: ${cleanPromo}` });
+    }
+  }
+
+  const totalCalculatedMinutes = selectedPack.baseMinutes + bonusMinutes;
+
   try {
-    const cleanTrx = trxId.trim().toUpperCase();
-    const reqId = `pay_${cleanTrx}`;
+    const reqId = `pay_${cleanTrx.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
     const reqRef = firestoreDb.collection('payment_requests').doc(reqId);
 
     const existing = await reqRef.get();
     if (existing.exists) {
-      return res.status(409).json({ error: 'This Transaction ID (TrxID) has already been submitted' });
+      return res.status(409).json({ error: 'This Transaction ID / TxHash has already been submitted.' });
     }
 
     const paymentData = {
       id: reqId,
       userId,
       userPhone: req.user.phone_number || '',
-      senderPhone: senderPhone.trim(),
+      senderIdentifier: identifier,
+      senderPhone: !isCrypto ? identifier : '',
+      senderCryptoWalletOrBinanceId: isCrypto ? identifier : '',
       trxId: cleanTrx,
-      packId: packId || 'custom',
-      minutes: parseInt(minutes, 10) || 0,
-      amount: Number(amount) || 0,
-      currency: 'BDT',
-      paymentMethod: paymentMethod || 'bKash',
-      promoCode: promoCode || null,
+      packId: selectedPack.id,
+      packName: selectedPack.name,
+      baseMinutes: selectedPack.baseMinutes,
+      bonusMinutes,
+      minutes: totalCalculatedMinutes,
+      amount: expectedAmount,
+      currency,
+      paymentMethod: method,
+      promoCode: validatedPromo,
       status: 'pending',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
     await reqRef.set(paymentData);
-    console.log(`[Payment] Real payment request submitted: ${cleanTrx} by ${userId} for ৳${amount}`);
+    console.log(`[Payment] Real payment request submitted: ${cleanTrx} (${method}) by ${userId} for ${expectedAmount} ${currency} -> ${totalCalculatedMinutes} mins`);
 
     return res.json({ success: true, payment: paymentData });
   } catch (err) {
@@ -1234,7 +1349,7 @@ app.post('/api/admin/payment-request/action', authenticateAdmin, async (req, res
       const targetUid = pData.userId;
       const minutesToAdd = Number(pData.minutes) || 0;
       const walletRef = firestoreDb.collection('users').doc(targetUid).collection('wallet').doc('current');
-      const txRef = firestoreDb.collection('recharge_transactions').doc(`tx_${pData.trxId}`);
+      const txRef = firestoreDb.collection('recharge_transactions').doc(`tx_${pData.trxId.replace(/[^a-zA-Z0-9_-]/g, '_')}`);
 
       await firestoreDb.runTransaction(async (transaction) => {
         const wDoc = await transaction.get(walletRef);
@@ -1245,7 +1360,7 @@ app.post('/api/admin/payment-request/action', authenticateAdmin, async (req, res
           trialExpiresAt: nowIso,
           totalMinutesUsed: 0,
           totalMinutesPurchased: 0,
-          currency: 'BDT',
+          currency: pData.currency || 'BDT',
           createdAt: nowIso,
         };
 
@@ -1259,20 +1374,34 @@ app.post('/api/admin/payment-request/action', authenticateAdmin, async (req, res
           updatedAt: nowIso,
         }, { merge: true });
 
+        // Record immutable transaction
         transaction.set(txRef, {
           transactionId: `tx_${pData.trxId}`,
           userId: targetUid,
           userPhone: pData.userPhone || '',
+          senderIdentifier: pData.senderIdentifier || pData.senderPhone || '',
           packId: pData.packId || 'custom',
           minutesAdded: minutesToAdd,
           amountPaid: Number(pData.amount) || 0,
-          currency: 'BDT',
+          currency: pData.currency || 'BDT',
           paymentMethod: pData.paymentMethod || 'bKash',
           trxId: pData.trxId,
+          promoCode: pData.promoCode || null,
           status: 'completed',
           approvedBy: adminName || 'Admin',
           createdAt: nowIso,
         });
+
+        // Mark promo code redeemed if used
+        if (pData.promoCode) {
+          const promoRef = firestoreDb.collection('users').doc(targetUid).collection('redeemed_promos').doc(pData.promoCode);
+          transaction.set(promoRef, {
+            promoCode: pData.promoCode,
+            bonusMinutes: pData.bonusMinutes || 0,
+            redeemedAt: nowIso,
+            paymentRequestId: requestId,
+          });
+        }
 
         transaction.update(reqRef, {
           status: 'approved',
@@ -1282,7 +1411,7 @@ app.post('/api/admin/payment-request/action', authenticateAdmin, async (req, res
         });
       });
 
-      console.log(`[Admin] Payment ${requestId} APPROVED. ${minutesToAdd} mins credited to ${targetUid}.`);
+      console.log(`[Admin] Payment ${requestId} APPROVED. ${minutesToAdd} mins credited to ${targetUid} (${pData.paymentMethod}).`);
       return res.json({ success: true, status: 'approved', minutesCredited: minutesToAdd });
     } else if (action === 'reject') {
       await reqRef.update({

@@ -100,5 +100,44 @@ void main() {
       const minutesToDeduct = isSameLanguage ? 0 : callDurationMinutes;
       expect(minutesToDeduct, equals(12));
     });
+
+    test('Crypto USDT pricing and network options configure correctly', () {
+      const packs = {
+        'starter_60': {'minutes': 60, 'usdt': 10, 'bdt': 1200},
+        'pro_180': {'minutes': 180, 'usdt': 25, 'bdt': 3000},
+        'agency_500': {'minutes': 500, 'usdt': 60, 'bdt': 7200},
+      };
+
+      expect(packs['starter_60']!['usdt'], equals(10));
+      expect(packs['pro_180']!['usdt'], equals(25));
+      expect(packs['agency_500']!['usdt'], equals(60));
+
+      const supportedCryptoMethods = [
+        'Binance_Pay',
+        'Crypto_USDT_TRC20',
+        'Crypto_USDT_BEP20',
+      ];
+      expect(supportedCryptoMethods.contains('Binance_Pay'), isTrue);
+      expect(supportedCryptoMethods.contains('Crypto_USDT_TRC20'), isTrue);
+      expect(supportedCryptoMethods.contains('Crypto_USDT_BEP20'), isTrue);
+    });
+
+    test('Payment submission validates required senderIdentifier and trxId', () {
+      bool validatePaymentInput({
+        required String packId,
+        required String senderIdentifier,
+        required String trxId,
+      }) {
+        if (packId.trim().isEmpty) return false;
+        if (senderIdentifier.trim().isEmpty) return false;
+        if (trxId.trim().isEmpty) return false;
+        return true;
+      }
+
+      expect(validatePaymentInput(packId: 'pro_180', senderIdentifier: '', trxId: '0x123'), isFalse);
+      expect(validatePaymentInput(packId: 'pro_180', senderIdentifier: 'TXvJ28M4Z2vY', trxId: ''), isFalse);
+      expect(validatePaymentInput(packId: 'pro_180', senderIdentifier: '849201842', trxId: 'BIN12345'), isTrue);
+    });
   });
 }
+

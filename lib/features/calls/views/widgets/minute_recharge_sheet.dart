@@ -42,11 +42,19 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
   double _selectedPackAmount = 3000.0;
   String _selectedPackId = 'pro_180';
   String _selectedPaymentMethod = 'bKash / Nagad';
+  String _selectedCryptoNetwork = 'TRC-20'; // 'TRC-20' or 'BEP-20'
   bool _isProcessing = false;
   final TextEditingController _promoController = TextEditingController();
   final TextEditingController _senderPhoneController = TextEditingController();
   final TextEditingController _trxIdController = TextEditingController();
   bool _showPromoField = false;
+
+  double get _selectedPackAmountUsdt {
+    if (_selectedPackId == 'starter_60') return 10.0;
+    if (_selectedPackId == 'pro_180') return 25.0;
+    if (_selectedPackId == 'agency_500') return 60.0;
+    return 25.0;
+  }
 
   @override
   void initState() {
@@ -75,13 +83,17 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
   }
 
   Future<void> _processRecharge() async {
-    final senderPhone = _senderPhoneController.text.trim();
+    final identifier = _senderPhoneController.text.trim();
     final trxId = _trxIdController.text.trim();
 
-    if (senderPhone.isEmpty) {
+    if (identifier.isEmpty) {
       showSnackBar(
         context: context,
-        content: 'অনুগ্রহ করে টাকা পাঠানোর ফোন নম্বরটি লিখুন।',
+        content: _selectedPaymentMethod == 'bKash / Nagad'
+            ? 'অনুগ্রহ করে টাকা পাঠানোর ফোন নম্বরটি লিখুন।'
+            : (_selectedPaymentMethod == 'Binance Pay'
+                ? 'অনুগ্রহ করে আপনার Binance Pay ID বা ইমেইল লিখুন।'
+                : 'অনুগ্রহ করে আপনার প্রেরক ক্রিপ্টো ওয়ালেট অ্যাড্রেস লিখুন।'),
         type: SnacBarType.error,
       );
       return;
@@ -90,7 +102,9 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
     if (trxId.isEmpty) {
       showSnackBar(
         context: context,
-        content: 'অনুগ্রহ করে bKash / Nagad ট্রানজেকশন আইডি (TrxID) লিখুন।',
+        content: _selectedPaymentMethod == 'Crypto USDT'
+            ? 'অনুগ্রহ করে Blockchain TxHash লিখুন।'
+            : 'অনুগ্রহ করে ট্রানজেকশন আইডি (TrxID / Order ID) লিখুন।',
         type: SnacBarType.error,
       );
       return;
@@ -101,24 +115,24 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
     });
 
     final promo = _promoController.text.trim();
-    int bonusMinutes = 0;
-    if (promo.toUpperCase() == 'LIVOCAL2026') {
-      bonusMinutes = 20;
-    } else if (promo.toUpperCase() == 'FREELANCERPRO') {
-      bonusMinutes = 30;
+
+    String paymentMethodKey = 'bKash';
+    if (_selectedPaymentMethod == 'Binance Pay') {
+      paymentMethodKey = 'Binance_Pay';
+    } else if (_selectedPaymentMethod == 'Crypto USDT') {
+      paymentMethodKey = _selectedCryptoNetwork == 'BEP-20' ? 'Crypto_USDT_BEP20' : 'Crypto_USDT_TRC20';
     }
 
-    final totalMinutes = _selectedPackMinutes + bonusMinutes;
-
     final repo = ref.read(walletRepositoryProvider);
-    final success = await repo.submitPaymentRequest(
+    final result = await repo.submitPaymentRequest(
       packId: _selectedPackId,
-      minutes: totalMinutes,
-      amount: _selectedPackAmount,
-      senderPhone: senderPhone,
+      senderIdentifier: identifier,
       trxId: trxId,
-      paymentMethod: _selectedPaymentMethod,
+      paymentMethod: paymentMethodKey,
       promoCode: promo.isNotEmpty ? promo : null,
+      senderPhone: _selectedPaymentMethod == 'bKash / Nagad' ? identifier : widget.user.phoneNumber,
+      minutes: _selectedPackMinutes,
+      amount: _selectedPaymentMethod == 'bKash / Nagad' ? _selectedPackAmount : _selectedPackAmountUsdt,
     );
 
     if (!mounted) return;
@@ -127,18 +141,18 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
       _isProcessing = false;
     });
 
-    if (success) {
+    if (result.success) {
       Navigator.of(context).pop();
       widget.onRecharged?.call();
       showSnackBar(
         context: context,
-        content: 'পেমেন্ট রিকোয়েস্ট জমা হয়েছে! অ্যাডমিন অনুমোদন করলেই $totalMinutes মিনিট যোগ হবে।',
+        content: 'পেমেন্ট রিকোয়েস্ট সফলভাবে জমা হয়েছে! অ্যাডমিন অনুমোদন করলেই মিনিট যোগ হবে।',
         type: SnacBarType.info,
       );
     } else {
       showSnackBar(
         context: context,
-        content: 'পেমেন্ট রিকোয়েস্ট জমা দেওয়া যায়নি। TrxID ইতিমধ্যে জমা হয়েছে অথবা সার্ভার ত্রুটি।',
+        content: result.message ?? 'পেমেন্ট রিকোয়েস্ট জমা দেওয়া যায়নি।',
         type: SnacBarType.error,
       );
     }
@@ -149,7 +163,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? const Color(0xFF131D2A) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black87;
-    final primaryColor = AppColors.primary;
+    const primaryColor = AppColors.primary;
     final walletAsync = ref.watch(walletStreamProvider(widget.user.id));
     final wallet = walletAsync.value ?? UserWallet.newTrial();
 
@@ -402,17 +416,26 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                     Expanded(
                       child: _buildPaymentMethodTile(
                         title: 'bKash / Nagad',
-                        subtitle: 'তাত্ক্ষণিক রিচার্জ',
+                        subtitle: '৳ BDT লোকাল',
                         icon: Icons.account_balance_wallet_rounded,
                         isDark: isDark,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: _buildPaymentMethodTile(
-                        title: 'Card / Visa',
-                        subtitle: 'Mastercard / Amex',
-                        icon: Icons.credit_card_rounded,
+                        title: 'Binance Pay',
+                        subtitle: 'Binance ID (USDT)',
+                        icon: Icons.currency_exchange_rounded,
+                        isDark: isDark,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildPaymentMethodTile(
+                        title: 'Crypto USDT',
+                        subtitle: 'TRC20 / BEP20',
+                        icon: Icons.toll_rounded,
                         isDark: isDark,
                       ),
                     ),
@@ -482,7 +505,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                   ),
                 const SizedBox(height: 14),
 
-                // Real bKash / Nagad Payment Instructions Box
+                // Real Payment Instructions Box (bKash / Binance Pay / Crypto USDT)
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
@@ -495,10 +518,22 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.verified_user_rounded, color: AppColors.primary, size: 18),
+                          Icon(
+                            _selectedPaymentMethod == 'bKash / Nagad'
+                                ? Icons.verified_user_rounded
+                                : (_selectedPaymentMethod == 'Binance Pay'
+                                    ? Icons.currency_exchange_rounded
+                                    : Icons.toll_rounded),
+                            color: AppColors.primary,
+                            size: 18,
+                          ),
                           const SizedBox(width: 8),
                           Text(
-                            'রিয়েল পেমেন্ট নির্দেশিকা (Real Payment Verification)',
+                            _selectedPaymentMethod == 'bKash / Nagad'
+                                ? 'রিয়েল পেমেন্ট নির্দেশিকা (bKash / Nagad)'
+                                : (_selectedPaymentMethod == 'Binance Pay'
+                                    ? 'Binance Pay USDT পেমেন্ট নির্দেশিকা'
+                                    : 'USDT ক্রিপ্টো ওয়ালেট ডিপোজিট নির্দেশিকা'),
                             style: TextStyle(
                               color: textColor,
                               fontWeight: FontWeight.bold,
@@ -508,7 +543,35 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                         ],
                       ),
                       const SizedBox(height: 10),
-                      // Payment Number Card
+
+                      // Crypto Network Switcher (For Crypto USDT)
+                      if (_selectedPaymentMethod == 'Crypto USDT') ...[
+                        Row(
+                          children: [
+                            Text(
+                              'নেটওয়ার্ক নির্বাচন করুন:',
+                              style: TextStyle(color: isDark ? Colors.white70 : Colors.black87, fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(width: 10),
+                            ChoiceChip(
+                              label: const Text('TRC-20 (TRON)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                              selected: _selectedCryptoNetwork == 'TRC-20',
+                              onSelected: (_) => setState(() => _selectedCryptoNetwork = 'TRC-20'),
+                              selectedColor: primaryColor.withOpacity(0.25),
+                            ),
+                            const SizedBox(width: 6),
+                            ChoiceChip(
+                              label: const Text('BEP-20 (BSC)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                              selected: _selectedCryptoNetwork == 'BEP-20',
+                              onSelected: (_) => setState(() => _selectedCryptoNetwork = 'BEP-20'),
+                              selectedColor: primaryColor.withOpacity(0.25),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+
+                      // Payment Account / Address Card
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
@@ -519,26 +582,41 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'bKash / Nagad পার্সোনাল / মার্চেন্ট নম্বর:',
-                                  style: TextStyle(
-                                    color: isDark ? Colors.white60 : Colors.black54,
-                                    fontSize: 11,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _selectedPaymentMethod == 'bKash / Nagad'
+                                        ? 'bKash / Nagad পার্সোনাল / মার্চেন্ট নম্বর:'
+                                        : (_selectedPaymentMethod == 'Binance Pay'
+                                            ? 'Livocal অফিসিয়াল Binance Pay ID:'
+                                            : 'Livocal অফিসিয়াল $_selectedCryptoNetwork ডিপোজিট অ্যাড্রেস:'),
+                                    style: TextStyle(
+                                      color: isDark ? Colors.white60 : Colors.black54,
+                                      fontSize: 11,
+                                    ),
                                   ),
-                                ),
-                                const Text(
-                                  '01721013902',
-                                  style: TextStyle(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                    letterSpacing: 1.0,
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _selectedPaymentMethod == 'bKash / Nagad'
+                                        ? '01721013902'
+                                        : (_selectedPaymentMethod == 'Binance Pay'
+                                            ? '849201842'
+                                            : (_selectedCryptoNetwork == 'BEP-20'
+                                                ? '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97'
+                                                : 'TXvJ28M4Z2vY5oN84gDqJv85xPq7eP1xyz')),
+                                    style: const TextStyle(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14.5,
+                                      letterSpacing: 0.8,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                             TextButton.icon(
                               style: TextButton.styleFrom(
@@ -555,10 +633,17 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                                 ),
                               ),
                               onPressed: () {
-                                Clipboard.setData(const ClipboardData(text: '01721013902'));
+                                final textToCopy = _selectedPaymentMethod == 'bKash / Nagad'
+                                    ? '01721013902'
+                                    : (_selectedPaymentMethod == 'Binance Pay'
+                                        ? '849201842'
+                                        : (_selectedCryptoNetwork == 'BEP-20'
+                                            ? '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97'
+                                            : 'TXvJ28M4Z2vY5oN84gDqJv85xPq7eP1xyz'));
+                                Clipboard.setData(ClipboardData(text: textToCopy));
                                 showSnackBar(
                                   context: context,
-                                  content: 'নম্বর 01721013902 ক্লিপবোর্ডে কপি করা হয়েছে!',
+                                  content: 'অ্যাড্রেস/নম্বর $textToCopy ক্লিপবোর্ডে কপি করা হয়েছে!',
                                   type: SnacBarType.info,
                                 );
                               },
@@ -568,7 +653,11 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        '১. আপনার bKash বা Nagad অ্যাপে গিয়ে Send Money বা পেমেন্ট করুন ৳${_selectedPackAmount.toStringAsFixed(0)}।\n২. সফল ট্রানজেকশনের পর নিচের ঘরে আপনার নম্বর ও TrxID লিখুন:',
+                        _selectedPaymentMethod == 'bKash / Nagad'
+                            ? '১. আপনার bKash বা Nagad অ্যাপ থেকে Send Money বা পেমেন্ট করুন ৳${_selectedPackAmount.toStringAsFixed(0)}।\n২. সফল ট্রানজেকশনের পর নিচের ঘরে আপনার প্রেরক নম্বর ও TrxID লিখুন:'
+                            : (_selectedPaymentMethod == 'Binance Pay'
+                                ? '১. Binance অ্যাপে Pay > Send to Binance ID-তে ${_selectedPackAmountUsdt.toStringAsFixed(0)} USDT পাঠান।\n২. সফল পাঠানোর পর আপনার Binance ID ও Pay Order ID নিচে লিখুন:'
+                                : '১. আপনার ক্রিপ্টো ওয়ালেট থেকে ${_selectedPackAmountUsdt.toStringAsFixed(0)} USDT ($_selectedCryptoNetwork) পাঠান।\n২. ট্রানজেকশনের পর আপনার প্রেরক ওয়ালেট অ্যাড্রেস ও TxHash নিচে লিখুন:'),
                         style: TextStyle(
                           color: isDark ? Colors.white70 : Colors.black87,
                           fontSize: 11.5,
@@ -576,15 +665,25 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      // Sender Phone Field
+                      // Sender Identifier Field
                       TextField(
                         controller: _senderPhoneController,
-                        keyboardType: TextInputType.phone,
                         style: TextStyle(color: textColor, fontSize: 13),
                         decoration: InputDecoration(
-                          labelText: 'আপনার টাকা পাঠানোর ফোন নম্বর (Sender Number)',
+                          labelText: _selectedPaymentMethod == 'bKash / Nagad'
+                              ? 'আপনার টাকা পাঠানোর ফোন নম্বর (Sender Number)'
+                              : (_selectedPaymentMethod == 'Binance Pay'
+                                  ? 'আপনার Binance Pay ID বা ইমেইল'
+                                  : 'আপনার প্রেরক ওয়ালেট অ্যাড্রেস (Sender Address)'),
                           labelStyle: TextStyle(color: isDark ? Colors.white60 : Colors.black54, fontSize: 12),
-                          prefixIcon: const Icon(Icons.phone_android_rounded, size: 18),
+                          hintText: _selectedPaymentMethod == 'bKash / Nagad'
+                              ? '017xxxxxxxx'
+                              : (_selectedPaymentMethod == 'Binance Pay' ? '849201842 বা user@gmail.com' : 'TXvJ... বা 0x48...'),
+                          hintStyle: TextStyle(color: isDark ? Colors.white30 : Colors.black38, fontSize: 12),
+                          prefixIcon: Icon(
+                            _selectedPaymentMethod == 'bKash / Nagad' ? Icons.phone_android_rounded : Icons.account_box_rounded,
+                            size: 18,
+                          ),
                           isDense: true,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                           filled: true,
@@ -596,15 +695,20 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      // TrxID Field
+                      // TrxID / TxHash Field
                       TextField(
                         controller: _trxIdController,
-                        textCapitalization: TextCapitalization.characters,
                         style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.bold),
                         decoration: InputDecoration(
-                          labelText: 'bKash / Nagad TrxID (Transaction ID)',
+                          labelText: _selectedPaymentMethod == 'bKash / Nagad'
+                              ? 'bKash / Nagad TrxID (Transaction ID)'
+                              : (_selectedPaymentMethod == 'Binance Pay'
+                                  ? 'Binance Pay Order ID / Transaction ID'
+                                  : 'Blockchain TxHash (Transaction Hash)'),
                           labelStyle: TextStyle(color: isDark ? Colors.white60 : Colors.black54, fontSize: 12),
-                          hintText: 'e.g. BKA8X92K4L',
+                          hintText: _selectedPaymentMethod == 'bKash / Nagad'
+                              ? 'e.g. BKA8X92K4L'
+                              : (_selectedPaymentMethod == 'Binance Pay' ? 'e.g. 293847291039485' : 'e.g. 0x8a9b... বা 7c4e...'),
                           hintStyle: TextStyle(color: isDark ? Colors.white30 : Colors.black38, fontSize: 12),
                           prefixIcon: const Icon(Icons.tag_rounded, size: 18),
                           isDense: true,
@@ -647,7 +751,9 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
                     )
                   : Text(
-                      '৳${_selectedPackAmount.toStringAsFixed(0)} পেমেন্ট ভেরিফিকেশন জমা দিন',
+                      _selectedPaymentMethod == 'bKash / Nagad'
+                          ? '৳${_selectedPackAmount.toStringAsFixed(0)} পেমেন্ট ভেরিফিকেশন জমা দিন'
+                          : '\$${_selectedPackAmountUsdt.toStringAsFixed(0)} USDT পেমেন্ট ভেরিফিকেশন জমা দিন',
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
@@ -672,7 +778,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
     required Color textColor,
   }) {
     final isSelected = _selectedPackId == packId;
-    final primaryColor = AppColors.primary;
+    const primaryColor = AppColors.primary;
 
     return InkWell(
       borderRadius: BorderRadius.circular(14),
@@ -769,7 +875,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
     required bool isDark,
   }) {
     final isSelected = _selectedPaymentMethod == title;
-    final primaryColor = AppColors.primary;
+    const primaryColor = AppColors.primary;
 
     return InkWell(
       borderRadius: BorderRadius.circular(12),

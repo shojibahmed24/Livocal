@@ -751,7 +751,7 @@
 
     // Save and retrieve admin secret
     function getAdminSecret() {
-      return localStorage.getItem('livocal_admin_secret') || 'livocal_admin_secret_2026';
+      return localStorage.getItem('livocal_admin_secret') || '';
     }
 
     function saveAdminSecret() {
@@ -760,6 +760,9 @@
         localStorage.setItem('livocal_admin_secret', val);
         showToast('Admin Secret সংরক্ষিত হয়েছে!');
         fetchDashboardData();
+      } else {
+        localStorage.removeItem('livocal_admin_secret');
+        showToast('Admin Secret মুছে ফেলা হয়েছে।', true);
       }
     }
 
@@ -767,12 +770,14 @@
       const savedSecret = localStorage.getItem('livocal_admin_secret');
       if (savedSecret) {
         document.getElementById('adminSecretInput').value = savedSecret;
+        fetchDashboardData();
       } else {
-        document.getElementById('adminSecretInput').value = 'livocal_admin_secret_2026';
+        showToast('অনুগ্রহ করে উপরে আপনার Admin Secret লিখে Save করুন।', true);
       }
-      fetchDashboardData();
       // Auto refresh every 30 seconds
-      setInterval(fetchDashboardData, 30000);
+      setInterval(() => {
+        if (getAdminSecret()) fetchDashboardData();
+      }, 30000);
     });
 
     function showToast(msg, isError = false) {
@@ -804,6 +809,7 @@
 
     async function fetchDashboardData() {
       const secret = getAdminSecret();
+      if (!secret) return;
       const headers = { 'x-admin-secret': secret };
 
       try {
@@ -945,13 +951,14 @@
 
       tbody.innerHTML = recharges.map(rc => {
         const dateStr = rc.createdAt ? new Date(rc.createdAt).toLocaleString() : '-';
+        const curr = rc.currency === 'USDT' ? `$${rc.amountPaid || 0} USDT` : `৳${rc.amountPaid || 0}`;
         return `
           <tr>
-            <td><code style="color:var(--accent);">${rc.transactionId ? rc.transactionId.substring(0, 14) : '-'}</code></td>
+            <td><code style="color:var(--accent);">${rc.transactionId ? rc.transactionId.substring(0, 16) : '-'}</code></td>
             <td><code>${rc.userPhone || rc.userId || '-'}</code></td>
             <td><span class="badge badge-info">${rc.packId || 'Custom'}</span></td>
             <td style="color:#34d399; font-weight:bold;">+${rc.minutesAdded || 0} মি.</td>
-            <td>৳${rc.amountPaid || 0}</td>
+            <td>${curr}</td>
             <td>${rc.paymentMethod || 'Manual'}</td>
             <td><span class="badge badge-success">সম্পন্ন</span></td>
             <td style="font-size:12px; color:var(--text-muted);">${dateStr}</td>
@@ -976,6 +983,23 @@
           statusBadge = `<span class="badge badge-danger">বাতিল (Rejected)</span>`;
         }
 
+        // Method Icon & Tag
+        let methodHtml = `<span class="badge badge-info">${r.paymentMethod || 'bKash'}</span>`;
+        if (r.paymentMethod === 'bKash') {
+          methodHtml = `<span class="badge" style="background:#e2136e; color:#fff;">📱 bKash</span>`;
+        } else if (r.paymentMethod === 'Nagad') {
+          methodHtml = `<span class="badge" style="background:#f7941d; color:#fff;">📱 Nagad</span>`;
+        } else if (r.paymentMethod === 'Binance_Pay') {
+          methodHtml = `<span class="badge" style="background:#f3ba2f; color:#000; font-weight:bold;">🟡 Binance Pay</span>`;
+        } else if (r.paymentMethod && r.paymentMethod.startsWith('Crypto_USDT')) {
+          methodHtml = `<span class="badge" style="background:#26a17b; color:#fff;">💎 USDT Crypto</span>`;
+        }
+
+        const amountFormatted = r.currency === 'USDT' ? `$${r.amount || 0} USDT` : `৳${r.amount || 0}`;
+        const sender = r.senderIdentifier || r.senderPhone || '-';
+
+        const promoBadge = r.promoCode ? `<div style="margin-top:2px;"><span class="badge badge-info" style="font-size:10px;">🏷️ ${r.promoCode} (+${r.bonusMinutes}m)</span></div>` : '';
+
         const actionBtns = r.status === 'pending'
           ? `
             <div style="display:flex; gap:6px;">
@@ -991,13 +1015,13 @@
 
         return `
           <tr>
-            <td><code style="color:var(--accent); font-weight:bold; font-size:13px;">${r.trxId || '-'}</code></td>
+            <td><code style="color:var(--accent); font-weight:bold; font-size:12.5px;" title="${r.trxId}">${r.trxId ? (r.trxId.length > 20 ? r.trxId.substring(0, 18) + '...' : r.trxId) : '-'}</code></td>
             <td><code>${r.userPhone || r.userId || '-'}</code></td>
-            <td><strong style="color:#f8fafc;">${r.senderPhone || '-'}</strong></td>
-            <td><span class="badge badge-info">${r.packId || 'Custom'}</span></td>
+            <td><strong style="color:#f8fafc; font-size:12px;">${sender}</strong></td>
+            <td><span class="badge badge-info">${r.packId || 'Custom'}</span>${promoBadge}</td>
             <td style="color:#34d399; font-weight:bold;">+${r.minutes || 0} মি.</td>
-            <td style="font-weight:700; color:#fff;">৳${r.amount || 0}</td>
-            <td>${r.paymentMethod || 'bKash'}</td>
+            <td style="font-weight:700; color:#fff;">${amountFormatted}</td>
+            <td>${methodHtml}</td>
             <td style="font-size:12px; color:var(--text-muted);">${timeStr}</td>
             <td>${statusBadge}</td>
             <td>${actionBtns}</td>
