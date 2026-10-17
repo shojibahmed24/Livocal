@@ -1309,7 +1309,7 @@ app.post('/api/wallet/payment-request', authenticateRequest, async (req, res) =>
   if (!trxId || typeof trxId !== 'string' || !trxId.trim()) {
     return res.status(400).json({ error: 'Transaction ID / TxHash is required' });
   }
-  const cleanTrx = trxId.trim();
+  const cleanTrx = trxId.trim().replace(/\s+/g, '');
   if (!/^[a-zA-Z0-9_\-]{6,128}$/.test(cleanTrx)) {
     return res.status(400).json({ error: 'Invalid Transaction ID / TxHash format. Must contain 6-128 alphanumeric characters.' });
   }
@@ -1319,10 +1319,13 @@ app.post('/api/wallet/payment-request', authenticateRequest, async (req, res) =>
   if (!rawIdentifier) {
     return res.status(400).json({ error: 'Sender phone number, Binance ID, or crypto wallet address is required' });
   }
-  if (!/^[a-zA-Z0-9@.+_\-]{1,64}$/.test(rawIdentifier)) {
+  // Strip whitespace so formatted phone numbers (e.g. "+880 1721 013902" or "01721 013 902")
+  // and spaced crypto/Binance inputs pass cleanly without rejecting user
+  const cleanIdentifier = rawIdentifier.replace(/\s+/g, '');
+  if (!/^[a-zA-Z0-9@.+_\-]{1,64}$/.test(cleanIdentifier)) {
     return res.status(400).json({ error: 'Invalid sender identifier format.' });
   }
-  const identifier = rawIdentifier;
+  const identifier = cleanIdentifier;
 
   // 4. Validate payment method & determine currency and amount
   const validMethods = ['bKash', 'Nagad', 'Binance_Pay', 'Crypto_USDT_TRC20', 'Crypto_USDT_BEP20'];

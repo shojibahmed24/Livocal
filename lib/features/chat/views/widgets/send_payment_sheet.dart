@@ -48,7 +48,7 @@ class _SendPaymentSheetContent extends StatefulWidget {
 class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
   final TextEditingController _amountController = TextEditingController(text: '10');
   final TextEditingController _noteController = TextEditingController();
-  String _selectedMethod = 'card';
+  String _selectedMethod = 'wallet';
   bool _isProcessing = false;
 
   final List<String> _quickAmounts = ['5', '10', '25', '50', '100'];
@@ -236,27 +236,13 @@ class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
               child: Column(
                 children: [
                   RadioListTile<String>(
-                    value: 'card',
+                    value: 'wallet',
                     groupValue: _selectedMethod,
                     title: const Row(
                       children: [
-                        Icon(Icons.credit_card, size: 20, color: AppColors.primary),
+                        Icon(Icons.account_balance_wallet, size: 20, color: AppColors.primary),
                         SizedBox(width: 8),
-                        Text('Credit / Debit Card (Stripe USD)', style: TextStyle(fontSize: 14)),
-                      ],
-                    ),
-                    activeColor: AppColors.primary,
-                    onChanged: (val) => setState(() => _selectedMethod = val!),
-                  ),
-                  const Divider(height: 1),
-                  RadioListTile<String>(
-                    value: 'gpay',
-                    groupValue: _selectedMethod,
-                    title: const Row(
-                      children: [
-                        Icon(Icons.account_balance_wallet, size: 20, color: Colors.blueAccent),
-                        SizedBox(width: 8),
-                        Text('Google Pay / Apple Pay', style: TextStyle(fontSize: 14)),
+                        Text('Livocal In-App Wallet', style: TextStyle(fontSize: 14)),
                       ],
                     ),
                     activeColor: AppColors.primary,
@@ -270,7 +256,21 @@ class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
                       children: [
                         Icon(Icons.phone_android, size: 20, color: Colors.pinkAccent),
                         SizedBox(width: 8),
-                        Text('bKash / Nagad (BDT Exchange)', style: TextStyle(fontSize: 14)),
+                        Text('bKash / Nagad MFS', style: TextStyle(fontSize: 14)),
+                      ],
+                    ),
+                    activeColor: AppColors.primary,
+                    onChanged: (val) => setState(() => _selectedMethod = val!),
+                  ),
+                  const Divider(height: 1),
+                  RadioListTile<String>(
+                    value: 'crypto',
+                    groupValue: _selectedMethod,
+                    title: const Row(
+                      children: [
+                        Icon(Icons.currency_bitcoin, size: 20, color: Colors.orange),
+                        SizedBox(width: 8),
+                        Text('Crypto (Binance Pay / USDT)', style: TextStyle(fontSize: 14)),
                       ],
                     ),
                     activeColor: AppColors.primary,

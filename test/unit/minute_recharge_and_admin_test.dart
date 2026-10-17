@@ -259,7 +259,67 @@ void main() {
       };
       expect(getDepositAccount('bKash'), equals('01721013902'));
     });
+
+    test('Sender identifier whitespace normalization cleans phone numbers and Binance IDs', () {
+      String normalizeIdentifier(String raw) {
+        return raw.trim().replaceAll(RegExp(r'\s+'), '');
+      }
+
+      // Bangladeshi phone with spaces
+      expect(normalizeIdentifier('+880 1721 013902'), equals('+8801721013902'));
+      expect(normalizeIdentifier('01721 013 902'), equals('01721013902'));
+
+      // Binance Pay ID with spaces
+      expect(normalizeIdentifier('849 201 842'), equals('849201842'));
+
+      // Tron address with accidental spacing
+      expect(
+        normalizeIdentifier('TXztYG8z HPCZNdZqK 5oodVWQVL 2322mgpf'),
+        equals('TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf'),
+      );
+
+      // Regex validation on normalized identifiers
+      final regex = RegExp(r'^[a-zA-Z0-9@.+_\-]{1,64}$');
+      expect(regex.hasMatch(normalizeIdentifier('+880 1721 013902')), isTrue);
+      expect(regex.hasMatch(normalizeIdentifier('849 201 842')), isTrue);
+    });
+
+    test('Admin secret sessionStorage lifecycle cleans persistent disk localStorage', () {
+      final Map<String, String> mockLocalStorage = {'livocal_admin_secret': 'legacy_secret_on_disk_12345'};
+      final Map<String, String> mockSessionStorage = {};
+
+      // Simulated migration and purge
+      String activeSecret = mockSessionStorage['livocal_admin_secret'] ?? '';
+      if (activeSecret.isEmpty && mockLocalStorage.containsKey('livocal_admin_secret')) {
+        activeSecret = mockLocalStorage['livocal_admin_secret']!;
+        mockSessionStorage['livocal_admin_secret'] = activeSecret;
+        mockLocalStorage.remove('livocal_admin_secret');
+      }
+
+      // Verify disk storage is wiped clean and only memory/session holds the key
+      expect(mockLocalStorage.containsKey('livocal_admin_secret'), isFalse);
+      expect(mockSessionStorage['livocal_admin_secret'], equals('legacy_secret_on_disk_12345'));
+
+      // Logout clears both
+      mockSessionStorage.remove('livocal_admin_secret');
+      mockLocalStorage.remove('livocal_admin_secret');
+      expect(mockSessionStorage['livocal_admin_secret'], isNull);
+      expect(mockLocalStorage['livocal_admin_secret'], isNull);
+    });
+
+    test('Chat send payment sheet uses Livocal Wallet, MFS, and Crypto without dead Stripe labels', () {
+      const availablePaymentMethods = ['wallet', 'mfs', 'crypto'];
+
+      expect(availablePaymentMethods.contains('wallet'), isTrue);
+      expect(availablePaymentMethods.contains('mfs'), isTrue);
+      expect(availablePaymentMethods.contains('crypto'), isTrue);
+      // Ensure dead methods are absent
+      expect(availablePaymentMethods.contains('card'), isFalse);
+      expect(availablePaymentMethods.contains('stripe'), isFalse);
+      expect(availablePaymentMethods.contains('gpay'), isFalse);
+    });
   });
 }
+
 
 

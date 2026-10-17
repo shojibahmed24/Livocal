@@ -24,4 +24,14 @@ services:
         sync: false
       - key: ADMIN_SECRET
         sync: false
+      - key: CRYPTO_USDT_TRC20
+        sync: false
+      - key: CRYPTO_USDT_BEP20
+        sync: false
+      - key: BINANCE_PAY_ID
+        sync: false
+      - key: BKASH_NUMBER
+        sync: false
+      - key: NAGAD_NUMBER
+        sync: false
 

@@ -815,6 +815,10 @@
       <button class="btn-icon" onclick="openSecretModal()" title="Admin Security Settings">
         🔑
       </button>
+
+      <button class="btn-icon" onclick="logoutAdmin()" title="Log Out & Clear Session" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">
+        🚪
+      </button>
     </div>
   </header>
 
@@ -1232,12 +1236,15 @@
         <label class="form-label">Admin Secret Key</label>
         <input type="password" id="modalSecretInput" class="form-control" placeholder="Paste your Admin Secret here...">
         <p style="font-size:11.5px; color:var(--text-muted); margin-top:6px;">
-          Configured in <code>backend/.env</code> as <code>ADMIN_SECRET</code>. Saved securely in local browser storage.
+          Configured in <code>backend/.env</code> as <code>ADMIN_SECRET</code>. Stored in active browser <code>sessionStorage</code> for high security.
         </p>
       </div>
-      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
-        <button type="button" class="btn btn-secondary" onclick="closeSecretModal()">Close</button>
-        <button type="button" class="btn btn-primary" onclick="saveAdminSecretFromModal()">Save Secret</button>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+        <button type="button" class="btn btn-secondary" style="color:#ef4444;" onclick="logoutAdmin()">Log Out</button>
+        <div style="display:flex; gap:10px;">
+          <button type="button" class="btn btn-secondary" onclick="closeSecretModal()">Close</button>
+          <button type="button" class="btn btn-primary" onclick="saveAdminSecretFromModal()">Save Secret</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1259,32 +1266,54 @@
     }
 
     function getAdminSecret() {
-      return localStorage.getItem('livocal_admin_secret') || '';
+      return sessionStorage.getItem('livocal_admin_secret') || '';
     }
 
     function saveAdminSecret() {
       const val = document.getElementById('adminSecretInput').value.trim();
       if (val) {
-        localStorage.setItem('livocal_admin_secret', val);
-        showToast('Admin Secret saved securely in browser!');
+        sessionStorage.setItem('livocal_admin_secret', val);
+        localStorage.removeItem('livocal_admin_secret'); // Clean up any persistent disk storage
+        showToast('Admin Secret saved securely in active session!');
         fetchDashboardData();
       } else {
+        sessionStorage.removeItem('livocal_admin_secret');
         localStorage.removeItem('livocal_admin_secret');
-        showToast('Admin Secret removed from storage.', true);
+        showToast('Admin Secret removed from session.', true);
       }
     }
 
     function saveAdminSecretFromModal() {
       const val = document.getElementById('modalSecretInput').value.trim();
       if (val) {
-        localStorage.setItem('livocal_admin_secret', val);
+        sessionStorage.setItem('livocal_admin_secret', val);
+        localStorage.removeItem('livocal_admin_secret'); // Clean up any persistent disk storage
         document.getElementById('adminSecretInput').value = val;
         closeSecretModal();
-        showToast('Admin Secret saved!');
+        showToast('Admin Secret saved in active session!');
         fetchDashboardData();
       } else {
         showToast('Please enter a valid secret.', true);
       }
+    }
+
+    function logoutAdmin() {
+      sessionStorage.removeItem('livocal_admin_secret');
+      localStorage.removeItem('livocal_admin_secret');
+      const input = document.getElementById('adminSecretInput');
+      if (input) input.value = '';
+      const modalInput = document.getElementById('modalSecretInput');
+      if (modalInput) modalInput.value = '';
+      closeSecretModal();
+      showToast('Admin logged out. Session cleared.', false);
+      const payTbody = document.getElementById('paymentsTableBody');
+      if (payTbody) payTbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Please log in with Admin Secret.</td></tr>';
+      const wallTbody = document.getElementById('walletsTableBody');
+      if (wallTbody) wallTbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Please log in with Admin Secret.</td></tr>';
+      const rechTbody = document.getElementById('rechargesTableBody');
+      if (rechTbody) rechTbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Please log in with Admin Secret.</td></tr>';
+      const ledgTbody = document.getElementById('ledgerTableBody');
+      if (ledgTbody) ledgTbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Please log in with Admin Secret.</td></tr>';
     }
 
     function openSecretModal() {
@@ -1297,12 +1326,18 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      const savedSecret = localStorage.getItem('livocal_admin_secret');
-      if (savedSecret) {
-        document.getElementById('adminSecretInput').value = savedSecret;
+      // Migrate legacy localStorage if present, then purge from localStorage
+      let activeSecret = sessionStorage.getItem('livocal_admin_secret');
+      if (!activeSecret && localStorage.getItem('livocal_admin_secret')) {
+        activeSecret = localStorage.getItem('livocal_admin_secret');
+        sessionStorage.setItem('livocal_admin_secret', activeSecret);
+        localStorage.removeItem('livocal_admin_secret');
+      }
+      if (activeSecret) {
+        document.getElementById('adminSecretInput').value = activeSecret;
         fetchDashboardData();
       } else {
-        showToast('Please configure your Admin Secret in the top bar.', true);
+        showToast('Please enter Admin Secret to load live dashboard data.', true);
       }
       loadDepositInfo();
 
