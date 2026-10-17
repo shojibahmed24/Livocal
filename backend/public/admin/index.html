@@ -1000,22 +1000,43 @@
 
         const promoBadge = r.promoCode ? `<div style="margin-top:2px;"><span class="badge badge-info" style="font-size:10px;">🏷️ ${r.promoCode} (+${r.bonusMinutes}m)</span></div>` : '';
 
+        // Explorer links
+        let explorerHtml = '';
+        if (r.paymentMethod === 'Crypto_USDT_TRC20') {
+          const clean = (r.trxId || '').replace(/^0x/, '');
+          explorerHtml = `<div style="margin-top:3px;"><a href="https://tronscan.org/#/transaction/${clean}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); font-size:11px; text-decoration:underline;">🔗 Tronscan-এ দেখুন</a></div>`;
+        } else if (r.paymentMethod === 'Crypto_USDT_BEP20') {
+          const clean = (r.trxId || '').startsWith('0x') ? r.trxId : `0x${r.trxId}`;
+          explorerHtml = `<div style="margin-top:3px;"><a href="https://bscscan.com/tx/${clean}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); font-size:11px; text-decoration:underline;">🔗 BscScan-এ দেখুন</a></div>`;
+        }
+
+        const isCryptoMethod = r.paymentMethod && r.paymentMethod.startsWith('Crypto_USDT');
+        const verifyBtn = isCryptoMethod
+          ? `<button class="btn btn-secondary" style="padding:3px 7px; font-size:11px; background:#1e293b; color:#38bdf8; border:1px solid #38bdf8;" onclick="verifyOnChainPayment('${r.paymentMethod}', '${r.trxId}', ${r.amount})">🔍 অন-চেইন যাচাই</button>`
+          : '';
+
         const actionBtns = r.status === 'pending'
           ? `
-            <div style="display:flex; gap:6px;">
-              <button class="btn btn-primary" style="padding:4px 8px; font-size:11.5px;" onclick="handlePaymentAction('${r.id}', 'approve', ${r.minutes})">
-                ✓ অনুমোদন
-              </button>
-              <button class="btn btn-secondary" style="padding:4px 8px; font-size:11.5px; color:var(--danger);" onclick="handlePaymentAction('${r.id}', 'reject')">
-                ✕ বাতিল
-              </button>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <div style="display:flex; gap:6px;">
+                <button class="btn btn-primary" style="padding:4px 8px; font-size:11.5px;" onclick="handlePaymentAction('${r.id}', 'approve', ${r.minutes})">
+                  ✓ অনুমোদন
+                </button>
+                <button class="btn btn-secondary" style="padding:4px 8px; font-size:11.5px; color:var(--danger);" onclick="handlePaymentAction('${r.id}', 'reject')">
+                  ✕ বাতিল
+                </button>
+              </div>
+              ${verifyBtn}
             </div>
           `
-          : `<span style="font-size:12px; color:var(--text-muted);">${r.approvedBy || r.rejectedBy || '-'}</span>`;
+          : `<div style="font-size:12px; color:var(--text-muted);">${r.approvedBy || r.rejectedBy || '-'}</div>${verifyBtn ? `<div style="margin-top:4px;">${verifyBtn}</div>` : ''}`;
 
         return `
           <tr>
-            <td><code style="color:var(--accent); font-weight:bold; font-size:12.5px;" title="${r.trxId}">${r.trxId ? (r.trxId.length > 20 ? r.trxId.substring(0, 18) + '...' : r.trxId) : '-'}</code></td>
+            <td>
+              <code style="color:var(--accent); font-weight:bold; font-size:12.5px;" title="${r.trxId}">${r.trxId ? (r.trxId.length > 20 ? r.trxId.substring(0, 18) + '...' : r.trxId) : '-'}</code>
+              ${explorerHtml}
+            </td>
             <td><code>${r.userPhone || r.userId || '-'}</code></td>
             <td><strong style="color:#f8fafc; font-size:12px;">${sender}</strong></td>
             <td><span class="badge badge-info">${r.packId || 'Custom'}</span>${promoBadge}</td>
@@ -1028,6 +1049,46 @@
           </tr>
         `;
       }).join('');
+    }
+
+    async function verifyOnChainPayment(paymentMethod, trxId, expectedAmount) {
+      const secret = getAdminSecret();
+      if (!secret) {
+        showToast('প্রথমে Admin Secret দিয়ে সংরক্ষণ করুন!', true);
+        return;
+      }
+
+      showToast('ব্লকচেইন স্ক্যান করা হচ্ছে...', false);
+
+      try {
+        const res = await fetch('/api/admin/verify-onchain', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-secret': secret,
+          },
+          body: JSON.stringify({ paymentMethod, trxId, expectedAmount }),
+        });
+
+        const data = await res.json();
+        if (data.verified) {
+          const d = data.details || {};
+          alert(`✅ অন-চেইন ভেরিফিকেশন সফল!\n\n` +
+                `স্ট্যাটাস: ${data.status} (Confirmed: ${data.confirmed ? 'Yes' : 'Mining'})\n` +
+                `প্রেরক: ${d.from}\n` +
+                `প্রাপক (আমাদের ওয়ালেট): ${d.to}\n` +
+                `জমা হয়েছে: $${d.amountTransferred || expectedAmount} USDT\n` +
+                `প্রত্যাশিত: $${d.expectedAmount || expectedAmount} USDT\n\n` +
+                `এই পেমেন্টটি নিরাপদ এবং অনুমোদনযোগ্য।`);
+        } else {
+          alert(`⚠️ অন-চেইন ভেরিফিকেশনে অসঙ্গতি বা পেন্ডিং:\n\n` +
+                `বার্তা: ${data.error || 'ব্লকচেইনে কোনো কনফার্মড ট্রানজেকশন মেলেনি'}\n` +
+                `স্ট্যাটাস: ${data.status || 'UNCONFIRMED'}\n\n` +
+                `অনুগ্রহ করে ব্লকচেইন এক্সপ্লোরারে চেক করুন অথবা অনুমোদনের আগে অপেক্ষা করুন।`);
+        }
+      } catch (err) {
+        alert(`অন-চেইন রিকোয়েস্ট ব্যর্থ: ${err.message}`);
+      }
     }
 
     async function handlePaymentAction(requestId, action, minutes) {

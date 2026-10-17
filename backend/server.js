@@ -925,12 +925,46 @@ const OFFICIAL_PROMOS = {
   'FREELANCERPRO': { bonusMinutes: 30, description: 'Freelancer Community Bonus' },
 };
 
-// Dynamic or environment-provided Admin Secret
-let effectiveAdminSecret = process.env.ADMIN_SECRET;
-if (!effectiveAdminSecret) {
-  effectiveAdminSecret = crypto.randomBytes(32).toString('hex');
-  console.warn('⚠️ [SECURITY WARNING] process.env.ADMIN_SECRET is not set in environment!');
-  console.warn(`🔑 Generated dynamic one-time Admin Secret for this session: ${effectiveAdminSecret}`);
+// Fail-Fast Admin Secret Configuration (Strict: No ephemeral secrets, No log leaks)
+const effectiveAdminSecret = process.env.ADMIN_SECRET;
+if (!effectiveAdminSecret || effectiveAdminSecret.trim().length < 16) {
+  console.error('❌ [FATAL SECURITY ERROR] process.env.ADMIN_SECRET is missing or less than 16 characters in backend/.env!');
+  console.error('👉 Please configure a strong ADMIN_SECRET in backend/.env before running the server.');
+  process.exit(1);
+}
+console.log('[Security] Admin Secret initialized and secured via environment.');
+
+// Cryptographic Tron TRC-20 Address Validation (Base58Check with 0x41 prefix and double SHA256 checksum)
+function validateTronAddress(addr) {
+  if (!addr || typeof addr !== 'string' || addr.length !== 34 || !addr.startsWith('T')) return false;
+  const bs58Alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+  let num = 0n;
+  for (const char of addr) {
+    const idx = bs58Alphabet.indexOf(char);
+    if (idx === -1) return false;
+    num = num * 58n + BigInt(idx);
+  }
+  let hex = num.toString(16);
+  if (hex.length % 2 !== 0) hex = '0' + hex;
+  const buf = Buffer.from(hex, 'hex');
+  if (buf.length !== 25 || buf[0] !== 0x41) return false;
+  const payload = buf.slice(0, 21);
+  const check = buf.slice(21);
+  const h1 = crypto.createHash('sha256').update(payload).digest();
+  const h2 = crypto.createHash('sha256').update(h1).digest();
+  return h2.slice(0, 4).equals(check);
+}
+
+// EVM / BSC BEP-20 Address Validation
+function validateBscAddress(addr) {
+  return typeof addr === 'string' && /^0x[a-fA-F0-9]{40}$/.test(addr.trim());
+}
+
+// Binance Pay ID / Email Validation
+function validateBinancePayId(id) {
+  if (!id || typeof id !== 'string') return false;
+  const trimmed = id.trim();
+  return /^\d{8,12}$/.test(trimmed) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
 }
 
 const safeCompareSecrets = (provided, target) => {
@@ -1200,6 +1234,48 @@ app.get('/api/admin/recharges', authenticateAdmin, async (req, res) => {
   }
 });
 
+// Public / authenticated endpoint for clients to get active deposit accounts & addresses dynamically
+app.get('/api/wallet/deposit-info', (req, res) => {
+  const trc20Addr = process.env.CRYPTO_USDT_TRC20 || 'TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf';
+  const bep20Addr = process.env.CRYPTO_USDT_BEP20 || '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97';
+  const binancePayId = process.env.BINANCE_PAY_ID || '849201842';
+  const bkashNum = process.env.BKASH_NUMBER || '01721013902';
+  const nagadNum = process.env.NAGAD_NUMBER || '01721013902';
+
+  res.json({
+    success: true,
+    depositInfo: {
+      bkash: {
+        number: bkashNum,
+        type: 'Personal / Send Money',
+      },
+      nagad: {
+        number: nagadNum,
+        type: 'Personal / Send Money',
+      },
+      binancePay: {
+        payId: binancePayId,
+        name: 'Livocal Global',
+      },
+      cryptoUsdt: {
+        trc20: {
+          network: 'TRC-20',
+          networkName: 'Tron (TRC-20)',
+          address: trc20Addr,
+          explorerUrl: 'https://tronscan.org/#/transaction/',
+        },
+        bep20: {
+          network: 'BEP-20',
+          networkName: 'BNB Smart Chain (BEP-20)',
+          address: bep20Addr,
+          explorerUrl: 'https://bscscan.com/tx/',
+        },
+      },
+    },
+    packs: OFFICIAL_PACKS,
+  });
+});
+
 // Freelancer submits payment verification request (bKash, Nagad, Binance Pay, USDT TRC20/BEP20)
 app.post('/api/wallet/payment-request', authenticateRequest, async (req, res) => {
   const userId = req.user.uid;
@@ -1236,11 +1312,34 @@ app.post('/api/wallet/payment-request', authenticateRequest, async (req, res) =>
   const validMethods = ['bKash', 'Nagad', 'Binance_Pay', 'Crypto_USDT_TRC20', 'Crypto_USDT_BEP20'];
   const method = validMethods.includes(paymentMethod) ? paymentMethod : 'bKash';
 
+  // Format checks for blockchain/crypto payments to stop fraudulent inputs immediately
+  if (method === 'Crypto_USDT_TRC20') {
+    if (!validateTronAddress(identifier)) {
+      return res.status(400).json({ error: 'Invalid Tron (TRC-20) sender wallet address format (Must start with T and have 34 Base58 characters).' });
+    }
+    const cleanHash = cleanTrx.replace(/^0x/, '');
+    if (!/^[a-fA-F0-9]{64}$/.test(cleanHash)) {
+      return res.status(400).json({ error: 'Invalid Tron TxHash format (Must be 64 hexadecimal characters).' });
+    }
+  } else if (method === 'Crypto_USDT_BEP20') {
+    if (!validateBscAddress(identifier)) {
+      return res.status(400).json({ error: 'Invalid BNB Smart Chain (BEP-20) sender wallet address (Must be 0x followed by 40 hex characters).' });
+    }
+    const cleanHash = cleanTrx.startsWith('0x') ? cleanTrx : `0x${cleanTrx}`;
+    if (!/^0x[a-fA-F0-9]{64}$/.test(cleanHash)) {
+      return res.status(400).json({ error: 'Invalid BSC TxHash format (Must be 64 hexadecimal characters).' });
+    }
+  } else if (method === 'Binance_Pay') {
+    if (!validateBinancePayId(identifier)) {
+      return res.status(400).json({ error: 'Invalid Binance Pay ID or Email address.' });
+    }
+  }
+
   const isCrypto = method === 'Binance_Pay' || method.startsWith('Crypto_USDT');
   const currency = isCrypto ? 'USDT' : 'BDT';
   const expectedAmount = isCrypto ? selectedPack.priceUsdt : selectedPack.priceBdt;
 
-  // 5. Server-side promo code validation (single-use per user)
+  // 5. Server-side promo code validation (single-use per user + race condition guard)
   let bonusMinutes = 0;
   let validatedPromo = null;
   if (promoCode && typeof promoCode === 'string' && promoCode.trim()) {
@@ -1252,6 +1351,18 @@ app.post('/api/wallet/payment-request', authenticateRequest, async (req, res) =>
       if (promoDoc.exists) {
         return res.status(400).json({ error: `Promo code ${cleanPromo} has already been used on your account.` });
       }
+
+      // Check if user already has an active pending payment request with this promo code
+      const pendingWithPromo = await firestoreDb.collection('payment_requests')
+        .where('userId', '==', userId)
+        .where('promoCode', '==', cleanPromo)
+        .where('status', '==', 'pending')
+        .limit(1)
+        .get();
+      if (!pendingWithPromo.empty) {
+        return res.status(400).json({ error: `You already have an active pending payment request with promo code ${cleanPromo}. Please wait for admin approval.` });
+      }
+
       bonusMinutes = OFFICIAL_PROMOS[cleanPromo].bonusMinutes;
       validatedPromo = cleanPromo;
     } else {
@@ -1333,25 +1444,48 @@ app.post('/api/admin/payment-request/action', authenticateAdmin, async (req, res
 
   try {
     const reqRef = firestoreDb.collection('payment_requests').doc(requestId);
-    const reqDoc = await reqRef.get();
-    if (!reqDoc.exists) {
-      return res.status(404).json({ error: 'Payment request not found' });
-    }
-
-    const pData = reqDoc.data();
-    if (pData.status !== 'pending') {
-      return res.status(400).json({ error: `Payment request is already ${pData.status}` });
-    }
-
     const nowIso = new Date().toISOString();
 
     if (action === 'approve') {
-      const targetUid = pData.userId;
-      const minutesToAdd = Number(pData.minutes) || 0;
-      const walletRef = firestoreDb.collection('users').doc(targetUid).collection('wallet').doc('current');
-      const txRef = firestoreDb.collection('recharge_transactions').doc(`tx_${pData.trxId.replace(/[^a-zA-Z0-9_-]/g, '_')}`);
+      let minutesCredited = 0;
+      let targetUser = '';
+      let paymentMethodUsed = '';
 
       await firestoreDb.runTransaction(async (transaction) => {
+        // 1. Fetch payment request inside transaction to lock and prevent race condition
+        const reqDoc = await transaction.get(reqRef);
+        if (!reqDoc.exists) {
+          throw new Error('PAYMENT_NOT_FOUND');
+        }
+
+        const pData = reqDoc.data();
+        if (pData.status !== 'pending') {
+          throw new Error(`ALREADY_${(pData.status || '').toUpperCase()}`);
+        }
+
+        targetUser = pData.userId;
+        minutesCredited = Number(pData.minutes) || 0;
+        paymentMethodUsed = pData.paymentMethod || 'bKash';
+
+        // 2. Atomically verify and redeem promo code inside transaction
+        if (pData.promoCode) {
+          const promoRef = firestoreDb.collection('users').doc(targetUser).collection('redeemed_promos').doc(pData.promoCode);
+          const promoDoc = await transaction.get(promoRef);
+          if (promoDoc.exists) {
+            throw new Error('PROMO_ALREADY_REDEEMED');
+          }
+          transaction.set(promoRef, {
+            promoCode: pData.promoCode,
+            bonusMinutes: pData.bonusMinutes || 0,
+            redeemedAt: nowIso,
+            paymentRequestId: requestId,
+          });
+        }
+
+        // 3. Update wallet balance
+        const walletRef = firestoreDb.collection('users').doc(targetUser).collection('wallet').doc('current');
+        const txRef = firestoreDb.collection('recharge_transactions').doc(`tx_${pData.trxId.replace(/[^a-zA-Z0-9_-]/g, '_')}`);
+
         const wDoc = await transaction.get(walletRef);
         let wData = wDoc.exists ? wDoc.data() : {
           balanceMinutes: 0,
@@ -1364,8 +1498,8 @@ app.post('/api/admin/payment-request/action', authenticateAdmin, async (req, res
           createdAt: nowIso,
         };
 
-        const newBalance = (wData.balanceMinutes || 0) + minutesToAdd;
-        const newPurchased = (wData.totalMinutesPurchased || 0) + minutesToAdd;
+        const newBalance = (wData.balanceMinutes || 0) + minutesCredited;
+        const newPurchased = (wData.totalMinutesPurchased || 0) + minutesCredited;
 
         transaction.set(walletRef, {
           ...wData,
@@ -1374,17 +1508,17 @@ app.post('/api/admin/payment-request/action', authenticateAdmin, async (req, res
           updatedAt: nowIso,
         }, { merge: true });
 
-        // Record immutable transaction
+        // 4. Record immutable recharge ledger transaction
         transaction.set(txRef, {
           transactionId: `tx_${pData.trxId}`,
-          userId: targetUid,
+          userId: targetUser,
           userPhone: pData.userPhone || '',
           senderIdentifier: pData.senderIdentifier || pData.senderPhone || '',
           packId: pData.packId || 'custom',
-          minutesAdded: minutesToAdd,
+          minutesAdded: minutesCredited,
           amountPaid: Number(pData.amount) || 0,
           currency: pData.currency || 'BDT',
-          paymentMethod: pData.paymentMethod || 'bKash',
+          paymentMethod: paymentMethodUsed,
           trxId: pData.trxId,
           promoCode: pData.promoCode || null,
           status: 'completed',
@@ -1392,17 +1526,7 @@ app.post('/api/admin/payment-request/action', authenticateAdmin, async (req, res
           createdAt: nowIso,
         });
 
-        // Mark promo code redeemed if used
-        if (pData.promoCode) {
-          const promoRef = firestoreDb.collection('users').doc(targetUid).collection('redeemed_promos').doc(pData.promoCode);
-          transaction.set(promoRef, {
-            promoCode: pData.promoCode,
-            bonusMinutes: pData.bonusMinutes || 0,
-            redeemedAt: nowIso,
-            paymentRequestId: requestId,
-          });
-        }
-
+        // 5. Update request status to approved
         transaction.update(reqRef, {
           status: 'approved',
           approvedAt: nowIso,
@@ -1411,23 +1535,171 @@ app.post('/api/admin/payment-request/action', authenticateAdmin, async (req, res
         });
       });
 
-      console.log(`[Admin] Payment ${requestId} APPROVED. ${minutesToAdd} mins credited to ${targetUid} (${pData.paymentMethod}).`);
-      return res.json({ success: true, status: 'approved', minutesCredited: minutesToAdd });
+      console.log(`[Admin] Payment ${requestId} APPROVED atomically. ${minutesCredited} mins credited to ${targetUser} (${paymentMethodUsed}).`);
+      return res.json({ success: true, status: 'approved', minutesCredited });
     } else if (action === 'reject') {
-      await reqRef.update({
-        status: 'rejected',
-        rejectedAt: nowIso,
-        rejectedBy: adminName || 'Admin',
-        notes: notes || 'Payment rejected by admin',
+      await firestoreDb.runTransaction(async (transaction) => {
+        const reqDoc = await transaction.get(reqRef);
+        if (!reqDoc.exists) throw new Error('PAYMENT_NOT_FOUND');
+        const pData = reqDoc.data();
+        if (pData.status !== 'pending') {
+          throw new Error(`ALREADY_${(pData.status || '').toUpperCase()}`);
+        }
+        transaction.update(reqRef, {
+          status: 'rejected',
+          rejectedAt: nowIso,
+          rejectedBy: adminName || 'Admin',
+          notes: notes || 'Payment rejected by admin',
+        });
       });
-      console.log(`[Admin] Payment ${requestId} REJECTED.`);
+
+      console.log(`[Admin] Payment ${requestId} REJECTED atomically.`);
       return res.json({ success: true, status: 'rejected' });
     } else {
       return res.status(400).json({ error: 'Invalid action. Must be approve or reject' });
     }
   } catch (err) {
     console.error('[Admin] Error processing payment action:', err.message);
+    if (err.message === 'ALREADY_APPROVED') {
+      return res.status(409).json({ error: 'Payment request has already been approved.' });
+    }
+    if (err.message === 'ALREADY_REJECTED') {
+      return res.status(409).json({ error: 'Payment request has already been rejected.' });
+    }
+    if (err.message === 'PROMO_ALREADY_REDEEMED') {
+      return res.status(409).json({ error: 'Promo code attached to this request was already redeemed.' });
+    }
+    if (err.message === 'PAYMENT_NOT_FOUND') {
+      return res.status(404).json({ error: 'Payment request not found' });
+    }
     return res.status(500).json({ error: 'Failed to process payment action', message: err.message });
+  }
+});
+
+// Admin on-chain verification endpoint for TRC-20 and BEP-20
+app.post('/api/admin/verify-onchain', authenticateAdmin, async (req, res) => {
+  const { paymentMethod, trxId, expectedAmount, targetAddress } = req.body || {};
+  if (!trxId || !paymentMethod) {
+    return res.status(400).json({ error: 'trxId and paymentMethod are required' });
+  }
+
+  const cleanHash = trxId.trim();
+
+  try {
+    if (paymentMethod === 'Crypto_USDT_TRC20') {
+      const expectedDeposit = targetAddress || process.env.CRYPTO_USDT_TRC20 || 'TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf';
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 6000);
+      const url = `https://apilist.tronscanapi.com/api/transaction-info?hash=${cleanHash.replace(/^0x/, '')}`;
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        return res.json({ verified: false, error: `Tronscan returned HTTP ${response.status}`, explorerUrl: `https://tronscan.org/#/transaction/${cleanHash}` });
+      }
+
+      const data = await response.json();
+      if (!data || !data.hash) {
+        return res.json({
+          verified: false,
+          error: 'Transaction not found on Tron blockchain. Either pending confirmation or invalid TxHash.',
+          explorerUrl: `https://tronscan.org/#/transaction/${cleanHash}`,
+        });
+      }
+
+      const isSuccess = data.contractRet === 'SUCCESS';
+      const confirmed = !!data.confirmed;
+
+      // Look for TRC20 transfer info
+      let transferFound = false;
+      let transferredAmount = 0;
+      let toRecipient = '';
+      let fromSender = '';
+
+      if (Array.isArray(data.trc20TransferInfo)) {
+        for (const t of data.trc20TransferInfo) {
+          if (t.symbol === 'USDT' || t.to_address === expectedDeposit) {
+            transferFound = true;
+            toRecipient = t.to_address;
+            fromSender = t.from_address;
+            const decimals = Number(t.decimals) || 6;
+            transferredAmount = Number(t.amount_str) / Math.pow(10, decimals);
+            break;
+          }
+        }
+      }
+
+      const recipientMatches = toRecipient.toLowerCase() === expectedDeposit.toLowerCase();
+      const amountMatches = expectedAmount ? Math.abs(transferredAmount - Number(expectedAmount)) < 0.1 : true;
+      const isFullyVerified = isSuccess && recipientMatches && amountMatches;
+
+      return res.json({
+        verified: isFullyVerified,
+        status: isSuccess ? 'SUCCESS' : 'FAILED',
+        confirmed,
+        details: {
+          hash: data.hash,
+          from: fromSender || data.ownerAddress || '-',
+          to: toRecipient || '-',
+          expectedRecipient: expectedDeposit,
+          recipientMatches,
+          amountTransferred: transferredAmount,
+          expectedAmount: expectedAmount || 0,
+          amountMatches,
+          timestamp: data.timestamp ? new Date(data.timestamp).toISOString() : null,
+          explorerUrl: `https://tronscan.org/#/transaction/${data.hash}`,
+        },
+      });
+    } else if (paymentMethod === 'Crypto_USDT_BEP20') {
+      const expectedDeposit = targetAddress || process.env.CRYPTO_USDT_BEP20 || '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97';
+      const hashFormatted = cleanHash.startsWith('0x') ? cleanHash : `0x${cleanHash}`;
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 6000);
+      const rpcUrl = 'https://bsc-dataseed.binance.org';
+      const response = await fetch(rpcUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'eth_getTransactionReceipt',
+          params: [hashFormatted],
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+
+      const rpcResult = await response.json();
+      const receipt = rpcResult?.result;
+
+      if (!receipt) {
+        return res.json({
+          verified: false,
+          error: 'Transaction receipt not found on BNB Smart Chain. Confirm tx hash or allow time to mine.',
+          explorerUrl: `https://bscscan.com/tx/${hashFormatted}`,
+        });
+      }
+
+      const isSuccess = receipt.status === '0x1';
+      return res.json({
+        verified: isSuccess,
+        status: isSuccess ? 'SUCCESS' : 'REVERTED',
+        details: {
+          hash: receipt.transactionHash,
+          blockNumber: parseInt(receipt.blockNumber, 16),
+          from: receipt.from,
+          to: receipt.to,
+          expectedRecipient: expectedDeposit,
+          explorerUrl: `https://bscscan.com/tx/${receipt.transactionHash}`,
+        },
+      });
+    } else {
+      return res.status(400).json({ error: 'On-chain verification only applies to Crypto_USDT_TRC20 or Crypto_USDT_BEP20' });
+    }
+  } catch (err) {
+    console.error('[OnChainVerify] Error verifying transaction:', err.message);
+    return res.status(500).json({ error: 'Verification failed', message: err.message });
   }
 });
 

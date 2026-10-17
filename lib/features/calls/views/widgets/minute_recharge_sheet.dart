@@ -48,6 +48,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
   final TextEditingController _senderPhoneController = TextEditingController();
   final TextEditingController _trxIdController = TextEditingController();
   bool _showPromoField = false;
+  Map<String, dynamic>? _depositInfo;
 
   double get _selectedPackAmountUsdt {
     if (_selectedPackId == 'starter_60') return 10.0;
@@ -56,10 +57,41 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
     return 25.0;
   }
 
+  String get _bkashNumber =>
+      _depositInfo?['bkash']?['number'] as String? ?? '01721013902';
+  String get _nagadNumber =>
+      _depositInfo?['nagad']?['number'] as String? ?? '01721013902';
+  String get _binancePayId =>
+      _depositInfo?['binancePay']?['payId'] as String? ?? '849201842';
+  String get _trc20Address =>
+      _depositInfo?['cryptoUsdt']?['trc20']?['address'] as String? ?? 'TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf';
+  String get _bep20Address =>
+      _depositInfo?['cryptoUsdt']?['bep20']?['address'] as String? ?? '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97';
+
+  String get _currentDepositAccount {
+    if (_selectedPaymentMethod == 'bKash / Nagad') {
+      return _bkashNumber.isNotEmpty ? _bkashNumber : _nagadNumber;
+    }
+    if (_selectedPaymentMethod == 'Binance Pay') return _binancePayId;
+    return _selectedCryptoNetwork == 'BEP-20' ? _bep20Address : _trc20Address;
+  }
+
   @override
   void initState() {
     super.initState();
     _senderPhoneController.text = widget.user.phoneNumber;
+    _fetchDepositInfo();
+  }
+
+  Future<void> _fetchDepositInfo() async {
+    try {
+      final info = await ref.read(walletRepositoryProvider).getDepositInfo();
+      if (mounted && info != null) {
+        setState(() {
+          _depositInfo = info;
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -108,6 +140,35 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
         type: SnacBarType.error,
       );
       return;
+    }
+
+    // Client-side address and tx hash sanity checks
+    if (_selectedPaymentMethod == 'Crypto USDT') {
+      if (_selectedCryptoNetwork == 'TRC-20' && (!identifier.startsWith('T') || identifier.length != 34)) {
+        showSnackBar(
+          context: context,
+          content: 'TRC-20 ওয়ালেট অ্যাড্রেস অবশ্যই T দিয়ে শুরু হতে হবে এবং ৩৪ অক্ষরের হতে হবে।',
+          type: SnacBarType.error,
+        );
+        return;
+      }
+      if (_selectedCryptoNetwork == 'BEP-20' && (!identifier.startsWith('0x') || identifier.length != 42)) {
+        showSnackBar(
+          context: context,
+          content: 'BEP-20 ওয়ালেট অ্যাড্রেস অবশ্যই 0x দিয়ে শুরু হতে হবে এবং ৪২ অক্ষরের হতে হবে।',
+          type: SnacBarType.error,
+        );
+        return;
+      }
+      final cleanHash = trxId.replaceAll('0x', '');
+      if (cleanHash.length != 64) {
+        showSnackBar(
+          context: context,
+          content: 'সঠিক ৬৪ অক্ষরের Blockchain TxHash লিখুন।',
+          type: SnacBarType.error,
+        );
+        return;
+      }
     }
 
     setState(() {
@@ -599,13 +660,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    _selectedPaymentMethod == 'bKash / Nagad'
-                                        ? '01721013902'
-                                        : (_selectedPaymentMethod == 'Binance Pay'
-                                            ? '849201842'
-                                            : (_selectedCryptoNetwork == 'BEP-20'
-                                                ? '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97'
-                                                : 'TXvJ28M4Z2vY5oN84gDqJv85xPq7eP1xyz')),
+                                    _currentDepositAccount,
                                     style: const TextStyle(
                                       color: AppColors.primary,
                                       fontWeight: FontWeight.bold,
@@ -633,13 +688,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                                 ),
                               ),
                               onPressed: () {
-                                final textToCopy = _selectedPaymentMethod == 'bKash / Nagad'
-                                    ? '01721013902'
-                                    : (_selectedPaymentMethod == 'Binance Pay'
-                                        ? '849201842'
-                                        : (_selectedCryptoNetwork == 'BEP-20'
-                                            ? '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97'
-                                            : 'TXvJ28M4Z2vY5oN84gDqJv85xPq7eP1xyz'));
+                                final textToCopy = _currentDepositAccount;
                                 Clipboard.setData(ClipboardData(text: textToCopy));
                                 showSnackBar(
                                   context: context,

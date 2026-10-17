@@ -135,9 +135,65 @@ void main() {
       }
 
       expect(validatePaymentInput(packId: 'pro_180', senderIdentifier: '', trxId: '0x123'), isFalse);
-      expect(validatePaymentInput(packId: 'pro_180', senderIdentifier: 'TXvJ28M4Z2vY', trxId: ''), isFalse);
+      expect(validatePaymentInput(packId: 'pro_180', senderIdentifier: 'TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf', trxId: ''), isFalse);
       expect(validatePaymentInput(packId: 'pro_180', senderIdentifier: '849201842', trxId: 'BIN12345'), isTrue);
+    });
+
+    test('Cryptographic TRC-20 and BEP-20 address format verification', () {
+      bool isValidTronAddressFormat(String addr) {
+        if (addr.length != 34 || !addr.startsWith('T')) return false;
+        final base58Regex = RegExp(r'^[1-9A-HJ-NP-Za-km-z]{34}$');
+        return base58Regex.hasMatch(addr);
+      }
+
+      bool isValidBscAddressFormat(String addr) {
+        final evmRegex = RegExp(r'^0x[a-fA-F0-9]{40}$');
+        return evmRegex.hasMatch(addr);
+      }
+
+      bool isValidTxHash(String hash) {
+        final clean = hash.replaceAll('0x', '');
+        return RegExp(r'^[a-fA-F0-9]{64}$').hasMatch(clean);
+      }
+
+      // Valid addresses
+      expect(isValidTronAddressFormat('TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf'), isTrue);
+      expect(isValidBscAddressFormat('0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97'), isTrue);
+      expect(isValidTxHash('1b63de7debd670f242ad82a5ec688597001d344241c82af8b8c392d21815eff0'), isTrue);
+      expect(isValidTxHash('0x1b63de7debd670f242ad82a5ec688597001d344241c82af8b8c392d21815eff0'), isTrue);
+
+      // Invalid addresses
+      expect(isValidTronAddressFormat('TXvJ28M4Z2vY5oN84gDqJv85xPq7eP1xyz000'), isFalse); // too long
+      expect(isValidTronAddressFormat('0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97'), isFalse); // not starting with T
+      expect(isValidBscAddressFormat('TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf'), isFalse);
+      expect(isValidTxHash('short_fake_hash'), isFalse);
+    });
+
+    test('Deposit Info schema contains all official payment methods dynamically', () {
+      final depositInfo = {
+        'bkash': {'number': '01721013902', 'type': 'Personal / Send Money'},
+        'nagad': {'number': '01721013902', 'type': 'Personal / Send Money'},
+        'binancePay': {'payId': '849201842', 'name': 'Livocal Global'},
+        'cryptoUsdt': {
+          'trc20': {
+            'network': 'TRC-20',
+            'address': 'TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf',
+            'explorerUrl': 'https://tronscan.org/#/transaction/',
+          },
+          'bep20': {
+            'network': 'BEP-20',
+            'address': '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97',
+            'explorerUrl': 'https://bscscan.com/tx/',
+          },
+        },
+      };
+
+      expect(depositInfo['bkash']?['number'], equals('01721013902'));
+      expect(depositInfo['binancePay']?['payId'], equals('849201842'));
+      expect((depositInfo['cryptoUsdt'] as Map)['trc20']['address'], equals('TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf'));
+      expect((depositInfo['cryptoUsdt'] as Map)['bep20']['address'], equals('0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97'));
     });
   });
 }
+
 

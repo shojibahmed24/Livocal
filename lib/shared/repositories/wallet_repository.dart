@@ -364,6 +364,24 @@ class WalletRepository {
       );
     }
   }
+
+  /// Fetches real-time payment deposit accounts & addresses from the server
+  Future<Map<String, dynamic>?> getDepositInfo() async {
+    try {
+      final url = Uri.parse(AppConfig.walletDepositInfoUrl);
+      final response = await http.get(url).timeout(const Duration(seconds: 6));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['depositInfo'] is Map<String, dynamic>) {
+          return data['depositInfo'] as Map<String, dynamic>;
+        }
+      }
+      return null;
+    } catch (e) {
+      debugPrint('[WalletRepository] getDepositInfo error: $e');
+      return null;
+    }
+  }
 }
 
 class PaymentSubmissionResult {
