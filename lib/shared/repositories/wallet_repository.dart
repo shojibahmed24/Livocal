@@ -368,8 +368,14 @@ class WalletRepository {
   /// Fetches real-time payment deposit accounts & addresses from the server
   Future<Map<String, dynamic>?> getDepositInfo() async {
     try {
+      final currentUser = fb.FirebaseAuth.instance.currentUser;
+      final idToken = await currentUser?.getIdToken();
       final url = Uri.parse(AppConfig.walletDepositInfoUrl);
-      final response = await http.get(url).timeout(const Duration(seconds: 6));
+      final headers = <String, String>{};
+      if (idToken != null && idToken.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $idToken';
+      }
+      final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 6));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success'] == true && data['depositInfo'] is Map<String, dynamic>) {

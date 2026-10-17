@@ -1000,6 +1000,15 @@ const authenticateAdmin = async (req, res, next) => {
   return res.status(403).json({ error: 'Forbidden: Valid Admin credentials or x-admin-secret header required' });
 };
 
+// User (Firebase ID token) OR Admin (x-admin-secret / admin claim) Authentication Middleware
+const authenticateUserOrAdmin = async (req, res, next) => {
+  const providedSecret = req.headers['x-admin-secret'];
+  if (providedSecret && safeCompareSecrets(providedSecret, effectiveAdminSecret)) {
+    return next();
+  }
+  return authenticateRequest(req, res, next);
+};
+
 // Direct client wallet crediting is STRICTLY BLOCKED for P0 security.
 // Only authenticated Admin or verified payment callback can invoke this endpoint directly.
 app.post('/api/wallet/recharge', authenticateAdmin, async (req, res) => {
@@ -1235,7 +1244,7 @@ app.get('/api/admin/recharges', authenticateAdmin, async (req, res) => {
 });
 
 // Public / authenticated endpoint for clients to get active deposit accounts & addresses dynamically
-app.get('/api/wallet/deposit-info', (req, res) => {
+app.get('/api/wallet/deposit-info', authenticateUserOrAdmin, (req, res) => {
   const trc20Addr = process.env.CRYPTO_USDT_TRC20 || 'TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf';
   const bep20Addr = process.env.CRYPTO_USDT_BEP20 || '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97';
   const binancePayId = process.env.BINANCE_PAY_ID || '849201842';
@@ -1296,17 +1305,24 @@ app.post('/api/wallet/payment-request', authenticateRequest, async (req, res) =>
     return res.status(400).json({ error: 'Invalid packId. Must be starter_60, pro_180, or agency_500' });
   }
 
-  // 2. Validate TrxID / TxHash
-  if (!trxId || !trxId.trim()) {
+  // 2. Validate TrxID / TxHash against strict regex to prevent stored XSS and injection
+  if (!trxId || typeof trxId !== 'string' || !trxId.trim()) {
     return res.status(400).json({ error: 'Transaction ID / TxHash is required' });
   }
   const cleanTrx = trxId.trim();
+  if (!/^[a-zA-Z0-9_\-]{6,128}$/.test(cleanTrx)) {
+    return res.status(400).json({ error: 'Invalid Transaction ID / TxHash format. Must contain 6-128 alphanumeric characters.' });
+  }
 
   // 3. Validate sender identifier
-  const identifier = (senderIdentifier || senderPhone || '').trim();
-  if (!identifier) {
+  const rawIdentifier = (senderIdentifier || senderPhone || '').trim();
+  if (!rawIdentifier) {
     return res.status(400).json({ error: 'Sender phone number, Binance ID, or crypto wallet address is required' });
   }
+  if (!/^[a-zA-Z0-9@.+_\-]{1,64}$/.test(rawIdentifier)) {
+    return res.status(400).json({ error: 'Invalid sender identifier format.' });
+  }
+  const identifier = rawIdentifier;
 
   // 4. Validate payment method & determine currency and amount
   const validMethods = ['bKash', 'Nagad', 'Binance_Pay', 'Crypto_USDT_TRC20', 'Crypto_USDT_BEP20'];
@@ -1339,30 +1355,15 @@ app.post('/api/wallet/payment-request', authenticateRequest, async (req, res) =>
   const currency = isCrypto ? 'USDT' : 'BDT';
   const expectedAmount = isCrypto ? selectedPack.priceUsdt : selectedPack.priceBdt;
 
-  // 5. Server-side promo code validation (single-use per user + race condition guard)
+  // 5. Server-side promo code validation
   let bonusMinutes = 0;
   let validatedPromo = null;
   if (promoCode && typeof promoCode === 'string' && promoCode.trim()) {
     const cleanPromo = promoCode.trim().toUpperCase();
+    if (!/^[A-Z0-9_]{3,20}$/.test(cleanPromo)) {
+      return res.status(400).json({ error: 'Invalid promo code format.' });
+    }
     if (OFFICIAL_PROMOS[cleanPromo]) {
-      // Check if user has already redeemed this promo
-      const promoRef = firestoreDb.collection('users').doc(userId).collection('redeemed_promos').doc(cleanPromo);
-      const promoDoc = await promoRef.get();
-      if (promoDoc.exists) {
-        return res.status(400).json({ error: `Promo code ${cleanPromo} has already been used on your account.` });
-      }
-
-      // Check if user already has an active pending payment request with this promo code
-      const pendingWithPromo = await firestoreDb.collection('payment_requests')
-        .where('userId', '==', userId)
-        .where('promoCode', '==', cleanPromo)
-        .where('status', '==', 'pending')
-        .limit(1)
-        .get();
-      if (!pendingWithPromo.empty) {
-        return res.status(400).json({ error: `You already have an active pending payment request with promo code ${cleanPromo}. Please wait for admin approval.` });
-      }
-
       bonusMinutes = OFFICIAL_PROMOS[cleanPromo].bonusMinutes;
       validatedPromo = cleanPromo;
     } else {
@@ -1371,15 +1372,11 @@ app.post('/api/wallet/payment-request', authenticateRequest, async (req, res) =>
   }
 
   const totalCalculatedMinutes = selectedPack.baseMinutes + bonusMinutes;
+  const nowIso = new Date().toISOString();
 
   try {
     const reqId = `pay_${cleanTrx.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
     const reqRef = firestoreDb.collection('payment_requests').doc(reqId);
-
-    const existing = await reqRef.get();
-    if (existing.exists) {
-      return res.status(409).json({ error: 'This Transaction ID / TxHash has already been submitted.' });
-    }
 
     const paymentData = {
       id: reqId,
@@ -1399,16 +1396,56 @@ app.post('/api/wallet/payment-request', authenticateRequest, async (req, res) =>
       paymentMethod: method,
       promoCode: validatedPromo,
       status: 'pending',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: nowIso,
+      updatedAt: nowIso,
     };
 
-    await reqRef.set(paymentData);
-    console.log(`[Payment] Real payment request submitted: ${cleanTrx} (${method}) by ${userId} for ${expectedAmount} ${currency} -> ${totalCalculatedMinutes} mins`);
+    // Atomic transaction: verify duplicate TrxID, lock promo code, and write request
+    await firestoreDb.runTransaction(async (transaction) => {
+      const existing = await transaction.get(reqRef);
+      if (existing.exists) {
+        throw new Error('DUPLICATE_TRX_ID');
+      }
 
+      if (validatedPromo) {
+        // 1. Check if user has already redeemed this promo
+        const promoRef = firestoreDb.collection('users').doc(userId).collection('redeemed_promos').doc(validatedPromo);
+        const promoDoc = await transaction.get(promoRef);
+        if (promoDoc.exists) {
+          throw new Error('PROMO_ALREADY_USED');
+        }
+
+        // 2. Check if user already has an active pending request locking this promo code
+        const promoLockRef = firestoreDb.collection('users').doc(userId).collection('active_promo_locks').doc(validatedPromo);
+        const lockDoc = await transaction.get(promoLockRef);
+        if (lockDoc.exists) {
+          throw new Error('PROMO_ALREADY_PENDING');
+        }
+
+        // Lock promo code atomically
+        transaction.set(promoLockRef, {
+          promoCode: validatedPromo,
+          requestId: reqId,
+          lockedAt: nowIso,
+        });
+      }
+
+      transaction.set(reqRef, paymentData);
+    });
+
+    console.log(`[Payment] Real payment request submitted atomically: ${cleanTrx} (${method}) by ${userId} for ${expectedAmount} ${currency} -> ${totalCalculatedMinutes} mins`);
     return res.json({ success: true, payment: paymentData });
   } catch (err) {
     console.error('[Payment] Error submitting payment request:', err.message);
+    if (err.message === 'DUPLICATE_TRX_ID') {
+      return res.status(409).json({ error: 'This Transaction ID / TxHash has already been submitted.' });
+    }
+    if (err.message === 'PROMO_ALREADY_USED') {
+      return res.status(400).json({ error: `Promo code ${validatedPromo} has already been used on your account.` });
+    }
+    if (err.message === 'PROMO_ALREADY_PENDING') {
+      return res.status(400).json({ error: `You already have an active pending payment request with promo code ${validatedPromo}. Please wait for admin approval.` });
+    }
     return res.status(500).json({ error: 'Failed to submit payment request', message: err.message });
   }
 });
@@ -1480,6 +1517,9 @@ app.post('/api/admin/payment-request/action', authenticateAdmin, async (req, res
             redeemedAt: nowIso,
             paymentRequestId: requestId,
           });
+          // Remove active promo lock now that promo is permanently redeemed
+          const promoLockRef = firestoreDb.collection('users').doc(targetUser).collection('active_promo_locks').doc(pData.promoCode);
+          transaction.delete(promoLockRef);
         }
 
         // 3. Update wallet balance
@@ -1544,6 +1584,11 @@ app.post('/api/admin/payment-request/action', authenticateAdmin, async (req, res
         const pData = reqDoc.data();
         if (pData.status !== 'pending') {
           throw new Error(`ALREADY_${(pData.status || '').toUpperCase()}`);
+        }
+        // If payment had promo code locked, release the lock on rejection
+        if (pData.promoCode) {
+          const promoLockRef = firestoreDb.collection('users').doc(pData.userId).collection('active_promo_locks').doc(pData.promoCode);
+          transaction.delete(promoLockRef);
         }
         transaction.update(reqRef, {
           status: 'rejected',
@@ -1682,15 +1727,62 @@ app.post('/api/admin/verify-onchain', authenticateAdmin, async (req, res) => {
       }
 
       const isSuccess = receipt.status === '0x1';
+      const cleanExpectedDeposit = expectedDeposit.toLowerCase().replace(/^0x/, '');
+      const paddedRecipient = '0x' + cleanExpectedDeposit.padStart(64, '0');
+      // Standard ERC20/BEP20 Transfer(address,address,uint256) event signature
+      const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+
+      let transferFound = false;
+      let transferredAmount = 0;
+      let fromAddress = receipt.from;
+      let toAddress = '';
+
+      if (Array.isArray(receipt.logs)) {
+        for (const log of receipt.logs) {
+          if (log.topics && log.topics[0] && log.topics[0].toLowerCase() === TRANSFER_TOPIC) {
+            const logRecipient = (log.topics[2] || '').toLowerCase();
+            if (logRecipient === paddedRecipient.toLowerCase() || logRecipient.endsWith(cleanExpectedDeposit.toLowerCase())) {
+              transferFound = true;
+              toAddress = '0x' + logRecipient.slice(26);
+              if (log.topics[1]) {
+                fromAddress = '0x' + log.topics[1].slice(26);
+              }
+              try {
+                // BSC USDT (BSC-USD) uses 18 decimals
+                const rawVal = BigInt(log.data);
+                transferredAmount = Number(rawVal) / 1e18;
+              } catch (_) {
+                transferredAmount = parseInt(log.data, 16) / 1e18;
+              }
+              break;
+            }
+          }
+        }
+      }
+
+      // Fallback: direct contract or native transaction recipient match
+      if (!transferFound && receipt.to && receipt.to.toLowerCase() === expectedDeposit.toLowerCase()) {
+        transferFound = true;
+        toAddress = receipt.to;
+      }
+
+      const recipientMatches = transferFound && toAddress.toLowerCase() === expectedDeposit.toLowerCase();
+      const amountMatches = expectedAmount ? Math.abs(transferredAmount - Number(expectedAmount)) < 0.1 : true;
+      const isFullyVerified = isSuccess && recipientMatches && amountMatches;
+
       return res.json({
-        verified: isSuccess,
+        verified: isFullyVerified,
         status: isSuccess ? 'SUCCESS' : 'REVERTED',
         details: {
           hash: receipt.transactionHash,
           blockNumber: parseInt(receipt.blockNumber, 16),
-          from: receipt.from,
-          to: receipt.to,
+          from: fromAddress || receipt.from,
+          to: toAddress || receipt.to || '-',
           expectedRecipient: expectedDeposit,
+          recipientMatches,
+          amountTransferred: transferredAmount,
+          expectedAmount: expectedAmount || 0,
+          amountMatches,
           explorerUrl: `https://bscscan.com/tx/${receipt.transactionHash}`,
         },
       });
@@ -1797,14 +1889,7 @@ app.post('/api/admin/wallet/topup', authenticateAdmin, async (req, res) => {
 });
 
 // Admin endpoint to backfill metadata and prune expired legacy statuses (>24h old)
-app.post('/api/admin/cleanup-legacy-storage', authenticateRequest, async (req, res) => {
-  const adminSecret = process.env.ADMIN_SECRET;
-  const authAdminSecret = req.headers['x-admin-secret'];
-  const isAdmin = (adminSecret && authAdminSecret === adminSecret) || req.user?.admin === true;
-  if (!isAdmin) {
-    return res.status(403).json({ error: 'Forbidden: Admin authorization required' });
-  }
-
+app.post('/api/admin/cleanup-legacy-storage', authenticateAdmin, async (req, res) => {
   if (!storageService) {
     return res.status(503).json({ error: 'Firebase Storage service is not initialized' });
   }

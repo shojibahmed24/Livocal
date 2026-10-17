@@ -1248,6 +1248,16 @@
   <script>
     let activeWalletsList = [];
 
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     function getAdminSecret() {
       return localStorage.getItem('livocal_admin_secret') || '';
     }
@@ -1295,6 +1305,39 @@
         showToast('Please configure your Admin Secret in the top bar.', true);
       }
       loadDepositInfo();
+
+      // Safe Event Delegation (Eliminates inline onclick and completely stops Stored XSS)
+      const payTbody = document.getElementById('paymentsTableBody');
+      if (payTbody) {
+        payTbody.addEventListener('click', (e) => {
+          const approveBtn = e.target.closest('.btn-action-approve');
+          if (approveBtn) {
+            handlePaymentAction(approveBtn.dataset.id, 'approve', Number(approveBtn.dataset.minutes));
+            return;
+          }
+          const rejectBtn = e.target.closest('.btn-action-reject');
+          if (rejectBtn) {
+            handlePaymentAction(rejectBtn.dataset.id, 'reject');
+            return;
+          }
+          const verifyBtn = e.target.closest('.btn-action-verify');
+          if (verifyBtn) {
+            verifyOnChainPayment(verifyBtn.dataset.method, verifyBtn.dataset.trx, Number(verifyBtn.dataset.amount));
+            return;
+          }
+        });
+      }
+
+      const walTbody = document.getElementById('walletsTableBody');
+      if (walTbody) {
+        walTbody.addEventListener('click', (e) => {
+          const topupBtn = e.target.closest('.btn-wallet-topup');
+          if (topupBtn && topupBtn.dataset.target) {
+            openTopUpForUser(topupBtn.dataset.target);
+          }
+        });
+      }
+
       // Auto-refresh every 30 seconds if secret is configured
       setInterval(() => {
         if (getAdminSecret()) fetchDashboardData();
@@ -1354,8 +1397,10 @@
     }
 
     async function loadDepositInfo() {
+      const secret = getAdminSecret();
+      const headers = secret ? { 'x-admin-secret': secret } : {};
       try {
-        const res = await fetch('/api/wallet/deposit-info');
+        const res = await fetch('/api/wallet/deposit-info', { headers });
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.depositInfo) {
@@ -1449,18 +1494,23 @@
       }
 
       tbody.innerHTML = records.map(r => {
-        const timeStr = r.timestamp ? new Date(r.timestamp).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' }) : '-';
+        const timeStr = r.timestamp ? escapeHtml(new Date(r.timestamp).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' })) : '-';
+        const rawCall = r.callId || '';
+        const shortCall = rawCall.length > 14 ? rawCall.substring(0, 12) + '...' : rawCall;
+        const callerStr = r.callerId ? r.callerId.substring(0, 10) : '-';
+        const calleeStr = r.calleeId ? r.calleeId.substring(0, 10) : '-';
+
         return `
           <tr>
-            <td><code style="color:var(--accent); font-weight:bold;">${r.callId ? r.callId.substring(0, 12) : '-'}</code></td>
+            <td><code style="color:var(--accent); font-weight:bold;" title="${escapeHtml(rawCall)}">${escapeHtml(shortCall || '-')}</code></td>
             <td>${timeStr}</td>
-            <td><code style="font-size:12px;">${r.callerId ? r.callerId.substring(0, 10) : '-'}</code></td>
-            <td><code style="font-size:12px;">${r.calleeId ? r.calleeId.substring(0, 10) : '-'}</code></td>
-            <td><span class="badge badge-info">Min #${r.minuteIndex || 1}</span></td>
-            <td>${r.durationSeconds || 60}s</td>
-            <td style="color:#fb7185; font-weight:600;">$${r.geminiCostUsd || '0.035'}</td>
-            <td style="color:#34d399; font-weight:600;">৳${r.retailRateBdt || '20.0'}</td>
-            <td style="color:#38bdf8; font-weight:bold;">+৳${r.netProfitBdt || '15.8'}</td>
+            <td><code style="font-size:12px;">${escapeHtml(callerStr)}</code></td>
+            <td><code style="font-size:12px;">${escapeHtml(calleeStr)}</code></td>
+            <td><span class="badge badge-info">Min #${Number(r.minuteIndex) || 1}</span></td>
+            <td>${Number(r.durationSeconds) || 60}s</td>
+            <td style="color:#fb7185; font-weight:600;">$${Number(r.geminiCostUsd) || 0.035}</td>
+            <td style="color:#34d399; font-weight:600;">৳${Number(r.retailRateBdt) || 20.0}</td>
+            <td style="color:#38bdf8; font-weight:bold;">+৳${Number(r.netProfitBdt) || 15.8}</td>
             <td><span class="badge badge-success">✓ Settled</span></td>
           </tr>
         `;
@@ -1477,20 +1527,21 @@
       tbody.innerHTML = wallets.map(w => {
         const isTrialActive = w.trialActive && (!w.trialExpiresAt || new Date(w.trialExpiresAt) > new Date());
         const trialBadge = isTrialActive
-          ? `<span class="badge badge-success">Active (${w.trialMinutes || 0}m)</span>`
+          ? `<span class="badge badge-success">Active (${Number(w.trialMinutes) || 0}m)</span>`
           : `<span class="badge badge-danger">Expired</span>`;
+        const userTarget = escapeHtml(w.phone || w.userId || '');
 
         return `
           <tr>
-            <td><strong>${w.name || 'Freelancer'}</strong></td>
-            <td><code style="color:var(--text-main); font-weight:bold;">${w.phone || '-'}</code></td>
-            <td><span style="font-weight:700; color:#34d399; font-size:14.5px;">💎 ${w.balanceMinutes || 0}m</span></td>
-            <td>⏱️ ${w.trialMinutes || 0}m</td>
+            <td><strong>${escapeHtml(w.name || 'Freelancer')}</strong></td>
+            <td><code style="color:var(--text-main); font-weight:bold;">${escapeHtml(w.phone || '-')}</code></td>
+            <td><span style="font-weight:700; color:#34d399; font-size:14.5px;">💎 ${Number(w.balanceMinutes) || 0}m</span></td>
+            <td>⏱️ ${Number(w.trialMinutes) || 0}m</td>
             <td>${trialBadge}</td>
-            <td style="font-size:12px; color:var(--text-muted);">${w.trialExpiresAt ? new Date(w.trialExpiresAt).toLocaleDateString() : '-'}</td>
-            <td>${w.totalMinutesUsed || 0}m</td>
+            <td style="font-size:12px; color:var(--text-muted);">${w.trialExpiresAt ? escapeHtml(new Date(w.trialExpiresAt).toLocaleDateString()) : '-'}</td>
+            <td>${Number(w.totalMinutesUsed) || 0}m</td>
             <td>
-              <button class="btn btn-secondary" style="padding:4px 10px; font-size:12px;" onclick="openTopUpForUser('${w.phone || w.userId}')">
+              <button class="btn btn-secondary btn-wallet-topup" data-target="${userTarget}" style="padding:4px 10px; font-size:12px;">
                 ➕ Top-Up
               </button>
             </td>
@@ -1521,16 +1572,19 @@
       }
 
       tbody.innerHTML = recharges.map(rc => {
-        const dateStr = rc.createdAt ? new Date(rc.createdAt).toLocaleString() : '-';
-        const curr = rc.currency === 'USDT' ? `$${rc.amountPaid || 0} USDT` : `৳${rc.amountPaid || 0}`;
+        const dateStr = rc.createdAt ? escapeHtml(new Date(rc.createdAt).toLocaleString()) : '-';
+        const curr = rc.currency === 'USDT' ? `$${Number(rc.amountPaid) || 0} USDT` : `৳${Number(rc.amountPaid) || 0}`;
+        const rawTx = rc.transactionId || '';
+        const shortTx = rawTx.length > 20 ? rawTx.substring(0, 18) + '...' : rawTx;
+
         return `
           <tr>
-            <td><code style="color:var(--accent); font-weight:600;">${rc.transactionId ? rc.transactionId.substring(0, 18) : '-'}</code></td>
-            <td><code>${rc.userPhone || rc.userId || '-'}</code></td>
-            <td><span class="badge badge-info">${rc.packId || 'Custom'}</span></td>
-            <td style="color:#34d399; font-weight:bold;">+${rc.minutesAdded || 0}m</td>
+            <td><code style="color:var(--accent); font-weight:600;" title="${escapeHtml(rawTx)}">${escapeHtml(shortTx || '-')}</code></td>
+            <td><code>${escapeHtml(rc.userPhone || rc.userId || '-')}</code></td>
+            <td><span class="badge badge-info">${escapeHtml(rc.packId || 'Custom')}</span></td>
+            <td style="color:#34d399; font-weight:bold;">+${Number(rc.minutesAdded) || 0}m</td>
             <td style="font-weight:700;">${curr}</td>
-            <td>${rc.paymentMethod || 'Manual'}</td>
+            <td>${escapeHtml(rc.paymentMethod || 'Manual')}</td>
             <td><span class="badge badge-success">✓ Completed</span></td>
             <td style="font-size:12px; color:var(--text-muted);">${dateStr}</td>
           </tr>
@@ -1546,7 +1600,7 @@
       }
 
       tbody.innerHTML = requests.map(r => {
-        const timeStr = r.createdAt ? new Date(r.createdAt).toLocaleString() : '-';
+        const timeStr = r.createdAt ? escapeHtml(new Date(r.createdAt).toLocaleString()) : '-';
         let statusBadge = `<span class="badge badge-warning">⏳ Pending</span>`;
         if (r.status === 'approved') {
           statusBadge = `<span class="badge badge-success">✓ Approved</span>`;
@@ -1555,7 +1609,7 @@
         }
 
         // Method Icon & Tag
-        let methodHtml = `<span class="badge badge-info">${r.paymentMethod || 'bKash'}</span>`;
+        let methodHtml = `<span class="badge badge-info">${escapeHtml(r.paymentMethod || 'bKash')}</span>`;
         if (r.paymentMethod === 'bKash') {
           methodHtml = `<span class="badge badge-bkash">📱 bKash</span>`;
         } else if (r.paymentMethod === 'Nagad') {
@@ -1567,52 +1621,60 @@
           methodHtml = `<span class="badge badge-crypto">💎 USDT (${net})</span>`;
         }
 
-        const amountFormatted = r.currency === 'USDT' ? `$${r.amount || 0} USDT` : `৳${r.amount || 0}`;
-        const sender = r.senderIdentifier || r.senderPhone || '-';
+        const amountFormatted = r.currency === 'USDT' ? `$${Number(r.amount) || 0} USDT` : `৳${Number(r.amount) || 0}`;
+        const sender = escapeHtml(r.senderIdentifier || r.senderPhone || '-');
+        const userDisplay = escapeHtml(r.userPhone || r.userId || '-');
+        const packDisplay = escapeHtml(r.packId || 'Custom');
 
-        const promoBadge = r.promoCode ? `<div style="margin-top:2px;"><span class="badge badge-info" style="font-size:10px;">🏷️ ${r.promoCode} (+${r.bonusMinutes}m)</span></div>` : '';
+        const promoBadge = r.promoCode
+          ? `<div style="margin-top:2px;"><span class="badge badge-info" style="font-size:10px;">🏷️ ${escapeHtml(r.promoCode)} (+${Number(r.bonusMinutes) || 0}m)</span></div>`
+          : '';
 
-        // Explorer links
+        // Explorer links (strictly sanitize hash for URL)
         let explorerHtml = '';
-        if (r.paymentMethod === 'Crypto_USDT_TRC20') {
-          const clean = (r.trxId || '').replace(/^0x/, '');
+        const safeHash = (r.trxId || '').replace(/[^a-zA-Z0-9]/g, '');
+        if (r.paymentMethod === 'Crypto_USDT_TRC20' && safeHash) {
+          const clean = safeHash.replace(/^0x/, '');
           explorerHtml = `<div style="margin-top:3px;"><a href="https://tronscan.org/#/transaction/${clean}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); font-size:11px; text-decoration:underline;">🔗 View on Tronscan</a></div>`;
-        } else if (r.paymentMethod === 'Crypto_USDT_BEP20') {
-          const clean = (r.trxId || '').startsWith('0x') ? r.trxId : `0x${r.trxId}`;
+        } else if (r.paymentMethod === 'Crypto_USDT_BEP20' && safeHash) {
+          const clean = safeHash.startsWith('0x') ? safeHash : `0x${safeHash}`;
           explorerHtml = `<div style="margin-top:3px;"><a href="https://bscscan.com/tx/${clean}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); font-size:11px; text-decoration:underline;">🔗 View on BscScan</a></div>`;
         }
 
         const isCryptoMethod = r.paymentMethod && r.paymentMethod.startsWith('Crypto_USDT');
         const verifyBtn = isCryptoMethod
-          ? `<button class="btn btn-secondary" style="padding:4px 8px; font-size:11px; background:#0f172a; color:#38bdf8; border:1px solid #38bdf8;" onclick="verifyOnChainPayment('${r.paymentMethod}', '${r.trxId}', ${r.amount})">🔍 Verify On-Chain</button>`
+          ? `<button class="btn btn-secondary btn-action-verify" data-method="${escapeHtml(r.paymentMethod)}" data-trx="${escapeHtml(r.trxId)}" data-amount="${Number(r.amount) || 0}" style="padding:4px 8px; font-size:11px; background:#0f172a; color:#38bdf8; border:1px solid #38bdf8;">🔍 Verify On-Chain</button>`
           : '';
 
         const actionBtns = r.status === 'pending'
           ? `
             <div style="display:flex; flex-direction:column; gap:6px;">
               <div style="display:flex; gap:6px;">
-                <button class="btn btn-primary" style="padding:5px 10px; font-size:12px;" onclick="handlePaymentAction('${r.id}', 'approve', ${r.minutes})">
+                <button class="btn btn-primary btn-action-approve" data-id="${escapeHtml(r.id)}" data-minutes="${Number(r.minutes) || 0}" style="padding:5px 10px; font-size:12px;">
                   ✓ Approve
                 </button>
-                <button class="btn btn-secondary" style="padding:5px 10px; font-size:12px; color:var(--danger);" onclick="handlePaymentAction('${r.id}', 'reject')">
+                <button class="btn btn-secondary btn-action-reject" data-id="${escapeHtml(r.id)}" style="padding:5px 10px; font-size:12px; color:var(--danger);">
                   ✕ Reject
                 </button>
               </div>
               ${verifyBtn}
             </div>
           `
-          : `<div style="font-size:12px; color:var(--text-muted);">${r.approvedBy || r.rejectedBy || '-'}</div>${verifyBtn ? `<div style="margin-top:4px;">${verifyBtn}</div>` : ''}`;
+          : `<div style="font-size:12px; color:var(--text-muted);">${escapeHtml(r.approvedBy || r.rejectedBy || '-')}</div>${verifyBtn ? `<div style="margin-top:4px;">${verifyBtn}</div>` : ''}`;
+
+        const rawTrx = r.trxId || '';
+        const shortTrx = rawTrx.length > 20 ? rawTrx.substring(0, 18) + '...' : rawTrx;
 
         return `
           <tr>
             <td>
-              <code style="color:var(--accent); font-weight:bold; font-size:12.5px;" title="${r.trxId}">${r.trxId ? (r.trxId.length > 20 ? r.trxId.substring(0, 18) + '...' : r.trxId) : '-'}</code>
+              <code style="color:var(--accent); font-weight:bold; font-size:12.5px;" title="${escapeHtml(rawTrx)}">${escapeHtml(shortTrx || '-')}</code>
               ${explorerHtml}
             </td>
-            <td><code>${r.userPhone || r.userId || '-'}</code></td>
+            <td><code>${userDisplay}</code></td>
             <td><strong style="color:#f8fafc; font-size:12px;">${sender}</strong></td>
-            <td><span class="badge badge-info">${r.packId || 'Custom'}</span>${promoBadge}</td>
-            <td style="color:#34d399; font-weight:bold; font-size:14px;">+${r.minutes || 0}m</td>
+            <td><span class="badge badge-info">${packDisplay}</span>${promoBadge}</td>
+            <td style="color:#34d399; font-weight:bold; font-size:14px;">+${Number(r.minutes) || 0}m</td>
             <td style="font-weight:700; color:#fff;">${amountFormatted}</td>
             <td>${methodHtml}</td>
             <td style="font-size:12px; color:var(--text-muted);">${timeStr}</td>

@@ -49,6 +49,8 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
   final TextEditingController _trxIdController = TextEditingController();
   bool _showPromoField = false;
   Map<String, dynamic>? _depositInfo;
+  bool _isLoadingDepositInfo = true;
+  String? _depositInfoError;
 
   double get _selectedPackAmountUsdt {
     if (_selectedPackId == 'starter_60') return 10.0;
@@ -58,15 +60,15 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
   }
 
   String get _bkashNumber =>
-      _depositInfo?['bkash']?['number'] as String? ?? '01721013902';
+      _depositInfo?['bkash']?['number'] as String? ?? '';
   String get _nagadNumber =>
-      _depositInfo?['nagad']?['number'] as String? ?? '01721013902';
+      _depositInfo?['nagad']?['number'] as String? ?? '';
   String get _binancePayId =>
-      _depositInfo?['binancePay']?['payId'] as String? ?? '849201842';
+      _depositInfo?['binancePay']?['payId'] as String? ?? '';
   String get _trc20Address =>
-      _depositInfo?['cryptoUsdt']?['trc20']?['address'] as String? ?? 'TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf';
+      _depositInfo?['cryptoUsdt']?['trc20']?['address'] as String? ?? '';
   String get _bep20Address =>
-      _depositInfo?['cryptoUsdt']?['bep20']?['address'] as String? ?? '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97';
+      _depositInfo?['cryptoUsdt']?['bep20']?['address'] as String? ?? '';
 
   String get _currentDepositAccount {
     if (_selectedPaymentMethod == 'bKash / Nagad') {
@@ -84,14 +86,32 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
   }
 
   Future<void> _fetchDepositInfo() async {
+    setState(() {
+      _isLoadingDepositInfo = true;
+      _depositInfoError = null;
+    });
     try {
       final info = await ref.read(walletRepositoryProvider).getDepositInfo();
-      if (mounted && info != null) {
+      if (!mounted) return;
+      if (info != null) {
         setState(() {
           _depositInfo = info;
+          _isLoadingDepositInfo = false;
+          _depositInfoError = null;
+        });
+      } else {
+        setState(() {
+          _isLoadingDepositInfo = false;
+          _depositInfoError = 'সার্ভার থেকে ডিপোজিট অ্যাকাউন্ট লোড করা যায়নি।';
         });
       }
-    } catch (_) {}
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingDepositInfo = false;
+        _depositInfoError = 'ডিপোজিট অ্যাকাউন্ট লোড ব্যর্থ হয়েছে ($e)।';
+      });
+    }
   }
 
   @override
@@ -115,6 +135,15 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
   }
 
   Future<void> _processRecharge() async {
+    if (_currentDepositAccount.isEmpty) {
+      showSnackBar(
+        context: context,
+        content: 'সার্ভার থেকে ডিপোজিট অ্যাকাউন্ট লোড হওয়া পর্যন্ত অপেক্ষা করুন বা রিফ্রেশ করুন।',
+        type: SnacBarType.error,
+      );
+      return;
+    }
+
     final identifier = _senderPhoneController.text.trim();
     final trxId = _trxIdController.text.trim();
 
@@ -640,65 +669,103 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _selectedPaymentMethod == 'bKash / Nagad'
-                                        ? 'bKash / Nagad পার্সোনাল / মার্চেন্ট নম্বর:'
-                                        : (_selectedPaymentMethod == 'Binance Pay'
-                                            ? 'Livocal অফিসিয়াল Binance Pay ID:'
-                                            : 'Livocal অফিসিয়াল $_selectedCryptoNetwork ডিপোজিট অ্যাড্রেস:'),
-                                    style: TextStyle(
-                                      color: isDark ? Colors.white60 : Colors.black54,
-                                      fontSize: 11,
+                        child: _isLoadingDepositInfo
+                            ? const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 8),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 14,
+                                      height: 14,
+                                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
                                     ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    _currentDepositAccount,
-                                    style: const TextStyle(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14.5,
-                                      letterSpacing: 0.8,
+                                    SizedBox(width: 10),
+                                    Text(
+                                      'সার্ভার থেকে ডিপোজিট অ্যাকাউন্ট লোড হচ্ছে...',
+                                      style: TextStyle(fontSize: 12, color: AppColors.primary),
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            TextButton.icon(
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                backgroundColor: primaryColor.withOpacity(0.12),
-                              ),
-                              icon: const Icon(Icons.copy_rounded, size: 16, color: AppColors.primary),
-                              label: const Text(
-                                'কপি করুন',
-                                style: TextStyle(
-                                  color: AppColors.primary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
+                                  ],
                                 ),
-                              ),
-                              onPressed: () {
-                                final textToCopy = _currentDepositAccount;
-                                Clipboard.setData(ClipboardData(text: textToCopy));
-                                showSnackBar(
-                                  context: context,
-                                  content: 'অ্যাড্রেস/নম্বর $textToCopy ক্লিপবোর্ডে কপি করা হয়েছে!',
-                                  type: SnacBarType.info,
-                                );
-                              },
-                            ),
-                          ],
-                        ),
+                              )
+                            : (_depositInfoError != null || _currentDepositAccount.isEmpty)
+                                ? Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 4),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            _depositInfoError ?? 'ডিপোজিট অ্যাকাউন্ট পাওয়া যায়নি।',
+                                            style: const TextStyle(color: Colors.redAccent, fontSize: 11),
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.refresh, size: 18, color: AppColors.primary),
+                                          onPressed: _fetchDepositInfo,
+                                          tooltip: 'পুনরায় চেষ্টা করুন',
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              _selectedPaymentMethod == 'bKash / Nagad'
+                                                  ? 'bKash / Nagad পার্সোনাল / মার্চেন্ট নম্বর:'
+                                                  : (_selectedPaymentMethod == 'Binance Pay'
+                                                      ? 'Livocal অফিসিয়াল Binance Pay ID:'
+                                                      : 'Livocal অফিসিয়াল $_selectedCryptoNetwork ডিপোজিট অ্যাড্রেস:'),
+                                              style: TextStyle(
+                                                color: isDark ? Colors.white60 : Colors.black54,
+                                                fontSize: 11,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              _currentDepositAccount,
+                                              style: const TextStyle(
+                                                color: AppColors.primary,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14.5,
+                                                letterSpacing: 0.8,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      TextButton.icon(
+                                        style: TextButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                          backgroundColor: primaryColor.withOpacity(0.12),
+                                        ),
+                                        icon: const Icon(Icons.copy_rounded, size: 16, color: AppColors.primary),
+                                        label: const Text(
+                                          'কপি করুন',
+                                          style: TextStyle(
+                                            color: AppColors.primary,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        onPressed: () {
+                                          final textToCopy = _currentDepositAccount;
+                                          Clipboard.setData(ClipboardData(text: textToCopy));
+                                          showSnackBar(
+                                            context: context,
+                                            content: 'অ্যাড্রেস/নম্বর $textToCopy ক্লিপবোর্ডে কপি করা হয়েছে!',
+                                            type: SnacBarType.info,
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
                       ),
                       const SizedBox(height: 10),
                       Text(
