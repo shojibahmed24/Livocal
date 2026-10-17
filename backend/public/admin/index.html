@@ -1,25 +1,31 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Livocal SaaS Admin Control Room | ফ্রিল্যান্সার মিনিট বিলিং ড্যাশবোর্ড</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Livocal SaaS Admin | Realtime Minute Billing & Payment Control Room</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0b1120;
-      --card-bg: #151e32;
-      --card-border: #1e293b;
+      --bg: #090d16;
+      --bg-surface: #0f172a;
+      --card-bg: rgba(21, 30, 50, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-border-hover: rgba(16, 185, 129, 0.35);
       --primary: #10b981;
       --primary-hover: #059669;
-      --primary-light: rgba(16, 185, 129, 0.12);
-      --accent: #06b6d4;
+      --primary-light: rgba(16, 185, 129, 0.15);
+      --accent: #38bdf8;
+      --accent-light: rgba(56, 189, 248, 0.15);
       --warning: #f59e0b;
-      --danger: #ef4444;
+      --warning-light: rgba(245, 158, 11, 0.15);
+      --danger: #f43f5e;
+      --danger-light: rgba(244, 63, 94, 0.15);
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
     }
 
@@ -27,88 +33,139 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
       background-color: var(--bg);
       color: var(--text-main);
-      font-family: 'Hind Siliguri', 'Inter', sans-serif;
+      font-family: var(--font-sans);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      padding-bottom: 84px; /* Space for mobile bottom bar */
+      background-image: 
+        radial-gradient(circle at 15% 10%, rgba(16, 185, 129, 0.08) 0%, transparent 35%),
+        radial-gradient(circle at 85% 25%, rgba(56, 189, 248, 0.07) 0%, transparent 40%);
+      background-attachment: fixed;
     }
 
+    /* Top Navigation Header */
     header {
       background-color: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--card-border);
       position: sticky;
       top: 0;
       z-index: 50;
-      padding: 14px 24px;
+      padding: 12px 20px;
       display: flex;
-      flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
     }
 
     .brand {
       display: flex;
       align-items: center;
       gap: 12px;
+      text-decoration: none;
     }
 
     .brand-logo {
-      width: 40px;
-      height: 40px;
+      width: 42px;
+      height: 42px;
       background: linear-gradient(135deg, #10b981, #06b6d4);
-      border-radius: 10px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 22px;
-      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+      flex-shrink: 0;
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
     }
 
     .brand-title {
-      font-size: 20px;
+      font-size: 19px;
       font-weight: 800;
-      letter-spacing: -0.5px;
-      background: linear-gradient(135deg, #ffffff, #94a3b8);
+      letter-spacing: -0.4px;
+      background: linear-gradient(135deg, #ffffff 30%, #94a3b8);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .brand-subtitle {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--accent);
       font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .live-pulse {
+      width: 7px;
+      height: 7px;
+      background: var(--primary);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--primary);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1.15); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
 
     .header-controls {
       display: flex;
       align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
+      gap: 10px;
     }
 
-    .auth-input-group {
+    .secret-input-wrapper {
       display: flex;
       align-items: center;
       background: #0f172a;
       border: 1px solid var(--card-border);
-      border-radius: 8px;
+      border-radius: 10px;
       padding: 4px 10px;
       gap: 8px;
+      transition: border 0.2s;
+    }
+    .secret-input-wrapper:focus-within {
+      border-color: var(--accent);
     }
 
-    .auth-input-group input {
+    .secret-input-wrapper input {
       background: transparent;
       border: none;
       color: #fff;
       font-family: var(--font-mono);
-      font-size: 13px;
+      font-size: 12.5px;
       outline: none;
       width: 170px;
     }
@@ -116,11 +173,12 @@
     .btn {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
       padding: 8px 16px;
-      font-size: 13.5px;
+      font-size: 13px;
       font-weight: 600;
-      border-radius: 8px;
+      border-radius: 10px;
       border: none;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -138,41 +196,44 @@
     }
 
     .btn-secondary {
-      background: #1e293b;
+      background: rgba(30, 41, 59, 0.8);
       color: var(--text-main);
-      border: 1px solid #334155;
+      border: 1px solid var(--card-border);
     }
     .btn-secondary:hover {
       background: #334155;
     }
 
-    .live-pulse {
-      display: inline-block;
-      width: 9px;
-      height: 9px;
-      background: var(--primary);
-      border-radius: 50%;
-      box-shadow: 0 0 10px var(--primary);
-      animation: pulse 1.8s infinite;
+    .btn-icon {
+      padding: 8px;
+      border-radius: 10px;
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .btn-icon:hover {
+      color: #fff;
+      border-color: var(--accent);
     }
 
-    @keyframes pulse {
-      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-      70% { transform: scale(1.15); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
-      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-    }
-
+    /* Main Container */
     main {
-      padding: 24px;
-      max-width: 1400px;
+      padding: 24px 20px;
+      max-width: 1440px;
       margin: 0 auto;
       width: 100%;
       flex: 1;
     }
 
+    /* KPI Cards Grid */
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 16px;
       margin-bottom: 24px;
     }
@@ -180,21 +241,28 @@
     .kpi-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 14px;
+      border-radius: 16px;
       padding: 18px 20px;
       position: relative;
       overflow: hidden;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: transform 0.2s, border 0.2s;
+    }
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--card-border-hover);
     }
 
-    .kpi-card::after {
+    .kpi-card::before {
       content: '';
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
       height: 3px;
-      background: var(--card-highlight, var(--primary));
+      background: var(--kpi-color, var(--primary));
     }
 
     .kpi-header {
@@ -205,54 +273,65 @@
     }
 
     .kpi-title {
-      font-size: 13.5px;
+      font-size: 12px;
       color: var(--text-muted);
       font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
     }
 
     .kpi-icon {
-      font-size: 20px;
-      opacity: 0.85;
+      font-size: 18px;
+      padding: 6px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
     }
 
     .kpi-value {
-      font-size: 28px;
+      font-size: 26px;
       font-weight: 800;
       letter-spacing: -0.5px;
       color: #fff;
-      font-family: 'Inter', sans-serif;
+      font-family: var(--font-sans);
     }
 
     .kpi-subtext {
-      font-size: 12px;
+      font-size: 11.5px;
       color: var(--text-muted);
       margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .kpi-badge {
       display: inline-block;
-      padding: 2px 8px;
+      padding: 2px 7px;
       border-radius: 6px;
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 700;
       background: var(--primary-light);
       color: var(--primary);
     }
 
-    /* Tabs */
-    .tabs-bar {
+    /* Desktop Navigation Tabs */
+    .desktop-tabs-bar {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       border-bottom: 1px solid var(--card-border);
-      margin-bottom: 20px;
+      margin-bottom: 22px;
       overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .desktop-tabs-bar::-webkit-scrollbar {
+      display: none;
     }
 
     .tab-btn {
       background: transparent;
       border: none;
       color: var(--text-muted);
-      font-size: 14.5px;
+      font-size: 14px;
       font-weight: 600;
       padding: 12px 18px;
       cursor: pointer;
@@ -260,6 +339,13 @@
       transition: all 0.2s ease;
       font-family: inherit;
       white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
     }
 
     .tab-btn.active {
@@ -274,24 +360,57 @@
       right: 0;
       height: 2.5px;
       background: var(--primary);
-      border-radius: 2px 2px 0 0;
+      border-radius: 4px 4px 0 0;
     }
 
+    .tab-count-badge {
+      background: #f43f5e;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 1px 7px;
+      border-radius: 12px;
+      display: inline-block;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+
+    /* Content Cards */
     .content-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 20px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
 
-    .card-action-bar {
+    .card-header-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
       gap: 12px;
       flex-wrap: wrap;
+    }
+
+    .card-title-group h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title-group p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 3px;
     }
 
     .search-box {
@@ -299,96 +418,168 @@
       align-items: center;
       background: #0f172a;
       border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 6px 12px;
+      border-radius: 10px;
+      padding: 7px 14px;
       gap: 8px;
       width: 280px;
+      transition: border 0.2s;
+    }
+    .search-box:focus-within {
+      border-color: var(--primary);
     }
 
     .search-box input {
       background: transparent;
       border: none;
       color: #fff;
-      font-size: 13.5px;
+      font-size: 13px;
       width: 100%;
       outline: none;
     }
 
-    .table-container {
+    /* Tables */
+    .table-responsive {
       overflow-x: auto;
-      border-radius: 8px;
+      border-radius: 12px;
       border: 1px solid var(--card-border);
+      background: #0d1424;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
       text-align: left;
-      font-size: 13.5px;
+      font-size: 13px;
     }
 
     th {
-      background: #0f172a;
+      background: #090f1d;
       color: var(--text-muted);
-      padding: 12px 16px;
+      padding: 13px 16px;
       font-weight: 600;
       border-bottom: 1px solid var(--card-border);
       white-space: nowrap;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
     }
 
     td {
-      padding: 12px 16px;
-      border-bottom: 1px solid #1e293b;
+      padding: 13px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       white-space: nowrap;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
     }
 
     tr:hover td {
       background-color: rgba(255, 255, 255, 0.02);
     }
 
+    /* Custom Badges */
     .badge {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      padding: 3px 9px;
-      border-radius: 6px;
+      gap: 5px;
+      padding: 4px 9px;
+      border-radius: 8px;
       font-size: 11.5px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .badge-success { background: var(--primary-light); color: var(--primary); }
+    .badge-warning { background: var(--warning-light); color: var(--warning); }
+    .badge-danger { background: var(--danger-light); color: var(--danger); }
+    .badge-info { background: var(--accent-light); color: var(--accent); }
+
+    .badge-bkash { background: rgba(226, 19, 110, 0.18); color: #ff4d94; border: 1px solid rgba(226, 19, 110, 0.3); }
+    .badge-nagad { background: rgba(247, 148, 29, 0.18); color: #ffaa47; border: 1px solid rgba(247, 148, 29, 0.3); }
+    .badge-binance { background: rgba(243, 186, 47, 0.18); color: #f3ba2f; border: 1px solid rgba(243, 186, 47, 0.3); }
+    .badge-crypto { background: rgba(38, 161, 123, 0.18); color: #34d399; border: 1px solid rgba(38, 161, 123, 0.3); }
+
+    /* Deposit Info Overview Grid */
+    .deposit-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .deposit-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .deposit-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .deposit-label {
+      font-size: 12px;
+      color: var(--text-muted);
       font-weight: 600;
     }
 
-    .badge-success { background: rgba(16, 185, 129, 0.15); color: #34d399; }
-    .badge-warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
-    .badge-info { background: rgba(6, 182, 212, 0.15); color: #22d3ee; }
-    .badge-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; }
-
-    /* Modal */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(6px);
-      display: none;
+    .deposit-value-box {
+      display: flex;
       align-items: center;
-      justify-content: center;
-      z-index: 100;
-      padding: 16px;
+      justify-content: space-between;
+      background: #090e1a;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 8px 12px;
+      gap: 8px;
     }
 
-    .modal-overlay.active {
+    .deposit-value-box code {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--accent);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-backdrop.active {
       display: flex;
     }
 
-    .modal {
-      background: #151e32;
+    .modal-box {
+      background: #111a2e;
       border: 1px solid var(--card-border);
-      border-radius: 16px;
+      border-radius: 20px;
       width: 100%;
       max-width: 480px;
       padding: 24px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+      animation: modalFadeIn 0.25s ease-out;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.96) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
     }
 
     .modal-header {
@@ -404,13 +595,15 @@
       color: #fff;
     }
 
-    .modal-close {
-      background: none;
+    .modal-close-btn {
+      background: transparent;
       border: none;
       color: var(--text-muted);
-      font-size: 20px;
+      font-size: 24px;
       cursor: pointer;
+      line-height: 1;
     }
+    .modal-close-btn:hover { color: #fff; }
 
     .form-group {
       margin-bottom: 16px;
@@ -424,332 +617,637 @@
       margin-bottom: 6px;
     }
 
-    .form-input {
+    .form-control {
       width: 100%;
-      background: #0f172a;
+      background: #090e1a;
       border: 1px solid var(--card-border);
-      border-radius: 8px;
+      border-radius: 10px;
       padding: 10px 14px;
       color: #fff;
-      font-size: 14px;
+      font-size: 13.5px;
       outline: none;
       font-family: inherit;
+      transition: border 0.2s;
     }
-    .form-input:focus {
+    .form-control:focus {
       border-color: var(--primary);
     }
 
-    .chips-grid {
+    .chips-selector {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      margin-top: 6px;
+      gap: 6px;
+      margin-top: 8px;
     }
 
-    .chip-btn {
-      background: #0f172a;
+    .chip-item {
+      background: #090e1a;
       border: 1px solid var(--card-border);
       border-radius: 8px;
-      color: var(--text-main);
-      padding: 8px 4px;
-      font-size: 12px;
+      color: var(--text-muted);
+      padding: 6px 4px;
+      font-size: 11.5px;
       font-weight: 600;
       cursor: pointer;
       text-align: center;
       transition: all 0.2s;
     }
-    .chip-btn.active {
+    .chip-item.active, .chip-item:hover {
       background: var(--primary-light);
       border-color: var(--primary);
       color: var(--primary);
     }
 
-    .toast {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      background: #1e293b;
-      color: #fff;
-      padding: 12px 20px;
-      border-radius: 8px;
-      border-left: 4px solid var(--primary);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    /* Mobile Bottom Navigation Bar */
+    .mobile-nav-bar {
       display: none;
-      z-index: 200;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 68px;
+      background: rgba(11, 17, 32, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--card-border);
+      z-index: 90;
+      justify-content: space-around;
+      align-items: center;
+      padding: 0 8px;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .mobile-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 10.5px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 12px;
+      position: relative;
+      transition: color 0.2s;
+    }
+
+    .mobile-nav-item svg, .mobile-nav-item .icon {
+      font-size: 20px;
+    }
+
+    .mobile-nav-item.active {
+      color: var(--primary);
+    }
+
+    .mobile-nav-item .nav-badge {
+      position: absolute;
+      top: 2px;
+      right: 8px;
+      background: #f43f5e;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 10px;
+    }
+
+    .mobile-nav-fab {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+      border: none;
+      cursor: pointer;
+      margin-top: -24px;
+      transition: transform 0.2s;
+    }
+    .mobile-nav-fab:active {
+      transform: scale(0.92);
+    }
+
+    /* Toast */
+    .toast-box {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 120;
+      background: #111a2e;
+      border: 1px solid var(--card-border);
+      border-left: 4px solid var(--primary);
+      border-radius: 12px;
+      padding: 14px 20px;
+      color: #fff;
       font-size: 13.5px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      display: none;
+      animation: toastSlideIn 0.3s ease;
+      max-width: 380px;
+    }
+
+    @keyframes toastSlideIn {
+      from { transform: translateX(50px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Responsive Queries */
+    @media (max-width: 820px) {
+      .desktop-tabs-bar { display: none; }
+      .mobile-nav-bar { display: flex; }
+      .header-controls .secret-input-wrapper { display: none; }
+      .header-controls .desktop-only { display: none; }
+      .brand-title { font-size: 17px; }
+      .brand-subtitle { display: none; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .kpi-card { padding: 14px 16px; }
+      .kpi-value { font-size: 22px; }
+      main { padding: 16px 12px; }
+      .content-card { padding: 16px 14px; border-radius: 14px; }
+      .search-box { width: 100%; }
+    }
+
+    @media (max-width: 480px) {
+      .kpi-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Header -->
+  <!-- Top Navigation Header -->
   <header>
-    <div class="brand">
-      <div class="brand-logo">🎙️</div>
-      <div>
-        <div class="brand-title">Livocal SaaS Admin Control Room</div>
-        <div class="brand-subtitle"><span class="live-pulse"></span> Freelancer Voice Translation Prepaid Billing Engine</div>
+    <a href="#" class="brand">
+      <div class="brand-logo">🌐</div>
+      <div class="brand-text">
+        <div class="brand-title">
+          Livocal SaaS
+          <span class="status-badge"><span class="live-pulse"></span> Live Gateway</span>
+        </div>
+        <div class="brand-subtitle">Realtime Gemini 2.0 Live Audio Translation & Metering</div>
       </div>
-    </div>
+    </a>
 
     <div class="header-controls">
-      <div class="auth-input-group">
-        <span style="font-size:12px; color:var(--text-muted);">Admin Secret:</span>
-        <input type="password" id="adminSecretInput" placeholder="Enter secret..." />
-        <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="saveAdminSecret()">Save</button>
+      <!-- Desktop Secret Box -->
+      <div class="secret-input-wrapper">
+        <span style="font-size:14px; opacity:0.8;">🔑</span>
+        <input type="password" id="adminSecretInput" placeholder="Enter Admin Secret..." autocomplete="off">
+        <button class="btn btn-primary" style="padding:4px 10px; font-size:11.5px;" onclick="saveAdminSecret()">Save</button>
       </div>
 
-      <button class="btn btn-primary" onclick="openTopUpModal()">
-        <span>⚡</span> টপ-আপ / রিচার্জ
+      <!-- Action Buttons -->
+      <button class="btn btn-secondary desktop-only" onclick="openTopUpModal()">
+        <span>➕</span> Quick Top-Up
       </button>
 
-      <button class="btn btn-secondary" onclick="fetchDashboardData()">
-        <span>🔄</span> রিফ্রেশ
+      <button class="btn-icon" onclick="fetchDashboardData()" title="Refresh Data">
+        🔄
+      </button>
+
+      <button class="btn-icon" onclick="openSecretModal()" title="Admin Security Settings">
+        🔑
       </button>
     </div>
   </header>
 
-  <!-- Main Content -->
+  <!-- Main Body Content -->
   <main>
-    <!-- KPI Cards -->
+    <!-- Live SaaS Metrics KPI Cards -->
     <div class="kpi-grid">
-      <!-- Total Revenue -->
-      <div class="kpi-card" style="--card-highlight: #10b981;">
+      <!-- Retail Gross Revenue -->
+      <div class="kpi-card" style="--kpi-color: #10b981;">
         <div class="kpi-header">
-          <span class="kpi-title">মোট রাজস্ব (Total Revenue)</span>
-          <span class="kpi-icon">📈</span>
+          <span class="kpi-title">Gross Revenue</span>
+          <span class="kpi-icon">💰</span>
         </div>
         <div class="kpi-value" id="kpiRevenue">৳0</div>
         <div class="kpi-subtext">
-          <span class="kpi-badge">খুচরা দর: ৳২০/মিনিট</span>
+          <span class="kpi-badge" id="kpiPricingRate">৳20.0/min ($0.16)</span>
+          <span>Paid minute sales</span>
         </div>
       </div>
 
-      <!-- Gemini Cost -->
-      <div class="kpi-card" style="--card-highlight: #06b6d4;">
+      <!-- Gemini AI API Cost -->
+      <div class="kpi-card" style="--kpi-color: #f43f5e;">
         <div class="kpi-header">
-          <span class="kpi-title">Gemini 3.5 API খরচ</span>
-          <span class="kpi-icon">🤖</span>
+          <span class="kpi-title">Gemini Live Cost</span>
+          <span class="kpi-icon">🧠</span>
         </div>
-        <div class="kpi-value" id="kpiGeminiCost">৳0</div>
+        <div class="kpi-value" id="kpiGeminiCost" style="color:#fb7185;">৳0</div>
         <div class="kpi-subtext" id="kpiGeminiCostUsd">
           $0.00 USD (@$0.035/min ≈ ৳4.2)
         </div>
       </div>
 
       <!-- Net Gross Profit -->
-      <div class="kpi-card" style="--card-highlight: #8b5cf6;">
+      <div class="kpi-card" style="--kpi-color: #38bdf8;">
         <div class="kpi-header">
-          <span class="kpi-title">নিট গ্রস লাভ (Net Profit)</span>
-          <span class="kpi-icon">💰</span>
+          <span class="kpi-title">Net Profit</span>
+          <span class="kpi-icon">📈</span>
         </div>
-        <div class="kpi-value" id="kpiProfit" style="color:#a78bfa;">৳0</div>
+        <div class="kpi-value" id="kpiProfit" style="color:#38bdf8;">৳0</div>
         <div class="kpi-subtext">
-          <span class="kpi-badge" style="background:rgba(139,92,246,0.18); color:#c4b5fd;" id="kpiMargin">মুনাফা মার্জিন: ৭৯%</span>
+          <span class="kpi-badge" id="kpiMargin" style="background:rgba(56, 189, 248, 0.15); color:#38bdf8;">Margin: 0.0%</span>
+          <span>After Gemini cost</span>
         </div>
       </div>
 
-      <!-- Total Billed Minutes -->
-      <div class="kpi-card" style="--card-highlight: #f59e0b;">
+      <!-- Total Billed Translation Minutes -->
+      <div class="kpi-card" style="--kpi-color: #f59e0b;">
         <div class="kpi-header">
-          <span class="kpi-title">অনুবাদিত কল মিনিট</span>
+          <span class="kpi-title">Billed Minutes</span>
           <span class="kpi-icon">⏱️</span>
         </div>
-        <div class="kpi-value" id="kpiBilledMinutes">0</div>
+        <div class="kpi-value" id="kpiBilledMinutes">0 min</div>
         <div class="kpi-subtext">
-          <span style="color:var(--text-muted);">লোকাল কল: ১০০% ফ্রি (০ মিনিট কাটা)</span>
+          <span>Caller-pays metered</span>
         </div>
       </div>
 
-      <!-- Total Freelancers -->
-      <div class="kpi-card" style="--card-highlight: #ec4899;">
+      <!-- Registered Freelancers -->
+      <div class="kpi-card" style="--kpi-color: #a855f7;">
         <div class="kpi-header">
-          <span class="kpi-title">নিবন্ধিত ফ্রিল্যান্সার / ইউজার</span>
+          <span class="kpi-title">Active Users</span>
           <span class="kpi-icon">👥</span>
         </div>
         <div class="kpi-value" id="kpiUsers">0</div>
         <div class="kpi-subtext">
-          ১৪-দিন ২০-মিনিট ফ্রি ট্রায়াল সক্রিয়
+          <span>Registered Freelancer accounts</span>
         </div>
       </div>
     </div>
 
-    <!-- Navigation Tabs -->
-    <div class="tabs-bar">
-      <button class="tab-btn active" onclick="switchTab('ledger')">📋 কল বিলিং লেজার (Call Records)</button>
-      <button class="tab-btn" onclick="switchTab('wallets')">👛 ফ্রিল্যান্সার ওয়ালেট (User Wallets)</button>
-      <button class="tab-btn" onclick="switchTab('recharges')">💳 রিচার্জ হিস্ট্রি (Transactions)</button>
-      <button class="tab-btn" id="tabBtnPayments" onclick="switchTab('payments')">🔔 পেন্ডিং পেমেন্ট <span class="badge badge-warning" id="pendingPaymentsBadge" style="margin-left:4px; display:none;">0</span></button>
+    <!-- Desktop Navigation Tabs -->
+    <div class="desktop-tabs-bar">
+      <button class="tab-btn active" id="tabBtnPayments" onclick="switchTab('payments')">
+        🔔 Pending Verifications
+        <span class="tab-count-badge" id="pendingPaymentsBadge" style="display:none;">0</span>
+      </button>
+      <button class="tab-btn" id="tabBtnWallets" onclick="switchTab('wallets')">
+        👥 Freelancer Wallets
+      </button>
+      <button class="tab-btn" id="tabBtnRecharges" onclick="switchTab('recharges')">
+        💳 Recharge Ledger
+      </button>
+      <button class="tab-btn" id="tabBtnLedger" onclick="switchTab('ledger')">
+        📊 Call Billing Ledger
+      </button>
+      <button class="tab-btn" id="tabBtnGateways" onclick="switchTab('gateways')">
+        🏦 Deposit Gateways
+      </button>
     </div>
 
-    <!-- Tab 1: Call Billing Ledger -->
-    <div id="tab-ledger" class="content-card tab-content">
-      <div class="card-action-bar">
-        <h3 style="font-size:16px;">রিয়েল-টাইম কল মিনিট ডিডাকশন অডিট লেজার</h3>
-        <span class="badge badge-info">Gemini 3.5 Live AI কলের প্রতি মিনিটে ১ মিনিট কাটা হয়</span>
-      </div>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>কল আইডি</th>
-              <th>সময়</th>
-              <th>কলার (UID)</th>
-              <th>প্রাপক (UID)</th>
-              <th>মিনিট ইনডেক্স</th>
-              <th>কলের সময়কাল</th>
-              <th>Gemini খরচ</th>
-              <th>খুচরা মূল্য</th>
-              <th>নিট লাভ</th>
-              <th>স্ট্যাটাস</th>
-            </tr>
-          </thead>
-          <tbody id="ledgerTableBody">
-            <tr><td colspan="10" style="text-align:center; padding:24px; color:var(--text-muted);">লোড হচ্ছে...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Tab 2: User Wallets -->
-    <div id="tab-wallets" class="content-card tab-content" style="display:none;">
-      <div class="card-action-bar">
-        <div class="search-box">
-          <span>🔍</span>
-          <input type="text" id="walletSearchInput" placeholder="ফোন নম্বর বা নাম দিয়ে খুঁজুন..." oninput="filterWallets()">
+    <!-- TAB 1: Pending Payment Verifications (Primary Workflow) -->
+    <div class="tab-content" id="tab-payments">
+      <div class="content-card">
+        <div class="card-header-bar">
+          <div class="card-title-group">
+            <h2>🔔 Freelancer Payment Requests</h2>
+            <p>Review submitted TrxID / TxHash, run on-chain verification, and credit minutes to wallets.</p>
+          </div>
+          <button class="btn btn-secondary" onclick="fetchDashboardData()">
+            🔄 Refresh Queue
+          </button>
         </div>
-        <button class="btn btn-primary" onclick="openTopUpModal()">+ নতুন মিনিট টপ-আপ</button>
-      </div>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>ইউজার / নাম</th>
-              <th>ফোন নম্বর</th>
-              <th>পেইড ব্যালেন্স মিনিট</th>
-              <th>ট্রায়াল মিনিট বাকি</th>
-              <th>ট্রায়াল স্ট্যাটাস</th>
-              <th>ট্রায়ালের মেয়াদ</th>
-              <th>ব্যবহৃত মোট মিনিট</th>
-              <th>অ্যাকশন</th>
-            </tr>
-          </thead>
-          <tbody id="walletsTableBody">
-            <tr><td colspan="8" style="text-align:center; padding:24px; color:var(--text-muted);">লোড হচ্ছে...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
 
-    <!-- Tab 3: Recharge Transactions -->
-    <div id="tab-recharges" class="content-card tab-content" style="display:none;">
-      <div class="card-action-bar">
-        <h3 style="font-size:16px;">প্যাকেজ রিচার্জ ও পেমেন্ট হিস্ট্রি</h3>
-        <span class="badge badge-success">Starter, Freelancer Pro & Agency Packs</span>
-      </div>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>ট্রানজেকশন আইডি</th>
-              <th>ইউজার / ফোন</th>
-              <th>প্যাকেজ</th>
-              <th>যোগ হওয়া মিনিট</th>
-              <th>পরিশোধিত টাকা</th>
-              <th>পেমেন্ট মাধ্যম</th>
-              <th>স্ট্যাটাস</th>
-              <th>তারিখ ও সময়</th>
-            </tr>
-          </thead>
-          <tbody id="rechargesTableBody">
-            <tr><td colspan="8" style="text-align:center; padding:24px; color:var(--text-muted);">লোড হচ্ছে...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Tab 4: Pending Payments Approval -->
-    <div id="tab-payments" class="content-card tab-content" style="display:none;">
-      <div class="card-action-bar">
-        <div>
-          <h3 style="font-size:16px;">🔔 ফ্রিল্যান্সার রিয়েল পেমেন্ট ভেরিফিকেশন ও অনুমোদন</h3>
-          <p style="font-size:12.5px; color:var(--text-muted); margin-top:4px;">ইউজারদের পাঠানো bKash / Nagad TrxID যাচাই করে ১-ক্লিকে অনুমোদন দিন (মিনিট সরাসরি অ্যাকাউন্টে জমা হবে)</p>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>TxID / TxHash</th>
+                <th>Freelancer</th>
+                <th>Sender Account</th>
+                <th>Package & Promo</th>
+                <th>Minutes</th>
+                <th>Amount</th>
+                <th>Payment Method</th>
+                <th>Submitted At</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="paymentsTableBody">
+              <tr>
+                <td colspan="10" style="text-align:center; padding:28px; color:var(--text-muted);">
+                  Loading payment requests...
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <button class="btn btn-secondary" onclick="fetchDashboardData()">🔄 রিলোড</button>
       </div>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>TrxID</th>
-              <th>ইউজার আইডি / ফোন</th>
-              <th>টাকা পাঠানোর নম্বর (Sender)</th>
-              <th>প্যাকেজ</th>
-              <th>মিনিট</th>
-              <th>টাকার পরিমাণ</th>
-              <th>মাধ্যম</th>
-              <th>সময়</th>
-              <th>স্ট্যাটাস</th>
-              <th>অ্যাকশন</th>
-            </tr>
-          </thead>
-          <tbody id="paymentsTableBody">
-            <tr><td colspan="10" style="text-align:center; padding:24px; color:var(--text-muted);">লোড হচ্ছে...</td></tr>
-          </tbody>
-        </table>
+    </div>
+
+    <!-- TAB 2: Freelancer Wallets -->
+    <div class="tab-content" id="tab-wallets" style="display: none;">
+      <div class="content-card">
+        <div class="card-header-bar">
+          <div class="card-title-group">
+            <h2>👥 Freelancer Wallets & Trials</h2>
+            <p>Live wallet balances, 14-day 20-min trial status, and direct minute adjustments.</p>
+          </div>
+          <div class="search-box">
+            <span>🔍</span>
+            <input type="text" id="walletSearchInput" placeholder="Search by phone, name or UID..." onkeyup="filterWallets()">
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Freelancer Name</th>
+                <th>Phone Number</th>
+                <th>Paid Balance</th>
+                <th>Trial Balance</th>
+                <th>Trial Status</th>
+                <th>Trial Expires</th>
+                <th>Total Minutes Used</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="walletsTableBody">
+              <tr>
+                <td colspan="8" style="text-align:center; padding:28px; color:var(--text-muted);">
+                  Loading freelancer wallets...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Recharge Ledger -->
+    <div class="tab-content" id="tab-recharges" style="display: none;">
+      <div class="content-card">
+        <div class="card-header-bar">
+          <div class="card-title-group">
+            <h2>💳 Minute Recharge Audit Ledger</h2>
+            <p>Immutable ledger of approved top-ups and cryptocurrency deposit confirmations.</p>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-primary" style="padding:6px 12px; font-size:12px;" onclick="switchTab('recharges')">💳 Recharge History</button>
+            <button class="btn btn-secondary" style="padding:6px 12px; font-size:12px;" onclick="switchTab('ledger')">📊 Call Metering</button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Transaction ID</th>
+                <th>User Identifier</th>
+                <th>Pack Name</th>
+                <th>Minutes Added</th>
+                <th>Amount Paid</th>
+                <th>Payment Channel</th>
+                <th>Status</th>
+                <th>Processed At</th>
+              </tr>
+            </thead>
+            <tbody id="rechargesTableBody">
+              <tr>
+                <td colspan="8" style="text-align:center; padding:28px; color:var(--text-muted);">
+                  Loading recharge audit history...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Call Billing Ledger -->
+    <div class="tab-content" id="tab-ledger" style="display: none;">
+      <div class="content-card">
+        <div class="card-header-bar">
+          <div class="card-title-group">
+            <h2>📊 Realtime Call Metering Ledger</h2>
+            <p>Per-minute deductions for live Gemini translated calls with retail vs AI cost breakdown.</p>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-secondary" style="padding:6px 12px; font-size:12px;" onclick="switchTab('recharges')">💳 Recharge History</button>
+            <button class="btn btn-primary" style="padding:6px 12px; font-size:12px;" onclick="switchTab('ledger')">📊 Call Metering</button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Call Session ID</th>
+                <th>Time</th>
+                <th>Caller UID</th>
+                <th>Callee UID</th>
+                <th>Minute Tick</th>
+                <th>Duration</th>
+                <th>Gemini AI Cost</th>
+                <th>Retail Rate</th>
+                <th>Net Profit</th>
+                <th>Metering Status</th>
+              </tr>
+            </thead>
+            <tbody id="ledgerTableBody">
+              <tr>
+                <td colspan="10" style="text-align:center; padding:28px; color:var(--text-muted);">
+                  No active call records yet.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: Deposit Gateways Overview -->
+    <div class="tab-content" id="tab-gateways" style="display: none;">
+      <div class="content-card">
+        <div class="card-header-bar">
+          <div class="card-title-group">
+            <h2>🏦 Official Deposit Gateway Configuration</h2>
+            <p>Dynamic deposit accounts configured on the backend server. Update them anytime in <code>backend/.env</code> without client app updates.</p>
+          </div>
+          <button class="btn btn-secondary" onclick="loadDepositInfo()">
+            🔄 Refresh Gateways
+          </button>
+        </div>
+
+        <div class="deposit-cards-grid">
+          <!-- bKash -->
+          <div class="deposit-card">
+            <div class="deposit-card-top">
+              <span class="badge badge-bkash">📱 bKash Merchant / Personal</span>
+              <span style="font-size:11px; color:var(--text-muted);">BDT ৳</span>
+            </div>
+            <div class="deposit-label">Send Money Number:</div>
+            <div class="deposit-value-box">
+              <code id="gwBkash">01721013902</code>
+              <button class="btn btn-secondary" style="padding:3px 8px; font-size:11px;" onclick="copyText(document.getElementById('gwBkash').innerText)">Copy</button>
+            </div>
+          </div>
+
+          <!-- Nagad -->
+          <div class="deposit-card">
+            <div class="deposit-card-top">
+              <span class="badge badge-nagad">📱 Nagad Personal</span>
+              <span style="font-size:11px; color:var(--text-muted);">BDT ৳</span>
+            </div>
+            <div class="deposit-label">Send Money Number:</div>
+            <div class="deposit-value-box">
+              <code id="gwNagad">01721013902</code>
+              <button class="btn btn-secondary" style="padding:3px 8px; font-size:11px;" onclick="copyText(document.getElementById('gwNagad').innerText)">Copy</button>
+            </div>
+          </div>
+
+          <!-- Binance Pay -->
+          <div class="deposit-card">
+            <div class="deposit-card-top">
+              <span class="badge badge-binance">🟡 Binance Pay</span>
+              <span style="font-size:11px; color:var(--text-muted);">USDT $</span>
+            </div>
+            <div class="deposit-label">Official Binance Pay ID:</div>
+            <div class="deposit-value-box">
+              <code id="gwBinance">849201842</code>
+              <button class="btn btn-secondary" style="padding:3px 8px; font-size:11px;" onclick="copyText(document.getElementById('gwBinance').innerText)">Copy</button>
+            </div>
+          </div>
+
+          <!-- USDT TRC-20 -->
+          <div class="deposit-card">
+            <div class="deposit-card-top">
+              <span class="badge badge-crypto">💎 USDT (TRC-20)</span>
+              <span style="font-size:11px; color:var(--text-muted);">Tron Network</span>
+            </div>
+            <div class="deposit-label">Tron Deposit Address (Base58Check):</div>
+            <div class="deposit-value-box">
+              <code id="gwTrc20">TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf</code>
+              <button class="btn btn-secondary" style="padding:3px 8px; font-size:11px;" onclick="copyText(document.getElementById('gwTrc20').innerText)">Copy</button>
+            </div>
+          </div>
+
+          <!-- USDT BEP-20 -->
+          <div class="deposit-card">
+            <div class="deposit-card-top">
+              <span class="badge badge-crypto">💎 USDT (BEP-20)</span>
+              <span style="font-size:11px; color:var(--text-muted);">BNB Smart Chain</span>
+            </div>
+            <div class="deposit-label">BSC Deposit Address (EVM):</div>
+            <div class="deposit-value-box">
+              <code id="gwBep20">0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97</code>
+              <button class="btn btn-secondary" style="padding:3px 8px; font-size:11px;" onclick="copyText(document.getElementById('gwBep20').innerText)">Copy</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </main>
 
-  <!-- Top-Up Modal -->
-  <div class="modal-overlay" id="topUpModal">
-    <div class="modal">
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav class="mobile-nav-bar">
+    <button class="mobile-nav-item active" id="mobNavPayments" onclick="switchTab('payments')">
+      <span class="icon">🔔</span>
+      <span>Payments</span>
+      <span class="nav-badge" id="mobBadgePayments" style="display:none;">0</span>
+    </button>
+
+    <button class="mobile-nav-item" id="mobNavWallets" onclick="switchTab('wallets')">
+      <span class="icon">👥</span>
+      <span>Wallets</span>
+    </button>
+
+    <button class="mobile-nav-fab" onclick="openTopUpModal()" title="Credit Minutes">
+      ➕
+    </button>
+
+    <button class="mobile-nav-item" id="mobNavRecharges" onclick="switchTab('recharges')">
+      <span class="icon">💳</span>
+      <span>Ledger</span>
+    </button>
+
+    <button class="mobile-nav-item" id="mobNavGateways" onclick="switchTab('gateways')">
+      <span class="icon">🏦</span>
+      <span>Gateways</span>
+    </button>
+  </nav>
+
+  <!-- Modal: Quick Minute Top-Up -->
+  <div class="modal-backdrop" id="topUpModal">
+    <div class="modal-box">
       <div class="modal-header">
-        <div class="modal-title">⚡ ফ্রিল্যান্সার মিনিট টপ-আপ / ক্রেডিট</div>
-        <button class="modal-close" onclick="closeTopUpModal()">&times;</button>
+        <div class="modal-title">⚡ Credit Freelancer Minutes</div>
+        <button class="modal-close-btn" onclick="closeTopUpModal()">&times;</button>
       </div>
       <form id="topUpForm" onsubmit="handleTopUpSubmit(event)">
         <div class="form-group">
-          <label class="form-label">ফোন নম্বর বা ইউজার আইডি</label>
-          <input type="text" id="topupPhone" class="form-input" placeholder="e.g. +8801721013902 বা UID" required>
+          <label class="form-label">Freelancer Phone Number or UID</label>
+          <input type="text" id="topupPhone" class="form-control" placeholder="e.g. +8801721013902 or UID" required>
         </div>
 
         <div class="form-group">
-          <label class="form-label">মিনিট নির্বাচন করুন</label>
-          <input type="number" id="topupMinutes" class="form-input" placeholder="মিনিটের সংখ্যা (e.g. 60)" min="1" required>
-          <div class="chips-grid">
-            <button type="button" class="chip-btn" onclick="selectMinuteChip(20)">+20 মি.</button>
-            <button type="button" class="chip-btn" onclick="selectMinuteChip(60)">+60 মি. (Starter)</button>
-            <button type="button" class="chip-btn active" onclick="selectMinuteChip(180)">+180 মি. (Pro)</button>
-            <button type="button" class="chip-btn" onclick="selectMinuteChip(500)">+500 মি. (Agency)</button>
+          <label class="form-label">Minutes to Credit</label>
+          <input type="number" id="topupMinutes" class="form-control" placeholder="Enter minutes amount (e.g. 180)" min="1" required>
+          <div class="chips-selector">
+            <button type="button" class="chip-item" onclick="selectMinuteChip(20)">+20m (Trial)</button>
+            <button type="button" class="chip-item" onclick="selectMinuteChip(60)">+60m (Starter)</button>
+            <button type="button" class="chip-item active" onclick="selectMinuteChip(180)">+180m (Pro)</button>
+            <button type="button" class="chip-item" onclick="selectMinuteChip(500)">+500m (Agency)</button>
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">পরিশোধিত টাকা (ঐচ্ছিক BDT)</label>
-          <input type="number" id="topupAmount" class="form-input" placeholder="e.g. 3000">
+          <label class="form-label">Amount Paid (Optional)</label>
+          <input type="number" id="topupAmount" class="form-control" placeholder="e.g. 3000">
         </div>
 
         <div class="form-group">
-          <label class="form-label">অ্যাডমিন নোট / TrxID (ঐচ্ছিক)</label>
-          <input type="text" id="topupNotes" class="form-input" placeholder="e.g. bKash TrxID #9X87234 manual topup">
+          <label class="form-label">Notes / TrxID (Audit Log)</label>
+          <input type="text" id="topupNotes" class="form-control" placeholder="e.g. Manual top-up via bKash / USDT">
         </div>
 
-        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
-          <button type="button" class="btn btn-secondary" onclick="closeTopUpModal()">বাতিল</button>
-          <button type="submit" class="btn btn-primary" id="btnSubmitTopup">মিনিট ক্রেডিট করুন</button>
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:22px;">
+          <button type="button" class="btn btn-secondary" onclick="closeTopUpModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnSubmitTopup">Confirm & Credit Minutes</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Toast Notification -->
-  <div id="toast" class="toast"></div>
+  <!-- Modal: Mobile Security Settings -->
+  <div class="modal-backdrop" id="secretModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">🔑 Admin Secret Key Settings</div>
+        <button class="modal-close-btn" onclick="closeSecretModal()">&times;</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Admin Secret Key</label>
+        <input type="password" id="modalSecretInput" class="form-control" placeholder="Paste your Admin Secret here...">
+        <p style="font-size:11.5px; color:var(--text-muted); margin-top:6px;">
+          Configured in <code>backend/.env</code> as <code>ADMIN_SECRET</code>. Saved securely in local browser storage.
+        </p>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+        <button type="button" class="btn btn-secondary" onclick="closeSecretModal()">Close</button>
+        <button type="button" class="btn btn-primary" onclick="saveAdminSecretFromModal()">Save Secret</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Message -->
+  <div id="toast" class="toast-box"></div>
 
   <script>
     let activeWalletsList = [];
 
-    // Save and retrieve admin secret
     function getAdminSecret() {
       return localStorage.getItem('livocal_admin_secret') || '';
     }
@@ -758,12 +1256,34 @@
       const val = document.getElementById('adminSecretInput').value.trim();
       if (val) {
         localStorage.setItem('livocal_admin_secret', val);
-        showToast('Admin Secret সংরক্ষিত হয়েছে!');
+        showToast('Admin Secret saved securely in browser!');
         fetchDashboardData();
       } else {
         localStorage.removeItem('livocal_admin_secret');
-        showToast('Admin Secret মুছে ফেলা হয়েছে।', true);
+        showToast('Admin Secret removed from storage.', true);
       }
+    }
+
+    function saveAdminSecretFromModal() {
+      const val = document.getElementById('modalSecretInput').value.trim();
+      if (val) {
+        localStorage.setItem('livocal_admin_secret', val);
+        document.getElementById('adminSecretInput').value = val;
+        closeSecretModal();
+        showToast('Admin Secret saved!');
+        fetchDashboardData();
+      } else {
+        showToast('Please enter a valid secret.', true);
+      }
+    }
+
+    function openSecretModal() {
+      document.getElementById('modalSecretInput').value = getAdminSecret();
+      document.getElementById('secretModal').classList.add('active');
+    }
+
+    function closeSecretModal() {
+      document.getElementById('secretModal').classList.remove('active');
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -772,9 +1292,10 @@
         document.getElementById('adminSecretInput').value = savedSecret;
         fetchDashboardData();
       } else {
-        showToast('অনুগ্রহ করে উপরে আপনার Admin Secret লিখে Save করুন।', true);
+        showToast('Please configure your Admin Secret in the top bar.', true);
       }
-      // Auto refresh every 30 seconds
+      loadDepositInfo();
+      // Auto-refresh every 30 seconds if secret is configured
       setInterval(() => {
         if (getAdminSecret()) fetchDashboardData();
       }, 30000);
@@ -788,22 +1309,66 @@
       setTimeout(() => { toast.style.display = 'none'; }, 3500);
     }
 
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(card => card.style.display = 'none');
+    function copyText(txt) {
+      navigator.clipboard.writeText(txt);
+      showToast(`Copied to clipboard: ${txt}`);
+    }
 
-      if (tabId === 'ledger') {
-        document.querySelectorAll('.tab-btn')[0].classList.add('active');
-        document.getElementById('tab-ledger').style.display = 'block';
-      } else if (tabId === 'wallets') {
-        document.querySelectorAll('.tab-btn')[1].classList.add('active');
-        document.getElementById('tab-wallets').style.display = 'block';
-      } else if (tabId === 'recharges') {
-        document.querySelectorAll('.tab-btn')[2].classList.add('active');
-        document.getElementById('tab-recharges').style.display = 'block';
-      } else if (tabId === 'payments') {
-        document.getElementById('tabBtnPayments').classList.add('active');
-        document.getElementById('tab-payments').style.display = 'block';
+    function switchTab(tabId) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(card => card.style.display = 'none');
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.mobile-nav-item').forEach(btn => btn.classList.remove('active'));
+
+      const targetTab = document.getElementById(`tab-${tabId}`);
+      if (targetTab) targetTab.style.display = 'block';
+
+      // Desktop active tab
+      const desktopBtnMap = {
+        'payments': 'tabBtnPayments',
+        'wallets': 'tabBtnWallets',
+        'recharges': 'tabBtnRecharges',
+        'ledger': 'tabBtnLedger',
+        'gateways': 'tabBtnGateways',
+      };
+      if (desktopBtnMap[tabId]) {
+        const dBtn = document.getElementById(desktopBtnMap[tabId]);
+        if (dBtn) dBtn.classList.add('active');
+      }
+
+      // Mobile active item
+      const mobBtnMap = {
+        'payments': 'mobNavPayments',
+        'wallets': 'mobNavWallets',
+        'recharges': 'mobNavRecharges',
+        'ledger': 'mobNavRecharges',
+        'gateways': 'mobNavGateways',
+      };
+      if (mobBtnMap[tabId]) {
+        const mBtn = document.getElementById(mobBtnMap[tabId]);
+        if (mBtn) mBtn.classList.add('active');
+      }
+
+      // Scroll smoothly to top on mobile tab switch
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function loadDepositInfo() {
+      try {
+        const res = await fetch('/api/wallet/deposit-info');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.depositInfo) {
+            const info = data.depositInfo;
+            if (info.bkash?.number) document.getElementById('gwBkash').innerText = info.bkash.number;
+            if (info.nagad?.number) document.getElementById('gwNagad').innerText = info.nagad.number;
+            if (info.binancePay?.payId) document.getElementById('gwBinance').innerText = info.binancePay.payId;
+            if (info.cryptoUsdt?.trc20?.address) document.getElementById('gwTrc20').innerText = info.cryptoUsdt.trc20.address;
+            if (info.cryptoUsdt?.bep20?.address) document.getElementById('gwBep20').innerText = info.cryptoUsdt.bep20.address;
+          }
+        }
+      } catch (err) {
+        console.warn('Could not fetch deposit gateways:', err.message);
       }
     }
 
@@ -813,7 +1378,7 @@
       const headers = { 'x-admin-secret': secret };
 
       try {
-        // 1. Fetch KPI Metrics
+        // 1. KPI Metrics
         const metricsRes = await fetch('/api/admin/metrics', { headers });
         if (metricsRes.ok) {
           const data = await metricsRes.json();
@@ -822,21 +1387,21 @@
           document.getElementById('kpiGeminiCost').innerText = `৳${m.totalGeminiCostBdt.toLocaleString()}`;
           document.getElementById('kpiGeminiCostUsd').innerText = `$${m.totalGeminiCostUsd} USD (@$0.035/min ≈ ৳4.2)`;
           document.getElementById('kpiProfit').innerText = `৳${(m.netProfitBdt + m.totalRechargeRevenueBdt).toLocaleString()}`;
-          document.getElementById('kpiMargin').innerText = `মুনাফা মার্জিন: ${m.profitMarginPercent}`;
-          document.getElementById('kpiBilledMinutes').innerText = `${m.totalBilledMinutes.toLocaleString()} মি.`;
-          document.getElementById('kpiUsers').innerText = `${m.totalUsers.toLocaleString()} জন`;
+          document.getElementById('kpiMargin').innerText = `Margin: ${m.profitMarginPercent}`;
+          document.getElementById('kpiBilledMinutes').innerText = `${m.totalBilledMinutes.toLocaleString()} min`;
+          document.getElementById('kpiUsers').innerText = `${m.totalUsers.toLocaleString()}`;
         } else if (metricsRes.status === 403 || metricsRes.status === 401) {
-          showToast('ভুল Admin Secret! অনুগ্রহ করে সঠিক সিক্রেট লিখুন।', true);
+          showToast('Invalid Admin Secret! Please check your key.', true);
         }
 
-        // 2. Fetch Billing Ledger
+        // 2. Billing Ledger
         const ledgerRes = await fetch('/api/admin/billing-ledger', { headers });
         if (ledgerRes.ok) {
           const data = await ledgerRes.json();
           renderLedgerTable(data.records || []);
         }
 
-        // 3. Fetch Wallets
+        // 3. Wallets
         const walletsRes = await fetch('/api/admin/wallets', { headers });
         if (walletsRes.ok) {
           const data = await walletsRes.json();
@@ -844,23 +1409,29 @@
           renderWalletsTable(activeWalletsList);
         }
 
-        // 4. Fetch Recharges
+        // 4. Recharges
         const rechargesRes = await fetch('/api/admin/recharges', { headers });
         if (rechargesRes.ok) {
           const data = await rechargesRes.json();
           renderRechargesTable(data.recharges || []);
         }
 
-        // 5. Fetch Pending/All Payment Requests
+        // 5. Payment Requests
         const paymentsRes = await fetch('/api/admin/payment-requests', { headers });
         if (paymentsRes.ok) {
           const data = await paymentsRes.json();
           const reqs = data.requests || [];
           const pendingCount = reqs.filter(r => r.status === 'pending').length;
-          const badge = document.getElementById('pendingPaymentsBadge');
-          if (badge) {
-            badge.innerText = pendingCount;
-            badge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
+          
+          const badgeDesk = document.getElementById('pendingPaymentsBadge');
+          if (badgeDesk) {
+            badgeDesk.innerText = pendingCount;
+            badgeDesk.style.display = pendingCount > 0 ? 'inline-block' : 'none';
+          }
+          const badgeMob = document.getElementById('mobBadgePayments');
+          if (badgeMob) {
+            badgeMob.innerText = pendingCount;
+            badgeMob.style.display = pendingCount > 0 ? 'inline-block' : 'none';
           }
           renderPaymentsTable(reqs);
         }
@@ -873,24 +1444,24 @@
     function renderLedgerTable(records) {
       const tbody = document.getElementById('ledgerTableBody');
       if (!records.length) {
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:24px; color:var(--text-muted);">কোনো কল বিলিং রেকর্ড এখনো নেই</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:28px; color:var(--text-muted);">No live call records recorded yet.</td></tr>`;
         return;
       }
 
       tbody.innerHTML = records.map(r => {
-        const timeStr = r.timestamp ? new Date(r.timestamp).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : '-';
+        const timeStr = r.timestamp ? new Date(r.timestamp).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' }) : '-';
         return `
           <tr>
-            <td><code style="color:var(--accent);">${r.callId ? r.callId.substring(0, 12) : '-'}</code></td>
+            <td><code style="color:var(--accent); font-weight:bold;">${r.callId ? r.callId.substring(0, 12) : '-'}</code></td>
             <td>${timeStr}</td>
             <td><code style="font-size:12px;">${r.callerId ? r.callerId.substring(0, 10) : '-'}</code></td>
             <td><code style="font-size:12px;">${r.calleeId ? r.calleeId.substring(0, 10) : '-'}</code></td>
-            <td><span class="badge badge-info">মিনিট #${r.minuteIndex || 1}</span></td>
-            <td>${r.durationSeconds || 60} সে.</td>
-            <td style="color:#f87171;">$${r.geminiCostUsd || '0.035'}</td>
+            <td><span class="badge badge-info">Min #${r.minuteIndex || 1}</span></td>
+            <td>${r.durationSeconds || 60}s</td>
+            <td style="color:#fb7185; font-weight:600;">$${r.geminiCostUsd || '0.035'}</td>
             <td style="color:#34d399; font-weight:600;">৳${r.retailRateBdt || '20.0'}</td>
-            <td style="color:#a78bfa; font-weight:bold;">+৳${r.netProfitBdt || '15.8'}</td>
-            <td><span class="badge badge-success">সফল</span></td>
+            <td style="color:#38bdf8; font-weight:bold;">+৳${r.netProfitBdt || '15.8'}</td>
+            <td><span class="badge badge-success">✓ Settled</span></td>
           </tr>
         `;
       }).join('');
@@ -899,28 +1470,28 @@
     function renderWalletsTable(wallets) {
       const tbody = document.getElementById('walletsTableBody');
       if (!wallets.length) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--text-muted);">কোনো ওয়ালেট পাওয়া যায়নি</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:28px; color:var(--text-muted);">No registered wallets found.</td></tr>`;
         return;
       }
 
       tbody.innerHTML = wallets.map(w => {
         const isTrialActive = w.trialActive && (!w.trialExpiresAt || new Date(w.trialExpiresAt) > new Date());
         const trialBadge = isTrialActive
-          ? `<span class="badge badge-success">সক্রিয় (${w.trialMinutes || 0} মি.)</span>`
-          : `<span class="badge badge-danger">মেয়াদ শেষ</span>`;
+          ? `<span class="badge badge-success">Active (${w.trialMinutes || 0}m)</span>`
+          : `<span class="badge badge-danger">Expired</span>`;
 
         return `
           <tr>
-            <td><strong>${w.name || 'User'}</strong></td>
+            <td><strong>${w.name || 'Freelancer'}</strong></td>
             <td><code style="color:var(--text-main); font-weight:bold;">${w.phone || '-'}</code></td>
-            <td><span style="font-weight:700; color:#34d399; font-size:15px;">💎 ${w.balanceMinutes || 0} মি.</span></td>
-            <td>⏱️ ${w.trialMinutes || 0} মি.</td>
+            <td><span style="font-weight:700; color:#34d399; font-size:14.5px;">💎 ${w.balanceMinutes || 0}m</span></td>
+            <td>⏱️ ${w.trialMinutes || 0}m</td>
             <td>${trialBadge}</td>
             <td style="font-size:12px; color:var(--text-muted);">${w.trialExpiresAt ? new Date(w.trialExpiresAt).toLocaleDateString() : '-'}</td>
-            <td>${w.totalMinutesUsed || 0} মি.</td>
+            <td>${w.totalMinutesUsed || 0}m</td>
             <td>
               <button class="btn btn-secondary" style="padding:4px 10px; font-size:12px;" onclick="openTopUpForUser('${w.phone || w.userId}')">
-                + টপ-আপ
+                ➕ Top-Up
               </button>
             </td>
           </tr>
@@ -945,7 +1516,7 @@
     function renderRechargesTable(recharges) {
       const tbody = document.getElementById('rechargesTableBody');
       if (!recharges.length) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--text-muted);">কোনো রিচার্জ হিস্ট্রি এখনো নেই</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:28px; color:var(--text-muted);">No recharge ledger records yet.</td></tr>`;
         return;
       }
 
@@ -954,13 +1525,13 @@
         const curr = rc.currency === 'USDT' ? `$${rc.amountPaid || 0} USDT` : `৳${rc.amountPaid || 0}`;
         return `
           <tr>
-            <td><code style="color:var(--accent);">${rc.transactionId ? rc.transactionId.substring(0, 16) : '-'}</code></td>
+            <td><code style="color:var(--accent); font-weight:600;">${rc.transactionId ? rc.transactionId.substring(0, 18) : '-'}</code></td>
             <td><code>${rc.userPhone || rc.userId || '-'}</code></td>
             <td><span class="badge badge-info">${rc.packId || 'Custom'}</span></td>
-            <td style="color:#34d399; font-weight:bold;">+${rc.minutesAdded || 0} মি.</td>
-            <td>${curr}</td>
+            <td style="color:#34d399; font-weight:bold;">+${rc.minutesAdded || 0}m</td>
+            <td style="font-weight:700;">${curr}</td>
             <td>${rc.paymentMethod || 'Manual'}</td>
-            <td><span class="badge badge-success">সম্পন্ন</span></td>
+            <td><span class="badge badge-success">✓ Completed</span></td>
             <td style="font-size:12px; color:var(--text-muted);">${dateStr}</td>
           </tr>
         `;
@@ -970,29 +1541,30 @@
     function renderPaymentsTable(requests) {
       const tbody = document.getElementById('paymentsTableBody');
       if (!requests.length) {
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:24px; color:var(--text-muted);">কোনো পেমেন্ট রিকোয়েস্ট এখনো নেই</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:28px; color:var(--text-muted);">No pending payment verification requests.</td></tr>`;
         return;
       }
 
       tbody.innerHTML = requests.map(r => {
         const timeStr = r.createdAt ? new Date(r.createdAt).toLocaleString() : '-';
-        let statusBadge = `<span class="badge badge-warning">পেন্ডিং (Pending)</span>`;
+        let statusBadge = `<span class="badge badge-warning">⏳ Pending</span>`;
         if (r.status === 'approved') {
-          statusBadge = `<span class="badge badge-success">অনুমোদিত (Approved)</span>`;
+          statusBadge = `<span class="badge badge-success">✓ Approved</span>`;
         } else if (r.status === 'rejected') {
-          statusBadge = `<span class="badge badge-danger">বাতিল (Rejected)</span>`;
+          statusBadge = `<span class="badge badge-danger">✕ Rejected</span>`;
         }
 
         // Method Icon & Tag
         let methodHtml = `<span class="badge badge-info">${r.paymentMethod || 'bKash'}</span>`;
         if (r.paymentMethod === 'bKash') {
-          methodHtml = `<span class="badge" style="background:#e2136e; color:#fff;">📱 bKash</span>`;
+          methodHtml = `<span class="badge badge-bkash">📱 bKash</span>`;
         } else if (r.paymentMethod === 'Nagad') {
-          methodHtml = `<span class="badge" style="background:#f7941d; color:#fff;">📱 Nagad</span>`;
+          methodHtml = `<span class="badge badge-nagad">📱 Nagad</span>`;
         } else if (r.paymentMethod === 'Binance_Pay') {
-          methodHtml = `<span class="badge" style="background:#f3ba2f; color:#000; font-weight:bold;">🟡 Binance Pay</span>`;
+          methodHtml = `<span class="badge badge-binance">🟡 Binance Pay</span>`;
         } else if (r.paymentMethod && r.paymentMethod.startsWith('Crypto_USDT')) {
-          methodHtml = `<span class="badge" style="background:#26a17b; color:#fff;">💎 USDT Crypto</span>`;
+          const net = r.paymentMethod.includes('TRC20') ? 'TRC-20' : 'BEP-20';
+          methodHtml = `<span class="badge badge-crypto">💎 USDT (${net})</span>`;
         }
 
         const amountFormatted = r.currency === 'USDT' ? `$${r.amount || 0} USDT` : `৳${r.amount || 0}`;
@@ -1004,26 +1576,26 @@
         let explorerHtml = '';
         if (r.paymentMethod === 'Crypto_USDT_TRC20') {
           const clean = (r.trxId || '').replace(/^0x/, '');
-          explorerHtml = `<div style="margin-top:3px;"><a href="https://tronscan.org/#/transaction/${clean}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); font-size:11px; text-decoration:underline;">🔗 Tronscan-এ দেখুন</a></div>`;
+          explorerHtml = `<div style="margin-top:3px;"><a href="https://tronscan.org/#/transaction/${clean}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); font-size:11px; text-decoration:underline;">🔗 View on Tronscan</a></div>`;
         } else if (r.paymentMethod === 'Crypto_USDT_BEP20') {
           const clean = (r.trxId || '').startsWith('0x') ? r.trxId : `0x${r.trxId}`;
-          explorerHtml = `<div style="margin-top:3px;"><a href="https://bscscan.com/tx/${clean}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); font-size:11px; text-decoration:underline;">🔗 BscScan-এ দেখুন</a></div>`;
+          explorerHtml = `<div style="margin-top:3px;"><a href="https://bscscan.com/tx/${clean}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); font-size:11px; text-decoration:underline;">🔗 View on BscScan</a></div>`;
         }
 
         const isCryptoMethod = r.paymentMethod && r.paymentMethod.startsWith('Crypto_USDT');
         const verifyBtn = isCryptoMethod
-          ? `<button class="btn btn-secondary" style="padding:3px 7px; font-size:11px; background:#1e293b; color:#38bdf8; border:1px solid #38bdf8;" onclick="verifyOnChainPayment('${r.paymentMethod}', '${r.trxId}', ${r.amount})">🔍 অন-চেইন যাচাই</button>`
+          ? `<button class="btn btn-secondary" style="padding:4px 8px; font-size:11px; background:#0f172a; color:#38bdf8; border:1px solid #38bdf8;" onclick="verifyOnChainPayment('${r.paymentMethod}', '${r.trxId}', ${r.amount})">🔍 Verify On-Chain</button>`
           : '';
 
         const actionBtns = r.status === 'pending'
           ? `
             <div style="display:flex; flex-direction:column; gap:6px;">
               <div style="display:flex; gap:6px;">
-                <button class="btn btn-primary" style="padding:4px 8px; font-size:11.5px;" onclick="handlePaymentAction('${r.id}', 'approve', ${r.minutes})">
-                  ✓ অনুমোদন
+                <button class="btn btn-primary" style="padding:5px 10px; font-size:12px;" onclick="handlePaymentAction('${r.id}', 'approve', ${r.minutes})">
+                  ✓ Approve
                 </button>
-                <button class="btn btn-secondary" style="padding:4px 8px; font-size:11.5px; color:var(--danger);" onclick="handlePaymentAction('${r.id}', 'reject')">
-                  ✕ বাতিল
+                <button class="btn btn-secondary" style="padding:5px 10px; font-size:12px; color:var(--danger);" onclick="handlePaymentAction('${r.id}', 'reject')">
+                  ✕ Reject
                 </button>
               </div>
               ${verifyBtn}
@@ -1040,7 +1612,7 @@
             <td><code>${r.userPhone || r.userId || '-'}</code></td>
             <td><strong style="color:#f8fafc; font-size:12px;">${sender}</strong></td>
             <td><span class="badge badge-info">${r.packId || 'Custom'}</span>${promoBadge}</td>
-            <td style="color:#34d399; font-weight:bold;">+${r.minutes || 0} মি.</td>
+            <td style="color:#34d399; font-weight:bold; font-size:14px;">+${r.minutes || 0}m</td>
             <td style="font-weight:700; color:#fff;">${amountFormatted}</td>
             <td>${methodHtml}</td>
             <td style="font-size:12px; color:var(--text-muted);">${timeStr}</td>
@@ -1054,11 +1626,11 @@
     async function verifyOnChainPayment(paymentMethod, trxId, expectedAmount) {
       const secret = getAdminSecret();
       if (!secret) {
-        showToast('প্রথমে Admin Secret দিয়ে সংরক্ষণ করুন!', true);
+        showToast('Please save your Admin Secret first!', true);
         return;
       }
 
-      showToast('ব্লকচেইন স্ক্যান করা হচ্ছে...', false);
+      showToast('Scanning live blockchain node...', false);
 
       try {
         const res = await fetch('/api/admin/verify-onchain', {
@@ -1073,28 +1645,28 @@
         const data = await res.json();
         if (data.verified) {
           const d = data.details || {};
-          alert(`✅ অন-চেইন ভেরিফিকেশন সফল!\n\n` +
-                `স্ট্যাটাস: ${data.status} (Confirmed: ${data.confirmed ? 'Yes' : 'Mining'})\n` +
-                `প্রেরক: ${d.from}\n` +
-                `প্রাপক (আমাদের ওয়ালেট): ${d.to}\n` +
-                `জমা হয়েছে: $${d.amountTransferred || expectedAmount} USDT\n` +
-                `প্রত্যাশিত: $${d.expectedAmount || expectedAmount} USDT\n\n` +
-                `এই পেমেন্টটি নিরাপদ এবং অনুমোদনযোগ্য।`);
+          alert(`✅ ON-CHAIN VERIFICATION CONFIRMED!\n\n` +
+                `Status: ${data.status} (Confirmed: ${data.confirmed ? 'Yes' : 'Mining'})\n` +
+                `Sender: ${d.from}\n` +
+                `Recipient (Our Wallet): ${d.to}\n` +
+                `Deposited Amount: $${d.amountTransferred || expectedAmount} USDT\n` +
+                `Expected Amount: $${d.expectedAmount || expectedAmount} USDT\n\n` +
+                `This transaction is 100% verified on-chain and safe to approve.`);
         } else {
-          alert(`⚠️ অন-চেইন ভেরিফিকেশনে অসঙ্গতি বা পেন্ডিং:\n\n` +
-                `বার্তা: ${data.error || 'ব্লকচেইনে কোনো কনফার্মড ট্রানজেকশন মেলেনি'}\n` +
-                `স্ট্যাটাস: ${data.status || 'UNCONFIRMED'}\n\n` +
-                `অনুগ্রহ করে ব্লকচেইন এক্সপ্লোরারে চেক করুন অথবা অনুমোদনের আগে অপেক্ষা করুন।`);
+          alert(`⚠️ ON-CHAIN VERIFICATION MISMATCH OR PENDING:\n\n` +
+                `Message: ${data.error || 'Transaction not found or recipient wallet did not match'}\n` +
+                `Status: ${data.status || 'UNCONFIRMED'}\n\n` +
+                `Please verify on the block explorer before approving.`);
         }
       } catch (err) {
-        alert(`অন-চেইন রিকোয়েস্ট ব্যর্থ: ${err.message}`);
+        alert(`On-chain verification error: ${err.message}`);
       }
     }
 
     async function handlePaymentAction(requestId, action, minutes) {
       const confirmMsg = action === 'approve'
-        ? `আপনি কি নিশ্চিতভাবে এই পেমেন্টটি অনুমোদন করে ইউজারের অ্যাকাউন্টে ${minutes} মিনিট ক্রেডিট করতে চান?`
-        : 'আপনি কি এই পেমেন্ট রিকোয়েস্টটি বাতিল করতে চান?';
+        ? `Are you sure you want to approve this payment and credit ${minutes} minutes to the freelancer's wallet?`
+        : 'Are you sure you want to reject this payment request?';
 
       if (!confirm(confirmMsg)) return;
 
@@ -1115,13 +1687,13 @@
 
         const data = await res.json();
         if (res.ok && data.success) {
-          showToast(action === 'approve' ? `পেমেন্ট অনুমোদিত! ${minutes} মিনিট সফলভাবে যোগ হয়েছে।` : 'পেমেন্ট রিকোয়েস্ট বাতিল করা হয়েছে।');
+          showToast(action === 'approve' ? `Payment approved! ${minutes} minutes credited.` : 'Payment request rejected.');
           fetchDashboardData();
         } else {
-          showToast(`ব্যর্থ: ${data.error || 'অ্যাকশন প্রক্রিয়া করা যায়নি'}`, true);
+          showToast(`Failed: ${data.error || 'Action could not be completed'}`, true);
         }
       } catch (err) {
-        showToast(`ত্রুটি: ${err.message}`, true);
+        showToast(`Error: ${err.message}`, true);
       }
     }
 
@@ -1145,7 +1717,7 @@
       if (mins === 180) document.getElementById('topupAmount').value = '3000';
       if (mins === 500) document.getElementById('topupAmount').value = '7200';
 
-      document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.chip-item').forEach(b => b.classList.remove('active'));
       event.target.classList.add('active');
     }
 
@@ -1158,7 +1730,7 @@
       const btn = document.getElementById('btnSubmitTopup');
 
       btn.disabled = true;
-      btn.innerText = 'ক্রেডিট করা হচ্ছে...';
+      btn.innerText = 'Processing...';
 
       try {
         const secret = getAdminSecret();
@@ -1179,17 +1751,17 @@
 
         const data = await res.json();
         if (res.ok && data.success) {
-          showToast(`সফল! ${minutes} মিনিট ক্রেডিট করা হয়েছে। নতুন ব্যালেন্স: ${data.wallet.balanceMinutes} মি.`);
+          showToast(`Success! ${minutes} minutes credited. New balance: ${data.wallet.balanceMinutes}m`);
           closeTopUpModal();
           fetchDashboardData();
         } else {
-          showToast(`ব্যর্থ: ${data.error || 'টপ-আপ করা যায়নি'}`, true);
+          showToast(`Failed: ${data.error || 'Top-up failed'}`, true);
         }
       } catch (err) {
-        showToast(`ত্রুটি: ${err.message}`, true);
+        showToast(`Error: ${err.message}`, true);
       } finally {
         btn.disabled = false;
-        btn.innerText = 'মিনিট ক্রেডিট করুন';
+        btn.innerText = 'Confirm & Credit Minutes';
       }
     }
   </script>
