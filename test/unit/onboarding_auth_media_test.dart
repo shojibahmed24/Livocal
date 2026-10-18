@@ -1,9 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:livocal/features/auth/controllers/login_controller.dart';
+import 'package:livocal/features/auth/data/repositories/auth_repository.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/widgets/search.dart';
 
@@ -61,74 +63,142 @@ void main() {
     });
   });
 
-  group('verifyOtp Narrow Exception Handling & Backdoor Prevention Tests', () {
-    test('FirebaseAuthException strictly returns false and never falls back to stale currentUser', () {
-      bool simulateVerifyOtp({
-        required Object thrownException,
-        required String? preExistingUid,
-        required String? currentUidAfterCall,
-      }) {
-        try {
-          throw thrownException;
-        } on FirebaseAuthException {
-          // Explicit Firebase Auth failure - NEVER allow fallback or return true
-          return false;
-        } on TypeError {
-          // Only treat as authenticated if native auth genuinely signed in a NEW user during this call
-          if (currentUidAfterCall != null &&
-              (preExistingUid == null || currentUidAfterCall != preExistingUid)) {
-            return true;
-          }
-          return false;
-        } catch (_) {
-          return false;
-        }
-      }
-
-      // Scenario 1: Re-authenticating / change-number user with stale session enters WRONG OTP
-      // Firebase throws FirebaseAuthException('invalid-verification-code')
-      // MUST RETURN FALSE even though currentUser != null!
-      final reAuthWrongOtpResult = simulateVerifyOtp(
-        thrownException: FirebaseAuthException(code: 'invalid-verification-code'),
-        preExistingUid: 'existing_user_123',
-        currentUidAfterCall: 'existing_user_123',
+  group('FirebaseAuthRepository.verifyOtp Real Implementation Tests', () {
+    test('Scenario 1: Re-auth user with stale session entering WRONG OTP strictly returns false', () async {
+      final fakeAuth = FakeFirebaseAuth(
+        currentUser: FakeUser('existing_stale_uid_123'),
+        onSignInWithCredential: (_) => throw FirebaseAuthException(
+          code: 'invalid-verification-code',
+          message: 'The verification code from SMS/TOTP is invalid.',
+        ),
       );
-      expect(reAuthWrongOtpResult, isFalse,
-          reason: 'Must not accept wrong OTP when pre-existing session is present');
 
-      // Scenario 2: Fresh login enters wrong OTP
-      final freshWrongOtpResult = simulateVerifyOtp(
-        thrownException: FirebaseAuthException(code: 'invalid-verification-code'),
-        preExistingUid: null,
-        currentUidAfterCall: null,
+      final repo = FirebaseAuthRepository(
+        auth: fakeAuth,
+        firestore: FakeFirebaseFirestore(),
       );
-      expect(freshWrongOtpResult, isFalse);
 
-      // Scenario 3: Stale user with generic exception
-      final genericErrorResult = simulateVerifyOtp(
-        thrownException: Exception('network failure'),
-        preExistingUid: 'existing_user_123',
-        currentUidAfterCall: 'existing_user_123',
-      );
-      expect(genericErrorResult, isFalse);
+      final result = await repo.verifyOtp('test_verification_id_1', '000000');
+      expect(result, isFalse, reason: 'FirebaseAuthException must return false even if currentUser is non-null');
+    });
 
-      // Scenario 4: Genuine new session established on native side but Pigeon deserialization threw TypeError
-      final pigeonDecodeSuccessResult = simulateVerifyOtp(
-        thrownException: TypeError(),
-        preExistingUid: null,
-        currentUidAfterCall: 'new_firebase_user_789',
+    test('Scenario 2: Fresh user login entering wrong OTP returns false', () async {
+      final fakeAuth = FakeFirebaseAuth(
+        currentUser: null,
+        onSignInWithCredential: (_) => throw FirebaseAuthException(
+          code: 'invalid-verification-code',
+          message: 'Invalid OTP',
+        ),
       );
-      expect(pigeonDecodeSuccessResult, isTrue,
-          reason: 'Genuine new native session with Pigeon decode mismatch should be accepted');
 
-      // Scenario 5: Stale user with Pigeon TypeError where no new user was signed in
-      final pigeonDecodeStaleUserResult = simulateVerifyOtp(
-        thrownException: TypeError(),
-        preExistingUid: 'existing_user_123',
-        currentUidAfterCall: 'existing_user_123',
+      final repo = FirebaseAuthRepository(
+        auth: fakeAuth,
+        firestore: FakeFirebaseFirestore(),
       );
-      expect(pigeonDecodeStaleUserResult, isFalse,
-          reason: 'Stale user session must not be mistaken for a newly verified OTP');
+
+      final result = await repo.verifyOtp('test_verification_id_2', '999999');
+      expect(result, isFalse);
+    });
+
+    test('Scenario 3: Generic Exception (e.g. network failure) returns false and does not fall back', () async {
+      final fakeAuth = FakeFirebaseAuth(
+        currentUser: FakeUser('existing_stale_uid_123'),
+        onSignInWithCredential: (_) => throw Exception('Network unreachable'),
+      );
+
+      final repo = FirebaseAuthRepository(
+        auth: fakeAuth,
+        firestore: FakeFirebaseFirestore(),
+      );
+
+      final result = await repo.verifyOtp('test_verification_id_3', '123456');
+      expect(result, isFalse);
+    });
+
+    test('Scenario 4: Genuine new session established on native side despite Pigeon TypeError returns true', () async {
+      final fakeAuth = FakeFirebaseAuth(
+        currentUser: null, // preExistingUid is null
+      );
+      fakeAuth.onSignInWithCredential = (_) {
+        // Native signs in new user, but Pigeon throws TypeError on decode
+        fakeAuth.currentUser = FakeUser('new_firebase_user_789');
+        throw TypeError();
+      };
+
+      final repo = FirebaseAuthRepository(
+        auth: fakeAuth,
+        firestore: FakeFirebaseFirestore(),
+      );
+
+      final result = await repo.verifyOtp('test_verification_id_4', '123456');
+      expect(result, isTrue, reason: 'Genuine new native session with Pigeon decode mismatch should be accepted');
+    });
+
+    test('Scenario 5: Stale session with Pigeon TypeError where native did NOT sign in a new user returns false', () async {
+      final fakeAuth = FakeFirebaseAuth(
+        currentUser: FakeUser('existing_user_123'),
+        onSignInWithCredential: (_) => throw TypeError(),
+      );
+
+      final repo = FirebaseAuthRepository(
+        auth: fakeAuth,
+        firestore: FakeFirebaseFirestore(),
+      );
+
+      final result = await repo.verifyOtp('test_verification_id_5', '123456');
+      expect(result, isFalse, reason: 'Stale user session with Pigeon TypeError must return false');
+    });
+
+    test('Scenario 6: Clean successful OTP verification returns true', () async {
+      final newUser = FakeUser('verified_uid_555');
+      final fakeAuth = FakeFirebaseAuth(
+        currentUser: null,
+        onSignInWithCredential: (_) => Future.value(FakeUserCredential(user: newUser)),
+      );
+
+      final repo = FirebaseAuthRepository(
+        auth: fakeAuth,
+        firestore: FakeFirebaseFirestore(),
+      );
+
+      final result = await repo.verifyOtp('test_verification_id_6', '123456');
+      expect(result, isTrue);
     });
   });
 }
+
+class FakeUser extends Fake implements User {
+  @override
+  final String uid;
+  FakeUser(this.uid);
+}
+
+class FakeUserCredential extends Fake implements UserCredential {
+  @override
+  final User? user;
+  FakeUserCredential({this.user});
+}
+
+class FakeFirebaseAuth extends Fake implements FirebaseAuth {
+  User? _currentUser;
+  Future<UserCredential> Function(AuthCredential)? onSignInWithCredential;
+
+  FakeFirebaseAuth({User? currentUser, this.onSignInWithCredential})
+      : _currentUser = currentUser;
+
+  @override
+  User? get currentUser => _currentUser;
+
+  set currentUser(User? u) => _currentUser = u;
+
+  @override
+  Future<UserCredential> signInWithCredential(AuthCredential credential) {
+    if (onSignInWithCredential != null) {
+      return onSignInWithCredential!(credential);
+    }
+    return Future.value(FakeUserCredential(user: _currentUser));
+  }
+}
+
+class FakeFirebaseFirestore extends Fake implements FirebaseFirestore {}
+

@@ -28,14 +28,14 @@ class FirebaseAuthRepository implements AuthenticationRepository {
   ) async {
     final preExistingUid = auth.currentUser?.uid;
     try {
-      debugPrint('[AuthRepository] verifyOtp starting: verificationId=$verificationID, smsCode=$smsCode');
+      debugPrint('[AuthRepository] verifyOtp starting: verificationId=${verificationID.length > 8 ? '${verificationID.substring(0, 6)}...' : 'present'}, smsCode=******');
       PhoneAuthCredential credential = PhoneAuthProvider.credential(
         verificationId: verificationID,
         smsCode: smsCode,
       );
 
       final userCred = await auth.signInWithCredential(credential);
-      debugPrint('[AuthRepository] verifyOtp success: uid=${userCred.user?.uid}, phone=${userCred.user?.phoneNumber}');
+      debugPrint('[AuthRepository] verifyOtp success: uid=${userCred.user?.uid}');
       return userCred.user != null;
     } on FirebaseAuthException catch (e, st) {
       // Explicit Firebase Auth failure (e.g. invalid-verification-code, session-expired, invalid-credential).
