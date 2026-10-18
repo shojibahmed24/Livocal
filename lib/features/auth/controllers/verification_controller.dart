@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/auth/domain/auth_service.dart';
@@ -7,8 +6,6 @@ import 'package:livocal/features/auth/views/user_details.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
-
-import 'package:livocal/theme/app_colors.dart';
 
 import '../../../shared/models/user.dart';
 
@@ -131,61 +128,30 @@ class VerificationController {
     BuildContext context,
     String phoneNumber,
   ) async {
-    return showAppDialog(
+    showAppProgressDialog(
       context: context,
-      barrierDismissible: false,
-      content: FutureBuilder<void>(
-        future: () async {
-          final authController = ref.read(
-            authControllerProvider,
-          );
-
-          await authController.sendVerificationCode(
-            context,
-            phoneNumber,
-            updateVerificationCode,
-          );
-        }(),
-        builder: (context, snapshot) {
-          String? text;
-          Widget? widget;
-
-          if (snapshot.hasError) {
-            text = 'Oops! An error occurred';
-            widget = const Icon(
-              Icons.cancel,
-              color: Color(0xFFE53935),
-              size: 38.0,
-            );
-
-            Future.delayed(const Duration(seconds: 2), () {
-              Navigator.of(context).pop();
-            });
-          }
-
-          final isDark = Theme.of(context).brightness == Brightness.dark;
-          return Row(
-            children: [
-              widget ??
-                  const CircularProgressIndicator(
-                    color: AppColors.primary,
-                  ),
-              const SizedBox(width: 24.0),
-              Expanded(
-                child: Text(
-                  text ?? 'Requesting verification code...',
-                  style: TextStyle(
-                    fontSize: 15.5,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+      message: 'Requesting verification code...',
     );
+
+    try {
+      final authController = ref.read(authControllerProvider);
+      await authController.sendVerificationCode(
+        context,
+        phoneNumber,
+        (code) {
+          updateVerificationCode(code);
+        },
+      );
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        showSnackBar(
+          context: context,
+          content: 'Oops! An error occurred: $e',
+          type: SnacBarType.error,
+        );
+      }
+    }
   }
 
   void onFilled(BuildContext context, String smsCode, Phone phone) async {
@@ -202,92 +168,53 @@ class VerificationController {
       return;
     }
 
-    return showAppDialog(
+    showAppProgressDialog(
       context: context,
-      barrierDismissible: false,
-      content: FutureBuilder<bool>(
-        future: authController.verifyOtp(
-          _verificationCode,
-          smsCode,
-        ),
-        builder: (context, snapshot) {
-          String? text;
-          Widget? widget;
-
-          if (snapshot.hasData && snapshot.data == true) {
-            text = 'Verification complete';
-            widget = const Icon(
-              Icons.check_circle,
-              color: AppColors.primary,
-              size: 38.0,
-            );
-
-            Future.delayed(const Duration(seconds: 2), () {
-              SharedPref.instance.setInt(
-                'resendTime',
-                0,
-              );
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(
-                  builder: (context) => UserProfileCreationPage(
-                    phone: phone,
-                  ),
-                ),
-                (route) => false,
-              );
-            });
-          } else if (snapshot.hasError || (snapshot.hasData && snapshot.data == false)) {
-            text = 'Invalid OTP! Please try again.';
-
-            if (snapshot.hasError && snapshot.error.runtimeType == FirebaseAuthException) {
-              final FirebaseAuthException error =
-                  snapshot.error as FirebaseAuthException;
-
-              final msgs = {
-                'invalid-verification-code': 'Invalid OTP!',
-                'network-request-failed': 'Network error!'
-              };
-
-              if (msgs.containsKey(error.code)) {
-                text = msgs[error.code];
-              }
-            }
-
-            ref.read(otpErrorProvider.notifier).state = text;
-
-            widget = const Icon(
-              Icons.cancel,
-              color: Color(0xFFE53935),
-              size: 38.0,
-            );
-
-            Future.delayed(const Duration(seconds: 2), () {
-              Navigator.of(context).pop();
-            });
-          }
-
-          final isDark = Theme.of(context).brightness == Brightness.dark;
-          return Row(
-            children: [
-              widget ??
-                  const CircularProgressIndicator(
-                    color: AppColors.primary,
-                  ),
-              const SizedBox(width: 24.0),
-              Expanded(
-                child: Text(
-                  text ?? 'Verifying OTP...',
-                  style: TextStyle(
-                    fontSize: 15.5,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+      message: 'Verifying OTP...',
     );
+
+    try {
+      final success = await authController.verifyOtp(
+        _verificationCode,
+        smsCode,
+      );
+
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+
+      if (success) {
+        SharedPref.instance.setInt('resendTime', 0);
+        if (context.mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(
+              builder: (context) => UserProfileCreationPage(phone: phone),
+            ),
+            (route) => false,
+          );
+        }
+      } else {
+        ref.read(otpErrorProvider.notifier).state = 'Invalid OTP! Please try again.';
+        if (context.mounted) {
+          showSnackBar(
+            context: context,
+            content: 'Invalid OTP! Please try again.',
+            type: SnacBarType.error,
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+      ref.read(otpErrorProvider.notifier).state = 'Verification failed. Please try again.';
+      if (context.mounted) {
+        showSnackBar(
+          context: context,
+          content: 'Verification failed: $e',
+          type: SnacBarType.error,
+        );
+      }
+    }
   }
 }

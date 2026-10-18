@@ -124,7 +124,7 @@ Future<T?> showAppDialog<T>({
         contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
         actionsPadding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         title: titleWidget,
-        content: bodyWidget != null ? SingleChildScrollView(child: bodyWidget) : null,
+        content: bodyWidget != null ? (content != null ? bodyWidget : SingleChildScrollView(child: bodyWidget)) : null,
         actions: dialogActions,
       );
     },

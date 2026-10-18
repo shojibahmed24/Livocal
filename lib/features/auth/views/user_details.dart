@@ -270,9 +270,8 @@ class _UserProfileCreationPageState
                   .usernameController,
             ),
           ),
-          child: Expanded(
+          child: SingleChildScrollView(
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               children: [
                 const SizedBox(height: 12.0),
                 Text(
@@ -347,10 +346,10 @@ class _UserProfileCreationPageState
                     ],
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(height: 36.0),
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 130,
+                    horizontal: 80,
                     vertical: 20,
                   ),
                   child: GreenElevatedButton(
