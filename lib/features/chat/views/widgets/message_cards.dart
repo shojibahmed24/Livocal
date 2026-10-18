@@ -7,6 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_emoji/flutter_emoji.dart';
 import 'package:livocal/features/chat/models/message.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/features/calls/models/call_language.dart';
+import 'package:livocal/shared/services/translation_service.dart';
 import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/theme/app_colors.dart';
@@ -37,6 +39,8 @@ class _MessageCardState extends State<MessageCard>
   late final AnimationController _animController;
   late final Animation<double> _fadeAnim;
   late final Animation<Offset> _slideAnim;
+  String? _translatedContent;
+  bool _isTranslating = false;
 
   @override
   void initState() {
@@ -57,6 +61,74 @@ class _MessageCardState extends State<MessageCard>
       curve: Curves.easeOutCubic,
     ));
     _animController.forward();
+
+    _checkAutoTranslation();
+  }
+
+  void _checkAutoTranslation() {
+    final isSent = widget.currentUserId == widget.message.senderId;
+    if (isSent || widget.message.isDeleted || widget.message.content.isEmpty) {
+      return;
+    }
+    if (widget.message.content.startsWith('💰')) return;
+
+    final peerId = widget.message.senderId;
+    final isTransEnabled =
+        SharedPref.instance.getBool('chat_trans_${peerId}_enabled') ?? false;
+    final autoIncoming =
+        SharedPref.instance.getBool('chat_trans_${peerId}_auto_incoming') ??
+            true;
+
+    if (isTransEnabled && autoIncoming) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _translateCurrentMessage(null);
+      });
+    }
+  }
+
+  Future<void> _translateCurrentMessage(BuildContext? context) async {
+    if (_isTranslating || _translatedContent != null) return;
+    if (mounted) setState(() => _isTranslating = true);
+
+    try {
+      final peerId = widget.message.senderId == widget.currentUserId
+          ? widget.message.receiverId
+          : widget.message.senderId;
+
+      final targetLangCode =
+          SharedPref.instance.getString('chat_trans_${peerId}_my_lang') ??
+              'bn';
+      final targetLang = CallLanguageRegistry.allLanguages.firstWhere(
+        (l) => l.code == targetLangCode,
+        orElse: () => CallLanguageRegistry.allLanguages[0],
+      );
+
+      final result = await TranslationService.translateText(
+        text: widget.message.content,
+        targetLangName: targetLang.englishName,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isTranslating = false;
+          _translatedContent = result;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isTranslating = false);
+        if (context != null && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Translation error: ${e.toString().replaceAll("Exception: ", "")}',
+              ),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    }
   }
 
   @override
@@ -112,6 +184,28 @@ class _MessageCardState extends State<MessageCard>
                           duration: Duration(seconds: 2),
                         ),
                       );
+                    },
+                  ),
+                if (!isDeleted &&
+                    !widget.message.content.startsWith('💰') &&
+                    widget.message.content.isNotEmpty)
+                  ListTile(
+                    leading: const Icon(
+                      Icons.translate_rounded,
+                      color: AppColors.primary,
+                    ),
+                    title: Text(
+                      _translatedContent == null
+                          ? 'Translate Message'
+                          : 'Hide Translation',
+                    ),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      if (_translatedContent != null) {
+                        setState(() => _translatedContent = null);
+                      } else {
+                        _translateCurrentMessage(context);
+                      }
                     },
                   ),
                 if (!isDeleted)
@@ -603,18 +697,127 @@ class _MessageCardState extends State<MessageCard>
                                   )
                                 : widget.message.content.startsWith('💰 Payment sent:')
                                     ? _buildPaymentCard(context, isDark, isSentMessageCard)
-                                    : Text(
-                                        '${widget.message.content} $textPadding',
-                                        textWidthBasis: TextWidthBasis.longestLine,
-                                        style: Theme.of(context)
-                                            .custom
-                                            .textTheme
-                                            .bodyText1
-                                            .copyWith(
-                                              fontSize: biggerFont ? 40 : 16,
-                                              color: colorTheme.textColor1,
+                                    : Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            '${widget.message.content} $textPadding',
+                                            textWidthBasis:
+                                                TextWidthBasis.longestLine,
+                                            style: Theme.of(context)
+                                                .custom
+                                                .textTheme
+                                                .bodyText1
+                                                .copyWith(
+                                                  fontSize: biggerFont ? 40 : 16,
+                                                  color: colorTheme.textColor1,
+                                                ),
+                                            softWrap: true,
+                                          ),
+                                          if (_isTranslating) ...[
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const SizedBox(
+                                                  width: 10,
+                                                  height: 10,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    strokeWidth: 1.5,
+                                                    color: AppColors.primary,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  'Translating...',
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontStyle: FontStyle.italic,
+                                                    color: isDark
+                                                        ? AppColors
+                                                            .darkTextSecondary
+                                                        : AppColors
+                                                            .lightTextSecondary,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                        softWrap: true,
+                                          ] else if (_translatedContent !=
+                                              null) ...[
+                                            const SizedBox(height: 4),
+                                            Container(
+                                              margin: const EdgeInsets.only(
+                                                  top: 2, bottom: 2),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: isDark
+                                                    ? Colors.white.withValues(
+                                                        alpha: 0.08)
+                                                    : Colors.black.withValues(
+                                                        alpha: 0.04),
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                border: const Border(
+                                                  left: BorderSide(
+                                                      color: AppColors.primary,
+                                                      width: 2.5),
+                                                ),
+                                              ),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                mainAxisSize:
+                                                    MainAxisSize.min,
+                                                children: [
+                                                  const Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Icon(
+                                                          Icons
+                                                              .translate_rounded,
+                                                          size: 10,
+                                                          color: AppColors
+                                                              .primary),
+                                                      SizedBox(width: 4),
+                                                      Text(
+                                                        'Translated',
+                                                        style: TextStyle(
+                                                          fontSize: 9.5,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                          color:
+                                                              AppColors.primary,
+                                                          letterSpacing: 0.2,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    _translatedContent!,
+                                                    style: TextStyle(
+                                                      fontSize: 13.5,
+                                                      fontStyle:
+                                                          FontStyle.italic,
+                                                      color: isDark
+                                                          ? AppColors
+                                                              .darkTextPrimary
+                                                          : AppColors
+                                                              .lightTextPrimary,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ],
                                       ),
                           )
                         ],

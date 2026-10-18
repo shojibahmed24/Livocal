@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/shared/services/translation_service.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/app_tokens.dart';
@@ -8,6 +9,8 @@ import 'package:livocal/theme/app_tokens.dart';
 void showInChatTranslationSheet({
   required BuildContext context,
   required String peerName,
+  String? peerId,
+  VoidCallback? onSettingsChanged,
 }) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
   showModalBottomSheet(
@@ -15,15 +18,27 @@ void showInChatTranslationSheet({
     isScrollControlled: true,
     backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightBackground,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.radiusLg)),
+      borderRadius:
+          BorderRadius.vertical(top: Radius.circular(AppRadius.radiusLg)),
     ),
-    builder: (ctx) => _ChatTranslationSheetContent(peerName: peerName),
+    builder: (ctx) => _ChatTranslationSheetContent(
+      peerName: peerName,
+      peerId: peerId,
+      onSettingsChanged: onSettingsChanged,
+    ),
   );
 }
 
 class _ChatTranslationSheetContent extends StatefulWidget {
-  const _ChatTranslationSheetContent({required this.peerName});
+  const _ChatTranslationSheetContent({
+    required this.peerName,
+    this.peerId,
+    this.onSettingsChanged,
+  });
+
   final String peerName;
+  final String? peerId;
+  final VoidCallback? onSettingsChanged;
 
   @override
   State<_ChatTranslationSheetContent> createState() =>
@@ -32,7 +47,7 @@ class _ChatTranslationSheetContent extends StatefulWidget {
 
 class _ChatTranslationSheetContentState
     extends State<_ChatTranslationSheetContent> {
-  bool _liveTranslationEnabled = true;
+  bool _liveTranslationEnabled = false;
   bool _autoTranslateIncoming = true;
   bool _autoTranscribeVoiceNotes = true;
   CallLanguage _myLanguage = CallLanguageRegistry.allLanguages[0]; // bn
@@ -41,6 +56,68 @@ class _ChatTranslationSheetContentState
   final TextEditingController _testController = TextEditingController();
   String _translatedPreview = '';
   bool _isTranslating = false;
+
+  String get _storagePrefix =>
+      'chat_trans_${widget.peerId ?? widget.peerName}';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreferences();
+  }
+
+  void _loadPreferences() {
+    final prefs = SharedPref.instance;
+    final savedEnabled = prefs.getBool('${_storagePrefix}_enabled');
+    final savedAutoIncoming = prefs.getBool('${_storagePrefix}_auto_incoming');
+    final savedAutoVoice = prefs.getBool('${_storagePrefix}_auto_voice');
+    final savedMyLangCode = prefs.getString('${_storagePrefix}_my_lang');
+    final savedPeerLangCode = prefs.getString('${_storagePrefix}_peer_lang');
+
+    setState(() {
+      // If user hasn't explicitly saved a preference yet, default to false so it doesn't unexpectedly turn on
+      _liveTranslationEnabled = savedEnabled ?? false;
+      _autoTranslateIncoming = savedAutoIncoming ?? true;
+      _autoTranscribeVoiceNotes = savedAutoVoice ?? true;
+
+      if (savedMyLangCode != null) {
+        final matches = CallLanguageRegistry.allLanguages
+            .where((l) => l.code == savedMyLangCode);
+        if (matches.isNotEmpty) _myLanguage = matches.first;
+      }
+
+      if (savedPeerLangCode != null) {
+        final matches = CallLanguageRegistry.allLanguages
+            .where((l) => l.code == savedPeerLangCode);
+        if (matches.isNotEmpty) _peerLanguage = matches.first;
+      }
+    });
+  }
+
+  Future<void> _savePreferences() async {
+    final prefs = SharedPref.instance;
+    await prefs.setBool(
+      '${_storagePrefix}_enabled',
+      _liveTranslationEnabled,
+    );
+    await prefs.setBool(
+      '${_storagePrefix}_auto_incoming',
+      _autoTranslateIncoming,
+    );
+    await prefs.setBool(
+      '${_storagePrefix}_auto_voice',
+      _autoTranscribeVoiceNotes,
+    );
+    await prefs.setString(
+      '${_storagePrefix}_my_lang',
+      _myLanguage.code,
+    );
+    await prefs.setString(
+      '${_storagePrefix}_peer_lang',
+      _peerLanguage.code,
+    );
+    widget.onSettingsChanged?.call();
+  }
 
   void _runQuickTest() async {
     final text = _testController.text.trim();
@@ -85,7 +162,7 @@ class _ChatTranslationSheetContentState
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = AppColors.primary;
+    const primaryColor = AppColors.primary;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -115,7 +192,11 @@ class _ChatTranslationSheetContentState
                 CircleAvatar(
                   radius: 20,
                   backgroundColor: primaryColor.withValues(alpha: 0.15),
-                  child: Icon(Icons.translate_rounded, color: primaryColor, size: 22),
+                  child: const Icon(
+                    Icons.translate_rounded,
+                    color: primaryColor,
+                    size: 22,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -124,11 +205,17 @@ class _ChatTranslationSheetContentState
                     children: [
                       const Text(
                         'In-Chat AI Live Translation',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       Text(
                         'Powered by Gemini Live API for ${widget.peerName}',
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
                       ),
                     ],
                   ),
@@ -137,17 +224,20 @@ class _ChatTranslationSheetContentState
                   value: _liveTranslationEnabled,
                   activeTrackColor: primaryColor,
                   activeThumbColor: Colors.white,
-                  onChanged: (val) {
+                  onChanged: (val) async {
                     setState(() {
                       _liveTranslationEnabled = val;
                     });
-                    showSnackBar(
-                      context: context,
-                      content: val
-                          ? 'In-Chat Live Translation Enabled'
-                          : 'In-Chat Live Translation Disabled',
-                      type: SnacBarType.info,
-                    );
+                    await _savePreferences();
+                    if (context.mounted) {
+                      showSnackBar(
+                        context: context,
+                        content: val
+                            ? 'In-Chat Live Translation Enabled'
+                            : 'In-Chat Live Translation Disabled',
+                        type: SnacBarType.info,
+                      );
+                    }
                   },
                 ),
               ],
@@ -155,22 +245,33 @@ class _ChatTranslationSheetContentState
             const Divider(height: 24),
             const Text(
               'Language Preferences',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey,
+              ),
             ),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                      border:
+                          Border.all(color: Colors.grey.withValues(alpha: 0.3)),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('My Language', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                        const Text(
+                          'My Language',
+                          style: TextStyle(fontSize: 11, color: Colors.grey),
+                        ),
                         const SizedBox(height: 4),
                         DropdownButton<CallLanguage>(
                           value: _myLanguage,
@@ -180,12 +281,18 @@ class _ChatTranslationSheetContentState
                               .map(
                                 (l) => DropdownMenuItem(
                                   value: l,
-                                  child: Text('${l.flagEmoji} ${l.nativeName}', style: const TextStyle(fontSize: 14)),
+                                  child: Text(
+                                    '${l.flagEmoji} ${l.nativeName}',
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
                                 ),
                               )
                               .toList(),
                           onChanged: (val) {
-                            if (val != null) setState(() => _myLanguage = val);
+                            if (val != null) {
+                              setState(() => _myLanguage = val);
+                              _savePreferences();
+                            }
                           },
                         ),
                       ],
@@ -202,22 +309,32 @@ class _ChatTranslationSheetContentState
                         _myLanguage = _peerLanguage;
                         _peerLanguage = temp;
                       });
+                      _savePreferences();
                     },
                   ),
                 ),
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                      border:
+                          Border.all(color: Colors.grey.withValues(alpha: 0.3)),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("${widget.peerName}'s Language",
-                            style: const TextStyle(fontSize: 11, color: Colors.grey),
-                            overflow: TextOverflow.ellipsis),
+                        Text(
+                          "${widget.peerName}'s Language",
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                         const SizedBox(height: 4),
                         DropdownButton<CallLanguage>(
                           value: _peerLanguage,
@@ -227,12 +344,18 @@ class _ChatTranslationSheetContentState
                               .map(
                                 (l) => DropdownMenuItem(
                                   value: l,
-                                  child: Text('${l.flagEmoji} ${l.nativeName}', style: const TextStyle(fontSize: 14)),
+                                  child: Text(
+                                    '${l.flagEmoji} ${l.nativeName}',
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
                                 ),
                               )
                               .toList(),
                           onChanged: (val) {
-                            if (val != null) setState(() => _peerLanguage = val);
+                            if (val != null) {
+                              setState(() => _peerLanguage = val);
+                              _savePreferences();
+                            }
                           },
                         ),
                       ],
@@ -244,24 +367,54 @@ class _ChatTranslationSheetContentState
             const SizedBox(height: 16),
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Auto-translate incoming messages', style: TextStyle(fontSize: 14)),
-              subtitle: const Text('Automatically displays translations below received messages', style: TextStyle(fontSize: 12)),
+              title: const Text(
+                'Auto-translate incoming messages',
+                style: TextStyle(fontSize: 14),
+              ),
+              subtitle: const Text(
+                'Automatically displays translations below received messages',
+                style: TextStyle(fontSize: 12),
+              ),
               value: _autoTranslateIncoming,
-              fillColor: WidgetStateProperty.resolveWith((states) => states.contains(WidgetState.selected) ? AppColors.primary : null),
-              onChanged: (val) => setState(() => _autoTranslateIncoming = val ?? true),
+              fillColor: WidgetStateProperty.resolveWith(
+                (states) => states.contains(WidgetState.selected)
+                    ? AppColors.primary
+                    : null,
+              ),
+              onChanged: (val) {
+                setState(() => _autoTranslateIncoming = val ?? true);
+                _savePreferences();
+              },
             ),
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Live Voice Note Transcription', style: TextStyle(fontSize: 14)),
-              subtitle: const Text('Transcribe and translate incoming audio voice messages', style: TextStyle(fontSize: 12)),
+              title: const Text(
+                'Live Voice Note Transcription',
+                style: TextStyle(fontSize: 14),
+              ),
+              subtitle: const Text(
+                'Transcribe and translate incoming audio voice messages',
+                style: TextStyle(fontSize: 12),
+              ),
               value: _autoTranscribeVoiceNotes,
-              fillColor: WidgetStateProperty.resolveWith((states) => states.contains(WidgetState.selected) ? AppColors.primary : null),
-              onChanged: (val) => setState(() => _autoTranscribeVoiceNotes = val ?? true),
+              fillColor: WidgetStateProperty.resolveWith(
+                (states) => states.contains(WidgetState.selected)
+                    ? AppColors.primary
+                    : null,
+              ),
+              onChanged: (val) {
+                setState(() => _autoTranscribeVoiceNotes = val ?? true);
+                _savePreferences();
+              },
             ),
             const Divider(height: 20),
             const Text(
               'Test Realtime Translation',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey,
+              ),
             ),
             const SizedBox(height: 8),
             Row(
@@ -272,8 +425,13 @@ class _ChatTranslationSheetContentState
                     decoration: InputDecoration(
                       hintText: 'Enter text to test...',
                       hintStyle: const TextStyle(fontSize: 13),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ),
@@ -282,11 +440,20 @@ class _ChatTranslationSheetContentState
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   onPressed: _isTranslating ? null : _runQuickTest,
                   child: _isTranslating
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
                       : const Text('Translate'),
                 ),
               ],
@@ -297,12 +464,17 @@ class _ChatTranslationSheetContentState
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF2A3942) : const Color(0xFFE7FCE3),
+                  color: isDark
+                      ? const Color(0xFF2A3942)
+                      : const Color(0xFFE7FCE3),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   _translatedPreview,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ],
@@ -312,15 +484,22 @@ class _ChatTranslationSheetContentState
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 minimumSize: const Size.fromHeight(46),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
               ),
-              onPressed: () {
-                Navigator.pop(context);
-                showSnackBar(
-                  context: context,
-                  content: 'Translation settings applied: ${_myLanguage.flagEmoji} ⇄ ${_peerLanguage.flagEmoji}',
-                  type: SnacBarType.info,
-                );
+              onPressed: () async {
+                await _savePreferences();
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  showSnackBar(
+                    context: context,
+                    content: _liveTranslationEnabled
+                        ? 'Translation settings applied: ${_myLanguage.flagEmoji} ⇄ ${_peerLanguage.flagEmoji}'
+                        : 'In-Chat Live Translation Disabled for ${widget.peerName}',
+                    type: SnacBarType.info,
+                  );
+                }
               },
               child: const Text('Save & Apply Settings'),
             ),

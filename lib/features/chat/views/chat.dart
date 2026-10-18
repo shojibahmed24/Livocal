@@ -180,19 +180,53 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           ),
         ),
         actions: [
-          IconButton(
-            tooltip: 'In-Chat Live Translation Settings',
-            onPressed: () {
-              showInChatTranslationSheet(
-                context: context,
-                peerName: widget.otherUserContactName,
+          Builder(
+            builder: (context) {
+              final isTransEnabled = SharedPref.instance.getBool(
+                    'chat_trans_${widget.other.id}_enabled',
+                  ) ??
+                  false;
+              return IconButton(
+                tooltip: isTransEnabled
+                    ? 'In-Chat Live Translation (ON)'
+                    : 'In-Chat Live Translation (OFF)',
+                onPressed: () {
+                  showInChatTranslationSheet(
+                    context: context,
+                    peerName: widget.otherUserContactName,
+                    peerId: widget.other.id,
+                    onSettingsChanged: () {
+                      setState(() {});
+                    },
+                  );
+                },
+                icon: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Icon(
+                      Icons.translate_rounded,
+                      size: 24,
+                      color: isTransEnabled
+                          ? const Color(0xFF25D366)
+                          : Colors.white,
+                    ),
+                    if (isTransEnabled)
+                      Positioned(
+                        right: 0,
+                        top: 2,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Color(0xFF25D366),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               );
             },
-            icon: const Icon(
-              Icons.translate_rounded,
-              size: 24,
-              color: Colors.white,
-            ),
           ),
           IconButton(
             tooltip: 'Voice Call with AI Translation',
