@@ -165,12 +165,9 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
     await GeminiLiveTranslator.saveVoiceName(voiceId);
 
     if (mounted) {
-      final isBangla = ref.read(appLocaleProvider).languageCode == 'bn';
       showSnackBar(
         context: context,
-        content: isBangla
-            ? 'লাইভ অনুবাদ ভয়েস হিসেবে "$voiceId" সেট করা হয়েছে'
-            : 'Set "$voiceId" as your live translation voice',
+        content: AppStrings.trParams(ref, 'voiceSetSuccess', {'voiceId': voiceId}),
         type: SnacBarType.info,
       );
     }
@@ -212,7 +209,7 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
         });
         showSnackBar(
           context: context,
-          content: 'Voice preview is unavailable offline.',
+          content: AppStrings.tr(ref, 'voicePreviewOffline'),
           type: SnacBarType.error,
         );
       }
@@ -238,7 +235,7 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
       backgroundColor: bgColor,
       appBar: AppBar(
         title: Text(
-          isBangla ? 'এআই ভয়েস পার্সোনা' : 'AI Voice Persona',
+          AppStrings.tr(ref, 'geminiVoiceEngine'),
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         elevation: 0,
@@ -289,9 +286,7 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isBangla
-                            ? 'লাইভ কল অনুবাদ ভয়েস'
-                            : 'Live Audio Translation Voice',
+                        AppStrings.tr(ref, 'liveAudioTranslationVoice'),
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
@@ -300,9 +295,7 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        isBangla
-                            ? 'কল করার সময় অন্য পক্ষের অনুবাদ কোন ভয়েসে শুনতে চান তা সিলেক্ট করুন। নির্বাচিত ভয়েসটি সরাসরি আউটপুট স্পিচে ব্যবহার হবে।'
-                            : 'Select which voice persona speaks translated speech to you during live phone and VoIP calls.',
+                        AppStrings.tr(ref, 'liveAudioTranslationVoiceDesc'),
                         style: TextStyle(
                           fontSize: 12.5,
                           color: subtitleColor,
@@ -322,7 +315,7 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
-              isBangla ? 'উপলব্ধ ভয়েস পার্সোনা' : 'AVAILABLE VOICE PERSONAS',
+              AppStrings.tr(ref, 'availableVoicePersonas'),
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -427,7 +420,7 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
                                                 BorderRadius.circular(10),
                                           ),
                                           child: Text(
-                                            isBangla ? 'সক্রিয়' : 'ACTIVE',
+                                            AppStrings.tr(ref, 'activeBadge'),
                                             style: const TextStyle(
                                               color: Colors.white,
                                               fontSize: 9.5,
@@ -555,13 +548,7 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
                                       ),
                                     const SizedBox(width: 6),
                                     Text(
-                                      isPlaying
-                                          ? (isBangla
-                                              ? 'বন্ধ করুন'
-                                              : 'Stop Preview')
-                                          : (isBangla
-                                              ? 'ভয়েস শুনুন'
-                                              : 'Listen Voice'),
+                                      isPlaying ? AppStrings.tr(ref, 'stopPreview') : AppStrings.tr(ref, 'listenVoice'),
                                       style: TextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
@@ -577,13 +564,7 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
 
                             // Tap to select indicator
                             Text(
-                              isSelected
-                                  ? (isBangla
-                                      ? 'নির্বাচিত ভয়েস'
-                                      : 'Selected Voice')
-                                  : (isBangla
-                                      ? 'সিলেক্ট করতে চাপুন'
-                                      : 'Tap to select'),
+                              isSelected ? AppStrings.tr(ref, 'selectedVoice') : AppStrings.tr(ref, 'tapToSelect'),
                               style: TextStyle(
                                 fontSize: 11,
                                 fontStyle: FontStyle.italic,
@@ -624,9 +605,7 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    isBangla
-                        ? 'আপনার ভয়েস পছন্দটি স্বয়ংক্রিয়ভাবে সংরক্ষিত থাকে এবং প্রতিটি লাইভ কলে প্রয়োগ করা হয়।'
-                        : 'Your preferred voice persona is securely saved on your device and applied automatically to all live translated calls.',
+                    AppStrings.tr(ref, 'voicePreferenceSavedNotice'),
                     style: TextStyle(
                       fontSize: 11.5,
                       color: subtitleColor,

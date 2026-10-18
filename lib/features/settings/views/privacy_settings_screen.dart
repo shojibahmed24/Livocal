@@ -321,7 +321,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
                   if (context.mounted) {
                     showSnackBar(
                       context: context,
-                      content: 'Biometric error: $e',
+                      content: '${AppStrings.tr(ref, 'biometricError')}: $e',
                       type: SnacBarType.error,
                     );
                   }

@@ -15,11 +15,11 @@ class QrCodeScreen extends ConsumerWidget {
 
   const QrCodeScreen({super.key, required this.user});
 
-  void _shareQrCode(BuildContext context) {
+  void _shareQrCode(BuildContext context, WidgetRef ref) {
     HapticFeedback.lightImpact();
     final link = 'https://livocal.app/add/${user.phone.getFormattedNumber().replaceAll(RegExp(r'\s+'), '')}';
     Share.share(
-      'Connect with me on Livocal: $link\nDownload the app to chat and make live translated voice calls!',
+      AppStrings.trParams(ref, 'shareQrInviteText', {'link': link}),
     );
   }
 
@@ -56,7 +56,7 @@ class QrCodeScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.share_rounded, color: Colors.white),
-            onPressed: () => _shareQrCode(context),
+            onPressed: () => _shareQrCode(context, ref),
           ),
         ],
       ),
@@ -139,10 +139,9 @@ class QrCodeScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    const Text(
-                      'Livocal Contact',
-                      style: TextStyle(
+                    Text(
+                      AppStrings.tr(ref, 'livocalContact'),
+                      style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.5,
@@ -195,7 +194,7 @@ class QrCodeScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(AppRadius.radiusLg),
                         ),
                       ),
-                      onPressed: () => _shareQrCode(context),
+                      onPressed: () => _shareQrCode(context, ref),
                       icon: const Icon(Icons.share_rounded, size: 20),
                       label: Text(AppStrings.tr(ref, 'shareQrCode')),
                     ),

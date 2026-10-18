@@ -146,7 +146,7 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
       if (mounted) {
         showSnackBar(
           context: context,
-          content: 'Failed to clear cache: $e',
+          content: '${AppStrings.tr(ref, 'failedToClearCache')}: $e',
           type: SnacBarType.error,
         );
       }

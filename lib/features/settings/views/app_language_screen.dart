@@ -82,7 +82,7 @@ class _AppLanguageScreenState extends ConsumerState<AppLanguageScreen> {
                     if (context.mounted) {
                       showSnackBar(
                         context: context,
-                        content: 'App language set to ${lang['name']}',
+                        content: '${AppStrings.tr(ref, 'appLanguageSetTo')} ${lang['name']}',
                         type: SnacBarType.info,
                       );
                     }

@@ -96,11 +96,13 @@ void main() {
         // Notifications screen
         'notifications', 'conversationTones', 'messagesHeader', 'notificationTone', 'callRingtoneTitle',
         // Storage screen
-        'storage', 'manageStorage', 'storageBreakdown', 'networkUsage', 'whenUsingMobileData',
+        'storage', 'manageStorage', 'storageBreakdown', 'networkUsage', 'whenUsingMobileData', 'failedToClearCache',
         // Help screen
-        'help', 'helpCentre', 'contactSupport', 'faqTitle', 'aboutLivocal',
+        'help', 'helpCentre', 'contactSupport', 'faqTitle', 'aboutLivocal', 'privacyPrinciplesBody', 'failedToSendFeedback', 'couldNotOpenUrl',
         // QR Code screen
-        'qrCode', 'copyLink', 'shareQrCode', 'qrCodeDesc',
+        'qrCode', 'copyLink', 'shareQrCode', 'qrCodeDesc', 'livocalContact', 'shareQrInviteText',
+        // Voice Persona & Security
+        'biometricError', 'voicePreviewOffline', 'liveAudioTranslationVoice', 'availableVoicePersonas',
       ];
 
       for (final key in subScreenSampleKeys) {
