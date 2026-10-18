@@ -219,6 +219,201 @@ class _MessageCardState extends State<MessageCard>
     );
   }
 
+  Widget _buildPaymentCard(
+    BuildContext context,
+    bool isDark,
+    bool isSent,
+  ) {
+    final content = widget.message.content;
+    String amount = '\$0.00';
+    String method = '';
+    String refId = '';
+    String note = '';
+
+    final lines = content.split('\n');
+    final mainLine = lines.isNotEmpty ? lines[0] : content;
+    if (lines.length > 1) {
+      for (int i = 1; i < lines.length; i++) {
+        if (lines[i].startsWith('Note: ')) {
+          note = lines[i].replaceFirst('Note: ', '').trim();
+        }
+      }
+    }
+
+    final matchAmount = RegExp(r'\$([0-9.,]+)').firstMatch(mainLine);
+    if (matchAmount != null) {
+      amount = '\$${matchAmount.group(1)}';
+    }
+
+    final matchMethod = RegExp(r'via\s+([^(]+)').firstMatch(mainLine);
+    if (matchMethod != null) {
+      method = matchMethod.group(1)!.trim();
+    }
+
+    final matchRef = RegExp(r'\(Ref:\s*([^)]+)\)').firstMatch(mainLine);
+    if (matchRef != null) {
+      refId = matchRef.group(1)!.trim();
+    }
+
+    final isWallet = method.toLowerCase().contains('wallet');
+    final isCrypto = method.toLowerCase().contains('usdt') ||
+        method.toLowerCase().contains('binance');
+    final primaryColor = isWallet
+        ? AppColors.primary
+        : isCrypto
+            ? const Color(0xFFF0B90B)
+            : const Color(0xFFE2136E);
+
+    return Container(
+      constraints: const BoxConstraints(minWidth: 230, maxWidth: 280),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.medium),
+        color: isDark
+            ? Colors.black.withValues(alpha: 0.25)
+            : Colors.white.withValues(alpha: 0.65),
+        border: Border.all(
+          color: primaryColor.withValues(alpha: isDark ? 0.45 : 0.35),
+          width: 1.2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: primaryColor.withValues(alpha: 0.15),
+                ),
+                child: Icon(
+                  isWallet
+                      ? Icons.account_balance_wallet_rounded
+                      : isCrypto
+                          ? Icons.currency_bitcoin_rounded
+                          : Icons.phone_android_rounded,
+                  size: 18,
+                  color: primaryColor,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isSent ? 'Payment Sent' : 'Payment Received',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.lightTextSecondary,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    Text(
+                      method.isNotEmpty ? method : 'Livocal Transfer',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: isDark
+                            ? AppColors.darkTextPrimary
+                            : AppColors.lightTextPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: AppColors.success.withValues(alpha: 0.15),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.check_circle_rounded,
+                        size: 10, color: AppColors.success),
+                    SizedBox(width: 3),
+                    Text(
+                      'PAID',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.success,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Center(
+            child: Text(
+              amount,
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
+                color: isDark
+                    ? AppColors.darkTextPrimary
+                    : AppColors.lightTextPrimary,
+              ),
+            ),
+          ),
+          if (refId.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.black.withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                'TrxID: $refId',
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 10.5,
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.lightTextSecondary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+          if (note.isNotEmpty) ...[
+            const SizedBox(height: 5),
+            Text(
+              '“$note”',
+              style: TextStyle(
+                fontSize: 11.5,
+                fontStyle: FontStyle.italic,
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   bool get wantKeepAlive => true;
 
@@ -406,19 +601,21 @@ class _MessageCardState extends State<MessageCard>
                                       ),
                                     ],
                                   )
-                                : Text(
-                                    '${widget.message.content} $textPadding',
-                                    textWidthBasis: TextWidthBasis.longestLine,
-                                    style: Theme.of(context)
-                                        .custom
-                                        .textTheme
-                                        .bodyText1
-                                        .copyWith(
-                                          fontSize: biggerFont ? 40 : 16,
-                                          color: colorTheme.textColor1,
-                                        ),
-                                    softWrap: true,
-                                  ),
+                                : widget.message.content.startsWith('💰 Payment sent:')
+                                    ? _buildPaymentCard(context, isDark, isSentMessageCard)
+                                    : Text(
+                                        '${widget.message.content} $textPadding',
+                                        textWidthBasis: TextWidthBasis.longestLine,
+                                        style: Theme.of(context)
+                                            .custom
+                                            .textTheme
+                                            .bodyText1
+                                            .copyWith(
+                                              fontSize: biggerFont ? 40 : 16,
+                                              color: colorTheme.textColor1,
+                                            ),
+                                        softWrap: true,
+                                      ),
                           )
                         ],
                       ],

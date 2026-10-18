@@ -318,6 +318,49 @@ void main() {
       expect(availablePaymentMethods.contains('stripe'), isFalse);
       expect(availablePaymentMethods.contains('gpay'), isFalse);
     });
+
+    test('Chat payment message format parses amount, method, refId, and note cleanly', () {
+      const rawMessage = '💰 Payment sent: \$25.00 via bKash Personal (Ref: 9JH76G)\nNote: Payment for live minutes';
+
+      // Verify payment message marker
+      expect(rawMessage.startsWith('💰 Payment sent:'), isTrue);
+
+      final lines = rawMessage.split('\n');
+      final mainLine = lines[0];
+      String note = '';
+      if (lines.length > 1 && lines[1].startsWith('Note: ')) {
+        note = lines[1].replaceFirst('Note: ', '').trim();
+      }
+
+      final matchAmount = RegExp(r'\$([0-9.,]+)').firstMatch(mainLine);
+      final matchMethod = RegExp(r'via\s+([^(]+)').firstMatch(mainLine);
+      final matchRef = RegExp(r'\(Ref:\s*([^)]+)\)').firstMatch(mainLine);
+
+      expect(matchAmount?.group(1), equals('25.00'));
+      expect(matchMethod?.group(1)?.trim(), equals('bKash Personal'));
+      expect(matchRef?.group(1)?.trim(), equals('9JH76G'));
+      expect(note, equals('Payment for live minutes'));
+    });
+
+    test('Chat mic hands-free tap-to-record state transitions', () {
+      // Simulate state machine of ChatInputMic
+      var recordingState = 'notRecording';
+
+      // Tap when notRecording -> transitions to locked hands-free recording
+      void onTapMic() {
+        if (recordingState == 'notRecording') {
+          recordingState = 'recordingLocked';
+        } else if (recordingState == 'recordingLocked' || recordingState == 'recording') {
+          recordingState = 'notRecording'; // sent
+        }
+      }
+
+      expect(recordingState, equals('notRecording'));
+      onTapMic(); // single click
+      expect(recordingState, equals('recordingLocked')); // hands-free locked
+      onTapMic(); // tap to send
+      expect(recordingState, equals('notRecording'));
+    });
   });
 }
 

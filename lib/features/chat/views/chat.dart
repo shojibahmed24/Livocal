@@ -540,8 +540,14 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
                   self: widget.self,
                   other: widget.other,
                   contactName: widget.otherUserContactName,
-                  onPaymentConfirmed: (amount, note) {
-                    final paymentMsg = '💰 Payment sent: \$$amount${note.isNotEmpty ? " ($note)" : ""}';
+                  onPaymentConfirmed: (amount, note, [method, txId]) {
+                    final methodStr =
+                        (method != null && method.isNotEmpty) ? ' via $method' : '';
+                    final refStr =
+                        (txId != null && txId.isNotEmpty) ? ' (Ref: $txId)' : '';
+                    final noteStr = note.isNotEmpty ? '\nNote: $note' : '';
+                    final paymentMsg =
+                        '💰 Payment sent: \$$amount$methodStr$refStr$noteStr';
                     ref.read(chatControllerProvider.notifier).sendMessageNoAttachments(
                       Message(
                         id: const Uuid().v4(),

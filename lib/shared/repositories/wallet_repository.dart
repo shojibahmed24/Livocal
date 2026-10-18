@@ -388,6 +388,56 @@ class WalletRepository {
       return null;
     }
   }
+
+  /// Atomically transfers minutes from sender's wallet to receiver's wallet
+  Future<bool> transferMinutes({
+    required String fromUserId,
+    required String toUserId,
+    required int minutes,
+  }) async {
+    if (minutes <= 0 || firestore == null) return false;
+    try {
+      final senderRef = _walletRef(fromUserId);
+      final receiverRef = _walletRef(toUserId);
+      if (senderRef == null || receiverRef == null) return false;
+
+      return await firestore!.runTransaction<bool>((tx) async {
+        final senderSnap = await tx.get(senderRef);
+        if (!senderSnap.exists || senderSnap.data() == null) return false;
+
+        final senderData = senderSnap.data()!;
+        final senderBalance = (senderData['balanceMinutes'] as num?)?.toInt() ?? 0;
+        if (senderBalance < minutes) return false;
+
+        final receiverSnap = await tx.get(receiverRef);
+        int receiverBalance = 0;
+        int receiverPurchased = 0;
+        if (receiverSnap.exists && receiverSnap.data() != null) {
+          final rData = receiverSnap.data()!;
+          receiverBalance = (rData['balanceMinutes'] as num?)?.toInt() ?? 0;
+          receiverPurchased = (rData['totalMinutesPurchased'] as num?)?.toInt() ?? 0;
+        }
+
+        // Deduct from sender
+        tx.set(senderRef, {
+          'balanceMinutes': senderBalance - minutes,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        // Credit to receiver
+        tx.set(receiverRef, {
+          'balanceMinutes': receiverBalance + minutes,
+          'totalMinutesPurchased': receiverPurchased + minutes,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        return true;
+      });
+    } catch (e) {
+      debugPrint('[WalletRepository] transferMinutes error: $e');
+      return false;
+    }
+  }
 }
 
 class PaymentSubmissionResult {

@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:livocal/features/calls/views/widgets/minute_recharge_sheet.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/models/user_wallet.dart';
+import 'package:livocal/shared/repositories/wallet_repository.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/app_tokens.dart';
@@ -9,7 +14,8 @@ void showSendPaymentSheet({
   required User self,
   required User other,
   required String contactName,
-  required Function(String amount, String note) onPaymentConfirmed,
+  required Function(String amount, String note, [String? method, String? txId])
+      onPaymentConfirmed,
 }) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
   showModalBottomSheet(
@@ -17,7 +23,8 @@ void showSendPaymentSheet({
     isScrollControlled: true,
     backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightBackground,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.radiusLg)),
+      borderRadius:
+          BorderRadius.vertical(top: Radius.circular(AppRadius.radiusLg)),
     ),
     builder: (ctx) => _SendPaymentSheetContent(
       self: self,
@@ -28,7 +35,7 @@ void showSendPaymentSheet({
   );
 }
 
-class _SendPaymentSheetContent extends StatefulWidget {
+class _SendPaymentSheetContent extends ConsumerStatefulWidget {
   const _SendPaymentSheetContent({
     required this.self,
     required this.other,
@@ -39,30 +46,74 @@ class _SendPaymentSheetContent extends StatefulWidget {
   final User self;
   final User other;
   final String contactName;
-  final Function(String amount, String note) onPaymentConfirmed;
+  final Function(String amount, String note, [String? method, String? txId])
+      onPaymentConfirmed;
 
   @override
-  State<_SendPaymentSheetContent> createState() => _SendPaymentSheetContentState();
+  ConsumerState<_SendPaymentSheetContent> createState() =>
+      _SendPaymentSheetContentState();
 }
 
-class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
-  final TextEditingController _amountController = TextEditingController(text: '10');
+class _SendPaymentSheetContentState
+    extends ConsumerState<_SendPaymentSheetContent> {
+  final TextEditingController _amountController =
+      TextEditingController(text: '10');
   final TextEditingController _noteController = TextEditingController();
-  String _selectedMethod = 'wallet';
+  final TextEditingController _trxIdController = TextEditingController();
+
+  String _selectedMethod = 'wallet'; // 'wallet', 'mfs', 'crypto'
+  String _mfsType = 'bKash'; // 'bKash' or 'Nagad'
+  String _cryptoNetwork = 'Binance Pay'; // 'Binance Pay', 'USDT TRC-20', 'USDT BEP-20'
   bool _isProcessing = false;
+  UserWallet? _wallet;
 
   final List<String> _quickAmounts = ['5', '10', '25', '50', '100'];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchWallet();
+  }
+
+  Future<void> _fetchWallet() async {
+    try {
+      final w =
+          await ref.read(walletRepositoryProvider).getWallet(widget.self.id);
+      if (mounted) {
+        setState(() {
+          _wallet = w;
+        });
+      }
+    } catch (e) {
+      debugPrint('[PaymentSheet] _fetchWallet error: $e');
+    }
+  }
 
   @override
   void dispose() {
     _amountController.dispose();
     _noteController.dispose();
+    _trxIdController.dispose();
     super.dispose();
   }
 
-  void _processPayment() {
-    final amount = _amountController.text.trim();
-    if (amount.isEmpty || double.tryParse(amount) == null || double.parse(amount) <= 0) {
+  String get _recipientPhone {
+    final phone = widget.other.phone.getFormattedNumber();
+    if (phone.isNotEmpty) return phone;
+    if (widget.other.phoneNumber.isNotEmpty) return widget.other.phoneNumber;
+    return '+8801700000000';
+  }
+
+  int get _calculatedMinutesForAmount {
+    final amt = double.tryParse(_amountController.text.trim()) ?? 0;
+    // 1 USD ~ 7 minutes
+    return (amt * 7).round();
+  }
+
+  Future<void> _processPayment() async {
+    final amountStr = _amountController.text.trim();
+    final amount = double.tryParse(amountStr);
+    if (amount == null || amount <= 0) {
       showSnackBar(
         context: context,
         content: 'Please enter a valid amount',
@@ -71,28 +122,109 @@ class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
       return;
     }
 
-    setState(() {
-      _isProcessing = true;
-    });
+    setState(() => _isProcessing = true);
 
-    Future.delayed(const Duration(milliseconds: 900), () {
+    try {
+      String methodDisplay = 'Livocal In-App Wallet';
+      String txId = '';
+
+      if (_selectedMethod == 'wallet') {
+        methodDisplay = 'Livocal Wallet';
+        final minutesToSend = _calculatedMinutesForAmount;
+        final available = _wallet?.balanceMinutes ?? 0;
+
+        if (minutesToSend > available) {
+          setState(() => _isProcessing = false);
+          showSnackBar(
+            context: context,
+            content:
+                'Insufficient wallet balance ($available mins available). Please recharge.',
+            type: SnacBarType.error,
+          );
+          return;
+        }
+
+        final success =
+            await ref.read(walletRepositoryProvider).transferMinutes(
+                  fromUserId: widget.self.id,
+                  toUserId: widget.other.id,
+                  minutes: minutesToSend,
+                );
+
+        if (!success) {
+          setState(() => _isProcessing = false);
+          if (mounted) {
+            showSnackBar(
+              context: context,
+              content: 'Wallet transfer failed. Please try again.',
+              type: SnacBarType.error,
+            );
+          }
+          return;
+        }
+        txId = 'LV-${DateTime.now().millisecondsSinceEpoch.toString().substring(6)}';
+      } else if (_selectedMethod == 'mfs') {
+        methodDisplay = '$_mfsType MFS';
+        final trx = _trxIdController.text.trim();
+        if (trx.isEmpty || trx.length < 6) {
+          setState(() => _isProcessing = false);
+          showSnackBar(
+            context: context,
+            content: 'Please enter a valid 8-10 character $_mfsType TrxID',
+            type: SnacBarType.error,
+          );
+          return;
+        }
+        txId = trx.toUpperCase();
+      } else {
+        methodDisplay = 'Crypto ($_cryptoNetwork)';
+        final hash = _trxIdController.text.trim();
+        if (hash.isEmpty || hash.length < 6) {
+          setState(() => _isProcessing = false);
+          showSnackBar(
+            context: context,
+            content: 'Please enter a valid Transaction Hash / Binance Order ID',
+            type: SnacBarType.error,
+          );
+          return;
+        }
+        txId = hash;
+      }
+
       if (!mounted) return;
-      setState(() {
-        _isProcessing = false;
-      });
+      setState(() => _isProcessing = false);
       Navigator.pop(context);
-      widget.onPaymentConfirmed(amount, _noteController.text.trim());
+
+      widget.onPaymentConfirmed(
+        amountStr,
+        _noteController.text.trim(),
+        methodDisplay,
+        txId,
+      );
+
       showSnackBar(
         context: context,
-        content: '\$$amount successfully sent to ${widget.contactName}!',
+        content: '\$$amountStr payment sent to ${widget.contactName}!',
         type: SnacBarType.info,
       );
-    });
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        showSnackBar(
+          context: context,
+          content: 'Payment failed: $e',
+          type: SnacBarType.error,
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final availableMinutes = _wallet?.balanceMinutes ?? 0;
+    final neededMinutes = _calculatedMinutesForAmount;
+    final hasEnoughWallet = availableMinutes >= neededMinutes;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -111,7 +243,7 @@ class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.4),
+                  color: Colors.grey.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -119,10 +251,20 @@ class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
             const SizedBox(height: 16),
             Row(
               children: [
-                const CircleAvatar(
-                  radius: 20,
-                  backgroundColor: AppColors.primary,
-                  child: Icon(Icons.attach_money_rounded, color: Colors.white, size: 24),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF00A884), Color(0xFF25D366)],
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.payments_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -130,13 +272,19 @@ class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Send Money to ${widget.contactName}',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        'Send Payment to ${widget.contactName}',
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        widget.other.phone.getFormattedNumber(),
-                        style: const TextStyle(fontSize: 13, color: Colors.grey),
+                        _recipientPhone,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey,
+                        ),
                       ),
                     ],
                   ),
@@ -155,28 +303,38 @@ class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
                     const Text(
                       '\$',
                       style: TextStyle(
-                        fontSize: 36,
+                        fontSize: 34,
                         fontWeight: FontWeight.bold,
                         color: AppColors.primary,
                       ),
                     ),
                     const SizedBox(width: 4),
                     SizedBox(
-                      width: 140,
+                      width: 130,
                       child: TextField(
                         controller: _amountController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontSize: 34,
+                          fontWeight: FontWeight.bold,
+                        ),
                         decoration: const InputDecoration(
                           border: InputBorder.none,
                           hintText: '0',
                         ),
+                        onChanged: (_) => setState(() {}),
                       ),
                     ),
                     const Text(
                       'USD',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                      ),
                     ),
                   ],
                 ),
@@ -184,7 +342,7 @@ class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
             ),
             const SizedBox(height: 8),
 
-            // Quick chips
+            // Quick amount chips
             Center(
               child: Wrap(
                 spacing: 8,
@@ -193,9 +351,11 @@ class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
                   return ChoiceChip(
                     label: Text('\$$amt'),
                     selected: isSelected,
-                    selectedColor: AppColors.primary.withOpacity(0.2),
+                    selectedColor: AppColors.primary.withValues(alpha: 0.2),
                     labelStyle: TextStyle(
-                      color: isSelected ? AppColors.primary : (isDark ? Colors.white : Colors.black87),
+                      color: isSelected
+                          ? AppColors.primary
+                          : (isDark ? Colors.white : Colors.black87),
                       fontWeight: FontWeight.w600,
                     ),
                     onSelected: (val) {
@@ -213,24 +373,30 @@ class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
             TextField(
               controller: _noteController,
               decoration: InputDecoration(
-                hintText: 'Add a note (e.g. Dinner, Freelance, Gift)',
-                hintStyle: const TextStyle(fontSize: 14),
+                hintText: 'Add a note (e.g. Freelance, Dinner, Translation)',
+                hintStyle: const TextStyle(fontSize: 13.5),
                 prefixIcon: const Icon(Icons.note_alt_outlined, size: 20),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
             const SizedBox(height: 16),
 
-            // Payment method selection
+            // Payment method selector
             const Text(
-              'Payment Method',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey),
+              'Select Payment Method',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey,
+              ),
             ),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -238,11 +404,37 @@ class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
                   RadioListTile<String>(
                     value: 'wallet',
                     groupValue: _selectedMethod,
-                    title: const Row(
+                    title: Row(
                       children: [
-                        Icon(Icons.account_balance_wallet, size: 20, color: AppColors.primary),
-                        SizedBox(width: 8),
-                        Text('Livocal In-App Wallet', style: TextStyle(fontSize: 14)),
+                        const Icon(
+                          Icons.account_balance_wallet,
+                          size: 20,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Livocal In-App Wallet',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                'Balance: $availableMinutes mins (transfers $neededMinutes mins)',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: hasEnoughWallet
+                                      ? const Color(0xFF25D366)
+                                      : Colors.redAccent,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                     activeColor: AppColors.primary,
@@ -254,9 +446,19 @@ class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
                     groupValue: _selectedMethod,
                     title: const Row(
                       children: [
-                        Icon(Icons.phone_android, size: 20, color: Colors.pinkAccent),
+                        Icon(
+                          Icons.phone_android,
+                          size: 20,
+                          color: Colors.pinkAccent,
+                        ),
                         SizedBox(width: 8),
-                        Text('bKash / Nagad MFS', style: TextStyle(fontSize: 14)),
+                        Text(
+                          'bKash / Nagad MFS (Direct Send)',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                     ),
                     activeColor: AppColors.primary,
@@ -268,9 +470,19 @@ class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
                     groupValue: _selectedMethod,
                     title: const Row(
                       children: [
-                        Icon(Icons.currency_bitcoin, size: 20, color: Colors.orange),
+                        Icon(
+                          Icons.currency_bitcoin,
+                          size: 20,
+                          color: Colors.orange,
+                        ),
                         SizedBox(width: 8),
-                        Text('Crypto (Binance Pay / USDT)', style: TextStyle(fontSize: 14)),
+                        Text(
+                          'Crypto (Binance Pay / USDT)',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                     ),
                     activeColor: AppColors.primary,
@@ -279,26 +491,246 @@ class _SendPaymentSheetContentState extends State<_SendPaymentSheetContent> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
-            // Send button
+            // Method-Specific Interactive Configuration Cards
+            if (_selectedMethod == 'wallet' && !hasEnoughWallet) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: Colors.redAccent.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.redAccent,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Short by ${neededMinutes - availableMinutes} mins to complete this transfer.',
+                        style: const TextStyle(fontSize: 12.5),
+                      ),
+                    ),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                      ),
+                      onPressed: () {
+                        showMinuteRechargeSheet(
+                          context,
+                          user: widget.self,
+                          onRecharged: _fetchWallet,
+                        );
+                      },
+                      child: const Text('Recharge'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ] else if (_selectedMethod == 'mfs') ...[
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF222E35)
+                      : const Color(0xFFF0F2F5),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        ChoiceChip(
+                          label: const Text('bKash'),
+                          selected: _mfsType == 'bKash',
+                          selectedColor: Colors.pinkAccent.withValues(alpha: 0.25),
+                          onSelected: (_) => setState(() => _mfsType = 'bKash'),
+                        ),
+                        const SizedBox(width: 8),
+                        ChoiceChip(
+                          label: const Text('Nagad'),
+                          selected: _mfsType == 'Nagad',
+                          selectedColor: Colors.orange.withValues(alpha: 0.25),
+                          onSelected: (_) => setState(() => _mfsType = 'Nagad'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${widget.contactName}\'s $_mfsType Number:',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              Text(
+                                _recipientPhone,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.copy_rounded,
+                            size: 19,
+                            color: AppColors.primary,
+                          ),
+                          onPressed: () {
+                            Clipboard.setData(
+                              ClipboardData(text: _recipientPhone),
+                            );
+                            showSnackBar(
+                              context: context,
+                              content:
+                                  '$_recipientPhone copied to clipboard!',
+                              type: SnacBarType.info,
+                            );
+                          },
+                          tooltip: 'Copy Number',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _trxIdController,
+                      decoration: InputDecoration(
+                        hintText: 'Enter 8-10 digit $_mfsType TrxID',
+                        hintStyle: const TextStyle(fontSize: 13),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        suffixIcon: TextButton(
+                          onPressed: () async {
+                            final data =
+                                await Clipboard.getData(Clipboard.kTextPlain);
+                            if (data?.text != null) {
+                              setState(() {
+                                _trxIdController.text = data!.text!.trim();
+                              });
+                            }
+                          },
+                          child: const Text('PASTE'),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ] else if (_selectedMethod == 'crypto') ...[
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF222E35)
+                      : const Color(0xFFF0F2F5),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 6,
+                      children: [
+                        'Binance Pay',
+                        'USDT TRC-20',
+                        'USDT BEP-20',
+                      ].map((net) {
+                        return ChoiceChip(
+                          label: Text(net, style: const TextStyle(fontSize: 12)),
+                          selected: _cryptoNetwork == net,
+                          selectedColor: Colors.orange.withValues(alpha: 0.25),
+                          onSelected: (_) => setState(() => _cryptoNetwork = net),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: _trxIdController,
+                      decoration: InputDecoration(
+                        hintText: 'Enter TxHash / Binance Order ID',
+                        hintStyle: const TextStyle(fontSize: 13),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        suffixIcon: TextButton(
+                          onPressed: () async {
+                            final data =
+                                await Clipboard.getData(Clipboard.kTextPlain);
+                            if (data?.text != null) {
+                              setState(() {
+                                _trxIdController.text = data!.text!.trim();
+                              });
+                            }
+                          },
+                          child: const Text('PASTE'),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Submit Button
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 minimumSize: const Size.fromHeight(48),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
               ),
               onPressed: _isProcessing ? null : _processPayment,
               child: _isProcessing
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : Text(
-                      'Pay \$${_amountController.text.isEmpty ? "0" : _amountController.text}',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      'Confirm Payment: \$${_amountController.text.trim().isEmpty ? "0" : _amountController.text.trim()}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
             ),
           ],

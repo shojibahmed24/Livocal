@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:logger/logger.dart';
 import 'package:mime/mime.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:uuid/uuid.dart';
@@ -147,29 +148,37 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
     IsarDb.saveUser(other);
   }
 
+  bool _isRecorderInited = false;
+
   Future<void> initRecorder() async {
-    await state.soundRecorder.openRecorder();
-    final session = await AudioSession.instance;
-    await session.configure(AudioSessionConfiguration(
-      avAudioSessionCategory: AVAudioSessionCategory.playAndRecord,
-      avAudioSessionCategoryOptions:
-          AVAudioSessionCategoryOptions.allowBluetooth |
-              AVAudioSessionCategoryOptions.defaultToSpeaker,
-      avAudioSessionMode: AVAudioSessionMode.spokenAudio,
-      avAudioSessionRouteSharingPolicy:
-          AVAudioSessionRouteSharingPolicy.defaultPolicy,
-      avAudioSessionSetActiveOptions: AVAudioSessionSetActiveOptions.none,
-      androidAudioAttributes: const AndroidAudioAttributes(
-        contentType: AndroidAudioContentType.speech,
-        flags: AndroidAudioFlags.none,
-        usage: AndroidAudioUsage.voiceCommunication,
-      ),
-      androidAudioFocusGainType: AndroidAudioFocusGainType.gain,
-      androidWillPauseWhenDucked: true,
-    ));
-    state.soundRecorder.setSubscriptionDuration(
-      const Duration(milliseconds: 120),
-    );
+    if (_isRecorderInited) return;
+    try {
+      await state.soundRecorder.openRecorder();
+      final session = await AudioSession.instance;
+      await session.configure(AudioSessionConfiguration(
+        avAudioSessionCategory: AVAudioSessionCategory.playAndRecord,
+        avAudioSessionCategoryOptions:
+            AVAudioSessionCategoryOptions.allowBluetooth |
+                AVAudioSessionCategoryOptions.defaultToSpeaker,
+        avAudioSessionMode: AVAudioSessionMode.spokenAudio,
+        avAudioSessionRouteSharingPolicy:
+            AVAudioSessionRouteSharingPolicy.defaultPolicy,
+        avAudioSessionSetActiveOptions: AVAudioSessionSetActiveOptions.none,
+        androidAudioAttributes: const AndroidAudioAttributes(
+          contentType: AndroidAudioContentType.speech,
+          flags: AndroidAudioFlags.none,
+          usage: AndroidAudioUsage.voiceCommunication,
+        ),
+        androidAudioFocusGainType: AndroidAudioFocusGainType.gain,
+        androidWillPauseWhenDucked: true,
+      ));
+      state.soundRecorder.setSubscriptionDuration(
+        const Duration(milliseconds: 120),
+      );
+      _isRecorderInited = true;
+    } catch (e) {
+      debugPrint('[ChatController] initRecorder error: $e');
+    }
   }
 
   @override
@@ -208,17 +217,38 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
 
   Future<void> startRecording() async {
     if (!await hasPermission(Permission.microphone)) return;
-    await state.soundRecorder.startRecorder(
-      codec: Codec.aacADTS,
-      sampleRate: 44100,
-      bitRate: 48000,
-      toFile: "voice.aac",
-    );
+    try {
+      if (!_isRecorderInited) {
+        await initRecorder();
+      }
+      if (state.soundRecorder.isRecording) {
+        return;
+      }
+      final tempDir = await getTemporaryDirectory();
+      final audioPath =
+          '${tempDir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.aac';
+      await state.soundRecorder.startRecorder(
+        codec: Codec.aacADTS,
+        sampleRate: 44100,
+        bitRate: 48000,
+        toFile: audioPath,
+      );
 
-    recordingStream = state.soundRecorder.onProgress!.listen(
-      recordingListener,
-    );
-    setRecordingState(RecordingState.recording);
+      recordingStream = state.soundRecorder.onProgress!.listen(
+        recordingListener,
+      );
+      setRecordingState(RecordingState.recording);
+    } catch (e, st) {
+      debugPrint('[ChatController] startRecording error: $e\n$st');
+      setRecordingState(RecordingState.notRecording);
+    }
+  }
+
+  Future<void> startRecordingLocked() async {
+    await startRecording();
+    if (state.recordingState == RecordingState.recording) {
+      setRecordingState(RecordingState.recordingLocked);
+    }
   }
 
   void recordingListener(RecordingDisposition data) {
@@ -236,56 +266,69 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
 
   Future<void> onMicDragUp(double dy, double deviceHeight) async {
     if (dy > deviceHeight - 100 ||
-        state.recordingState == RecordingState.recordingLocked) return;
+        state.recordingState == RecordingState.recordingLocked) {
+      return;
+    }
 
     setRecordingState(RecordingState.recordingLocked);
   }
 
   Future<void> onRecordingDone() async {
-    final path = await state.soundRecorder.stopRecorder();
-    recordingStream?.cancel();
-    recordingStream = null;
+    try {
+      final path = await state.soundRecorder.stopRecorder();
+      recordingStream?.cancel();
+      recordingStream = null;
 
-    final samples = state.recordingSamples.map((e) => e.decibels ?? 0).toList();
+      final samples = state.recordingSamples.map((e) => e.decibels ?? 0).toList();
 
-    state = state.copyWith(
-      recordingSamples: [],
-      recordingState: RecordingState.notRecording,
-    );
+      state = state.copyWith(
+        recordingSamples: [],
+        recordingState: RecordingState.notRecording,
+      );
 
-    final recordedFile = File(path!);
-    final messageId = const Uuid().v4();
-    final timestamp = Timestamp.now();
-    final ext = path.split(".").last;
-    final fileName = "AUD_${timestamp.seconds}.$ext";
+      if (path == null || path.isEmpty) return;
+      final recordedFile = File(path);
+      if (!recordedFile.existsSync()) return;
 
-    final savedFilePath = DeviceStorage.getMediaFilePath(fileName);
-    final savedFile = await recordedFile.copy(savedFilePath);
+      final messageId = const Uuid().v4();
+      final timestamp = Timestamp.now();
+      final ext = path.split(".").last;
+      final fileName = "AUD_${timestamp.seconds}.$ext";
 
-    final senderId = ref.read(chatControllerProvider.notifier).self.id;
-    final receiverId = ref.read(chatControllerProvider.notifier).other.id;
+      final savedFilePath = DeviceStorage.getMediaFilePath(fileName);
+      final savedFile = await recordedFile.copy(savedFilePath);
 
-    ref.read(chatControllerProvider.notifier).sendMessageWithAttachments(
-          Message(
-            id: messageId,
-            content: "",
-            status: MessageStatus.pending,
-            senderId: senderId,
-            receiverId: receiverId,
-            timestamp: timestamp,
-            attachment: Attachment(
-              type: AttachmentType.voice,
-              url: "",
-              fileName: fileName,
-              fileSize: savedFile.existsSync() ? savedFile.lengthSync() : recordedFile.lengthSync(),
-              fileExtension: ext,
-              uploadStatus: UploadStatus.uploading,
-              autoDownload: true,
-              file: savedFile,
-              samples: samples,
+      final senderId = ref.read(chatControllerProvider.notifier).self.id;
+      final receiverId = ref.read(chatControllerProvider.notifier).other.id;
+
+      ref.read(chatControllerProvider.notifier).sendMessageWithAttachments(
+            Message(
+              id: messageId,
+              content: "",
+              status: MessageStatus.pending,
+              senderId: senderId,
+              receiverId: receiverId,
+              timestamp: timestamp,
+              attachment: Attachment(
+                type: AttachmentType.voice,
+                url: "",
+                fileName: fileName,
+                fileSize: savedFile.existsSync() ? savedFile.lengthSync() : recordedFile.lengthSync(),
+                fileExtension: ext,
+                uploadStatus: UploadStatus.uploading,
+                autoDownload: true,
+                file: savedFile,
+                samples: samples,
+              ),
             ),
-          ),
-        );
+          );
+    } catch (e, st) {
+      debugPrint('[ChatController] onRecordingDone error: $e\n$st');
+      state = state.copyWith(
+        recordingSamples: [],
+        recordingState: RecordingState.notRecording,
+      );
+    }
   }
 
   void onTextChanged(String value) {

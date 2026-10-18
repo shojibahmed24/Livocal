@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/theme/theme.dart';
 
@@ -17,7 +18,18 @@ class ChatInputMic extends ConsumerWidget {
     );
 
     return GestureDetector(
-      onLongPress: ref.read(chatControllerProvider.notifier).startRecording,
+      onTap: () async {
+        HapticFeedback.mediumImpact();
+        if (recordingState == RecordingState.notRecording) {
+          await ref.read(chatControllerProvider.notifier).startRecordingLocked();
+        } else {
+          await ref.read(chatControllerProvider.notifier).onRecordingDone();
+        }
+      },
+      onLongPress: () async {
+        HapticFeedback.mediumImpact();
+        await ref.read(chatControllerProvider.notifier).startRecording();
+      },
       onLongPressUp: () {
         if (recordingState == RecordingState.notRecording) {
           return;
