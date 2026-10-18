@@ -10,11 +10,19 @@ class AppAuthGuard extends StatefulWidget {
   final Widget child;
   const AppAuthGuard({super.key, required this.child});
 
+  /// Global flag indicating whether any biometric/PIN prompt is currently in-flight
+  static bool isSystemAuthenticating = false;
+  static DateTime? lastUnlockedAt;
+
+  static void markUnlocked() {
+    lastUnlockedAt = DateTime.now();
+  }
+
   @override
-  State<AppAuthGuard> createState() => _AppAuthGuardState();
+  State<AppAuthGuard> createState() => AppAuthGuardState();
 }
 
-class _AppAuthGuardState extends State<AppAuthGuard>
+class AppAuthGuardState extends State<AppAuthGuard>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   bool _isLocked = false;
   bool _isAuthenticating = false;
@@ -24,6 +32,7 @@ class _AppAuthGuardState extends State<AppAuthGuard>
   String? _pinError;
   int _lockoutSeconds = 0;
   Timer? _lockoutTimer;
+  DateTime? _pausedTimestamp;
 
   late final AnimationController _shakeController;
   late final Animation<double> _shakeAnimation;
@@ -57,18 +66,35 @@ class _AppAuthGuardState extends State<AppAuthGuard>
     final fingerprintEnabled =
         SharedPref.instance.getBool('privacy_fingerprint') ?? false;
 
+    // Ignore transitions when an authentication dialog (ours or settings) is open
+    if (_isAuthenticating || AppAuthGuard.isSystemAuthenticating) {
+      return;
+    }
+
     if (state == AppLifecycleState.paused) {
-      if (fingerprintEnabled || _twoStepEnabled) {
-        setState(() {
-          _isLocked = true;
-          _enteredPin = '';
-          _pinError = null;
-        });
-      }
+      _pausedTimestamp = DateTime.now();
     } else if (state == AppLifecycleState.resumed) {
-      _checkLockStatus();
-      if (_isLocked && !_isAuthenticating && fingerprintEnabled) {
-        _authenticate();
+      final paused = _pausedTimestamp;
+      _pausedTimestamp = null;
+
+      if (paused != null) {
+        final timeInBackground = DateTime.now().difference(paused);
+        // Only lock if app was genuinely in background for >2 seconds
+        // (prevents re-locking during notification shade, system popups, or camera/picker sheets)
+        if (timeInBackground > const Duration(seconds: 2)) {
+          if (fingerprintEnabled || _twoStepEnabled) {
+            if (mounted) {
+              setState(() {
+                _isLocked = true;
+                _enteredPin = '';
+                _pinError = null;
+              });
+              if (fingerprintEnabled) {
+                _authenticate();
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -78,26 +104,37 @@ class _AppAuthGuardState extends State<AppAuthGuard>
         SharedPref.instance.getBool('privacy_fingerprint') ?? false;
     final twoStep = await SecurePinService.isPinSet();
 
-    if (mounted) {
-      setState(() {
-        _twoStepEnabled = twoStep;
-        if (fingerprintEnabled || twoStep) {
-          _isLocked = true;
-        } else {
-          _isLocked = false;
+    if (!mounted) return;
+
+    final recentlyUnlocked = AppAuthGuard.lastUnlockedAt != null &&
+        DateTime.now().difference(AppAuthGuard.lastUnlockedAt!) <
+            const Duration(seconds: 15);
+
+    setState(() {
+      _twoStepEnabled = twoStep;
+      if ((fingerprintEnabled || twoStep) && !recentlyUnlocked) {
+        _isLocked = true;
+      } else {
+        _isLocked = false;
+      }
+    });
+
+    if (_isLocked &&
+        fingerprintEnabled &&
+        !_isAuthenticating &&
+        !AppAuthGuard.isSystemAuthenticating) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _isLocked) {
+          _authenticate();
         }
       });
-      if (fingerprintEnabled) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _authenticate();
-        });
-      }
     }
   }
 
   Future<void> _authenticate() async {
-    if (_isAuthenticating) return;
+    if (_isAuthenticating || AppAuthGuard.isSystemAuthenticating) return;
     _isAuthenticating = true;
+    AppAuthGuard.isSystemAuthenticating = true;
 
     try {
       final canCheck = await _auth.canCheckBiometrics;
@@ -108,6 +145,7 @@ class _AppAuthGuardState extends State<AppAuthGuard>
           setState(() {
             _isLocked = _twoStepEnabled;
             _isAuthenticating = false;
+            AppAuthGuard.isSystemAuthenticating = false;
           });
         }
         return;
@@ -123,6 +161,10 @@ class _AppAuthGuardState extends State<AppAuthGuard>
         setState(() {
           _isLocked = !authenticated;
           _isAuthenticating = false;
+          AppAuthGuard.isSystemAuthenticating = false;
+          if (authenticated) {
+            AppAuthGuard.markUnlocked();
+          }
         });
       }
     } catch (e) {
@@ -130,6 +172,7 @@ class _AppAuthGuardState extends State<AppAuthGuard>
       if (mounted) {
         setState(() {
           _isAuthenticating = false;
+          AppAuthGuard.isSystemAuthenticating = false;
         });
       }
     }
@@ -200,6 +243,7 @@ class _AppAuthGuardState extends State<AppAuthGuard>
     if (mounted) {
       if (isValid) {
         _lockoutTimer?.cancel();
+        AppAuthGuard.markUnlocked();
         setState(() {
           _isLocked = false;
           _pinError = null;

@@ -4,6 +4,7 @@ import 'package:local_auth/local_auth.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/shared/widgets/app_auth_guard.dart';
 import 'package:livocal/shared/widgets/settings_row.dart';
 import 'package:livocal/theme/app_colors.dart';
 
@@ -241,6 +242,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
               activeTrackColor: AppColors.primary,
               activeThumbColor: Colors.white,
               onChanged: (val) async {
+                AppAuthGuard.isSystemAuthenticating = true;
                 try {
                   final auth = LocalAuthentication();
                   final canCheck = await auth.canCheckBiometrics;
@@ -266,6 +268,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
                   );
 
                   if (authenticated) {
+                    AppAuthGuard.markUnlocked();
                     await SharedPref.instance
                         .setBool('privacy_fingerprint', val);
                     if (mounted) {
@@ -298,6 +301,8 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
                       type: SnacBarType.error,
                     );
                   }
+                } finally {
+                  AppAuthGuard.isSystemAuthenticating = false;
                 }
               },
             ),

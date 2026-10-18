@@ -4,13 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:livocal/features/auth/domain/auth_service.dart';
-import 'package:livocal/features/calls/services/gemini_live_translator.dart';
 import 'package:livocal/features/home/views/profile_edit_screen.dart';
 import 'package:livocal/features/settings/views/qr_code_screen.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
-import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/widgets/settings_row.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/theme.dart';
@@ -20,6 +18,7 @@ import 'package:livocal/features/settings/views/notifications_settings_screen.da
 import 'package:livocal/features/settings/views/storage_settings_screen.dart';
 import 'package:livocal/features/settings/views/app_language_screen.dart';
 import 'package:livocal/features/settings/views/help_settings_screen.dart';
+import 'package:livocal/features/settings/views/voice_persona_screen.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -118,120 +117,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ref: ref,
               userId: widget.user.id,
             );
-          },
-        ),
-      ],
-    );
-  }
-
-  void _showGeminiConfigDialog() {
-    final apiKeyController =
-        TextEditingController(text: GeminiLiveTranslator.getSavedApiKey());
-    String selectedModel = GeminiLiveTranslator.getSavedModelId();
-    String selectedVoice = GeminiLiveTranslator.getSavedVoiceName();
-
-    showAppDialog(
-      context: context,
-      title: 'Gemini Live Voice Settings',
-      icon: Icons.auto_awesome,
-      content: StatefulBuilder(
-        builder: (ctx, setDialogState) => Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Gemini API Key (Optional if Backend Relay is active):',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            TextField(
-              controller: apiKeyController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                hintText: 'AIzaSy...',
-                border: OutlineInputBorder(),
-                isDense: true,
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'AI Live Translation Model:',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            DropdownButtonFormField<String>(
-              value: GeminiLiveTranslator.modelPresets
-                      .any((m) => m.id == selectedModel)
-                  ? selectedModel
-                  : GeminiLiveTranslator.modelPresets.first.id,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                isDense: true,
-              ),
-              items: GeminiLiveTranslator.modelPresets.map((preset) {
-                return DropdownMenuItem(
-                  value: preset.id,
-                  child:
-                      Text(preset.title, style: const TextStyle(fontSize: 13)),
-                );
-              }).toList(),
-              onChanged: (val) {
-                if (val != null) {
-                  setDialogState(() => selectedModel = val);
-                }
-              },
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'AI Live Voice Persona:',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            DropdownButtonFormField<String>(
-              value: GeminiLiveTranslator.availableVoices.contains(selectedVoice)
-                  ? selectedVoice
-                  : GeminiLiveTranslator.availableVoices.first,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                isDense: true,
-              ),
-              items: GeminiLiveTranslator.availableVoices.map((voice) {
-                return DropdownMenuItem(
-                  value: voice,
-                  child: Text(voice, style: const TextStyle(fontSize: 13)),
-                );
-              }).toList(),
-              onChanged: (val) {
-                if (val != null) {
-                  setDialogState(() => selectedVoice = val);
-                }
-              },
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        AppDialogAction(
-          label: 'CANCEL',
-          onPressed: () => Navigator.pop(context),
-        ),
-        AppDialogAction(
-          label: 'SAVE',
-          isPrimary: true,
-          onPressed: () async {
-            await GeminiLiveTranslator.saveApiKey(apiKeyController.text);
-            await GeminiLiveTranslator.saveModelId(selectedModel);
-            await GeminiLiveTranslator.saveVoiceName(selectedVoice);
-            if (context.mounted) {
-              Navigator.pop(context);
-              showSnackBar(
-                context: context,
-                content: 'Gemini Live settings saved successfully!',
-                type: SnacBarType.info,
-              );
-            }
           },
         ),
       ],
@@ -426,14 +311,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
           ),
 
-          // Section 3: Advanced & AI Engine (moved from top for clean system-app feel)
+          // Section 3: Advanced & AI Engine
           SettingsSectionHeader(title: AppStrings.tr(ref, 'advancedAiEngine')),
           SettingsRow(
             icon: Icons.auto_awesome_rounded,
             title: AppStrings.tr(ref, 'geminiVoiceEngine'),
             subtitle: AppStrings.tr(ref, 'geminiVoiceEngineSub'),
             iconColor: const Color(0xFF53BDEC),
-            onTap: _showGeminiConfigDialog,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const VoicePersonaScreen(),
+                ),
+              );
+            },
           ),
 
           // Section 4: Support & Community
