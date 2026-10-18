@@ -350,7 +350,7 @@ class _HomePageState extends ConsumerState<HomePage>
           ),
         ),
 
-        // Brand Typography: "Livo" (White/Light) + "cal" (Emerald Green)
+        // Brand Typography: "Li" (White/Light) + "Vocal" (Emerald Green)
         RichText(
           text: TextSpan(
             style: const TextStyle(
@@ -360,14 +360,14 @@ class _HomePageState extends ConsumerState<HomePage>
             ),
             children: [
               TextSpan(
-                text: 'Livo',
+                text: 'Li ',
                 style: TextStyle(
                   color: isDark ? const Color(0xFFF0F2F5) : Colors.white,
                   fontWeight: FontWeight.w800,
                 ),
               ),
               const TextSpan(
-                text: 'cal',
+                text: 'Vocal',
                 style: TextStyle(
                   color: Color(0xFF25D366),
                   fontWeight: FontWeight.w800,
