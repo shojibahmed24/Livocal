@@ -389,17 +389,57 @@ class WalletRepository {
     }
   }
 
-  /// Atomically transfers minutes from sender's wallet to receiver's wallet
+  /// Atomically transfers minutes from sender's wallet to receiver's wallet and records audit log
   Future<bool> transferMinutes({
     required String fromUserId,
     required String toUserId,
     required int minutes,
+    String? note,
   }) async {
-    if (minutes <= 0 || firestore == null) return false;
+    if (minutes <= 0) return false;
+
+    // 1. Try secure backend relay endpoint first (handles server transaction & audit)
+    try {
+      final currentUser = fb.FirebaseAuth.instance.currentUser;
+      final idToken = await currentUser?.getIdToken();
+      if (idToken != null && idToken.isNotEmpty) {
+        final uri = Uri.parse(AppConfig.walletP2pTransferUrl);
+        final response = await http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $idToken',
+          },
+          body: jsonEncode({
+            'toUserId': toUserId,
+            'minutes': minutes,
+            'note': note ?? '',
+          }),
+        ).timeout(const Duration(seconds: 10));
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          if (data['success'] == true) {
+            return true;
+          }
+        } else {
+          debugPrint('[WalletRepository] Backend p2p transfer returned ${response.statusCode}: ${response.body}');
+        }
+      }
+    } catch (e) {
+      debugPrint('[WalletRepository] Backend p2p transfer failed, trying direct Firestore: $e');
+    }
+
+    // 2. Direct Firestore transaction fallback (for unit tests or offline/local fallback)
+    if (firestore == null) return false;
     try {
       final senderRef = _walletRef(fromUserId);
       final receiverRef = _walletRef(toUserId);
       if (senderRef == null || receiverRef == null) return false;
+
+      final transferId =
+          'p2p_min_${DateTime.now().millisecondsSinceEpoch}_${fromUserId.length > 5 ? fromUserId.substring(0, 5) : fromUserId}';
+      final transferRef = firestore!.collection('p2p_transfers').doc(transferId);
 
       return await firestore!.runTransaction<bool>((tx) async {
         final senderSnap = await tx.get(senderRef);
@@ -430,6 +470,19 @@ class WalletRepository {
           'totalMinutesPurchased': receiverPurchased + minutes,
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
+
+        // Central audit record for Admin Panel
+        tx.set(transferRef, {
+          'id': transferId,
+          'type': 'minute_transfer',
+          'fromUserId': fromUserId,
+          'toUserId': toUserId,
+          'minutes': minutes,
+          'note': note ?? '',
+          'status': 'completed',
+          'method': 'Livocal Wallet',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
 
         return true;
       });

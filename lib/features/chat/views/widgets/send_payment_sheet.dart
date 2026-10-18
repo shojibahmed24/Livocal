@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -149,6 +150,7 @@ class _SendPaymentSheetContentState
                   fromUserId: widget.self.id,
                   toUserId: widget.other.id,
                   minutes: minutesToSend,
+                  note: _noteController.text.trim(),
                 );
 
         if (!success) {
@@ -189,6 +191,32 @@ class _SendPaymentSheetContentState
           return;
         }
         txId = hash;
+      }
+
+      // Log central audit record for Admin Panel visibility
+      final payRecordId =
+          'p2p_pay_${DateTime.now().millisecondsSinceEpoch}_${widget.self.id.length > 4 ? widget.self.id.substring(0, 4) : widget.self.id}';
+      try {
+        await FirebaseFirestore.instance
+            .collection('p2p_payments')
+            .doc(payRecordId)
+            .set({
+          'id': payRecordId,
+          'type': _selectedMethod,
+          'methodDisplay': methodDisplay,
+          'amount': amountStr,
+          'senderId': widget.self.id,
+          'senderPhone': widget.self.phone.getFormattedNumber(),
+          'recipientId': widget.other.id,
+          'recipientPhone': widget.other.phone.getFormattedNumber(),
+          'recipientName': widget.contactName,
+          'txId': txId,
+          'note': _noteController.text.trim(),
+          'status': _selectedMethod == 'wallet' ? 'completed' : 'reported',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      } catch (err) {
+        debugPrint('[PaymentSheet] Error logging to p2p_payments: $err');
       }
 
       if (!mounted) return;

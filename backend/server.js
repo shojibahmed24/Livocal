@@ -1243,6 +1243,212 @@ app.get('/api/admin/recharges', authenticateAdmin, async (req, res) => {
   }
 });
 
+// P2P In-Chat Minute Transfer (Atomic User A -> User B)
+app.post('/api/wallet/p2p-transfer', authenticateRequest, async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
+
+  const fromUserId = req.user?.uid;
+  const { toUserId, minutes, note } = req.body || {};
+
+  if (!fromUserId) {
+    return res.status(401).json({ error: 'Unauthorized: missing sender UID' });
+  }
+  if (!toUserId || typeof toUserId !== 'string' || toUserId.trim() === '') {
+    return res.status(400).json({ error: 'Valid recipient toUserId is required' });
+  }
+  if (fromUserId === toUserId) {
+    return res.status(400).json({ error: 'Cannot transfer minutes to yourself' });
+  }
+
+  const mins = parseInt(minutes, 10);
+  if (isNaN(mins) || mins <= 0) {
+    return res.status(400).json({ error: 'Minutes to transfer must be a positive integer' });
+  }
+
+  try {
+    const senderRef = firestoreDb.collection('users').doc(fromUserId).collection('wallet').doc('current');
+    const receiverRef = firestoreDb.collection('users').doc(toUserId).collection('wallet').doc('current');
+    const transferId = `p2p_min_${Date.now()}_${fromUserId.length > 5 ? fromUserId.substring(0, 5) : fromUserId}`;
+    const transferRef = firestoreDb.collection('p2p_transfers').doc(transferId);
+
+    const result = await firestoreDb.runTransaction(async (tx) => {
+      const senderSnap = await tx.get(senderRef);
+      if (!senderSnap.exists) {
+        throw new Error('Sender wallet does not exist');
+      }
+
+      const senderData = senderSnap.data() || {};
+      const senderBalance = Number(senderData.balanceMinutes || 0);
+      if (senderBalance < mins) {
+        throw new Error(`Insufficient minute balance. Current: ${senderBalance}, Requested: ${mins}`);
+      }
+
+      const receiverSnap = await tx.get(receiverRef);
+      let receiverBalance = 0;
+      let receiverPurchased = 0;
+      if (receiverSnap.exists) {
+        const rData = receiverSnap.data() || {};
+        receiverBalance = Number(rData.balanceMinutes || 0);
+        receiverPurchased = Number(rData.totalMinutesPurchased || 0);
+      }
+
+      const nowIso = new Date().toISOString();
+
+      // Deduct from sender
+      tx.set(senderRef, {
+        balanceMinutes: senderBalance - mins,
+        updatedAt: nowIso,
+      }, { merge: true });
+
+      // Credit to receiver
+      tx.set(receiverRef, {
+        balanceMinutes: receiverBalance + mins,
+        totalMinutesPurchased: receiverPurchased + mins,
+        updatedAt: nowIso,
+      }, { merge: true });
+
+      // Immutable central audit record for Admin Panel
+      tx.set(transferRef, {
+        id: transferId,
+        type: 'minute_transfer',
+        fromUserId,
+        toUserId,
+        minutes: mins,
+        note: (note || '').toString().trim(),
+        status: 'completed',
+        method: 'Livocal Wallet',
+        createdAt: nowIso,
+      });
+
+      return {
+        transferId,
+        remainingMinutes: senderBalance - mins,
+      };
+    });
+
+    return res.json({
+      success: true,
+      message: `Successfully transferred ${mins} minutes`,
+      ...result,
+    });
+  } catch (err) {
+    console.error('[P2P Transfer] Error transferring minutes:', err.message);
+    const statusCode = err.message.includes('Insufficient') ? 400 : 500;
+    return res.status(statusCode).json({ error: err.message || 'Failed to transfer minutes' });
+  }
+});
+
+// Admin In-Chat P2P Transfers & Payments Tracking
+app.get('/api/admin/p2p-transfers', authenticateAdmin, async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
+
+  try {
+    let transfers = [];
+    let payments = [];
+
+    try {
+      const snapTransfers = await firestoreDb.collection('p2p_transfers')
+        .orderBy('createdAt', 'desc')
+        .limit(100)
+        .get();
+      snapTransfers.forEach(doc => transfers.push({ id: doc.id, ...doc.data() }));
+    } catch (e) {
+      console.warn('[Admin] Fallback fetch p2p_transfers without order:', e.message);
+      const snapTransfers = await firestoreDb.collection('p2p_transfers').limit(100).get();
+      snapTransfers.forEach(doc => transfers.push({ id: doc.id, ...doc.data() }));
+    }
+
+    try {
+      const snapPayments = await firestoreDb.collection('p2p_payments')
+        .orderBy('createdAt', 'desc')
+        .limit(100)
+        .get();
+      snapPayments.forEach(doc => payments.push({ id: doc.id, ...doc.data() }));
+    } catch (e) {
+      console.warn('[Admin] Fallback fetch p2p_payments without order:', e.message);
+      const snapPayments = await firestoreDb.collection('p2p_payments').limit(100).get();
+      snapPayments.forEach(doc => payments.push({ id: doc.id, ...doc.data() }));
+    }
+
+    let totalMinutes = 0;
+    transfers.forEach(t => {
+      if (t.status === 'completed' && Number(t.minutes)) {
+        totalMinutes += Number(t.minutes);
+      }
+    });
+
+    let totalBdt = 0;
+    let totalCryptoUsdt = 0;
+    payments.forEach(p => {
+      const rawAmt = typeof p.amount === 'string' ? p.amount.replace(/[^0-9.]/g, '') : Number(p.amount);
+      const numAmt = parseFloat(rawAmt) || 0;
+      const method = (p.type || p.methodDisplay || '').toLowerCase();
+      if (method.includes('bkash') || method.includes('nagad') || (p.currency || '').toUpperCase() === 'BDT') {
+        totalBdt += numAmt;
+      } else if (method.includes('crypto') || method.includes('usdt') || method.includes('binance') || (p.currency || '').toUpperCase() === 'USDT') {
+        totalCryptoUsdt += numAmt;
+      }
+    });
+
+    return res.json({
+      success: true,
+      transfers,
+      payments,
+      stats: {
+        totalMinutesTransferred: totalMinutes,
+        totalBdtAmount: totalBdt,
+        totalCryptoUsdtAmount: totalCryptoUsdt,
+        totalTransfersCount: transfers.length,
+        totalPaymentsCount: payments.length,
+      },
+    });
+  } catch (err) {
+    console.error('[Admin] Error fetching p2p records:', err.message);
+    return res.status(500).json({ error: 'Failed to fetch p2p records' });
+  }
+});
+
+// Admin update / verify P2P payment record status
+app.post('/api/admin/p2p-payment/action', authenticateAdmin, async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
+
+  const { paymentId, action, note } = req.body || {};
+  if (!paymentId) {
+    return res.status(400).json({ error: 'paymentId is required' });
+  }
+
+  const validActions = ['verify', 'flag', 'resolve'];
+  if (!validActions.includes(action)) {
+    return res.status(400).json({ error: `Invalid action. Must be one of: ${validActions.join(', ')}` });
+  }
+
+  const targetStatus = action === 'verify' ? 'verified' : (action === 'flag' ? 'flagged' : 'resolved');
+
+  try {
+    const payRef = firestoreDb.collection('p2p_payments').doc(paymentId);
+    const snap = await payRef.get();
+    if (!snap.exists) {
+      return res.status(404).json({ error: 'P2P Payment record not found' });
+    }
+
+    await payRef.set({
+      status: targetStatus,
+      adminNote: (note || '').toString().trim(),
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+
+    return res.json({
+      success: true,
+      paymentId,
+      status: targetStatus,
+      message: `P2P payment status updated to ${targetStatus}`,
+    });
+  } catch (err) {
+    console.error('[Admin] Error updating p2p payment status:', err.message);
+    return res.status(500).json({ error: 'Failed to update p2p payment status' });
+  }
+});
+
 // Public / authenticated endpoint for clients to get active deposit accounts & addresses dynamically
 app.get('/api/wallet/deposit-info', authenticateUserOrAdmin, (req, res) => {
   const trc20Addr = process.env.CRYPTO_USDT_TRC20 || 'TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf';

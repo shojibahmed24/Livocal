@@ -898,6 +898,10 @@
       <button class="tab-btn" id="tabBtnWallets" onclick="switchTab('wallets')">
         👥 Freelancer Wallets
       </button>
+      <button class="tab-btn" id="tabBtnP2P" onclick="switchTab('p2p')">
+        🤝 In-Chat P2P
+        <span class="tab-count-badge" id="p2pCountBadge" style="display:none;">0</span>
+      </button>
       <button class="tab-btn" id="tabBtnRecharges" onclick="switchTab('recharges')">
         💳 Recharge Ledger
       </button>
@@ -982,6 +986,81 @@
               <tr>
                 <td colspan="8" style="text-align:center; padding:28px; color:var(--text-muted);">
                   Loading freelancer wallets...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: In-Chat P2P Transfers & Payments -->
+    <div class="tab-content" id="tab-p2p" style="display: none;">
+      <div class="content-card">
+        <div class="card-header-bar">
+          <div class="card-title-group">
+            <h2>🤝 In-Chat P2P Transfers &amp; Payments</h2>
+            <p>Live audit trail of user-to-user minute transfers, bKash/Nagad transactions, and Crypto USDT payments sent in chats.</p>
+          </div>
+          <button class="btn btn-secondary" onclick="fetchDashboardData()">
+            🔄 Refresh
+          </button>
+        </div>
+
+        <!-- Summary KPI Cards for P2P -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px;">
+          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; padding: 14px;">
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--primary); font-weight: 700;">P2P Minutes Sent</div>
+            <div id="p2pKpiMinutes" style="font-size: 24px; font-weight: 800; color: #fff; margin-top: 4px;">0 min</div>
+            <div id="p2pKpiTransfersCount" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">0 wallet transfers</div>
+          </div>
+          <div style="background: rgba(236, 72, 153, 0.08); border: 1px solid rgba(236, 72, 153, 0.2); border-radius: 12px; padding: 14px;">
+            <div style="font-size: 11px; text-transform: uppercase; color: #f472b6; font-weight: 700;">MFS P2P Volume (BDT)</div>
+            <div id="p2pKpiBdt" style="font-size: 24px; font-weight: 800; color: #fff; margin-top: 4px;">৳0</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">bKash &amp; Nagad</div>
+          </div>
+          <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 12px; padding: 14px;">
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--accent); font-weight: 700;">Crypto P2P Volume (USDT)</div>
+            <div id="p2pKpiUsdt" style="font-size: 24px; font-weight: 800; color: #fff; margin-top: 4px;">$0 USDT</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">TRC-20, BEP-20 &amp; Binance</div>
+          </div>
+          <div style="background: rgba(148, 163, 184, 0.08); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 12px; padding: 14px;">
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Total P2P Events</div>
+            <div id="p2pKpiTotalEvents" style="font-size: 24px; font-weight: 800; color: #fff; margin-top: 4px;">0</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">All in-chat payments</div>
+          </div>
+        </div>
+
+        <!-- Filter & Search Bar -->
+        <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px; align-items:center;">
+          <input type="text" id="searchP2PInput" placeholder="🔍 Search TrxID, Phone, UID, or Note..." oninput="filterP2PTable()" style="flex:1; min-width:240px; padding:10px 14px; background:rgba(15,23,42,0.8); border:1px solid var(--card-border); border-radius:8px; color:#fff; font-size:13px; font-family:var(--font-sans);" />
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-secondary p2p-filter-btn" id="filterP2PAll" onclick="setP2PFilter('all')" style="padding:6px 12px; font-size:12px; border-color:var(--primary); color:var(--primary);">All</button>
+            <button class="btn btn-secondary p2p-filter-btn" id="filterP2PWallet" onclick="setP2PFilter('wallet')" style="padding:6px 12px; font-size:12px;">Minutes</button>
+            <button class="btn btn-secondary p2p-filter-btn" id="filterP2PMfs" onclick="setP2PFilter('mfs')" style="padding:6px 12px; font-size:12px;">bKash/Nagad</button>
+            <button class="btn btn-secondary p2p-filter-btn" id="filterP2PCrypto" onclick="setP2PFilter('crypto')" style="padding:6px 12px; font-size:12px;">Crypto</button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Date / Time</th>
+                <th>Type / Method</th>
+                <th>Sender</th>
+                <th>Recipient</th>
+                <th>Amount / Minutes</th>
+                <th>TrxID / Reference</th>
+                <th>Note</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="p2pTableBody">
+              <tr>
+                <td colspan="9" style="text-align:center; padding:28px; color:var(--text-muted);">
+                  Loading P2P payment records...
                 </td>
               </tr>
             </tbody>
@@ -1168,6 +1247,12 @@
       <span>Wallets</span>
     </button>
 
+    <button class="mobile-nav-item" id="mobNavP2P" onclick="switchTab('p2p')">
+      <span class="icon">🤝</span>
+      <span>P2P</span>
+      <span class="nav-badge" id="mobBadgeP2P" style="display:none;">0</span>
+    </button>
+
     <button class="mobile-nav-fab" onclick="openTopUpModal()" title="Credit Minutes">
       ➕
     </button>
@@ -1254,6 +1339,8 @@
 
   <script>
     let activeWalletsList = [];
+    let rawP2PRecords = [];
+    let currentP2PFilter = 'all';
 
     function escapeHtml(str) {
       if (str === null || str === undefined) return '';
@@ -1373,6 +1460,27 @@
         });
       }
 
+      const p2pTbody = document.getElementById('p2pTableBody');
+      if (p2pTbody) {
+        p2pTbody.addEventListener('click', (e) => {
+          const verifyBtn = e.target.closest('.btn-p2p-verify');
+          if (verifyBtn && verifyBtn.dataset.id) {
+            handleP2PAction(verifyBtn.dataset.id, 'verify');
+            return;
+          }
+          const flagBtn = e.target.closest('.btn-p2p-flag');
+          if (flagBtn && flagBtn.dataset.id) {
+            handleP2PAction(flagBtn.dataset.id, 'flag');
+            return;
+          }
+          const copyBtn = e.target.closest('.btn-p2p-copy');
+          if (copyBtn && copyBtn.dataset.text) {
+            copyText(copyBtn.dataset.text);
+            return;
+          }
+        });
+      }
+
       // Auto-refresh every 30 seconds if secret is configured
       setInterval(() => {
         if (getAdminSecret()) fetchDashboardData();
@@ -1405,6 +1513,7 @@
       const desktopBtnMap = {
         'payments': 'tabBtnPayments',
         'wallets': 'tabBtnWallets',
+        'p2p': 'tabBtnP2P',
         'recharges': 'tabBtnRecharges',
         'ledger': 'tabBtnLedger',
         'gateways': 'tabBtnGateways',
@@ -1418,6 +1527,7 @@
       const mobBtnMap = {
         'payments': 'mobNavPayments',
         'wallets': 'mobNavWallets',
+        'p2p': 'mobNavP2P',
         'recharges': 'mobNavRecharges',
         'ledger': 'mobNavRecharges',
         'gateways': 'mobNavGateways',
@@ -1514,6 +1624,50 @@
             badgeMob.style.display = pendingCount > 0 ? 'inline-block' : 'none';
           }
           renderPaymentsTable(reqs);
+        }
+
+        // 6. In-Chat P2P Payments & Transfers
+        const p2pRes = await fetch('/api/admin/p2p-transfers', { headers });
+        if (p2pRes.ok) {
+          const data = await p2pRes.json();
+          const s = data.stats || {};
+          const transfers = data.transfers || [];
+          const payments = data.payments || [];
+          
+          if (document.getElementById('p2pKpiMinutes')) {
+            document.getElementById('p2pKpiMinutes').innerText = `${(s.totalMinutesTransferred || 0).toLocaleString()} min`;
+          }
+          if (document.getElementById('p2pKpiTransfersCount')) {
+            document.getElementById('p2pKpiTransfersCount').innerText = `${transfers.length} wallet transfers`;
+          }
+          if (document.getElementById('p2pKpiBdt')) {
+            document.getElementById('p2pKpiBdt').innerText = `৳${(s.totalBdtAmount || 0).toLocaleString()}`;
+          }
+          if (document.getElementById('p2pKpiUsdt')) {
+            document.getElementById('p2pKpiUsdt').innerText = `$${(s.totalCryptoUsdtAmount || 0).toLocaleString()} USDT`;
+          }
+          if (document.getElementById('p2pKpiTotalEvents')) {
+            document.getElementById('p2pKpiTotalEvents').innerText = `${transfers.length + payments.length}`;
+          }
+
+          const totalPendingP2p = payments.filter(p => p.status === 'reported').length;
+          const badgeDesk = document.getElementById('p2pCountBadge');
+          if (badgeDesk) {
+            badgeDesk.innerText = totalPendingP2p;
+            badgeDesk.style.display = totalPendingP2p > 0 ? 'inline-block' : 'none';
+          }
+          const badgeMob = document.getElementById('mobBadgeP2P');
+          if (badgeMob) {
+            badgeMob.innerText = totalPendingP2p;
+            badgeMob.style.display = totalPendingP2p > 0 ? 'inline-block' : 'none';
+          }
+
+          rawP2PRecords = [
+            ...transfers.map(t => ({ ...t, kind: 'minute_transfer' })),
+            ...payments.map(p => ({ ...p, kind: 'payment' }))
+          ].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+          filterP2PTable();
         }
 
       } catch (err) {
@@ -1718,6 +1872,181 @@
           </tr>
         `;
       }).join('');
+    }
+
+    function setP2PFilter(filter) {
+      currentP2PFilter = filter;
+      document.querySelectorAll('.p2p-filter-btn').forEach(btn => {
+        btn.style.borderColor = 'var(--card-border)';
+        btn.style.color = 'var(--text-main)';
+      });
+      const activeBtnMap = {
+        'all': 'filterP2PAll',
+        'wallet': 'filterP2PWallet',
+        'mfs': 'filterP2PMfs',
+        'crypto': 'filterP2PCrypto',
+      };
+      const activeEl = document.getElementById(activeBtnMap[filter]);
+      if (activeEl) {
+        activeEl.style.borderColor = 'var(--primary)';
+        activeEl.style.color = 'var(--primary)';
+      }
+      filterP2PTable();
+    }
+
+    function filterP2PTable() {
+      const query = (document.getElementById('searchP2PInput')?.value || '').toLowerCase().trim();
+      let filtered = rawP2PRecords;
+
+      if (currentP2PFilter === 'wallet') {
+        filtered = filtered.filter(r => r.kind === 'minute_transfer');
+      } else if (currentP2PFilter === 'mfs') {
+        filtered = filtered.filter(r => {
+          const m = (r.type || r.methodDisplay || '').toLowerCase();
+          return m.includes('bkash') || m.includes('nagad') || (r.currency || '').toUpperCase() === 'BDT';
+        });
+      } else if (currentP2PFilter === 'crypto') {
+        filtered = filtered.filter(r => {
+          const m = (r.type || r.methodDisplay || '').toLowerCase();
+          return m.includes('crypto') || m.includes('usdt') || m.includes('binance') || (r.currency || '').toUpperCase() === 'USDT';
+        });
+      }
+
+      if (query) {
+        filtered = filtered.filter(r => {
+          const matchId = (r.id || '').toLowerCase().includes(query);
+          const matchTx = (r.txId || '').toLowerCase().includes(query);
+          const matchFrom = (r.fromUserId || r.senderId || r.senderPhone || '').toLowerCase().includes(query);
+          const matchTo = (r.toUserId || r.recipientId || r.recipientPhone || r.recipientName || '').toLowerCase().includes(query);
+          const matchNote = (r.note || '').toLowerCase().includes(query);
+          return matchId || matchTx || matchFrom || matchTo || matchNote;
+        });
+      }
+
+      renderP2PTable(filtered);
+    }
+
+    function renderP2PTable(records) {
+      const tbody = document.getElementById('p2pTableBody');
+      if (!tbody) return;
+      if (!records || !records.length) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:28px; color:var(--text-muted);">No in-chat P2P payment or transfer records matching criteria.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = records.map(r => {
+        const timeStr = r.createdAt ? escapeHtml(new Date(r.createdAt).toLocaleString()) : '-';
+        const isTransfer = r.kind === 'minute_transfer';
+
+        // Method Badge
+        let methodHtml = `<span class="badge" style="background:rgba(16,185,129,0.15); color:#34d399;">⚡ Wallet Minutes</span>`;
+        if (!isTransfer) {
+          const m = (r.type || r.methodDisplay || '').toLowerCase();
+          if (m.includes('bkash')) {
+            methodHtml = `<span class="badge badge-bkash">📱 bKash</span>`;
+          } else if (m.includes('nagad')) {
+            methodHtml = `<span class="badge badge-nagad">📱 Nagad</span>`;
+          } else if (m.includes('binance')) {
+            methodHtml = `<span class="badge badge-binance">🟡 Binance Pay</span>`;
+          } else {
+            methodHtml = `<span class="badge badge-crypto">💎 Crypto USDT</span>`;
+          }
+        }
+
+        // Sender & Recipient
+        const senderStr = escapeHtml(r.senderPhone || r.fromUserId || r.senderId || '-');
+        const recipientStr = escapeHtml(r.recipientName || r.recipientPhone || r.toUserId || r.recipientId || '-');
+
+        // Amount Display
+        let amountHtml = '';
+        if (isTransfer) {
+          amountHtml = `<span style="color:#34d399; font-weight:800; font-size:14px;">⚡ +${Number(r.minutes) || 0}m</span>`;
+        } else {
+          const amt = r.amount ? escapeHtml(String(r.amount)) : '0';
+          amountHtml = `<span style="font-weight:800; font-size:14px; color:#fff;">${amt}</span>`;
+        }
+
+        // TrxID / Ref
+        const rawTx = r.txId || r.id || '';
+        const shortTx = rawTx.length > 16 ? rawTx.substring(0, 14) + '...' : rawTx;
+        const trxHtml = rawTx
+          ? `<div style="display:flex; align-items:center; gap:6px;">
+               <code style="color:var(--accent); font-weight:600;" title="${escapeHtml(rawTx)}">${escapeHtml(shortTx)}</code>
+               <button class="btn btn-secondary btn-p2p-copy" data-text="${escapeHtml(rawTx)}" style="padding:2px 6px; font-size:10px;">📋</button>
+             </div>`
+          : '-';
+
+        // Status Badge
+        let statusBadge = `<span class="badge badge-success">✓ Completed</span>`;
+        if (r.status === 'reported') {
+          statusBadge = `<span class="badge badge-warning">⏳ Reported</span>`;
+        } else if (r.status === 'verified') {
+          statusBadge = `<span class="badge badge-success">✓ Verified</span>`;
+        } else if (r.status === 'flagged') {
+          statusBadge = `<span class="badge badge-danger">⚠️ Flagged</span>`;
+        }
+
+        // Action Buttons
+        let actionsHtml = `<span style="font-size:11px; color:var(--text-muted);">-</span>`;
+        if (!isTransfer && (r.status === 'reported' || r.status === 'flagged')) {
+          actionsHtml = `
+            <div style="display:flex; gap:4px;">
+              <button class="btn btn-primary btn-p2p-verify" data-id="${escapeHtml(r.id)}" style="padding:3px 8px; font-size:11px;">✓ Verify</button>
+              <button class="btn btn-secondary btn-p2p-flag" data-id="${escapeHtml(r.id)}" style="padding:3px 8px; font-size:11px; color:var(--danger);">⚠️ Flag</button>
+            </div>
+          `;
+        } else if (!isTransfer && r.status === 'verified') {
+          actionsHtml = `<span style="font-size:11px; color:#34d399; font-weight:600;">Confirmed</span>`;
+        }
+
+        return `
+          <tr>
+            <td style="font-size:12px; color:var(--text-muted);">${timeStr}</td>
+            <td>${methodHtml}</td>
+            <td><code style="font-size:12px;">${senderStr}</code></td>
+            <td><code style="font-size:12px;">${recipientStr}</code></td>
+            <td>${amountHtml}</td>
+            <td>${trxHtml}</td>
+            <td style="font-size:12px; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(r.note || '')}">${escapeHtml(r.note || '-')}</td>
+            <td>${statusBadge}</td>
+            <td>${actionsHtml}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function handleP2PAction(paymentId, action) {
+      const confirmMsg = action === 'verify'
+        ? 'Are you sure you want to mark this reported in-chat payment as VERIFIED?'
+        : 'Are you sure you want to FLAG this in-chat payment for investigation?';
+
+      if (!confirm(confirmMsg)) return;
+
+      const secret = getAdminSecret();
+      try {
+        const res = await fetch('/api/admin/p2p-payment/action', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-secret': secret,
+          },
+          body: JSON.stringify({
+            paymentId,
+            action,
+            note: 'Updated from Admin Control Room',
+          }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast(`P2P payment status updated to ${data.status}!`);
+          fetchDashboardData();
+        } else {
+          showToast(`Failed: ${data.error || 'Action failed'}`, true);
+        }
+      } catch (err) {
+        showToast(`Error: ${err.message}`, true);
+      }
     }
 
     async function verifyOnChainPayment(paymentMethod, trxId, expectedAmount) {

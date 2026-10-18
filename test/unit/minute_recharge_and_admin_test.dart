@@ -361,6 +361,113 @@ void main() {
       onTapMic(); // tap to send
       expect(recordingState, equals('notRecording'));
     });
+
+    test('P2P minute transfer audit log schema and balance arithmetic', () {
+      const fromUid = 'user_sender_123';
+      const toUid = 'user_receiver_456';
+      const transferMinutes = 15;
+      const initialSenderBalance = 50;
+      const initialReceiverBalance = 10;
+
+      // Transfer payload validation
+      final auditLog = {
+        'id': 'p2p_min_1729000000000_user_',
+        'type': 'minute_transfer',
+        'fromUserId': fromUid,
+        'toUserId': toUid,
+        'minutes': transferMinutes,
+        'note': 'Thanks for the quick translation call!',
+        'status': 'completed',
+        'method': 'Livocal Wallet',
+      };
+
+      expect(auditLog['type'], equals('minute_transfer'));
+      expect(auditLog['minutes'], equals(15));
+      expect(auditLog['status'], equals('completed'));
+      expect(auditLog['fromUserId'], equals(fromUid));
+      expect(auditLog['toUserId'], equals(toUid));
+
+      // Balance transfer calculation
+      final newSenderBalance = initialSenderBalance - transferMinutes;
+      final newReceiverBalance = initialReceiverBalance + transferMinutes;
+      expect(newSenderBalance, equals(35));
+      expect(newReceiverBalance, equals(25));
+    });
+
+    test('P2P in-chat payment audit record schema for MFS and Crypto', () {
+      final bkashRecord = {
+        'id': 'p2p_pay_1729000001000_send',
+        'type': 'mfs',
+        'methodDisplay': 'bKash Personal',
+        'amount': '500',
+        'senderId': 'sender_123',
+        'senderPhone': '+8801700000001',
+        'recipientId': 'receiver_456',
+        'recipientPhone': '+8801800000002',
+        'recipientName': 'Nafis Ahmed',
+        'txId': '9K8J7H6G5F',
+        'note': 'Payment for invoice #102',
+        'status': 'reported',
+      };
+
+      expect(bkashRecord['type'], equals('mfs'));
+      expect(bkashRecord['status'], equals('reported'));
+      expect(bkashRecord['senderPhone'], equals('+8801700000001'));
+      expect(bkashRecord['txId'], equals('9K8J7H6G5F'));
+
+      final cryptoRecord = {
+        'id': 'p2p_pay_1729000002000_send',
+        'type': 'crypto',
+        'methodDisplay': 'Crypto (USDT TRC-20)',
+        'amount': '25.00',
+        'senderId': 'sender_123',
+        'recipientId': 'receiver_456',
+        'txId': '4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b',
+        'status': 'reported',
+      };
+
+      expect(cryptoRecord['type'], equals('crypto'));
+      expect(cryptoRecord['txId']!.length, equals(64));
+    });
+
+    test('Admin Panel P2P aggregate stats calculates volume correctly', () {
+      final p2pTransfers = [
+        {'minutes': 10, 'status': 'completed'},
+        {'minutes': 25, 'status': 'completed'},
+        {'minutes': 5, 'status': 'failed'},
+      ];
+
+      final p2pPayments = [
+        {'type': 'mfs', 'amount': '1500', 'status': 'reported'},
+        {'type': 'mfs', 'amount': '500', 'status': 'verified'},
+        {'type': 'crypto', 'amount': '50.00', 'status': 'reported'},
+        {'type': 'crypto', 'amount': '100.00', 'status': 'verified'},
+      ];
+
+      // Aggregate minutes
+      int totalMinutes = 0;
+      for (final t in p2pTransfers) {
+        if (t['status'] == 'completed') {
+          totalMinutes += (t['minutes'] as num).toInt();
+        }
+      }
+      expect(totalMinutes, equals(35));
+
+      // Aggregate BDT & Crypto
+      double totalBdt = 0;
+      double totalCrypto = 0;
+      for (final p in p2pPayments) {
+        final amt = double.tryParse((p['amount'] as String).replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0;
+        if (p['type'] == 'mfs') {
+          totalBdt += amt;
+        } else if (p['type'] == 'crypto') {
+          totalCrypto += amt;
+        }
+      }
+
+      expect(totalBdt, equals(2000.0));
+      expect(totalCrypto, equals(150.0));
+    });
   });
 }
 

@@ -67,4 +67,7 @@ class AppConfig {
 
   static String get walletDepositInfoUrl =>
       '$relayHttpBaseUrl/api/wallet/deposit-info';
+
+  static String get walletP2pTransferUrl =>
+      '$relayHttpBaseUrl/api/wallet/p2p-transfer';
 }
