@@ -2,13 +2,15 @@ import 'dart:math';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/app_tokens.dart';
 
-class QrCodeScreen extends StatelessWidget {
+class QrCodeScreen extends ConsumerWidget {
   final User user;
 
   const QrCodeScreen({super.key, required this.user});
@@ -21,19 +23,19 @@ class QrCodeScreen extends StatelessWidget {
     );
   }
 
-  void _copyLink(BuildContext context) {
+  void _copyLink(BuildContext context, WidgetRef ref) {
     HapticFeedback.lightImpact();
     final link = 'https://livocal.app/add/${user.phone.getFormattedNumber().replaceAll(RegExp(r'\s+'), '')}';
     Clipboard.setData(ClipboardData(text: link));
     showSnackBar(
       context: context,
-      content: 'Invite link copied to clipboard',
+      content: AppStrings.tr(ref, 'inviteLinkCopied'),
       type: SnacBarType.info,
     );
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? const Color(0xFF1F2C34) : Colors.white;
 
@@ -44,9 +46,9 @@ class QrCodeScreen extends StatelessWidget {
         scrolledUnderElevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         actionsIconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'QR Code',
-          style: TextStyle(
+        title: Text(
+          AppStrings.tr(ref, 'qrCode'),
+          style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
@@ -153,7 +155,7 @@ class QrCodeScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
               Text(
-                'Your QR code is private. If you share it with someone, they can scan it with their camera to contact you on Livocal.',
+                AppStrings.tr(ref, 'qrCodeDesc'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13,
@@ -177,9 +179,9 @@ class QrCodeScreen extends StatelessWidget {
                           color: isDark ? Colors.white24 : Colors.black12,
                         ),
                       ),
-                      onPressed: () => _copyLink(context),
+                      onPressed: () => _copyLink(context, ref),
                       icon: const Icon(Icons.link_rounded, size: 20),
-                      label: const Text('Copy link'),
+                      label: Text(AppStrings.tr(ref, 'copyLink')),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -195,7 +197,7 @@ class QrCodeScreen extends StatelessWidget {
                       ),
                       onPressed: () => _shareQrCode(context),
                       icon: const Icon(Icons.share_rounded, size: 20),
-                      label: const Text('Share code'),
+                      label: Text(AppStrings.tr(ref, 'shareQrCode')),
                     ),
                   ),
                 ],

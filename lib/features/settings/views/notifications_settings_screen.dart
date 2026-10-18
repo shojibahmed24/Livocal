@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/calls/services/ringtone_manager.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/widgets/settings_row.dart';
@@ -47,6 +48,35 @@ class _NotificationsSettingsScreenState
         SharedPref.instance.getString('notif_call_vibrate') ?? 'Default';
   }
 
+  String _localizeOption(String opt) {
+    switch (opt) {
+      case 'Default':
+        return AppStrings.tr(ref, 'vibrateDefault');
+      case 'Short':
+        return AppStrings.tr(ref, 'vibrateShort');
+      case 'Long':
+        return AppStrings.tr(ref, 'vibrateLong');
+      case 'Off':
+        return AppStrings.tr(ref, 'vibrateOff');
+      case 'Livocal Harmony (Default)':
+        return AppStrings.tr(ref, 'livocalHarmonyPreset');
+      case 'Digital Pulse':
+        return AppStrings.tr(ref, 'digitalPulsePreset');
+      case 'Marimba Bloom':
+        return AppStrings.tr(ref, 'marimbaBloomPreset');
+      case 'Classic Bell':
+        return AppStrings.tr(ref, 'classicBellPreset');
+      case 'Livocal Chime (Default)':
+        return AppStrings.tr(ref, 'livocalChimePreset');
+      case 'Subtle Ding':
+        return AppStrings.tr(ref, 'subtleDingPreset');
+      case 'Crystal Pop':
+        return AppStrings.tr(ref, 'crystalPopPreset');
+      default:
+        return opt;
+    }
+  }
+
   void _showRadioDialog({
     required String title,
     required List<String> options,
@@ -61,7 +91,7 @@ class _NotificationsSettingsScreenState
         children: options
             .map(
               (opt) => RadioListTile<String>(
-                title: Text(opt),
+                title: Text(_localizeOption(opt)),
                 value: opt,
                 groupValue: currentValue,
                 activeColor: AppColors.primary,
@@ -79,7 +109,7 @@ class _NotificationsSettingsScreenState
       ),
       actions: [
         AppDialogAction(
-          label: 'CANCEL',
+          label: AppStrings.tr(ref, 'cancel').toUpperCase(),
           onPressed: () => Navigator.pop(context),
         ),
       ],
@@ -88,7 +118,9 @@ class _NotificationsSettingsScreenState
 
   /// Interactive Tone Picker with built-in presets, custom audio file picker from storage, and live sound preview.
   void _showTonePickerDialog({required bool isCallRingtone}) {
-    final title = isCallRingtone ? 'Call Ringtone' : 'Message Notification Tone';
+    final title = isCallRingtone
+        ? AppStrings.tr(ref, 'callRingtoneTitle')
+        : AppStrings.tr(ref, 'messageNotificationTone');
     final presets = isCallRingtone
         ? [
             'Livocal Harmony (Default)',
@@ -137,7 +169,7 @@ class _NotificationsSettingsScreenState
                     },
                   ),
                   title: Text(
-                    preset,
+                    _localizeOption(preset),
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
@@ -182,7 +214,7 @@ class _NotificationsSettingsScreenState
                     },
                   ),
                   title: Text(
-                    'Custom: ${File(customPath!).uri.pathSegments.last}',
+                    '${AppStrings.tr(ref, 'customLabel')}${File(customPath!).uri.pathSegments.last}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -219,7 +251,7 @@ class _NotificationsSettingsScreenState
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 ),
                 icon: const Icon(Icons.audio_file_outlined, size: 20),
-                label: const Text('Choose Audio From Phone...'),
+                label: Text(AppStrings.tr(ref, 'chooseAudioFromPhone')),
                 onPressed: () async {
                   await RingtoneManager().stopPreview();
                   final result = await FilePicker.platform.pickFiles(
@@ -242,7 +274,7 @@ class _NotificationsSettingsScreenState
                       SharedPref.instance.setString('notif_msg_tone', name);
                       SharedPref.instance.setString('notif_custom_msg_tone_path', path);
                     }
-                    if (context.mounted) {
+                    if (mounted && dialogCtx.mounted) {
                       Navigator.pop(dialogCtx);
                       showSnackBar(
                         context: context,
@@ -259,14 +291,14 @@ class _NotificationsSettingsScreenState
       ),
       actions: [
         AppDialogAction(
-          label: 'CANCEL',
+          label: AppStrings.tr(ref, 'cancel').toUpperCase(),
           onPressed: () async {
             await RingtoneManager().stopPreview();
-            if (context.mounted) Navigator.pop(context);
+            if (mounted) Navigator.pop(context);
           },
         ),
         AppDialogAction(
-          label: 'SAVE',
+          label: AppStrings.tr(ref, 'save').toUpperCase(),
           isPrimary: true,
           onPressed: () async {
             await RingtoneManager().stopPreview();
@@ -281,11 +313,11 @@ class _NotificationsSettingsScreenState
                 SharedPref.instance.setString('notif_custom_msg_tone_path', '');
               }
             }
-            if (context.mounted) {
+            if (mounted) {
               Navigator.pop(context);
               showSnackBar(
                 context: context,
-                content: '$title updated',
+                content: '$title ${AppStrings.tr(ref, 'toneUpdatedSuccess')}',
                 type: SnacBarType.info,
               );
             }
@@ -306,9 +338,9 @@ class _NotificationsSettingsScreenState
         scrolledUnderElevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         actionsIconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'Notifications',
-          style: TextStyle(
+        title: Text(
+          AppStrings.tr(ref, 'notifications'),
+          style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
@@ -321,9 +353,9 @@ class _NotificationsSettingsScreenState
                 context: context,
                 position: const RelativeRect.fromLTRB(100, 80, 0, 0),
                 items: [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'reset',
-                    child: Text('Reset notification settings'),
+                    child: Text(AppStrings.tr(ref, 'resetNotifications')),
                   ),
                 ],
               ).then((value) {
@@ -350,7 +382,7 @@ class _NotificationsSettingsScreenState
                   if (context.mounted) {
                     showSnackBar(
                       context: context,
-                      content: 'Notification settings reset to defaults',
+                      content: AppStrings.tr(ref, 'resetNotificationsSuccess'),
                       type: SnacBarType.info,
                     );
                   }
@@ -364,8 +396,8 @@ class _NotificationsSettingsScreenState
         children: [
           SettingsRow(
             icon: Icons.volume_up_outlined,
-            title: 'Conversation tones',
-            subtitle: 'Play sounds for incoming and outgoing messages',
+            title: AppStrings.tr(ref, 'conversationTones'),
+            subtitle: AppStrings.tr(ref, 'conversationTonesSub'),
             showChevron: false,
             trailing: Switch(
               value: _conversationTones,
@@ -378,20 +410,20 @@ class _NotificationsSettingsScreenState
             ),
           ),
           const Divider(height: 1),
-          const SettingsSectionHeader(title: 'Messages'),
+          SettingsSectionHeader(title: AppStrings.tr(ref, 'messagesHeader')),
           SettingsRow(
             icon: Icons.music_note_outlined,
-            title: 'Notification tone',
-            subtitle: _msgTone,
+            title: AppStrings.tr(ref, 'notificationTone'),
+            subtitle: _localizeOption(_msgTone),
             onTap: () => _showTonePickerDialog(isCallRingtone: false),
           ),
           const Divider(height: 1),
           SettingsRow(
             icon: Icons.vibration_outlined,
-            title: 'Vibrate',
-            subtitle: _msgVibrate,
+            title: AppStrings.tr(ref, 'vibrate'),
+            subtitle: _localizeOption(_msgVibrate),
             onTap: () => _showRadioDialog(
-              title: 'Vibrate',
+              title: AppStrings.tr(ref, 'vibrate'),
               options: ['Default', 'Short', 'Long', 'Off'],
               currentValue: _msgVibrate,
               onSelected: (val) {
@@ -403,8 +435,8 @@ class _NotificationsSettingsScreenState
           const Divider(height: 1),
           SettingsRow(
             icon: Icons.priority_high_outlined,
-            title: 'Use high priority notifications',
-            subtitle: 'Show previews of notifications at the top of the screen',
+            title: AppStrings.tr(ref, 'useHighPriority'),
+            subtitle: AppStrings.tr(ref, 'useHighPrioritySub'),
             showChevron: false,
             trailing: Switch(
               value: _highPriority,
@@ -419,8 +451,8 @@ class _NotificationsSettingsScreenState
           const Divider(height: 1),
           SettingsRow(
             icon: Icons.add_reaction_outlined,
-            title: 'Reaction notifications',
-            subtitle: 'Show notifications for reactions to messages you send',
+            title: AppStrings.tr(ref, 'reactionNotifications'),
+            subtitle: AppStrings.tr(ref, 'reactionNotificationsSub'),
             showChevron: false,
             trailing: Switch(
               value: _reactionNotifications,
@@ -433,20 +465,20 @@ class _NotificationsSettingsScreenState
             ),
           ),
           const Divider(height: 1),
-          const SettingsSectionHeader(title: 'Calls'),
+          SettingsSectionHeader(title: AppStrings.tr(ref, 'callsHeader')),
           SettingsRow(
             icon: Icons.ring_volume_outlined,
-            title: 'Ringtone',
-            subtitle: _callRingtone,
+            title: AppStrings.tr(ref, 'ringtone'),
+            subtitle: _localizeOption(_callRingtone),
             onTap: () => _showTonePickerDialog(isCallRingtone: true),
           ),
           const Divider(height: 1),
           SettingsRow(
             icon: Icons.vibration_outlined,
-            title: 'Vibrate',
-            subtitle: _callVibrate,
+            title: AppStrings.tr(ref, 'vibrate'),
+            subtitle: _localizeOption(_callVibrate),
             onTap: () => _showRadioDialog(
-              title: 'Vibrate',
+              title: AppStrings.tr(ref, 'vibrate'),
               options: ['Default', 'Short', 'Long', 'Off'],
               currentValue: _callVibrate,
               onSelected: (val) {

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/auth/domain/auth_service.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/secure_pin_service.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
@@ -42,8 +43,8 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     showAppDialog(
       context: context,
       title: _twoStepEnabled
-          ? 'Disable Two-Step Verification'
-          : 'Enable Two-Step Verification',
+          ? AppStrings.tr(ref, 'disableTwoStep')
+          : AppStrings.tr(ref, 'enableTwoStep'),
       icon: Icons.pin_outlined,
       iconColor: _twoStepEnabled ? Colors.redAccent : AppColors.primary,
       content: Column(
@@ -52,8 +53,8 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
         children: [
           Text(
             _twoStepEnabled
-                ? 'Enter your current 6-digit PIN to confirm disabling Two-Step Verification:'
-                : 'Enter a 6-digit PIN which will be required to access and secure your Livocal account:',
+                ? AppStrings.tr(ref, 'enterCurrentPin')
+                : AppStrings.tr(ref, 'enterNewPin'),
             style: const TextStyle(fontSize: 14),
           ),
           const SizedBox(height: 16),
@@ -72,11 +73,13 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       ),
       actions: [
         AppDialogAction(
-          label: 'CANCEL',
+          label: AppStrings.tr(ref, 'cancel').toUpperCase(),
           onPressed: () => Navigator.pop(context),
         ),
         AppDialogAction(
-          label: _twoStepEnabled ? 'CONFIRM DISABLE' : 'ENABLE PIN',
+          label: _twoStepEnabled
+              ? AppStrings.tr(ref, 'confirmDisable')
+              : AppStrings.tr(ref, 'enablePin'),
           isDestructive: _twoStepEnabled,
           isPrimary: !_twoStepEnabled,
           onPressed: () async {
@@ -84,7 +87,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
             if (enteredPin.length != 6) {
               showSnackBar(
                 context: context,
-                content: 'Please enter a valid 6-digit PIN',
+                content: AppStrings.tr(ref, 'enterValid6DigitPin'),
                 type: SnacBarType.error,
               );
               return;
@@ -96,7 +99,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
               if (!isCorrect) {
                 showSnackBar(
                   context: context,
-                  content: 'Incorrect PIN. Verification failed.',
+                  content: AppStrings.tr(ref, 'incorrectPin'),
                   type: SnacBarType.error,
                 );
                 return;
@@ -107,7 +110,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
               setState(() => _twoStepEnabled = false);
               showSnackBar(
                 context: context,
-                content: 'Two-step verification disabled',
+                content: AppStrings.tr(ref, 'twoStepDisabledSuccess'),
                 type: SnacBarType.info,
               );
             } else {
@@ -117,7 +120,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
               setState(() => _twoStepEnabled = true);
               showSnackBar(
                 context: context,
-                content: 'Two-step verification PIN saved in secure storage',
+                content: AppStrings.tr(ref, 'twoStepSavedSuccess'),
                 type: SnacBarType.info,
               );
             }
@@ -130,27 +133,27 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
   void _showDeleteAccountDialog() {
     showAppDialog(
       context: context,
-      title: 'Delete this account?',
+      title: AppStrings.tr(ref, 'deleteAccountTitle'),
       icon: Icons.delete_forever_rounded,
       iconColor: Colors.redAccent,
-      content: const Column(
+      content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Deleting your account will:'),
-          SizedBox(height: 8),
-          Text('• Delete your account info and profile photo'),
-          Text('• Delete all local message history from this device'),
-          Text('• Remove you from your contacts’ Livocal lists'),
+          Text(AppStrings.tr(ref, 'deleteAccountDesc')),
+          const SizedBox(height: 8),
+          Text(AppStrings.tr(ref, 'deleteAccountBullet1')),
+          Text(AppStrings.tr(ref, 'deleteAccountBullet2')),
+          Text(AppStrings.tr(ref, 'deleteAccountBullet3')),
         ],
       ),
       actions: [
         AppDialogAction(
-          label: 'CANCEL',
+          label: AppStrings.tr(ref, 'cancel').toUpperCase(),
           onPressed: () => Navigator.pop(context),
         ),
         AppDialogAction(
-          label: 'DELETE ACCOUNT',
+          label: AppStrings.tr(ref, 'deleteAccountButton'),
           isDestructive: true,
           onPressed: () async {
             Navigator.pop(context);
@@ -176,9 +179,9 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
         scrolledUnderElevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         actionsIconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'Account',
-          style: TextStyle(
+        title: Text(
+          AppStrings.tr(ref, 'account'),
+          style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
@@ -186,12 +189,11 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       ),
       body: ListView(
         children: [
-          const SettingsSectionHeader(title: 'Security & Access'),
+          SettingsSectionHeader(title: AppStrings.tr(ref, 'securityAndAccess')),
           SettingsRow(
             icon: Icons.shield_outlined,
-            title: 'Security notifications',
-            subtitle:
-                'Show security notifications when encryption keys change for any contact.',
+            title: AppStrings.tr(ref, 'securityNotifications'),
+            subtitle: AppStrings.tr(ref, 'securityNotificationsSub'),
             showChevron: false,
             trailing: Switch(
               value: _securityNotifications,
@@ -206,27 +208,27 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
           const Divider(height: 1),
           SettingsRow(
             icon: Icons.pin_outlined,
-            title: 'Two-step verification',
+            title: AppStrings.tr(ref, 'twoStepVerification'),
             subtitle: _twoStepEnabled
-                ? 'Enabled (PIN protection active)'
-                : 'Disabled (Set up a 6-digit PIN)',
+                ? AppStrings.tr(ref, 'twoStepEnabledSub')
+                : AppStrings.tr(ref, 'twoStepDisabledSub'),
             onTap: _showTwoStepDialog,
           ),
-          const SettingsSectionHeader(title: 'Account Management'),
+          SettingsSectionHeader(title: AppStrings.tr(ref, 'accountManagement')),
           SettingsRow(
             icon: Icons.phone_android_outlined,
-            title: 'Change number',
-            subtitle: 'Current: ${widget.user.phone.getFormattedNumber()}',
+            title: AppStrings.tr(ref, 'changeNumber'),
+            subtitle:
+                '${AppStrings.tr(ref, 'currentNumber')}${widget.user.phone.getFormattedNumber()}',
             onTap: () {
               showAppDialog(
                 context: context,
-                title: 'Change phone number',
+                title: AppStrings.tr(ref, 'changeNumber'),
                 icon: Icons.phone_android_outlined,
-                contentText:
-                    'Migrating your account to a new phone number will transfer all your account info, settings, and encryption keys.',
+                contentText: AppStrings.tr(ref, 'changeNumberDialogContent'),
                 actions: [
                   AppDialogAction(
-                    label: 'OK',
+                    label: AppStrings.tr(ref, 'ok'),
                     isPrimary: true,
                     onPressed: () => Navigator.pop(context),
                   ),
@@ -237,13 +239,12 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
           const Divider(height: 1),
           SettingsRow(
             icon: Icons.description_outlined,
-            title: 'Request account info',
-            subtitle: 'Request a report of your account info and settings',
+            title: AppStrings.tr(ref, 'requestAccountInfo'),
+            subtitle: AppStrings.tr(ref, 'requestAccountInfoSub'),
             onTap: () {
               showSnackBar(
                 context: context,
-                content:
-                    'Account report request submitted. Ready within 24 hours.',
+                content: AppStrings.tr(ref, 'accountReportSubmitted'),
                 type: SnacBarType.info,
               );
             },
@@ -251,8 +252,8 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
           const Divider(height: 1),
           SettingsRow(
             icon: Icons.delete_outline,
-            title: 'Delete my account',
-            subtitle: 'Permanently remove your account and data',
+            title: AppStrings.tr(ref, 'deleteMyAccount'),
+            subtitle: AppStrings.tr(ref, 'deleteMyAccountSub'),
             isDestructive: true,
             onTap: _showDeleteAccountDialog,
           ),

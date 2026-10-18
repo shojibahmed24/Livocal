@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/network_tracker.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
@@ -40,6 +41,21 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
         SharedPref.instance.getString('storage_roaming_auto') ?? 'No media';
 
     _loadRealStorageSizes();
+  }
+
+  String _localizeOption(String opt) {
+    switch (opt) {
+      case 'No media':
+        return AppStrings.tr(ref, 'noMedia');
+      case 'Photos':
+        return AppStrings.tr(ref, 'photos');
+      case 'Photos, Audio':
+        return AppStrings.tr(ref, 'photosAudio');
+      case 'All media':
+        return AppStrings.tr(ref, 'allMedia');
+      default:
+        return opt;
+    }
   }
 
   String _formatBytes(int bytes) {
@@ -121,7 +137,7 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
       if (mounted) {
         showSnackBar(
           context: context,
-          content: 'Cache cleared successfully (${_formatBytes(freed)} freed)',
+          content: '${AppStrings.tr(ref, 'cacheClearedSuccess')} (${_formatBytes(freed)})',
           type: SnacBarType.info,
         );
       }
@@ -150,7 +166,7 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
         children: ['No media', 'Photos', 'Photos, Audio', 'All media']
             .map(
               (opt) => RadioListTile<String>(
-                title: Text(opt),
+                title: Text(_localizeOption(opt)),
                 value: opt,
                 groupValue: current,
                 activeColor: AppColors.primary,
@@ -166,7 +182,7 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
       ),
       actions: [
         AppDialogAction(
-          label: 'CANCEL',
+          label: AppStrings.tr(ref, 'cancel').toUpperCase(),
           onPressed: () => Navigator.pop(context),
         ),
       ],
@@ -187,9 +203,9 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
         scrolledUnderElevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         actionsIconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'Storage and data',
-          style: TextStyle(
+        title: Text(
+          AppStrings.tr(ref, 'storage'),
+          style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
@@ -197,36 +213,36 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
       ),
       body: ListView(
         children: [
-          const SettingsSectionHeader(title: 'Storage & Network Usage'),
+          SettingsSectionHeader(title: AppStrings.tr(ref, 'storageAndNetworkUsage')),
           SettingsRow(
             icon: Icons.folder_outlined,
-            title: 'Manage storage',
+            title: AppStrings.tr(ref, 'manageStorage'),
             subtitle: _isLoadingSizes
-                ? 'Calculating real disk usage...'
-                : 'Database: ${_formatBytes(_dbBytes)} • Cache: ${_formatBytes(_cacheBytes)}',
+                ? AppStrings.tr(ref, 'calculatingStorage')
+                : '${AppStrings.tr(ref, 'databaseLabel')}${_formatBytes(_dbBytes)} • ${AppStrings.tr(ref, 'cacheLabel')}${_formatBytes(_cacheBytes)}',
             onTap: () {
               showAppDialog(
                 context: context,
-                title: 'Storage Breakdown',
+                title: AppStrings.tr(ref, 'storageBreakdown'),
                 icon: Icons.pie_chart_outline_rounded,
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('• App Database (Isar): ${_formatBytes(_dbBytes)}'),
+                    Text('${AppStrings.tr(ref, 'appDatabaseIsar')}${_formatBytes(_dbBytes)}'),
                     const SizedBox(height: 8),
                     Text(
-                        '• Cached Media & Temporary Audio: ${_formatBytes(_cacheBytes)}'),
+                        '${AppStrings.tr(ref, 'cachedMediaTemp')}${_formatBytes(_cacheBytes)}'),
                     const SizedBox(height: 8),
                     Text(
-                      'Total App Footprint: ${_formatBytes(_dbBytes + _cacheBytes)}',
+                      '${AppStrings.tr(ref, 'totalAppFootprint')}${_formatBytes(_dbBytes + _cacheBytes)}',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
                 actions: [
                   AppDialogAction(
-                    label: 'CLEAR CACHE',
+                    label: AppStrings.tr(ref, 'clearCache'),
                     isDestructive: true,
                     onPressed: () {
                       Navigator.pop(context);
@@ -234,7 +250,7 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
                     },
                   ),
                   AppDialogAction(
-                    label: 'CLOSE',
+                    label: AppStrings.tr(ref, 'close'),
                     isPrimary: true,
                     onPressed: () => Navigator.pop(context),
                   ),
@@ -245,32 +261,32 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
           const Divider(height: 1),
           SettingsRow(
             icon: Icons.data_usage_rounded,
-            title: 'Network usage',
+            title: AppStrings.tr(ref, 'networkUsage'),
             subtitle:
-                '${_formatBytes(sentBytes)} sent • ${_formatBytes(recvBytes)} received',
+                '${_formatBytes(sentBytes)} ${AppStrings.tr(ref, 'sent')} • ${_formatBytes(recvBytes)} ${AppStrings.tr(ref, 'received')}',
             onTap: () {
               showAppDialog(
                 context: context,
-                title: 'Network Usage Details',
+                title: AppStrings.tr(ref, 'networkUsageDetails'),
                 icon: Icons.network_check_rounded,
                 content: (sentBytes == 0 && recvBytes == 0)
-                    ? const Text('No network usage recorded yet.')
+                    ? Text(AppStrings.tr(ref, 'noNetworkUsage'))
                     : Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                              '• Total Traffic: ${_formatBytes(sentBytes + recvBytes)}'),
+                              '${AppStrings.tr(ref, 'totalTraffic')}${_formatBytes(sentBytes + recvBytes)}'),
                           const SizedBox(height: 6),
-                          Text('• Sent: ${_formatBytes(sentBytes)}'),
+                          Text('${AppStrings.tr(ref, 'sentTraffic')}${_formatBytes(sentBytes)}'),
                           const SizedBox(height: 6),
-                          Text('• Received: ${_formatBytes(recvBytes)}'),
+                          Text('${AppStrings.tr(ref, 'receivedTraffic')}${_formatBytes(recvBytes)}'),
                         ],
                       ),
                 actions: [
                   if (sentBytes > 0 || recvBytes > 0)
                     AppDialogAction(
-                      label: 'RESET USAGE',
+                      label: AppStrings.tr(ref, 'resetUsage'),
                       isDestructive: true,
                       onPressed: () {
                         NetworkTracker.resetUsage();
@@ -279,7 +295,7 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
                       },
                     ),
                   AppDialogAction(
-                    label: 'CLOSE',
+                    label: AppStrings.tr(ref, 'close'),
                     isPrimary: true,
                     onPressed: () => Navigator.pop(context),
                   ),
@@ -288,12 +304,11 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
             },
           ),
           const Divider(height: 1),
-          const SettingsSectionHeader(title: 'Call Settings'),
+          SettingsSectionHeader(title: AppStrings.tr(ref, 'callSettings')),
           SettingsRow(
             icon: Icons.phone_in_talk_outlined,
-            title: 'Use less data for calls',
-            subtitle:
-                'Optimizes Opus codec audio bitrate during low network connectivity',
+            title: AppStrings.tr(ref, 'useLessDataCalls'),
+            subtitle: AppStrings.tr(ref, 'useLessDataCallsSub'),
             showChevron: false,
             trailing: Switch(
               value: _lessDataForCalls,
@@ -306,13 +321,13 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
             ),
           ),
           const Divider(height: 1),
-          const SettingsSectionHeader(title: 'Media auto-download'),
+          SettingsSectionHeader(title: AppStrings.tr(ref, 'mediaAutoDownload')),
           SettingsRow(
             icon: Icons.signal_cellular_alt_rounded,
-            title: 'When using mobile data',
-            subtitle: _mobileDataAuto,
+            title: AppStrings.tr(ref, 'whenUsingMobileData'),
+            subtitle: _localizeOption(_mobileDataAuto),
             onTap: () => _showAutoDownloadDialog(
-              title: 'When using mobile data',
+              title: AppStrings.tr(ref, 'whenUsingMobileData'),
               current: _mobileDataAuto,
               onSelected: (val) {
                 setState(() => _mobileDataAuto = val);
@@ -323,10 +338,10 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
           const Divider(height: 1),
           SettingsRow(
             icon: Icons.wifi_rounded,
-            title: 'When connected to Wi-Fi',
-            subtitle: _wifiAuto,
+            title: AppStrings.tr(ref, 'whenConnectedWifi'),
+            subtitle: _localizeOption(_wifiAuto),
             onTap: () => _showAutoDownloadDialog(
-              title: 'When connected to Wi-Fi',
+              title: AppStrings.tr(ref, 'whenConnectedWifi'),
               current: _wifiAuto,
               onSelected: (val) {
                 setState(() => _wifiAuto = val);
@@ -337,10 +352,10 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
           const Divider(height: 1),
           SettingsRow(
             icon: Icons.public_rounded,
-            title: 'When roaming',
-            subtitle: _roamingAuto,
+            title: AppStrings.tr(ref, 'whenRoaming'),
+            subtitle: _localizeOption(_roamingAuto),
             onTap: () => _showAutoDownloadDialog(
-              title: 'When roaming',
+              title: AppStrings.tr(ref, 'whenRoaming'),
               current: _roamingAuto,
               onSelected: (val) {
                 setState(() => _roamingAuto = val);

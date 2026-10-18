@@ -64,6 +64,55 @@ void main() {
       expect(AppStrings.get('settings', 'de'), equals('Einstellungen'));
     });
 
+    test('100% Key Parity: All 7 supported locales have identical key sets with non-empty values', () {
+      final supportedLocales = AppStrings.supportedLanguages;
+      expect(supportedLocales, unorderedEquals(['en', 'bn', 'hi', 'ar', 'es', 'fr', 'de']));
+
+      final enKeys = AppStrings.allKeys;
+      expect(enKeys.length, greaterThanOrEqualTo(150), reason: 'All sub-screens must be included');
+
+      for (final lang in supportedLocales) {
+        final langDict = AppStrings.localizedValues[lang];
+        expect(langDict, isNotNull, reason: 'Language $lang must have a dictionary');
+
+        final langKeys = langDict!.keys.toSet();
+        final missingKeys = enKeys.difference(langKeys);
+        expect(missingKeys, isEmpty,
+            reason: 'Language $lang is missing ${missingKeys.length} keys: $missingKeys');
+
+        for (final entry in langDict.entries) {
+          expect(entry.value.trim().isNotEmpty, isTrue,
+              reason: 'Language $lang key "${entry.key}" must not have empty value');
+        }
+      }
+    });
+
+    test('All 6 Settings Sub-screens have complete translations across all 7 locales', () {
+      const subScreenSampleKeys = [
+        // Account screen
+        'account', 'securityAndAccess', 'twoStepVerification', 'changeNumber', 'deleteMyAccount',
+        // Privacy screen
+        'privacy', 'whoCanSeeMyInfo', 'lastSeenAndOnline', 'disappearingMessages', 'fingerprintLock',
+        // Notifications screen
+        'notifications', 'conversationTones', 'messagesHeader', 'notificationTone', 'callRingtoneTitle',
+        // Storage screen
+        'storage', 'manageStorage', 'storageBreakdown', 'networkUsage', 'whenUsingMobileData',
+        // Help screen
+        'help', 'helpCentre', 'contactSupport', 'faqTitle', 'aboutLivocal',
+        // QR Code screen
+        'qrCode', 'copyLink', 'shareQrCode', 'qrCodeDesc',
+      ];
+
+      for (final key in subScreenSampleKeys) {
+        for (final lang in AppStrings.supportedLanguages) {
+          final translated = AppStrings.get(key, lang);
+          expect(translated, isNot(equals(key)),
+              reason: 'Key "$key" should be translated in locale "$lang"');
+          expect(translated.trim().isNotEmpty, isTrue);
+        }
+      }
+    });
+
     test('Unknown keys gracefully return fallback', () {
       expect(AppStrings.get('non_existent_key_xyz', 'bn'), equals('non_existent_key_xyz'));
     });

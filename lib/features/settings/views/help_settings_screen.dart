@@ -2,24 +2,26 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/widgets/settings_row.dart';
 import 'package:livocal/theme/app_colors.dart';
 
-class HelpSettingsScreen extends StatelessWidget {
+class HelpSettingsScreen extends ConsumerWidget {
   const HelpSettingsScreen({super.key});
 
-  void _showContactUsDialog(BuildContext context) {
+  void _showContactUsDialog(BuildContext context, WidgetRef ref) {
     final textController = TextEditingController();
     bool isSubmitting = false;
     void Function(void Function())? dialogStateSetter;
 
     showAppDialog(
       context: context,
-      title: 'Contact Support',
+      title: AppStrings.tr(ref, 'contactSupport'),
       icon: Icons.support_agent_outlined,
       barrierDismissible: false,
       content: StatefulBuilder(
@@ -29,18 +31,18 @@ class HelpSettingsScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Tell us how we can help you. Describe your issue or suggestion:',
-                style: TextStyle(fontSize: 14),
+              Text(
+                AppStrings.tr(ref, 'contactSupportDesc'),
+                style: const TextStyle(fontSize: 14),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: textController,
                 maxLines: 4,
                 enabled: !isSubmitting,
-                decoration: const InputDecoration(
-                  hintText: 'Type your message here...',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  hintText: AppStrings.tr(ref, 'typeYourMessage'),
+                  border: const OutlineInputBorder(),
                 ),
               ),
               if (isSubmitting) ...[
@@ -57,18 +59,18 @@ class HelpSettingsScreen extends StatelessWidget {
       ),
       actions: [
         AppDialogAction(
-          label: 'CANCEL',
+          label: AppStrings.tr(ref, 'cancel').toUpperCase(),
           onPressed: () => Navigator.pop(context),
         ),
         AppDialogAction(
-          label: 'SUBMIT',
+          label: AppStrings.tr(ref, 'submit'),
           isPrimary: true,
           onPressed: () async {
             final message = textController.text.trim();
             if (message.isEmpty) {
               showSnackBar(
                 context: context,
-                content: 'Please enter a message before submitting.',
+                content: AppStrings.tr(ref, 'enterMessageError'),
                 type: SnacBarType.error,
               );
               return;
@@ -90,8 +92,7 @@ class HelpSettingsScreen extends StatelessWidget {
                 Navigator.pop(context);
                 showSnackBar(
                   context: context,
-                  content:
-                      'Thank you! Your feedback has been sent to the Livocal engineering team.',
+                  content: AppStrings.tr(ref, 'feedbackSentSuccess'),
                   type: SnacBarType.info,
                 );
               }
@@ -112,33 +113,33 @@ class HelpSettingsScreen extends StatelessWidget {
     );
   }
 
-  void _showAppInfoDialog(BuildContext context) {
+  void _showAppInfoDialog(BuildContext context, WidgetRef ref) {
     showAppDialog(
       context: context,
-      title: 'About Livocal',
+      title: AppStrings.tr(ref, 'aboutLivocal'),
       icon: Icons.bolt_rounded,
-      content: const Column(
+      content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'Livocal for Android',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 4),
-          Text('Version 1.0.0 (Production Build 2026.10.15)'),
-          SizedBox(height: 12),
+          const SizedBox(height: 4),
+          const Text('Version 1.0.0 (Production Build 2026.10.15)'),
+          const SizedBox(height: 12),
           Text(
-            'Real-Time AI Voice Translation & Secure Messaging powered by WebRTC, Gemini Multimodal Live API, and Flutter.',
-            style: TextStyle(fontSize: 13, color: Colors.grey),
+            AppStrings.tr(ref, 'appInfoDesc'),
+            style: const TextStyle(fontSize: 13, color: Colors.grey),
           ),
-          SizedBox(height: 12),
-          Text('© 2026 Livocal Inc. All rights reserved.'),
+          const SizedBox(height: 12),
+          const Text('© 2026 Livocal Inc. All rights reserved.'),
         ],
       ),
       actions: [
         AppDialogAction(
-          label: 'CLOSE',
+          label: AppStrings.tr(ref, 'close'),
           isPrimary: true,
           onPressed: () => Navigator.pop(context),
         ),
@@ -147,7 +148,7 @@ class HelpSettingsScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -157,9 +158,9 @@ class HelpSettingsScreen extends StatelessWidget {
         scrolledUnderElevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         actionsIconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'Help',
-          style: TextStyle(
+        title: Text(
+          AppStrings.tr(ref, 'help'),
+          style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
@@ -167,11 +168,11 @@ class HelpSettingsScreen extends StatelessWidget {
       ),
       body: ListView(
         children: [
-          const SettingsSectionHeader(title: 'Support & Knowledge'),
+          SettingsSectionHeader(title: AppStrings.tr(ref, 'supportAndKnowledge')),
           SettingsRow(
             icon: Icons.help_center_outlined,
-            title: 'Help Centre',
-            subtitle: 'FAQs, user guides, troubleshooting',
+            title: AppStrings.tr(ref, 'helpCentre'),
+            subtitle: AppStrings.tr(ref, 'helpCentreSub'),
             onTap: () {
               Navigator.push(
                 context,
@@ -182,20 +183,20 @@ class HelpSettingsScreen extends StatelessWidget {
           const Divider(height: 1),
           SettingsRow(
             icon: Icons.support_agent_outlined,
-            title: 'Contact us',
-            subtitle: 'Questions? Need help? Reach our team',
-            onTap: () => _showContactUsDialog(context),
+            title: AppStrings.tr(ref, 'contactSupport'),
+            subtitle: AppStrings.tr(ref, 'contactSupportSub'),
+            onTap: () => _showContactUsDialog(context, ref),
           ),
-          const SettingsSectionHeader(title: 'Legal & Info'),
+          SettingsSectionHeader(title: AppStrings.tr(ref, 'legalAndInfo')),
           SettingsRow(
             icon: Icons.privacy_tip_outlined,
-            title: 'Terms and Privacy Policy',
-            subtitle: 'Private communication & zero-knowledge policy',
+            title: AppStrings.tr(ref, 'termsAndPrivacy'),
+            subtitle: AppStrings.tr(ref, 'termsAndPrivacySub'),
             onTap: () {
               bool isBnSelected = false;
               showAppDialog(
                 context: context,
-                title: 'Terms & Privacy Policy',
+                title: AppStrings.tr(ref, 'termsAndPrivacy'),
                 icon: Icons.privacy_tip_outlined,
                 content: StatefulBuilder(
                   builder: (ctx, setContentState) {
@@ -240,7 +241,7 @@ class HelpSettingsScreen extends StatelessWidget {
                 ),
                 actions: [
                   AppDialogAction(
-                    label: 'ONLINE POLICY',
+                    label: AppStrings.tr(ref, 'onlinePolicy'),
                     isPrimary: true,
                     onPressed: () async {
                       final uri = Uri.parse(AppConfig.privacyPolicyUrl);
@@ -260,7 +261,7 @@ class HelpSettingsScreen extends StatelessWidget {
                     },
                   ),
                   AppDialogAction(
-                    label: 'I UNDERSTAND',
+                    label: AppStrings.tr(ref, 'iUnderstand'),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
@@ -270,9 +271,9 @@ class HelpSettingsScreen extends StatelessWidget {
           const Divider(height: 1),
           SettingsRow(
             icon: Icons.info_outline,
-            title: 'App info',
+            title: AppStrings.tr(ref, 'appInfo'),
             subtitle: 'Livocal v1.0.0',
-            onTap: () => _showAppInfoDialog(context),
+            onTap: () => _showAppInfoDialog(context, ref),
           ),
         ],
       ),
@@ -280,11 +281,11 @@ class HelpSettingsScreen extends StatelessWidget {
   }
 }
 
-class FAQScreen extends StatelessWidget {
+class FAQScreen extends ConsumerWidget {
   const FAQScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -294,60 +295,60 @@ class FAQScreen extends StatelessWidget {
         scrolledUnderElevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         actionsIconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'Help Centre & FAQs',
-          style: TextStyle(
+        title: Text(
+          AppStrings.tr(ref, 'faqTitle'),
+          style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
       body: ListView(
-        children: const [
+        children: [
           ExpansionTile(
-            title: Text('How does Real-Time AI Live Translation work?'),
+            title: Text(AppStrings.tr(ref, 'faqLiveTranslationQ')),
             children: [
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Text(
-                  'During a voice call, Livocal streams raw audio via WebRTC. When AI translation is toggled on, speech is streamed to the Gemini Multimodal Live API which translates bidirectional speech with sub-second latency.',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  AppStrings.tr(ref, 'faqLiveTranslationA'),
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
               ),
             ],
           ),
           ExpansionTile(
-            title: Text('Are my voice calls and messages encrypted?'),
+            title: Text(AppStrings.tr(ref, 'faqSecurityQ')),
             children: [
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Text(
-                  'Yes! All WebRTC audio streams use DTLS-SRTP encryption, and all chat messages are authenticated with zero-trust Firestore security rules.',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  AppStrings.tr(ref, 'faqSecurityA'),
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
               ),
             ],
           ),
           ExpansionTile(
-            title: Text('How do I add or invite contacts?'),
+            title: Text(AppStrings.tr(ref, 'faqContactsQ')),
             children: [
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Text(
-                  'Tap the floating action button on the home screen to open Contacts. You can tap any contact registered on Livocal to chat or call immediately, or tap "Invite" to send an SMS invitation.',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  AppStrings.tr(ref, 'faqContactsA'),
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
               ),
             ],
           ),
           ExpansionTile(
-            title: Text('How do I configure my Gemini API Key?'),
+            title: Text(AppStrings.tr(ref, 'faqApiKeyQ')),
             children: [
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Text(
-                  'Go to Settings > Gemini Live Voice Translation. You can enter your personal Gemini API key from Google AI Studio, select your preferred voice (Puck, Charon, Kore, Fenrir, Aoede), and save securely.',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  AppStrings.tr(ref, 'faqApiKeyA'),
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
               ),
             ],

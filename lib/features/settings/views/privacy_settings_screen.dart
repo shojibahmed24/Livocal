@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/widgets/app_auth_guard.dart';
@@ -43,6 +44,31 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
         SharedPref.instance.getBool('privacy_fingerprint') ?? false;
   }
 
+  String _localizeOption(String opt) {
+    switch (opt) {
+      case 'Everyone':
+        return AppStrings.tr(ref, 'everyone');
+      case 'My contacts':
+        return AppStrings.tr(ref, 'myContacts');
+      case 'Nobody':
+        return AppStrings.tr(ref, 'nobody');
+      case 'My contacts except...':
+        return AppStrings.tr(ref, 'myContactsExcept');
+      case 'Only share with...':
+        return AppStrings.tr(ref, 'onlyShareWith');
+      case 'Off':
+        return AppStrings.tr(ref, 'off');
+      case '24 hours':
+        return AppStrings.tr(ref, 'hours24');
+      case '7 days':
+        return AppStrings.tr(ref, 'days7');
+      case '90 days':
+        return AppStrings.tr(ref, 'days90');
+      default:
+        return opt;
+    }
+  }
+
   void _showRadioOptionDialog({
     required String title,
     required List<String> options,
@@ -57,7 +83,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
         children: options
             .map(
               (opt) => RadioListTile<String>(
-                title: Text(opt),
+                title: Text(_localizeOption(opt)),
                 value: opt,
                 groupValue: currentValue,
                 activeColor: AppColors.primary,
@@ -73,7 +99,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
       ),
       actions: [
         AppDialogAction(
-          label: 'CANCEL',
+          label: AppStrings.tr(ref, 'cancel').toUpperCase(),
           onPressed: () => Navigator.pop(context),
         ),
       ],
@@ -91,9 +117,9 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
         scrolledUnderElevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         actionsIconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'Privacy',
-          style: TextStyle(
+        title: Text(
+          AppStrings.tr(ref, 'privacy'),
+          style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
@@ -101,13 +127,13 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
       ),
       body: ListView(
         children: [
-          const SettingsSectionHeader(title: 'Who can see my personal info'),
+          SettingsSectionHeader(title: AppStrings.tr(ref, 'whoCanSeeMyInfo')),
           SettingsRow(
             icon: Icons.visibility_outlined,
-            title: 'Last seen and online',
-            subtitle: _lastSeen,
+            title: AppStrings.tr(ref, 'lastSeenAndOnline'),
+            subtitle: _localizeOption(_lastSeen),
             onTap: () => _showRadioOptionDialog(
-              title: 'Last seen and online',
+              title: AppStrings.tr(ref, 'lastSeenAndOnline'),
               options: ['Everyone', 'My contacts', 'Nobody'],
               currentValue: _lastSeen,
               onSelected: (val) {
@@ -119,10 +145,10 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
           const Divider(height: 1),
           SettingsRow(
             icon: Icons.account_circle_outlined,
-            title: 'Profile photo',
-            subtitle: _profilePhoto,
+            title: AppStrings.tr(ref, 'profilePhoto'),
+            subtitle: _localizeOption(_profilePhoto),
             onTap: () => _showRadioOptionDialog(
-              title: 'Profile photo',
+              title: AppStrings.tr(ref, 'profilePhoto'),
               options: ['Everyone', 'My contacts', 'Nobody'],
               currentValue: _profilePhoto,
               onSelected: (val) {
@@ -134,10 +160,10 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
           const Divider(height: 1),
           SettingsRow(
             icon: Icons.info_outline,
-            title: 'About',
-            subtitle: _about,
+            title: AppStrings.tr(ref, 'about'),
+            subtitle: _localizeOption(_about),
             onTap: () => _showRadioOptionDialog(
-              title: 'About',
+              title: AppStrings.tr(ref, 'about'),
               options: ['Everyone', 'My contacts', 'Nobody'],
               currentValue: _about,
               onSelected: (val) {
@@ -149,14 +175,14 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
           const Divider(height: 1),
           SettingsRow(
             icon: Icons.donut_large_outlined,
-            title: 'Status',
+            title: AppStrings.tr(ref, 'status'),
             subtitle: _statusPrivacy == 'contacts'
-                ? 'My contacts'
+                ? AppStrings.tr(ref, 'myContacts')
                 : (_statusPrivacy == 'except'
-                    ? 'My contacts except...'
-                    : 'Only share with...'),
+                    ? AppStrings.tr(ref, 'myContactsExcept')
+                    : AppStrings.tr(ref, 'onlyShareWith')),
             onTap: () => _showRadioOptionDialog(
-              title: 'Status privacy',
+              title: AppStrings.tr(ref, 'statusPrivacy'),
               options: [
                 'My contacts',
                 'My contacts except...',
@@ -179,9 +205,8 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
           const Divider(height: 1),
           SettingsRow(
             icon: Icons.done_all_outlined,
-            title: 'Read receipts',
-            subtitle:
-                'If turned off, you won\'t send or receive Read receipts (blue ticks).',
+            title: AppStrings.tr(ref, 'readReceipts'),
+            subtitle: AppStrings.tr(ref, 'readReceiptsSub'),
             showChevron: false,
             trailing: Switch(
               value: _readReceipts,
@@ -194,13 +219,13 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
             ),
           ),
           const Divider(height: 1),
-          const SettingsSectionHeader(title: 'Disappearing messages'),
+          SettingsSectionHeader(title: AppStrings.tr(ref, 'disappearingMessages')),
           SettingsRow(
             icon: Icons.timer_outlined,
-            title: 'Default message timer',
-            subtitle: _disappearingTimer,
+            title: AppStrings.tr(ref, 'defaultMessageTimer'),
+            subtitle: _localizeOption(_disappearingTimer),
             onTap: () => _showRadioOptionDialog(
-              title: 'Default message timer',
+              title: AppStrings.tr(ref, 'defaultMessageTimer'),
               options: ['Off', '24 hours', '7 days', '90 days'],
               currentValue: _disappearingTimer,
               onSelected: (val) {
@@ -210,20 +235,20 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
             ),
           ),
           const Divider(height: 1),
-          const SettingsSectionHeader(title: 'Security & App Lock'),
+          SettingsSectionHeader(title: AppStrings.tr(ref, 'securityAndAppLock')),
           SettingsRow(
             icon: Icons.block_flipped,
-            title: 'Blocked contacts',
-            subtitle: '0 contacts',
+            title: AppStrings.tr(ref, 'blockedContacts'),
+            subtitle: AppStrings.tr(ref, 'blockedContactsCount'),
             onTap: () {
               showAppDialog(
                 context: context,
-                title: 'Blocked contacts',
+                title: AppStrings.tr(ref, 'blockedContacts'),
                 icon: Icons.block_flipped,
-                contentText: 'No blocked contacts.',
+                contentText: AppStrings.tr(ref, 'noBlockedContacts'),
                 actions: [
                   AppDialogAction(
-                    label: 'OK',
+                    label: AppStrings.tr(ref, 'ok'),
                     isPrimary: true,
                     onPressed: () => Navigator.pop(context),
                   ),
@@ -234,8 +259,8 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
           const Divider(height: 1),
           SettingsRow(
             icon: Icons.fingerprint_rounded,
-            title: 'Fingerprint lock',
-            subtitle: 'Require biometric authentication to open Livocal',
+            title: AppStrings.tr(ref, 'fingerprintLock'),
+            subtitle: AppStrings.tr(ref, 'fingerprintLockSub'),
             showChevron: false,
             trailing: Switch(
               value: _fingerprintLock,
@@ -251,8 +276,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
                     if (context.mounted) {
                       showSnackBar(
                         context: context,
-                        content:
-                            'Biometric authentication is not supported on this device.',
+                        content: AppStrings.tr(ref, 'biometricNotSupported'),
                         type: SnacBarType.error,
                       );
                     }
@@ -261,8 +285,8 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
 
                   final authenticated = await auth.authenticate(
                     localizedReason: val
-                        ? 'Confirm your fingerprint or biometric credential to enable lock'
-                        : 'Confirm your biometric credential to disable lock',
+                        ? AppStrings.tr(ref, 'confirmFingerprintEnable')
+                        : AppStrings.tr(ref, 'confirmFingerprintDisable'),
                     biometricOnly: false,
                     persistAcrossBackgrounding: true,
                   );
@@ -278,8 +302,8 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
                       showSnackBar(
                         context: context,
                         content: val
-                            ? 'Fingerprint lock enabled'
-                            : 'Fingerprint lock disabled',
+                            ? AppStrings.tr(ref, 'fingerprintLockEnabled')
+                            : AppStrings.tr(ref, 'fingerprintLockDisabled'),
                         type: SnacBarType.info,
                       );
                     }
@@ -287,7 +311,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
                     if (context.mounted) {
                       showSnackBar(
                         context: context,
-                        content: 'Biometric verification cancelled.',
+                        content: AppStrings.tr(ref, 'biometricCancelled'),
                         type: SnacBarType.error,
                       );
                     }
