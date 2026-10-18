@@ -31,6 +31,7 @@ void main() async {
 
     // Pass all uncaught "fatal" errors from the framework to Crashlytics
     FlutterError.onError = (errorDetails) {
+      FlutterError.dumpErrorToConsole(errorDetails);
       FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
     };
 
@@ -130,6 +131,7 @@ class CustomErrorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint("🔴 CustomErrorWidget caught: ${details.exceptionAsString()}\n${details.stack}");
     final colorTheme = Theme.of(context).custom.colorTheme;
 
     return Scaffold(
