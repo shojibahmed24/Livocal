@@ -318,6 +318,99 @@ class _HomePageState extends ConsumerState<HomePage>
     );
   }
 
+  Widget _buildBrandTitle(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Brand Logo Emblem with subtle glow
+        Container(
+          width: 30,
+          height: 30,
+          margin: const EdgeInsets.only(right: 9),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF00A884).withValues(alpha: 0.35),
+                blurRadius: 6,
+                offset: const Offset(0, 1.5),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.all(2.0),
+            child: Image.asset(
+              'assets/images/logo.png',
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+
+        // Brand Typography: "Livo" (White/Light) + "cal" (Emerald Green)
+        RichText(
+          text: TextSpan(
+            style: const TextStyle(
+              fontSize: 21,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.3,
+            ),
+            children: [
+              TextSpan(
+                text: 'Livo',
+                style: TextStyle(
+                  color: isDark ? const Color(0xFFF0F2F5) : Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const TextSpan(
+                text: 'cal',
+                style: TextStyle(
+                  color: Color(0xFF25D366),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(width: 6),
+
+        // Modern "AI" Pill Accent
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF00A884), Color(0xFF25D366)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(5),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF25D366).withValues(alpha: 0.35),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: const Text(
+            'AI',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 9.5,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.4,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).custom.textTheme;
@@ -359,14 +452,7 @@ class _HomePageState extends ConsumerState<HomePage>
                   ),
                   onChanged: (_) => setState(() {}),
                 )
-              : Text(
-                  'Livocal',
-                  style: textTheme.titleLarge.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
+              : _buildBrandTitle(context),
           actions: [
             if (_isSearching) ...[
               IconButton(
