@@ -149,5 +149,15 @@ service cloud.firestore {
       allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
       allow write: if false;
     }
+
+    // 11. AI Call Summaries (Created by Relay Server Admin SDK, read by call participants)
+    match /call_summaries/{summaryId} {
+      allow read: if isAuthenticated() && (
+        resource.data.callerId == request.auth.uid ||
+        resource.data.calleeId == request.auth.uid ||
+        (resource.data.participants != null && request.auth.uid in resource.data.participants)
+      );
+      allow write: if false;
+    }
   }
 }

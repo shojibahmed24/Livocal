@@ -26,6 +26,7 @@ class FirebaseAuthRepository implements AuthenticationRepository {
     String verificationID,
     String smsCode,
   ) async {
+    final preExistingUid = auth.currentUser?.uid;
     try {
       debugPrint('[AuthRepository] verifyOtp starting: verificationId=$verificationID, smsCode=$smsCode');
       PhoneAuthCredential credential = PhoneAuthProvider.credential(
@@ -36,14 +37,22 @@ class FirebaseAuthRepository implements AuthenticationRepository {
       final userCred = await auth.signInWithCredential(credential);
       debugPrint('[AuthRepository] verifyOtp success: uid=${userCred.user?.uid}, phone=${userCred.user?.phoneNumber}');
       return userCred.user != null;
-    } catch (e, st) {
-      debugPrint('[AuthRepository] verifyOtp FAILED with error: $e\n$st');
-      // If native Firebase Auth succeeded, auth.currentUser is authenticated
-      // despite the Pigeon platform-interface type cast deserialization error.
-      if (auth.currentUser != null) {
-        debugPrint('[AuthRepository] User authenticated successfully despite Pigeon decode error: uid=${auth.currentUser?.uid}');
+    } on FirebaseAuthException catch (e, st) {
+      // Explicit Firebase Auth failure (e.g. invalid-verification-code, session-expired, invalid-credential).
+      // NEVER allow fallback or return true on auth failures - prevents backdoor in re-auth / change-number.
+      debugPrint('[AuthRepository] verifyOtp FirebaseAuthException: [${e.code}] ${e.message}\n$st');
+      return false;
+    } on TypeError catch (e, st) {
+      debugPrint('[AuthRepository] verifyOtp TypeError (Pigeon decode mismatch): $e\n$st');
+      // Only treat as authenticated if native auth genuinely signed in a NEW user/session during this call
+      final activeUser = auth.currentUser;
+      if (activeUser != null && (preExistingUid == null || activeUser.uid != preExistingUid)) {
+        debugPrint('[AuthRepository] User authenticated successfully despite Pigeon decode error: uid=${activeUser.uid}');
         return true;
       }
+      return false;
+    } catch (e, st) {
+      debugPrint('[AuthRepository] verifyOtp unexpected error: $e\n$st');
       return false;
     }
   }
