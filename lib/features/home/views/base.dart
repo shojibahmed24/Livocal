@@ -515,18 +515,17 @@ class _HomePageState extends ConsumerState<HomePage>
                   case 'logout':
                     showAppDialog(
                       context: context,
-                      title: 'Log out of Livocal?',
+                      title: AppStrings.tr(ref, 'logoutDialogTitle'),
                       icon: Icons.logout_rounded,
                       iconColor: Colors.redAccent,
-                      contentText:
-                          'Are you sure you want to log out? Local data and credentials will be cleared.',
+                      contentText: AppStrings.tr(ref, 'logoutDialogContent'),
                       actions: [
                         AppDialogAction(
-                          label: 'CANCEL',
+                          label: AppStrings.tr(ref, 'cancel').toUpperCase(),
                           onPressed: () => Navigator.pop(context),
                         ),
                         AppDialogAction(
-                          label: 'LOG OUT',
+                          label: AppStrings.tr(ref, 'logout').toUpperCase(),
                           isDestructive: true,
                           onPressed: () async {
                             Navigator.pop(context);
@@ -545,66 +544,66 @@ class _HomePageState extends ConsumerState<HomePage>
               itemBuilder: (context) {
                 if (_tabController.index == 2) {
                   // CALLS tab
-                  return const [
+                  return [
                     PopupMenuItem(
                       value: 'clear_call_log',
-                      child: Text('Clear call log'),
+                      child: Text(AppStrings.tr(ref, 'clearCallLog')),
                     ),
                     PopupMenuItem(
                       value: 'settings',
-                      child: Text('Settings'),
+                      child: Text(AppStrings.tr(ref, 'settings')),
                     ),
-                    PopupMenuDivider(),
+                    const PopupMenuDivider(),
                     PopupMenuItem(
                       value: 'logout',
                       child: Text(
-                        'Log out',
-                        style: TextStyle(color: Colors.redAccent),
+                        AppStrings.tr(ref, 'logout'),
+                        style: const TextStyle(color: Colors.redAccent),
                       ),
                     ),
                   ];
                 } else if (_tabController.index == 1) {
                   // STATUS tab
-                  return const [
+                  return [
                     PopupMenuItem(
                       value: 'status_privacy',
-                      child: Text('Status privacy'),
+                      child: Text(AppStrings.tr(ref, 'statusPrivacy')),
                     ),
                     PopupMenuItem(
                       value: 'settings',
-                      child: Text('Settings'),
+                      child: Text(AppStrings.tr(ref, 'settings')),
                     ),
-                    PopupMenuDivider(),
+                    const PopupMenuDivider(),
                     PopupMenuItem(
                       value: 'logout',
                       child: Text(
-                        'Log out',
-                        style: TextStyle(color: Colors.redAccent),
+                        AppStrings.tr(ref, 'logout'),
+                        style: const TextStyle(color: Colors.redAccent),
                       ),
                     ),
                   ];
                 }
 
                 // CHATS tab (default)
-                return const [
+                return [
                   PopupMenuItem(
                     value: 'linked_devices',
-                    child: Text('Linked devices'),
+                    child: Text(AppStrings.tr(ref, 'linkedDevices')),
                   ),
                   PopupMenuItem(
                     value: 'starred_messages',
-                    child: Text('Starred messages'),
+                    child: Text(AppStrings.tr(ref, 'starredMessages')),
                   ),
                   PopupMenuItem(
                     value: 'settings',
-                    child: Text('Settings'),
+                    child: Text(AppStrings.tr(ref, 'settings')),
                   ),
-                  PopupMenuDivider(),
+                  const PopupMenuDivider(),
                   PopupMenuItem(
                     value: 'logout',
                     child: Text(
-                      'Log out',
-                      style: TextStyle(color: Colors.redAccent),
+                      AppStrings.tr(ref, 'logout'),
+                      style: const TextStyle(color: Colors.redAccent),
                     ),
                   ),
                 ];

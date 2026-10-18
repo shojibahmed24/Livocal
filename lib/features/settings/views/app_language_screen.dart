@@ -43,9 +43,9 @@ class _AppLanguageScreenState extends ConsumerState<AppLanguageScreen> {
         scrolledUnderElevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         actionsIconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'App language',
-          style: TextStyle(
+        title: Text(
+          AppStrings.tr(ref, 'appLanguage'),
+          style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
@@ -53,7 +53,7 @@ class _AppLanguageScreenState extends ConsumerState<AppLanguageScreen> {
       ),
       body: ListView(
         children: [
-          const SettingsSectionHeader(title: 'Choose Interface Language'),
+          SettingsSectionHeader(title: AppStrings.tr(ref, 'chooseLanguage')),
           ..._languages.map((lang) {
             final isSelected = _selectedLang == lang['code'];
             return Column(
@@ -96,7 +96,7 @@ class _AppLanguageScreenState extends ConsumerState<AppLanguageScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Text(
-              'Changing language updates all UI screens, notifications, dialogs and voice call prompts instantly.',
+              AppStrings.tr(ref, 'languageNote'),
               style: TextStyle(
                 fontSize: 12.5,
                 color: isDark ? Colors.white38 : Colors.black45,

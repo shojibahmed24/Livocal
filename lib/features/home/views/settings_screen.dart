@@ -20,6 +20,7 @@ import 'package:livocal/features/settings/views/notifications_settings_screen.da
 import 'package:livocal/features/settings/views/storage_settings_screen.dart';
 import 'package:livocal/features/settings/views/app_language_screen.dart';
 import 'package:livocal/features/settings/views/help_settings_screen.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   final User user;
@@ -43,13 +44,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     showAppDialog(
       context: context,
-      title: 'Choose Theme',
+      title: AppStrings.tr(ref, 'chooseTheme'),
       icon: Icons.brightness_6_rounded,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           RadioListTile<ThemeMode>(
-            title: const Text('System default'),
+            title: Text(AppStrings.tr(ref, 'systemDefault')),
             value: ThemeMode.system,
             groupValue: currentTheme,
             activeColor: AppColors.primary,
@@ -61,7 +62,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
           ),
           RadioListTile<ThemeMode>(
-            title: const Text('Light'),
+            title: Text(AppStrings.tr(ref, 'light')),
             value: ThemeMode.light,
             groupValue: currentTheme,
             activeColor: AppColors.primary,
@@ -73,7 +74,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
           ),
           RadioListTile<ThemeMode>(
-            title: const Text('Dark'),
+            title: Text(AppStrings.tr(ref, 'dark')),
             value: ThemeMode.dark,
             groupValue: currentTheme,
             activeColor: AppColors.primary,
@@ -88,7 +89,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
       actions: [
         AppDialogAction(
-          label: 'CANCEL',
+          label: AppStrings.tr(ref, 'cancel').toUpperCase(),
           onPressed: () => Navigator.pop(context),
         ),
       ],
@@ -98,18 +99,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void _showLogoutDialog() {
     showAppDialog(
       context: context,
-      title: 'Log out of Livocal?',
+      title: AppStrings.tr(ref, 'logoutDialogTitle'),
       icon: Icons.logout_rounded,
       iconColor: Colors.redAccent,
-      contentText:
-          'Are you sure you want to log out? Your local messages and credentials will be safely preserved in local storage.',
+      contentText: AppStrings.tr(ref, 'logoutDialogContent'),
       actions: [
         AppDialogAction(
-          label: 'CANCEL',
+          label: AppStrings.tr(ref, 'cancel').toUpperCase(),
           onPressed: () => Navigator.pop(context),
         ),
         AppDialogAction(
-          label: 'LOG OUT',
+          label: AppStrings.tr(ref, 'logout').toUpperCase(),
           isDestructive: true,
           onPressed: () async {
             Navigator.pop(context);
@@ -241,8 +241,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).custom.textTheme;
-
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Watch locale so entire screen updates in real time when language changes
+    ref.watch(appLocaleProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -251,9 +252,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         scrolledUnderElevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         actionsIconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'Settings',
-          style: TextStyle(
+        title: Text(
+          AppStrings.tr(ref, 'settings'),
+          style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
@@ -348,11 +349,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const Divider(thickness: 0.5, height: 1),
 
           // Section 1: Account & Privacy
-          const SettingsSectionHeader(title: 'Account & Privacy'),
+          SettingsSectionHeader(title: AppStrings.tr(ref, 'accountAndPrivacy')),
           SettingsRow(
             icon: Icons.key_rounded,
-            title: 'Account',
-            subtitle: 'Security notifications, two-step verification, change number',
+            title: AppStrings.tr(ref, 'account'),
+            subtitle: AppStrings.tr(ref, 'accountSub'),
             onTap: () {
               Navigator.push(
                 context,
@@ -364,8 +365,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           SettingsRow(
             icon: Icons.lock_outline_rounded,
-            title: 'Privacy',
-            subtitle: 'Block contacts, disappearing messages, biometric lock',
+            title: AppStrings.tr(ref, 'privacy'),
+            subtitle: AppStrings.tr(ref, 'privacySub'),
             onTap: () {
               Navigator.push(
                 context,
@@ -377,18 +378,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
 
           // Section 2: Preferences
-          const SettingsSectionHeader(title: 'Preferences'),
+          SettingsSectionHeader(title: AppStrings.tr(ref, 'preferences')),
           SettingsRow(
             icon: Icons.palette_outlined,
-            title: 'Chats & Theme',
+            title: AppStrings.tr(ref, 'chatsAndTheme'),
             subtitle:
-                'Theme: ${ref.watch(themeModeProvider).name.toUpperCase()}, wallpapers, chat history',
+                '${ref.watch(themeModeProvider).name.toUpperCase()}, ${AppStrings.tr(ref, 'chatsAndThemeSub')}',
             onTap: _showThemeSelectionDialog,
           ),
           SettingsRow(
             icon: Icons.notifications_none_rounded,
-            title: 'Notifications',
-            subtitle: 'Message, group & incoming call tones, vibration',
+            title: AppStrings.tr(ref, 'notifications'),
+            subtitle: AppStrings.tr(ref, 'notificationsSub'),
             onTap: () {
               Navigator.push(
                 context,
@@ -400,8 +401,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           SettingsRow(
             icon: Icons.data_usage_rounded,
-            title: 'Storage and data',
-            subtitle: 'Network usage, cache cleaner, media auto-download',
+            title: AppStrings.tr(ref, 'storage'),
+            subtitle: AppStrings.tr(ref, 'storageSub'),
             onTap: () {
               Navigator.push(
                 context,
@@ -413,8 +414,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           SettingsRow(
             icon: Icons.language_rounded,
-            title: 'App language',
-            subtitle: 'English (device language), বাংলা, हिन्दी, العربية...',
+            title: AppStrings.tr(ref, 'appLanguage'),
+            subtitle: AppStrings.tr(ref, 'appLanguageSub'),
             onTap: () {
               Navigator.push(
                 context,
@@ -426,21 +427,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
 
           // Section 3: Advanced & AI Engine (moved from top for clean system-app feel)
-          const SettingsSectionHeader(title: 'Advanced & AI Engine'),
+          SettingsSectionHeader(title: AppStrings.tr(ref, 'advancedAiEngine')),
           SettingsRow(
             icon: Icons.auto_awesome_rounded,
-            title: 'Gemini Live Voice Engine',
-            subtitle: 'API key, neural voice presets & speech model config',
+            title: AppStrings.tr(ref, 'geminiVoiceEngine'),
+            subtitle: AppStrings.tr(ref, 'geminiVoiceEngineSub'),
             iconColor: const Color(0xFF53BDEC),
             onTap: _showGeminiConfigDialog,
           ),
 
           // Section 4: Support & Community
-          const SettingsSectionHeader(title: 'Support & Community'),
+          SettingsSectionHeader(title: AppStrings.tr(ref, 'supportAndCommunity')),
           SettingsRow(
             icon: Icons.help_outline_rounded,
-            title: 'Help',
-            subtitle: 'Help centre, contact us, terms & privacy policy',
+            title: AppStrings.tr(ref, 'help'),
+            subtitle: AppStrings.tr(ref, 'helpSub'),
             onTap: () {
               Navigator.push(
                 context,
@@ -452,8 +453,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           SettingsRow(
             icon: Icons.people_outline_rounded,
-            title: 'Invite a friend',
-            subtitle: 'Share Livocal with contacts & family',
+            title: AppStrings.tr(ref, 'inviteFriend'),
+            subtitle: AppStrings.tr(ref, 'inviteFriendSub'),
             onTap: () {
               Share.share(
                 'Join me on Livocal — the next-generation chat app with live speech-to-speech AI voice translation! Download here: https://github.com/shojibahmed24/Livocal',
@@ -462,24 +463,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
 
           // Section 5: Session
-          const SettingsSectionHeader(title: 'Session'),
+          SettingsSectionHeader(title: AppStrings.tr(ref, 'session')),
           SettingsRow(
             icon: Icons.logout_rounded,
-            title: 'Log out',
-            subtitle: 'Clear local credentials and sign out',
+            title: AppStrings.tr(ref, 'logout'),
+            subtitle: AppStrings.tr(ref, 'logoutSub'),
             isDestructive: true,
             onTap: _showLogoutDialog,
           ),
 
           const SizedBox(height: 24),
-          const Center(
+          Center(
             child: Column(
               children: [
                 Text(
-                  'from',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  AppStrings.tr(ref, 'from'),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
-                Text(
+                const Text(
                   'LIVOCAL',
                   style: TextStyle(
                     fontSize: 14,
@@ -488,12 +489,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     color: AppColors.primary,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  'Version 1.0.0 (Production Ready)',
-                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                  AppStrings.tr(ref, 'version'),
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
                 ),
-                SizedBox(height: 32),
+                const SizedBox(height: 32),
               ],
             ),
           ),
