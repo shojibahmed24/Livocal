@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   cupertino_icons: ^1.0.2
   firebase_auth: ^4.4.0
@@ -21,7 +23,7 @@ dependencies:
   country_picker: ^2.0.20
   permission_handler: ^11.1.0
   shared_preferences: ^2.0.20
-  intl: ^0.19.0
+  intl: ^0.20.2
   emoji_picker_flutter: ^1.5.2
   flutter_keyboard_visibility: ^6.0.0
   phone_number: ^2.0.1
