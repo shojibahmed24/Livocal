@@ -88,7 +88,7 @@ class VerificationController {
         DateTime.now().millisecondsSinceEpoch ~/ 1000 - resendTimestamp;
     final remainingTime = (resendTime ?? 0) - elapsedTime;
 
-    if (resendTime == null || remainingTime < 1) {
+    if (resendTime == null || remainingTime < 1 || _verificationCode.isEmpty) {
       if (resendTime != null && elapsedTime < 3600) {
         int count = resendTime ~/ (_resendFactor * _resendInitial) + 1;
 

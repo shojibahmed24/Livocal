@@ -208,8 +208,10 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
                   final slide = _slides[index];
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 28.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    child: SingleChildScrollView(
+                      physics: const ClampingScrollPhysics(),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         // Decorative glowing icon container
                         Container(
@@ -291,7 +293,8 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
                         ),
                       ],
                     ),
-                  );
+                  ),
+                );
                 },
               ),
             ),

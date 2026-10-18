@@ -27,15 +27,23 @@ class FirebaseAuthRepository implements AuthenticationRepository {
     String smsCode,
   ) async {
     try {
+      debugPrint('[AuthRepository] verifyOtp starting: verificationId=$verificationID, smsCode=$smsCode');
       PhoneAuthCredential credential = PhoneAuthProvider.credential(
         verificationId: verificationID,
         smsCode: smsCode,
       );
 
       final userCred = await auth.signInWithCredential(credential);
+      debugPrint('[AuthRepository] verifyOtp success: uid=${userCred.user?.uid}, phone=${userCred.user?.phoneNumber}');
       return userCred.user != null;
     } catch (e, st) {
-      debugPrint('[AuthRepository] verifyOtp error: $e\n$st');
+      debugPrint('[AuthRepository] verifyOtp FAILED with error: $e\n$st');
+      // If native Firebase Auth succeeded, auth.currentUser is authenticated
+      // despite the Pigeon platform-interface type cast deserialization error.
+      if (auth.currentUser != null) {
+        debugPrint('[AuthRepository] User authenticated successfully despite Pigeon decode error: uid=${auth.currentUser?.uid}');
+        return true;
+      }
       return false;
     }
   }
@@ -48,18 +56,20 @@ class FirebaseAuthRepository implements AuthenticationRepository {
     void Function(String code) onCodeSent,
   ) async {
     try {
+      debugPrint('[AuthRepository] signInWithPhone starting for: $phoneNumber');
       await auth.verifyPhoneNumber(
         phoneNumber: phoneNumber,
         timeout: const Duration(seconds: 60),
         verificationCompleted: (PhoneAuthCredential credential) async {
-          debugPrint('Silent auto-verification completed via Play Integrity');
+          debugPrint('[AuthRepository] Silent auto-verification completed via Play Integrity: smsCode=${credential.smsCode}');
           try {
             await auth.signInWithCredential(credential);
           } catch (e) {
-            debugPrint('Auto sign-in error: $e');
+            debugPrint('[AuthRepository] Auto sign-in error: $e');
           }
         },
         verificationFailed: (FirebaseAuthException e) {
+          debugPrint('[AuthRepository] verificationFailed: code=${e.code}, message=${e.message}');
           if (context.mounted) {
             Navigator.pop(context);
             String message = e.message ?? 'Verification failed';
@@ -81,6 +91,7 @@ class FirebaseAuthRepository implements AuthenticationRepository {
           }
         },
         codeSent: (String verificationId, int? resendToken) {
+          debugPrint('[AuthRepository] codeSent! verificationId=$verificationId, resendToken=$resendToken');
           onCodeSent(verificationId);
           if (context.mounted) {
             Navigator.pop(context);
@@ -92,11 +103,11 @@ class FirebaseAuthRepository implements AuthenticationRepository {
           }
         },
         codeAutoRetrievalTimeout: (String verificationId) {
-          debugPrint('Code auto retrieval timed out: $verificationId');
+          debugPrint('[AuthRepository] Code auto retrieval timed out: $verificationId');
         },
       );
     } catch (e) {
-      debugPrint('AuthRepository.verifyPhoneNumber error: $e');
+      debugPrint('[AuthRepository] AuthRepository.verifyPhoneNumber catch: $e');
       if (context.mounted) {
         Navigator.pop(context);
         showSnackBar(
