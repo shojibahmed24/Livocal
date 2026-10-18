@@ -413,7 +413,6 @@ class _HomePageState extends ConsumerState<HomePage>
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).custom.textTheme;
     final colorTheme = Theme.of(context).custom.colorTheme;
 
     return DefaultTabController(
@@ -698,16 +697,44 @@ class _HomePageState extends ConsumerState<HomePage>
           ],
           bottom: TabBar(
             controller: _tabController,
-            labelStyle: textTheme.labelLarge,
+            indicator: const UnderlineTabIndicator(
+              borderSide: BorderSide(
+                width: 3.2,
+                color: Color(0xFF25D366),
+              ),
+              borderRadius: BorderRadius.all(Radius.circular(3)),
+              insets: EdgeInsets.symmetric(horizontal: 16),
+            ),
+            indicatorSize: TabBarIndicatorSize.label,
+            labelColor: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF25D366)
+                : Colors.white,
+            unselectedLabelColor: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF8696A0)
+                : Colors.white70,
+            labelStyle: const TextStyle(
+              fontSize: 14.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+            ),
+            unselectedLabelStyle: const TextStyle(
+              fontSize: 14.5,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.3,
+            ),
+            dividerColor: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF252D32)
+                : Colors.white24,
+            dividerHeight: 1.0,
             tabs: [
               Tab(
-                text: AppStrings.tr(ref, 'chats'),
+                text: AppStrings.tr(ref, 'chats').toUpperCase(),
               ),
               Tab(
-                text: AppStrings.tr(ref, 'status'),
+                text: AppStrings.tr(ref, 'status').toUpperCase(),
               ),
               Tab(
-                text: AppStrings.tr(ref, 'calls'),
+                text: AppStrings.tr(ref, 'calls').toUpperCase(),
               ),
             ],
           ),
@@ -901,69 +928,74 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
           );
         }
 
-        return ListView(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: ListView.builder(
-                itemCount: chats.length,
-                shrinkWrap: true,
-                itemBuilder: (context, index) {
-                  RecentChat chat = chats[index];
-                  Message msg = chat.message;
-                  String msgContent = chat.message.content;
-                  String msgStatus = '';
-
-                  if (msg.senderId == widget.user.id) {
-                    msgStatus = msg.status.value;
-                  }
-                  return RecentChatWidget(
-                    user: widget.user,
-                    chat: chat,
-                    colorTheme: colorTheme,
-                    title: chat.user.name,
-                    msgStatus: msgStatus,
-                    msgContent: msgContent,
-                  );
-                },
-              ),
-            ),
-            if (chats.isNotEmpty) ...[
-              const Divider(),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return ListView.separated(
+          padding: const EdgeInsets.only(top: 6.0, bottom: 20.0),
+          itemCount: chats.length + (chats.isNotEmpty ? 1 : 0),
+          separatorBuilder: (context, index) {
+            if (index >= chats.length - 1) return const SizedBox.shrink();
+            return Divider(
+              height: 1,
+              thickness: 0.5,
+              indent: 82,
+              endIndent: 16,
+              color: isDark ? const Color(0xFF1F2C34) : const Color(0xFFF0F2F5),
+            );
+          },
+          itemBuilder: (context, index) {
+            if (index == chats.length) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.lock,
-                      size: 18,
-                      color: Theme.of(context).brightness == Brightness.light
-                          ? colorTheme.greyColor
-                          : colorTheme.iconColor,
+                      Icons.lock_rounded,
+                      size: 13,
+                      color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 6),
                     RichText(
                       textAlign: TextAlign.center,
                       text: TextSpan(
-                        style: Theme.of(context).textTheme.bodySmall,
-                        children: [
+                        style: TextStyle(
+                          fontSize: 12.0,
+                          color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
+                        ),
+                        children: const [
+                          TextSpan(text: 'Your personal messages are '),
                           TextSpan(
-                            text: 'Your personal messages are ',
-                            style: TextStyle(color: colorTheme.greyColor),
-                          ),
-                          TextSpan(
-                            text: 'private and secured',
-                            style: TextStyle(color: colorTheme.greenColor),
+                            text: 'end-to-end encrypted',
+                            style: TextStyle(
+                              color: Color(0xFF25D366),
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ],
                 ),
-              ),
-            ]
-          ],
+              );
+            }
+
+            RecentChat chat = chats[index];
+            Message msg = chat.message;
+            String msgContent = chat.message.content;
+            String msgStatus = '';
+
+            if (msg.senderId == widget.user.id) {
+              msgStatus = msg.status.value;
+            }
+            return RecentChatWidget(
+              user: widget.user,
+              chat: chat,
+              colorTheme: colorTheme,
+              title: chat.user.name,
+              msgStatus: msgStatus,
+              msgContent: msgContent,
+            );
+          },
         );
       },
     );
@@ -1093,34 +1125,202 @@ class RecentChatWidget extends StatelessWidget {
   final String msgStatus;
   final String msgContent;
 
-  @override
-  Widget build(BuildContext context) {
-    final trailingChildren = [
-      RecentChatTime(chat: chat, colorTheme: colorTheme),
-      if (chat.unreadCount > 0) ...[
-        const SizedBox(height: 4.0),
-        Container(
-          constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+  List<Color> _getGradientForName(String name) {
+    const gradients = [
+      [Color(0xFF00A884), Color(0xFF128C7E)],
+      [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+      [Color(0xFF7C3AED), Color(0xFF6D28D9)],
+      [Color(0xFFDB2777), Color(0xFFBE185D)],
+      [Color(0xFFD97706), Color(0xFFB45309)],
+      [Color(0xFF059669), Color(0xFF047857)],
+      [Color(0xFF0891B2), Color(0xFF0E7490)],
+      [Color(0xFF4F46E5), Color(0xFF4338CA)],
+    ];
+    if (name.isEmpty) return gradients[0];
+    final hash = name.codeUnits.fold<int>(0, (prev, elem) => prev + elem);
+    return gradients[hash % gradients.length];
+  }
+
+  Widget _buildAvatar(BuildContext context, bool isDark) {
+    final avatarUrl = chat.user.avatarUrl;
+    final displayName =
+        title.trim().isNotEmpty ? title.trim() : chat.user.name.trim();
+    final initial = displayName.isNotEmpty
+        ? displayName.substring(0, 1).toUpperCase()
+        : '?';
+    final gradient = _getGradientForName(displayName);
+
+    Widget avatarContent;
+    if (avatarUrl.isNotEmpty && avatarUrl.startsWith('http')) {
+      avatarContent = CachedNetworkImage(
+        imageUrl: avatarUrl,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.radiusFull),
-            color: colorTheme.greenColor,
-          ),
-          margin: const EdgeInsets.only(left: 4.0),
-          padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
-          child: Text(
-            chat.unreadCount > 99 ? '99+' : chat.unreadCount.toString(),
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
+            gradient: LinearGradient(
+              colors: gradient,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
-        )
+          child: Center(
+            child: Text(
+              initial,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+        errorWidget: (_, __, ___) => Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: gradient,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              initial,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      );
+    } else {
+      avatarContent = Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: gradient,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: Text(
+            initial,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 21,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.5,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      width: 52,
+      height: 52,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: const Color(0xFF25D366).withValues(alpha: 0.18),
+          width: 1.5,
+        ),
+      ),
+      child: ClipOval(
+        child: avatarContent,
+      ),
+    );
+  }
+
+  Widget _buildSubtitle(BuildContext context, bool isDark, bool hasUnread) {
+    final textColor = hasUnread
+        ? (isDark ? const Color(0xFFE9EDEF) : const Color(0xFF111B21))
+        : (isDark ? const Color(0xFF8696A0) : const Color(0xFF667781));
+
+    String text = msgContent;
+    if (text == "\u00A0" || text.isEmpty) {
+      text = chat.message.attachment?.type.value ?? '';
+    }
+
+    IconData? attachmentIcon;
+    String? attachmentLabel;
+
+    if (chat.message.attachment != null) {
+      switch (chat.message.attachment!.type) {
+        case AttachmentType.audio:
+          attachmentIcon = Icons.audiotrack_rounded;
+          attachmentLabel = 'Audio';
+          break;
+        case AttachmentType.voice:
+          attachmentIcon = Icons.mic_rounded;
+          attachmentLabel = 'Voice message';
+          break;
+        case AttachmentType.image:
+          attachmentIcon = Icons.photo_rounded;
+          attachmentLabel = 'Photo';
+          break;
+        case AttachmentType.video:
+          attachmentIcon = Icons.videocam_rounded;
+          attachmentLabel = 'Video';
+          break;
+        case AttachmentType.document:
+          attachmentIcon = Icons.insert_drive_file_rounded;
+          attachmentLabel = 'Document';
+          break;
+      }
+    }
+
+    return Row(
+      children: [
+        if (msgStatus.isNotEmpty) ...[
+          Image.asset(
+            'assets/images/$msgStatus.png',
+            color: msgStatus == 'SEEN'
+                ? const Color(0xFF53BDEB)
+                : (isDark ? const Color(0xFF8696A0) : const Color(0xFF667781)),
+            width: 16.0,
+          ),
+          const SizedBox(width: 4.0),
+        ],
+        if (attachmentIcon != null) ...[
+          Icon(
+            attachmentIcon,
+            size: 16.0,
+            color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
+          ),
+          const SizedBox(width: 4.0),
+        ],
+        Expanded(
+          child: Text(
+            attachmentLabel != null && text.isEmpty ? attachmentLabel : text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 14.0,
+              height: 1.25,
+              fontWeight: hasUnread ? FontWeight.w500 : FontWeight.w400,
+              color: textColor,
+            ),
+          ),
+        ),
       ],
-    ];
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hasUnread = chat.unreadCount > 0;
+    final contactDisplayName = title.isNotEmpty
+        ? title
+        : (chat.user.phone.getFormattedNumber().isNotEmpty
+            ? chat.user.phone.getFormattedNumber()
+            : 'Unknown');
 
     return ListTile(
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       onTap: () {
         chat.unreadCount = 0;
 
@@ -1135,90 +1335,73 @@ class RecentChatWidget extends StatelessWidget {
           ),
         );
       },
-      leading: CircleAvatar(
-        radius: 28.0,
-        backgroundImage: chat.user.avatarUrl.isNotEmpty
-            ? CachedNetworkImageProvider(chat.user.avatarUrl)
-            : const AssetImage('assets/images/avatar.png') as ImageProvider,
+      leading: _buildAvatar(context, isDark),
+      title: Padding(
+        padding: const EdgeInsets.only(bottom: 3.0),
+        child: Text(
+          contactDisplayName,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 16.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
+            color: isDark
+                ? const Color(0xFFE9EDEF)
+                : const Color(0xFF111B21),
+          ),
+        ),
       ),
-      title: Text(
-        title,
-        style: Theme.of(context)
-            .custom
-            .textTheme
-            .titleMedium
-            .copyWith(color: colorTheme.textColor1),
-      ),
-      subtitle: Row(
-        children: [
-          if (msgStatus.isNotEmpty) ...[
-            Image.asset(
-              'assets/images/$msgStatus.png',
-              color: msgStatus != 'SEEN' ? colorTheme.textColor1 : null,
-              width: 15.0,
+      subtitle: _buildSubtitle(context, isDark, hasUnread),
+      trailing: Padding(
+        padding: const EdgeInsets.only(top: 2.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RecentChatTime(
+              chat: chat,
+              hasUnread: hasUnread,
             ),
-            const SizedBox(
-              width: 2.0,
-            )
+            const SizedBox(height: 5.0),
+            if (hasUnread)
+              Container(
+                constraints:
+                    const BoxConstraints(minWidth: 20, minHeight: 20),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6.5, vertical: 2.0),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF00A884), Color(0xFF25D366)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF25D366).withValues(alpha: 0.35),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  chat.unreadCount > 99 ? '99+' : '${chat.unreadCount}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              )
+            else
+              const SizedBox(height: 20.0),
           ],
-          if (chat.message.attachment != null) ...[
-            LayoutBuilder(
-              builder: (context, _) {
-                switch (chat.message.attachment!.type) {
-                  case AttachmentType.audio:
-                    return const Icon(
-                      Icons.audiotrack_rounded,
-                      size: 20,
-                    );
-
-                  case AttachmentType.voice:
-                    return const Icon(
-                      Icons.mic,
-                      size: 20,
-                    );
-
-                  case AttachmentType.image:
-                    return const Icon(
-                      Icons.image_rounded,
-                      size: 20,
-                    );
-
-                  case AttachmentType.video:
-                    return const Icon(
-                      Icons.videocam_rounded,
-                      size: 20,
-                    );
-
-                  default:
-                    return const Icon(
-                      Icons.file_copy,
-                      size: 20,
-                    );
-                }
-              },
-            ),
-            const SizedBox(
-              width: 2.0,
-            )
-          ],
-          Text(
-              msgContent.length > 30
-                  ? '${msgContent.substring(0, 30)}...'
-                  : msgContent == "\u00A0" || msgContent.isEmpty
-                      ? (chat.message.attachment?.type.value ?? '')
-                      : msgContent,
-              style: Theme.of(context).custom.textTheme.subtitle2)
-        ],
+        ),
       ),
-      trailing: chat.unreadCount > 0
-          ? Column(
-              mainAxisSize: MainAxisSize.min,
-              children: trailingChildren,
-            )
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: trailingChildren,
-            ),
     );
   }
 }
@@ -1227,14 +1410,15 @@ class RecentChatTime extends StatelessWidget {
   const RecentChatTime({
     super.key,
     required this.chat,
-    required this.colorTheme,
+    this.hasUnread = false,
   });
 
   final RecentChat chat;
-  final ColorTheme colorTheme;
+  final bool hasUnread;
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ValueListenableBuilder<DateTime>(
       valueListenable: TimeTicker.minuteTicker,
       builder: (context, _, __) {
@@ -1242,11 +1426,16 @@ class RecentChatTime extends StatelessWidget {
           formattedTimestamp(
             chat.message.timestamp,
           ),
-          style: Theme.of(context).custom.textTheme.caption.copyWith(
-                color: chat.unreadCount > 0
-                    ? colorTheme.greenColor
-                    : Theme.of(context).custom.colorTheme.greyColor,
-              ),
+          style: TextStyle(
+            fontSize: 12.0,
+            fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
+            letterSpacing: -0.1,
+            color: hasUnread
+                ? const Color(0xFF25D366)
+                : (isDark
+                    ? const Color(0xFF8696A0)
+                    : const Color(0xFF667781)),
+          ),
         );
       },
     );
