@@ -160,24 +160,29 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // 12. P2P Minute Transfers (Immutable audit ledger)
+    // 12. P2P Minute Transfers (Immutable audit ledger - created only via trusted backend transaction)
     match /p2p_transfers/{transferId} {
       allow read: if isAuthenticated() && (
         resource.data.fromUserId == request.auth.uid ||
         resource.data.toUserId == request.auth.uid
       );
-      allow create: if isAuthenticated() && request.resource.data.fromUserId == request.auth.uid;
-      allow update, delete: if false;
+      allow write: if false; // Server-only creation prevents client audit forgery
     }
 
-    // 13. P2P In-Chat Payment Audit Records (bKash, Nagad, Crypto USDT, Wallet)
+    // 13. P2P In-Chat Payment Audit Records (bKash, Nagad, Crypto USDT)
     match /p2p_payments/{paymentId} {
       allow read: if isAuthenticated() && (
         resource.data.senderId == request.auth.uid ||
         resource.data.recipientId == request.auth.uid
       );
-      allow create: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
-      allow update, delete: if false;
+      // Strictly constrain client create: must be pending, non-empty amount, valid currency
+      allow create: if isAuthenticated() &&
+        request.resource.data.senderId == request.auth.uid &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.amount is string &&
+        request.resource.data.amount.size() > 0 &&
+        request.resource.data.currency in ['BDT', 'USDT', 'MINUTES'];
+      allow update, delete: if false; // Status changes (verified/flagged) reserved for Admin SDK
     }
   }
 }

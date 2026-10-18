@@ -65,12 +65,14 @@ class FirebaseAuthRepository implements AuthenticationRepository {
     void Function(String code) onCodeSent,
   ) async {
     try {
-      debugPrint('[AuthRepository] signInWithPhone starting for: $phoneNumber');
+      debugPrint(
+          '[AuthRepository] signInWithPhone starting for: ${phoneNumber.length > 4 ? '***${phoneNumber.substring(phoneNumber.length - 4)}' : '***'}');
       await auth.verifyPhoneNumber(
         phoneNumber: phoneNumber,
         timeout: const Duration(seconds: 60),
         verificationCompleted: (PhoneAuthCredential credential) async {
-          debugPrint('[AuthRepository] Silent auto-verification completed via Play Integrity: smsCode=${credential.smsCode}');
+          debugPrint(
+              '[AuthRepository] Silent auto-verification completed via Play Integrity: smsCode=******');
           try {
             await auth.signInWithCredential(credential);
           } catch (e) {
@@ -100,7 +102,8 @@ class FirebaseAuthRepository implements AuthenticationRepository {
           }
         },
         codeSent: (String verificationId, int? resendToken) {
-          debugPrint('[AuthRepository] codeSent! verificationId=$verificationId, resendToken=$resendToken');
+          debugPrint(
+              '[AuthRepository] codeSent! verificationId=${verificationId.length > 8 ? '${verificationId.substring(0, 6)}...' : 'present'}, resendToken=${resendToken != null ? 'present' : 'null'}');
           onCodeSent(verificationId);
           if (context.mounted) {
             Navigator.pop(context);
@@ -112,7 +115,8 @@ class FirebaseAuthRepository implements AuthenticationRepository {
           }
         },
         codeAutoRetrievalTimeout: (String verificationId) {
-          debugPrint('[AuthRepository] Code auto retrieval timed out: $verificationId');
+          debugPrint(
+              '[AuthRepository] Code auto retrieval timed out: ${verificationId.length > 8 ? '${verificationId.substring(0, 6)}...' : 'present'}');
         },
       );
     } catch (e) {

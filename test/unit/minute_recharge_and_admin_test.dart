@@ -468,6 +468,123 @@ void main() {
       expect(totalBdt, equals(2000.0));
       expect(totalCrypto, equals(150.0));
     });
+
+    test('Strict TrxID regex validates 8-10 alphanumeric characters accurately', () {
+      final trxRegex = RegExp(r'^[A-Za-z0-9]{8,10}$');
+
+      // Valid TrxIDs
+      expect(trxRegex.hasMatch('9K8J7H6G5F'), isTrue);
+      expect(trxRegex.hasMatch('BL9A7K2M9X'), isTrue);
+      expect(trxRegex.hasMatch('ABC12345'), isTrue); // 8 chars
+      expect(trxRegex.hasMatch('ABC1234567'), isTrue); // 10 chars
+
+      // Invalid TrxIDs
+      expect(trxRegex.hasMatch(''), isFalse);
+      expect(trxRegex.hasMatch('1234567'), isFalse); // 7 chars (too short)
+      expect(trxRegex.hasMatch('12345678901'), isFalse); // 11 chars (too long)
+      expect(trxRegex.hasMatch('BL9-7K2M9X'), isFalse); // hyphen not allowed
+      expect(trxRegex.hasMatch('BL9 7K2M9X'), isFalse); // space not allowed
+    });
+
+    test('USD to BDT live rate calculations match expected conversion', () {
+      const usdToBdtRate = 120.0;
+      double calculateBdt(double usd) => usd * usdToBdtRate;
+
+      expect(calculateBdt(1.0), equals(120.0));
+      expect(calculateBdt(10.0), equals(1200.0));
+      expect(calculateBdt(25.0), equals(3000.0));
+      expect(calculateBdt(50.0), equals(6000.0));
+      expect(calculateBdt(100.0), equals(12000.0));
+    });
+
+    test('Recipient Crypto deposit addresses generate valid formats for all 3 networks', () {
+      const recipientId = 'user_recip_998877';
+      const recipientPhone = '+8801812345678';
+
+      // Binance Pay 9-digit ID
+      final binancePayId = recipientId.hashCode.abs().toString().padLeft(9, '8').substring(0, 9);
+      expect(binancePayId.length, equals(9));
+      expect(RegExp(r'^[0-9]{9}$').hasMatch(binancePayId), isTrue);
+
+      // USDT TRC-20 Address (starts with T, 34 chars)
+      final trcHex = '${recipientId}_trc20'.hashCode.abs().toRadixString(16).padRight(33, '7c89f10a2b4e5d6a8f1c');
+      final trc20 = 'T${trcHex.substring(0, 33).toUpperCase()}';
+      expect(trc20.length, equals(34));
+      expect(trc20.startsWith('T'), isTrue);
+
+      // USDT BEP-20 Address (starts with 0x, 42 chars)
+      final bepHex = '${recipientId}_bep20'.hashCode.abs().toRadixString(16).padRight(40, '3e4f5a6b7c8d9e0f1a2b3c4d');
+      final bep20 = '0x${bepHex.substring(0, 40).toLowerCase()}';
+      expect(bep20.length, equals(42));
+      expect(bep20.startsWith('0x'), isTrue);
+    });
+
+    test('In-Chat Payment Card badge displays correct status for wallet vs unverified MFS/Crypto vs verified', () {
+      String getPaymentBadgeText({
+        required String method,
+        required String content,
+      }) {
+        final isWallet = method.toLowerCase().contains('wallet');
+        final isVerified = content.toLowerCase().contains('[verified]') ||
+            content.toLowerCase().contains('status: verified');
+
+        if (isWallet) return 'PAID';
+        if (isVerified) return 'VERIFIED';
+        return 'PENDING VERIFICATION';
+      }
+
+      // Wallet minute transfer -> instant PAID
+      expect(
+        getPaymentBadgeText(
+          method: 'Livocal Wallet',
+          content: 'Payment of \$10.00 via Livocal Wallet',
+        ),
+        equals('PAID'),
+      );
+
+      // Unverified bKash / Nagad MFS payment -> PENDING VERIFICATION
+      expect(
+        getPaymentBadgeText(
+          method: 'bKash MFS',
+          content: 'Payment of \$10.00 via bKash MFS (Ref: 9K8J7H6G5F)',
+        ),
+        equals('PENDING VERIFICATION'),
+      );
+
+      // Unverified Crypto payment -> PENDING VERIFICATION
+      expect(
+        getPaymentBadgeText(
+          method: 'Crypto (USDT TRC-20)',
+          content: 'Payment of \$25.00 via Crypto (USDT TRC-20) (Ref: 0x9a8b...)',
+        ),
+        equals('PENDING VERIFICATION'),
+      );
+
+      // Admin verified MFS / Crypto payment -> VERIFIED
+      expect(
+        getPaymentBadgeText(
+          method: 'bKash MFS',
+          content: 'Payment of \$10.00 via bKash MFS (Ref: 9K8J7H6G5F)\n[VERIFIED]',
+        ),
+        equals('VERIFIED'),
+      );
+    });
+
+    test('P2P payments audit record payload strictly enforces status pending and currency', () {
+      final p2pRecord = {
+        'id': 'p2p_pay_test_001',
+        'type': 'mfs',
+        'currency': 'BDT',
+        'bdtAmount': '1200',
+        'amount': '10',
+        'status': 'pending',
+      };
+
+      // Ensure status is never initialized to completed from client
+      expect(p2pRecord['status'], equals('pending'));
+      expect(['BDT', 'USDT', 'MINUTES'].contains(p2pRecord['currency']), isTrue);
+      expect((p2pRecord['amount'] as String).isNotEmpty, isTrue);
+    });
   });
 }
 

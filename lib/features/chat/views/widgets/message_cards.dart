@@ -357,6 +357,8 @@ class _MessageCardState extends State<MessageCard>
         : isCrypto
             ? const Color(0xFFF0B90B)
             : const Color(0xFFE2136E);
+    final isVerified = content.toLowerCase().contains('[verified]') ||
+        content.toLowerCase().contains('status: verified');
 
     return Container(
       constraints: const BoxConstraints(minWidth: 230, maxWidth: 280),
@@ -429,20 +431,36 @@ class _MessageCardState extends State<MessageCard>
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
-                  color: AppColors.success.withValues(alpha: 0.15),
+                  color: (isWallet || isVerified
+                          ? AppColors.success
+                          : const Color(0xFFFF9800))
+                      .withValues(alpha: 0.15),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.check_circle_rounded,
-                        size: 10, color: AppColors.success),
-                    SizedBox(width: 3),
+                    Icon(
+                      isWallet || isVerified
+                          ? (isVerified
+                              ? Icons.verified_rounded
+                              : Icons.check_circle_rounded)
+                          : Icons.schedule_rounded,
+                      size: 10,
+                      color: isWallet || isVerified
+                          ? AppColors.success
+                          : const Color(0xFFFF9800),
+                    ),
+                    const SizedBox(width: 3),
                     Text(
-                      'PAID',
+                      isWallet
+                          ? 'PAID'
+                          : (isVerified ? 'VERIFIED' : 'PENDING VERIFICATION'),
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.success,
+                        color: isWallet || isVerified
+                            ? AppColors.success
+                            : const Color(0xFFFF9800),
                         letterSpacing: 0.5,
                       ),
                     ),
