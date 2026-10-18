@@ -1401,9 +1401,9 @@ class UploadingAttachment extends ConsumerStatefulWidget {
 }
 
 class _UploadingAttachmentState extends ConsumerState<UploadingAttachment> {
-  late bool isUploading;
-  late Stream<TaskSnapshot> uploadStream;
-  late bool clientIsSender;
+  bool isUploading = false;
+  Stream<TaskSnapshot>? uploadStream;
+  bool clientIsSender = false;
 
   @override
   void initState() {
@@ -1413,6 +1413,8 @@ class _UploadingAttachmentState extends ConsumerState<UploadingAttachment> {
       final stream = UploadService.getUploadStream(widget.message.id);
       if (stream != null) {
         uploadStream = stream;
+      } else {
+        isUploading = false;
       }
     }
 
@@ -1430,7 +1432,12 @@ class _UploadingAttachmentState extends ConsumerState<UploadingAttachment> {
         widget.message.attachment!.uploadStatus == UploadStatus.uploading;
 
     if (isUploading) {
-      uploadStream = UploadService.getUploadStream(widget.message.id)!;
+      final stream = UploadService.getUploadStream(widget.message.id);
+      if (stream != null) {
+        uploadStream = stream;
+      } else {
+        isUploading = false;
+      }
     }
   }
 
@@ -1461,7 +1468,7 @@ class _UploadingAttachmentState extends ConsumerState<UploadingAttachment> {
 
     const overlayColor = Color.fromARGB(150, 0, 0, 0);
 
-    if (!isUploading) {
+    if (!isUploading || uploadStream == null) {
       return Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
