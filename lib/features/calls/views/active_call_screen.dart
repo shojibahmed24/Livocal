@@ -6,6 +6,8 @@ import 'package:livocal/features/calls/controllers/call_controller.dart';
 import 'package:livocal/features/calls/models/call_model.dart';
 import 'package:livocal/features/calls/services/webrtc_call_client.dart';
 import 'package:livocal/features/calls/views/widgets/language_picker_sheet.dart';
+import 'package:livocal/features/calls/views/widgets/minute_recharge_sheet.dart';
+import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/theme/color_theme.dart';
 import 'package:livocal/theme/theme.dart';
@@ -356,6 +358,93 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                           ),
                         ),
                       ),
+                    ],
+                  ),
+                ),
+
+              // Translation Minutes Exhausted Banner with Recharge CTA
+              if (callState.isTranslationExhausted)
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade900.withValues(alpha: 0.95),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: Colors.amberAccent.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.amberAccent,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppStrings.tr(ref, 'minutesExhaustedTitle'),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              (session?.isIncoming ?? false)
+                                  ? AppStrings.tr(ref, 'callerMinutesExhaustedDirectVoiceDesc')
+                                  : AppStrings.tr(ref, 'callContinuingDirectVoiceDesc'),
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.9),
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (!(session?.isIncoming ?? false)) ...[
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: () {
+                            HapticFeedback.lightImpact();
+                            final currentUser = getCurrentUser();
+                            if (currentUser != null) {
+                              showMinuteRechargeSheet(
+                                context,
+                                user: currentUser,
+                                onRecharged: () {
+                                  controller.resumeTranslationAfterRecharge();
+                                },
+                              );
+                            }
+                          },
+                          child: Text(
+                            AppStrings.tr(ref, 'rechargeNowBtn'),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11.5,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),

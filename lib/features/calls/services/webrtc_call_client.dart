@@ -84,6 +84,9 @@ class WebRtcCallClient {
 
   bool _isCaller = false;
   String? _currentCallId;
+  String? _lastAppliedRemoteSdp;
+  int? _lastProcessedRestartTimestamp;
+  int? _lastCalleeRestartReqTs;
 
   WebRtcCallClient({FirebaseFirestore? firestore})
       : firestore = firestore ?? _safeFirestore();
@@ -419,18 +422,37 @@ class WebRtcCallClient {
           final data = snapshot.data();
           if (data == null) return;
 
-          if (data.containsKey('answer') &&
-              _peerConnection != null &&
-              await _peerConnection?.getRemoteDescription() == null) {
+          // 4.1 Process Answer (Initial or ICE Restart)
+          if (data.containsKey('answer') && _peerConnection != null) {
             final answerMap = data['answer'] as Map<String, dynamic>;
-            final tunedAnswerSdp = tuneAudioSdp(answerMap['sdp'] ?? '');
-            final answer = RTCSessionDescription(
-              tunedAnswerSdp,
-              answerMap['type'],
-            );
-            await _peerConnection!.setRemoteDescription(answer);
-            debugPrint('Caller successfully set remote answer description with Opus FEC');
-            await _drainPendingCandidates();
+            final rawAnswerSdp = answerMap['sdp']?.toString() ?? '';
+            final answerRestartTs = data['answerRestart'] as int? ?? 0;
+
+            final currentRemoteDesc = await _peerConnection?.getRemoteDescription();
+            final isNewAnswer = currentRemoteDesc == null ||
+                (rawAnswerSdp.isNotEmpty && rawAnswerSdp != _lastAppliedRemoteSdp);
+
+            if (isNewAnswer && rawAnswerSdp.isNotEmpty) {
+              _lastAppliedRemoteSdp = rawAnswerSdp;
+              final tunedAnswerSdp = tuneAudioSdp(rawAnswerSdp);
+              final answer = RTCSessionDescription(
+                tunedAnswerSdp,
+                answerMap['type'],
+              );
+              await _peerConnection!.setRemoteDescription(answer);
+              debugPrint('[WebRtcCallClient] Caller applied remote answer (initial or ICE restart, ts: $answerRestartTs)');
+              await _drainPendingCandidates();
+            }
+          }
+
+          // 4.2 If Callee requested ICE restart via Firestore signal
+          if (data.containsKey('calleeNeedsIceRestart') && _isCaller) {
+            final reqTs = data['calleeNeedsIceRestart'] as int? ?? 0;
+            if (reqTs > (_lastCalleeRestartReqTs ?? 0)) {
+              _lastCalleeRestartReqTs = reqTs;
+              debugPrint('[WebRtcCallClient] Caller received callee request for ICE restart (ts: $reqTs). Initiating restart offer...');
+              restartIce();
+            }
           }
         });
 
@@ -501,6 +523,58 @@ class WebRtcCallClient {
             'type': tunedAnswer.type,
           },
         }, SetOptions(merge: true));
+
+        // Listen for Caller ICE restart offers
+        _callDocSubscription = firestore!
+            .collection('calls')
+            .doc(callId)
+            .snapshots()
+            .listen((snapshot) async {
+          if (!snapshot.exists) return;
+          final data = snapshot.data();
+          if (data == null) return;
+
+          // If caller initiated ICE restart
+          if (data.containsKey('iceRestart') && data.containsKey('offer') && _peerConnection != null) {
+            final restartTs = data['iceRestart'] as int? ?? 0;
+            if (restartTs > (_lastProcessedRestartTimestamp ?? 0)) {
+              _lastProcessedRestartTimestamp = restartTs;
+              final offerMap = data['offer'] as Map<String, dynamic>;
+              final rawOfferSdp = offerMap['sdp']?.toString() ?? '';
+              if (rawOfferSdp.isNotEmpty) {
+                try {
+                  debugPrint('[WebRtcCallClient] Callee processing ICE restart offer (ts: $restartTs)...');
+                  final tunedRemoteOfferSdp = tuneAudioSdp(rawOfferSdp);
+                  final remoteOffer = RTCSessionDescription(
+                    tunedRemoteOfferSdp,
+                    offerMap['type'],
+                  );
+                  await _peerConnection!.setRemoteDescription(remoteOffer);
+                  await _drainPendingCandidates();
+
+                  final newAnswer = await _peerConnection!.createAnswer({
+                    'offerToReceiveAudio': 1,
+                    'offerToReceiveVideo': 0,
+                  });
+                  final tunedAnswerSdp = tuneAudioSdp(newAnswer.sdp ?? '');
+                  final tunedAnswer = RTCSessionDescription(tunedAnswerSdp, newAnswer.type);
+                  await _peerConnection!.setLocalDescription(tunedAnswer);
+
+                  await firestore!.collection('calls').doc(callId).set({
+                    'answer': {
+                      'sdp': tunedAnswer.sdp,
+                      'type': tunedAnswer.type,
+                    },
+                    'answerRestart': restartTs,
+                  }, SetOptions(merge: true));
+                  debugPrint('[WebRtcCallClient] Callee applied restart offer & sent answer (ts: $restartTs)');
+                } catch (e) {
+                  debugPrint('[WebRtcCallClient] Callee ICE restart renegotiation error: $e');
+                }
+              }
+            }
+          }
+        });
 
         // Listen for Caller ICE Candidates
         _remoteCandidatesSubscription = firestore!
@@ -576,34 +650,26 @@ class WebRtcCallClient {
         await _peerConnection!.setLocalDescription(tunedOffer);
 
         if (firestore != null && _currentCallId != null) {
+          final now = DateTime.now().millisecondsSinceEpoch;
+          _lastProcessedRestartTimestamp = now;
           await firestore!.collection('calls').doc(_currentCallId!).set({
             'offer': {
               'sdp': tunedOffer.sdp,
               'type': tunedOffer.type,
             },
-            'iceRestart': DateTime.now().millisecondsSinceEpoch,
+            'iceRestart': now,
           }, SetOptions(merge: true));
         }
         debugPrint('[WebRtcCallClient] ICE restart offer generated & committed to Firestore');
       } else {
-        final answer = await _peerConnection!.createAnswer({
-          'offerToReceiveAudio': 1,
-          'offerToReceiveVideo': 0,
-        });
-        final tunedAnswerSdp = tuneAudioSdp(answer.sdp ?? '');
-        final tunedAnswer = RTCSessionDescription(tunedAnswerSdp, answer.type);
-        await _peerConnection!.setLocalDescription(tunedAnswer);
-
+        // Callee signals Caller to initiate renegotiation offer per RFC 5245/8839
         if (firestore != null && _currentCallId != null) {
+          final now = DateTime.now().millisecondsSinceEpoch;
           await firestore!.collection('calls').doc(_currentCallId!).set({
-            'answer': {
-              'sdp': tunedAnswer.sdp,
-              'type': tunedAnswer.type,
-            },
-            'iceRestart': DateTime.now().millisecondsSinceEpoch,
+            'calleeNeedsIceRestart': now,
           }, SetOptions(merge: true));
+          debugPrint('[WebRtcCallClient] Callee signaled caller for ICE restart (ts: $now)');
         }
-        debugPrint('[WebRtcCallClient] ICE restart answer generated & committed to Firestore');
       }
     } catch (e) {
       debugPrint('[WebRtcCallClient] restartIce failed: $e');
@@ -795,6 +861,10 @@ class WebRtcCallClient {
 
     _currentCallId = null;
     _isCaller = false;
+    _lastAppliedRemoteSdp = null;
+    _lastProcessedRestartTimestamp = 0;
+    _lastCalleeRestartReqTs = null;
+    _pendingCandidates.clear();
   }
 
   void dispose() {

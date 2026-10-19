@@ -1530,11 +1530,11 @@ async function getDepositGateways() {
     }
   }
 
-  const bkashNum = (docData?.bkashNumber || process.env.BKASH_NUMBER || '01721013902').trim();
-  const nagadNum = (docData?.nagadNumber || process.env.NAGAD_NUMBER || '01721013902').trim();
-  const binancePayId = (docData?.binancePayId || process.env.BINANCE_PAY_ID || '849201842').trim();
-  const trc20Addr = (docData?.cryptoUsdtTrc20 || process.env.CRYPTO_USDT_TRC20 || 'TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf').trim();
-  const bep20Addr = (docData?.cryptoUsdtBep20 || process.env.CRYPTO_USDT_BEP20 || '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97').trim();
+  const bkashNum = (docData?.bkashNumber || process.env.BKASH_NUMBER || '').trim();
+  const nagadNum = (docData?.nagadNumber || process.env.NAGAD_NUMBER || '').trim();
+  const binancePayId = (docData?.binancePayId || process.env.BINANCE_PAY_ID || '').trim();
+  const trc20Addr = (docData?.cryptoUsdtTrc20 || process.env.CRYPTO_USDT_TRC20 || '').trim();
+  const bep20Addr = (docData?.cryptoUsdtBep20 || process.env.CRYPTO_USDT_BEP20 || '').trim();
 
   return { bkashNum, nagadNum, binancePayId, trc20Addr, bep20Addr };
 }
@@ -1547,29 +1547,34 @@ app.get('/api/wallet/deposit-info', authenticateUserOrAdmin, async (req, res) =>
     success: true,
     depositInfo: {
       bkash: {
-        number: bkashNum,
+        number: bkashNum || null,
         type: 'Personal / Send Money',
+        isConfigured: !!bkashNum,
       },
       nagad: {
-        number: nagadNum,
+        number: nagadNum || null,
         type: 'Personal / Send Money',
+        isConfigured: !!nagadNum,
       },
       binancePay: {
-        payId: binancePayId,
+        payId: binancePayId || null,
         name: 'Livocal Global',
+        isConfigured: !!binancePayId,
       },
       cryptoUsdt: {
         trc20: {
           network: 'TRC-20',
           networkName: 'Tron (TRC-20)',
-          address: trc20Addr,
+          address: trc20Addr || null,
           explorerUrl: 'https://tronscan.org/#/transaction/',
+          isConfigured: !!trc20Addr,
         },
         bep20: {
           network: 'BEP-20',
           networkName: 'BNB Smart Chain (BEP-20)',
-          address: bep20Addr,
+          address: bep20Addr || null,
           explorerUrl: 'https://bscscan.com/tx/',
+          isConfigured: !!bep20Addr,
         },
       },
     },
@@ -1730,6 +1735,21 @@ app.post('/api/wallet/payment-request', authenticateRequest, async (req, res) =>
   const isCrypto = method === 'Binance_Pay' || method.startsWith('Crypto_USDT');
   const currency = isCrypto ? 'USDT' : 'BDT';
   const expectedAmount = isCrypto ? selectedPack.priceUsdt : selectedPack.priceBdt;
+
+  // Fail-Closed Guard: Ensure deposit gateway is configured on server
+  const gateways = await getDepositGateways();
+  let gatewayAddress = '';
+  if (method === 'bKash') gatewayAddress = gateways.bkashNum;
+  else if (method === 'Nagad') gatewayAddress = gateways.nagadNum;
+  else if (method === 'Binance_Pay') gatewayAddress = gateways.binancePayId;
+  else if (method === 'Crypto_USDT_TRC20') gatewayAddress = gateways.trc20Addr;
+  else if (method === 'Crypto_USDT_BEP20') gatewayAddress = gateways.bep20Addr;
+
+  if (!gatewayAddress) {
+    return res.status(503).json({
+      error: `Payment gateway for ${method} is not configured on the server. Please select another payment method or contact support.`,
+    });
+  }
 
   // 5. Server-side promo code validation
   let bonusMinutes = 0;
@@ -2010,7 +2030,11 @@ app.post('/api/admin/verify-onchain', authenticateAdmin, async (req, res) => {
 
   try {
     if (paymentMethod === 'Crypto_USDT_TRC20') {
-      const expectedDeposit = targetAddress || process.env.CRYPTO_USDT_TRC20 || 'TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf';
+      const gateways = await getDepositGateways();
+      const expectedDeposit = targetAddress || gateways.trc20Addr;
+      if (!expectedDeposit) {
+        return res.status(400).json({ verified: false, error: 'Tron (TRC-20) deposit address is not configured on the server.' });
+      }
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 6000);
       const url = `https://apilist.tronscanapi.com/api/transaction-info?hash=${cleanHash.replace(/^0x/, '')}`;
@@ -2074,7 +2098,11 @@ app.post('/api/admin/verify-onchain', authenticateAdmin, async (req, res) => {
         },
       });
     } else if (paymentMethod === 'Crypto_USDT_BEP20') {
-      const expectedDeposit = targetAddress || process.env.CRYPTO_USDT_BEP20 || '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97';
+      const gateways = await getDepositGateways();
+      const expectedDeposit = targetAddress || gateways.bep20Addr;
+      if (!expectedDeposit) {
+        return res.status(400).json({ verified: false, error: 'BSC (BEP-20) deposit address is not configured on the server.' });
+      }
       const hashFormatted = cleanHash.startsWith('0x') ? cleanHash : `0x${cleanHash}`;
 
       const controller = new AbortController();

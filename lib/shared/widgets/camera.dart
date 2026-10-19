@@ -420,8 +420,11 @@ class CameraViewState extends ConsumerState<CameraView>
                                   .toList();
                               if (otherCameras.isNotEmpty) {
                                 setState(() {
-                                  _initializeControllerFuture =
-                                      _controller.setDescription(otherCameras.first);
+                                  _initializeControllerFuture = _controller
+                                      .setDescription(otherCameras.first)
+                                      .catchError((e) {
+                                    debugPrint('Error switching camera: $e');
+                                  });
                                 });
                               }
                             } catch (e) {

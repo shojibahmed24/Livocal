@@ -397,6 +397,9 @@ class AppStrings {
       'starterPackPriceText': "1,200 BDT (\$9.99)",
       'proPackPriceText': "3,000 BDT (\$24.99)",
       'bdtAmount': "{amount} BDT",
+      'callContinuingDirectVoiceDesc': "Call continuing as direct voice.",
+      'callerMinutesExhaustedDirectVoiceDesc': "Caller's translation minutes exhausted. Switched to direct voice.",
+      'rechargeNowBtn': "Recharge",
     },
     'bn': {
       'about': "অ্যাবাউট (স্ট্যাটাস)",
@@ -760,6 +763,9 @@ class AppStrings {
       'starterPackPriceText': "৳১,২০০ (\$৯.৯৯)",
       'proPackPriceText': "৳৩,০০০ (\$২৪.৯৯)",
       'bdtAmount': "৳{amount}",
+      'callContinuingDirectVoiceDesc': "সরাসরি ভয়েস কল চালু আছে।",
+      'callerMinutesExhaustedDirectVoiceDesc': "কলার এর অনুবাদ মিনিট শেষ হয়ে গেছে। সরাসরি ভয়েস কলে পরিবর্তন করা হয়েছে।",
+      'rechargeNowBtn': "রিচার্জ",
     },
     'hi': {
       'about': "के बारे में",
@@ -1123,6 +1129,9 @@ class AppStrings {
       'starterPackPriceText': "1,200 BDT (\$9.99)",
       'proPackPriceText': "3,000 BDT (\$24.99)",
       'bdtAmount': "{amount} BDT",
+      'callContinuingDirectVoiceDesc': "सीधी वॉइस कॉल जारी है।",
+      'callerMinutesExhaustedDirectVoiceDesc': "कॉलर के अनुवाद मिनट समाप्त हो गए हैं। सीधी वॉइस कॉल पर स्विच किया गया।",
+      'rechargeNowBtn': "रिचार्ज",
     },
     'ar': {
       'about': "الأخبار",
@@ -1486,6 +1495,9 @@ class AppStrings {
       'starterPackPriceText': "1,200 BDT (\$9.99)",
       'proPackPriceText': "3,000 BDT (\$24.99)",
       'bdtAmount': "{amount} BDT",
+      'callContinuingDirectVoiceDesc': "المكالمة مستمرة كمكالمة صوتية مباشرة.",
+      'callerMinutesExhaustedDirectVoiceDesc': "نفدت دقائق الترجمة للمتصل. تم التحويل إلى مكالمة صوتية مباشرة.",
+      'rechargeNowBtn': "إعادة الشحن",
     },
     'es': {
       'about': "Info.",
@@ -1849,6 +1861,9 @@ class AppStrings {
       'starterPackPriceText': "1,200 BDT (\$9.99)",
       'proPackPriceText': "3,000 BDT (\$24.99)",
       'bdtAmount': "{amount} BDT",
+      'callContinuingDirectVoiceDesc': "La llamada continúa como voz directa.",
+      'callerMinutesExhaustedDirectVoiceDesc': "Minutos de traducción del llamante agotados. Cambiado a voz directa.",
+      'rechargeNowBtn': "Recargar",
     },
     'fr': {
       'about': "Actu",
@@ -2212,6 +2227,9 @@ class AppStrings {
       'starterPackPriceText': "1,200 BDT (\$9.99)",
       'proPackPriceText': "3,000 BDT (\$24.99)",
       'bdtAmount': "{amount} BDT",
+      'callContinuingDirectVoiceDesc': "L'appel continue en voix directe.",
+      'callerMinutesExhaustedDirectVoiceDesc': "Minutes de traduction de l'appelant épuisées. Basculé en voix directe.",
+      'rechargeNowBtn': "Recharger",
     },
     'de': {
       'about': "Info",
@@ -2575,6 +2593,9 @@ class AppStrings {
       'starterPackPriceText': "1,200 BDT (\$9.99)",
       'proPackPriceText': "3,000 BDT (\$24.99)",
       'bdtAmount': "{amount} BDT",
+      'callContinuingDirectVoiceDesc': "Anruf wird als direkter Sprachanruf fortgesetzt.",
+      'callerMinutesExhaustedDirectVoiceDesc': "Übersetzungsminuten des Anrufers aufgebraucht. Auf direkten Sprachanruf umgeschaltet.",
+      'rechargeNowBtn': "Aufladen",
     },
   };
 

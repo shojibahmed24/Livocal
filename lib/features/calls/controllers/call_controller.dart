@@ -47,6 +47,7 @@ class CallControllerState {
   final WebRtcCallState webrtcState;
   final CallNetworkQuality networkQuality;
   final bool isLowDataModeAutoEnabled;
+  final bool isTranslationExhausted;
   final String? error;
 
   const CallControllerState({
@@ -67,6 +68,7 @@ class CallControllerState {
     this.webrtcState = WebRtcCallState.idle,
     this.networkQuality = CallNetworkQuality.good,
     this.isLowDataModeAutoEnabled = false,
+    this.isTranslationExhausted = false,
     this.error,
   });
 
@@ -96,6 +98,7 @@ class CallControllerState {
     WebRtcCallState? webrtcState,
     CallNetworkQuality? networkQuality,
     bool? isLowDataModeAutoEnabled,
+    bool? isTranslationExhausted,
     String? error,
     bool clearError = false,
   }) {
@@ -120,6 +123,8 @@ class CallControllerState {
       networkQuality: networkQuality ?? this.networkQuality,
       isLowDataModeAutoEnabled:
           isLowDataModeAutoEnabled ?? this.isLowDataModeAutoEnabled,
+      isTranslationExhausted:
+          isTranslationExhausted ?? this.isTranslationExhausted,
       error: clearError ? null : (error ?? this.error),
     );
   }
@@ -672,12 +677,47 @@ class CallController extends StateNotifier<CallControllerState> {
       debugPrint('[CallController] WebRtcCallState changed to $wState');
       state = state.copyWith(webrtcState: wState);
       if (wState == WebRtcCallState.connected) {
+        final wasReconnecting = _networkDropTimer != null;
         _networkDropTimer?.cancel();
         _networkDropTimer = null;
+        if (wasReconnecting) {
+          final reconnectedBubble = LiveTranscriptEntry(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            speakerId: 'system',
+            speakerName: 'System',
+            isSelf: false,
+            sourceLangCode: 'en',
+            targetLangCode: _currentAppLang,
+            originalText: 'Call reconnected.',
+            translatedText: _currentAppLang == 'bn'
+                ? 'কল পুনরায় সংযুক্ত হয়েছে।'
+                : 'Call reconnected.',
+            timestamp: DateTime.now(),
+          );
+          state = state.copyWith(
+            transcripts: [...state.transcripts, reconnectedBubble],
+          );
+        }
       } else if (wState == WebRtcCallState.disconnected) {
         debugPrint('[CallController] WebRTC disconnected, triggering ICE restart and starting 10s timer');
         _webrtcClient.restartIce();
         _networkDropTimer?.cancel();
+        final reconnectingBubble = LiveTranscriptEntry(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          speakerId: 'system',
+          speakerName: 'System',
+          isSelf: false,
+          sourceLangCode: 'en',
+          targetLangCode: _currentAppLang,
+          originalText: 'Connection lost. Reconnecting call...',
+          translatedText: _currentAppLang == 'bn'
+              ? 'সংযোগ বিচ্ছিন্ন হয়েছে। কল পুনরায় সংযুক্ত করা হচ্ছে...'
+              : 'Connection lost. Reconnecting call...',
+          timestamp: DateTime.now(),
+        );
+        state = state.copyWith(
+          transcripts: [...state.transcripts, reconnectingBubble],
+        );
         _networkDropTimer = Timer(const Duration(seconds: 10), () {
           if (state.webrtcState == WebRtcCallState.disconnected && state.activeSession != null) {
             debugPrint('[CallController] WebRTC disconnected for >10s. Auto hanging up.');
@@ -852,6 +892,14 @@ class CallController extends StateNotifier<CallControllerState> {
         state = state.copyWith(transcripts: [...state.transcripts, warningBubble]);
       }
       if (bEvent.isExhausted) {
+        final isCallee = state.activeSession?.isIncoming ?? false;
+        final originalNotice = isCallee
+            ? "Caller's translation minutes exhausted. Switched to direct voice call."
+            : "Translation minutes exhausted. Switched to direct voice call. Recharge to resume live translation.";
+        final translatedNotice = isCallee
+            ? AppStrings.get('callerMinutesExhaustedDirectVoiceDesc', _currentAppLang)
+            : '${AppStrings.get('minutesExhaustedAlert', _currentAppLang)} ${AppStrings.get('callContinuingDirectVoiceDesc', _currentAppLang)}';
+
         final exhaustedBubble = LiveTranscriptEntry(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           speakerId: 'system',
@@ -859,15 +907,22 @@ class CallController extends StateNotifier<CallControllerState> {
           isSelf: true,
           sourceLangCode: 'en',
           targetLangCode: _currentAppLang,
-          originalText: '🛑 Minutes Exhausted: Your call balance has reached 0 minutes. Call disconnected.',
-          translatedText: AppStrings.get('callTerminatedExhausted', _currentAppLang),
+          originalText: originalNotice,
+          translatedText: translatedNotice,
           timestamp: DateTime.now(),
         );
+
+        // Fall back gracefully to direct voice audio instead of abruptly terminating the call!
+        _webrtcClient.setMicrophoneMute(state.isMuted);
+        _webrtcClient.setRemoteAudioVolume(1.0);
+        setAudioMode(CallAudioMode.originalOnly);
+
         state = state.copyWith(
           transcripts: [...state.transcripts, exhaustedBubble],
           error: 'MINUTES_EXHAUSTED',
+          isTranslationExhausted: true,
+          translationEnabled: false,
         );
-        endCall(recordAsMissed: false);
       }
     });
 
@@ -884,21 +939,23 @@ class CallController extends StateNotifier<CallControllerState> {
       _webrtcClient.setRemoteAudioVolume(1.0);
       setAudioMode(CallAudioMode.originalOnly);
 
-      final fallbackBubble = LiveTranscriptEntry(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        speakerId: 'system',
-        speakerName: 'AI Offline — Direct Voice Active',
-        isSelf: false,
-        sourceLangCode: myLang.code,
-        targetLangCode: peerLang.code,
-        originalText: 'AI Interpreter unavailable (missing key/relay). Connected via direct WebRTC voice.',
-        translatedText: AppStrings.get('aiUnavailableDirectFallback', _currentAppLang),
-        timestamp: DateTime.now(),
-      );
-      state = state.copyWith(
-        geminiState: GeminiLiveState.error,
-        transcripts: [...state.transcripts, fallbackBubble],
-      );
+      if (!state.isTranslationExhausted) {
+        final fallbackBubble = LiveTranscriptEntry(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          speakerId: 'system',
+          speakerName: 'AI Offline — Direct Voice Active',
+          isSelf: false,
+          sourceLangCode: myLang.code,
+          targetLangCode: peerLang.code,
+          originalText: 'AI Interpreter unavailable (missing key/relay). Connected via direct WebRTC voice.',
+          translatedText: AppStrings.get('aiUnavailableDirectFallback', _currentAppLang),
+          timestamp: DateTime.now(),
+        );
+        state = state.copyWith(
+          geminiState: GeminiLiveState.error,
+          transcripts: [...state.transcripts, fallbackBubble],
+        );
+      }
       return;
     }
 
@@ -1029,6 +1086,55 @@ class CallController extends StateNotifier<CallControllerState> {
   Future<void> retryWebRtc() async {
     debugPrint('[CallController] User triggered retryWebRtc');
     await _webrtcClient.restartIce();
+  }
+
+  Future<void> resumeTranslationAfterRecharge() async {
+    final current = state.activeSession;
+    if (current == null || current.status != CallStateStatus.connected) return;
+
+    debugPrint('[CallController] Resuming translation after wallet recharge...');
+    state = state.copyWith(
+      isTranslationExhausted: false,
+      translationEnabled: true,
+      clearError: true,
+      geminiState: GeminiLiveState.connecting,
+    );
+
+    _webrtcClient.setRemoteAudioVolume(0.0);
+    _webrtcClient.setMicrophoneMute(true);
+    setAudioMode(CallAudioMode.translatedOnly);
+
+    final ok = await _geminiTranslator.connect(
+      langA: state.myLanguage,
+      langB: state.peerLanguage,
+      bidirectional: state.isBidirectionalSingleDevice,
+      callId: current.callId,
+    );
+
+    if (ok) {
+      final resumedBubble = LiveTranscriptEntry(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        speakerId: 'system',
+        speakerName: 'Livocal Billing',
+        isSelf: true,
+        sourceLangCode: 'en',
+        targetLangCode: _currentAppLang,
+        originalText: '✅ Translation resumed successfully after recharge.',
+        translatedText: _currentAppLang == 'bn'
+            ? '✅ রিচার্জের পর অনুবাদ সফলভাবে পুনরায় চালু হয়েছে।'
+            : '✅ Translation resumed successfully after recharge.',
+        timestamp: DateTime.now(),
+      );
+      state = state.copyWith(
+        geminiState: GeminiLiveState.listening,
+        transcripts: [...state.transcripts, resumedBubble],
+      );
+    } else {
+      debugPrint('[CallController] Failed to resume translation after recharge. Staying in direct voice.');
+      _webrtcClient.setMicrophoneMute(state.isMuted);
+      _webrtcClient.setRemoteAudioVolume(1.0);
+      setAudioMode(CallAudioMode.originalOnly);
+    }
   }
 
   bool _lowBalanceAlerted = false;
