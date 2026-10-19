@@ -680,10 +680,16 @@ app.post('/api/wallet/init-or-get', authenticateRequest, async (req, res) => {
     }
 
     // New wallet required: Check hardware device fingerprint to prevent trial fraud
-    let grantTrial = true;
-    const cleanDeviceId = deviceId && String(deviceId).trim();
+    const cleanDeviceId = (deviceId && typeof deviceId === 'string') ? deviceId.trim() : null;
 
-    if (cleanDeviceId) {
+    // Strict Fail-Closed Security (C3): deviceId is strictly required to grant free trial.
+    // If deviceId is omitted, null, empty, or too short, trial is DENIED (grantTrial = false).
+    let grantTrial = false;
+
+    if (!cleanDeviceId || cleanDeviceId.length < 8) {
+      console.warn(`[SaaS Billing] Security Alert: User ${userId} requested wallet init without valid deviceId ("${deviceId}"). Denying trial minutes (fail-closed).`);
+      grantTrial = false;
+    } else {
       const fingerprintRef = firestoreDb.collection('device_fingerprints').doc(cleanDeviceId);
       const fingerprintSnap = await fingerprintRef.get();
 
@@ -692,7 +698,8 @@ app.post('/api/wallet/init-or-get', authenticateRequest, async (req, res) => {
         grantTrial = false;
         console.log(`[SaaS Billing] Device ${cleanDeviceId} already claimed trial. Denying trial minutes for uid ${userId}.`);
       } else {
-        // Mark device fingerprint as claimed
+        // Fresh physical device: Grant trial and persist hardware fingerprint
+        grantTrial = true;
         await fingerprintRef.set({
           firstUid: userId,
           firstPhone: phone || req.user.phone_number || '',
@@ -1080,7 +1087,7 @@ const authenticateUserOrAdmin = async (req, res, next) => {
 // Only authenticated Admin or verified payment callback can invoke this endpoint directly.
 app.post('/api/wallet/recharge', authenticateAdmin, async (req, res) => {
   const targetUid = req.body.userId || req.body.uid;
-  const { packId, minutes, amount, currency, paymentMethod, transactionId, promoCode } = req.body || {};
+  const { packId, minutes, amount, currency, paymentMethod, transactionId, idempotencyKey, promoCode } = req.body || {};
 
   if (!targetUid) {
     return res.status(400).json({ error: 'target userId is required' });
@@ -1106,12 +1113,32 @@ app.post('/api/wallet/recharge', authenticateAdmin, async (req, res) => {
     return res.status(400).json({ error: 'Invalid minutes amount' });
   }
 
+  // Idempotency key sanitization
+  const rawIdempotencyKey = idempotencyKey || req.headers['idempotency-key'] || transactionId;
+  const cleanIdempotencyKey = (typeof rawIdempotencyKey === 'string' && rawIdempotencyKey.trim().length > 0)
+    ? rawIdempotencyKey.trim().replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 64)
+    : null;
+
   try {
     const walletRef = firestoreDb.collection('users').doc(targetUid).collection('wallet').doc('current');
-    const txId = transactionId || `adm_tx_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    const txId = cleanIdempotencyKey
+      ? (cleanIdempotencyKey.startsWith('tx_') ? cleanIdempotencyKey : `tx_${cleanIdempotencyKey}`)
+      : `adm_tx_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
     const txRef = firestoreDb.collection('recharge_transactions').doc(txId);
 
-    const updatedWallet = await firestoreDb.runTransaction(async (transaction) => {
+    const result = await firestoreDb.runTransaction(async (transaction) => {
+      // 1. Check idempotency: READ txRef before writes!
+      const txDoc = await transaction.get(txRef);
+      if (txDoc.exists) {
+        const existingTx = txDoc.data() || {};
+        return {
+          alreadyProcessed: true,
+          transactionId: txId,
+          minutesAdded: existingTx.minutesAdded || minutesToAdd,
+        };
+      }
+
+      // 2. READ walletRef
       const walletDoc = await transaction.get(walletRef);
       const nowIso = new Date().toISOString();
 
@@ -1140,6 +1167,7 @@ app.post('/api/wallet/recharge', authenticateAdmin, async (req, res) => {
 
       transaction.set(txRef, {
         transactionId: txId,
+        idempotencyKey: cleanIdempotencyKey || null,
         userId: targetUid,
         userPhone: currentData.phone || '',
         packId: packId || 'custom',
@@ -1152,11 +1180,25 @@ app.post('/api/wallet/recharge', authenticateAdmin, async (req, res) => {
         createdAt: nowIso,
       });
 
-      return walletUpdate;
+      return {
+        alreadyProcessed: false,
+        wallet: walletUpdate,
+        transactionId: txId,
+      };
     });
 
-    console.log(`[SaaS Billing] Admin recharged ${minutesToAdd} minutes for user ${targetUid}. New balance: ${updatedWallet.balanceMinutes} mins.`);
-    return res.json({ success: true, wallet: updatedWallet, transactionId: txId });
+    if (result.alreadyProcessed) {
+      console.log(`[SaaS Billing] Recharge idempotent retry detected for ${txId}. Returning existing status.`);
+      return res.json({
+        success: true,
+        alreadyProcessed: true,
+        transactionId: txId,
+        message: 'Recharge already processed (idempotent)',
+      });
+    }
+
+    console.log(`[SaaS Billing] Admin recharged ${minutesToAdd} minutes for user ${targetUid}. New balance: ${result.wallet.balanceMinutes} mins.`);
+    return res.json({ success: true, wallet: result.wallet, transactionId: txId });
   } catch (err) {
     console.error('[SaaS Billing] Error processing wallet recharge:', err.message);
     return res.status(500).json({ error: 'Failed to process recharge', message: err.message });
@@ -2347,15 +2389,21 @@ app.post('/api/admin/verify-onchain', authenticateAdmin, async (req, res) => {
   }
 });
 
-// Admin Manual Top-up endpoint
+// Admin Manual Top-up endpoint with Idempotency Protection
 app.post('/api/admin/wallet/topup', authenticateAdmin, async (req, res) => {
-  const { phone, userId, minutes, amount, notes, adminName } = req.body || {};
+  const { phone, userId, minutes, amount, notes, adminName, idempotencyKey, transactionId } = req.body || {};
   const minutesToAdd = parseInt(minutes, 10);
   if (isNaN(minutesToAdd) || minutesToAdd <= 0) {
     return res.status(400).json({ error: 'Valid minutes amount required' });
   }
 
   if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
+
+  // Idempotency key sanitization
+  const rawIdempotencyKey = idempotencyKey || req.headers['idempotency-key'] || transactionId;
+  const cleanIdempotencyKey = (typeof rawIdempotencyKey === 'string' && rawIdempotencyKey.trim().length > 0)
+    ? rawIdempotencyKey.trim().replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 64)
+    : null;
 
   try {
     let targetUid = userId;
@@ -2385,12 +2433,27 @@ app.post('/api/admin/wallet/topup', authenticateAdmin, async (req, res) => {
     }
 
     const walletRef = firestoreDb.collection('users').doc(targetUid).collection('wallet').doc('current');
-    const txId = `adm_tx_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const txId = cleanIdempotencyKey
+      ? (cleanIdempotencyKey.startsWith('topup_') ? cleanIdempotencyKey : `topup_${cleanIdempotencyKey}`)
+      : `adm_tx_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const txRef = firestoreDb.collection('recharge_transactions').doc(txId);
 
     const nowIso = new Date().toISOString();
 
-    const updatedWallet = await firestoreDb.runTransaction(async (transaction) => {
+    const result = await firestoreDb.runTransaction(async (transaction) => {
+      // 1. Check idempotency: READ txRef before writes!
+      const txDoc = await transaction.get(txRef);
+      if (txDoc.exists) {
+        const existingTx = txDoc.data() || {};
+        return {
+          alreadyProcessed: true,
+          wallet: null,
+          transactionId: txId,
+          minutesAdded: existingTx.minutesAdded || minutesToAdd,
+        };
+      }
+
+      // 2. READ walletRef
       const doc = await transaction.get(walletRef);
       let data = doc.exists ? doc.data() : {
         balanceMinutes: 0,
@@ -2417,6 +2480,7 @@ app.post('/api/admin/wallet/topup', authenticateAdmin, async (req, res) => {
 
       transaction.set(txRef, {
         transactionId: txId,
+        idempotencyKey: cleanIdempotencyKey || null,
         userId: targetUid,
         userPhone: phone || data.phone || '',
         packId: 'admin_topup',
@@ -2429,11 +2493,26 @@ app.post('/api/admin/wallet/topup', authenticateAdmin, async (req, res) => {
         createdAt: nowIso,
       });
 
-      return updated;
+      return {
+        alreadyProcessed: false,
+        wallet: updated,
+        transactionId: txId,
+      };
     });
 
+    if (result.alreadyProcessed) {
+      console.log(`[Admin] Topup idempotent retry detected for ${txId}. Returning existing status.`);
+      return res.json({
+        success: true,
+        alreadyProcessed: true,
+        userId: targetUid,
+        transactionId: txId,
+        message: 'Top-up already processed (idempotent)',
+      });
+    }
+
     console.log(`[Admin] Successfully topped up ${minutesToAdd} minutes for user ${targetUid}`);
-    return res.json({ success: true, userId: targetUid, wallet: updatedWallet, transactionId: txId });
+    return res.json({ success: true, userId: targetUid, wallet: result.wallet, transactionId: txId });
   } catch (err) {
     console.error('[Admin] Error performing topup:', err.message);
     return res.status(500).json({ error: 'Top-up failed', message: err.message });

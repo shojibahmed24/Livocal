@@ -127,6 +127,12 @@ class GeminiLiveTranslator {
   bool _setupCompleted = false;
   bool _disposed = false;
 
+  int _reconnectAttempts = 0;
+  static const int maxReconnectAttempts = 3;
+  Timer? _reconnectTimer;
+  bool _isExplicitDisconnect = false;
+  bool _isReconnecting = false;
+
   CallLanguage _langA = CallLanguageRegistry.fromCode('bn');
   CallLanguage _langB = CallLanguageRegistry.fromCode('en');
   bool _bidirectionalMode = true;
@@ -226,6 +232,7 @@ CRITICAL OPERATING RULES:
     bool bidirectional = true,
     bool forceDirect = false,
     String? callId,
+    bool isReconnect = false,
   }) async {
     _langA = langA;
     _langB = langB;
@@ -235,6 +242,14 @@ CRITICAL OPERATING RULES:
     }
     _disposed = false;
     _setupCompleted = false;
+
+    if (!isReconnect) {
+      _isExplicitDisconnect = false;
+      _isReconnecting = false;
+      _reconnectTimer?.cancel();
+      _reconnectTimer = null;
+      _reconnectAttempts = 0;
+    }
 
     _stateController.add(GeminiLiveState.connecting);
 
@@ -265,8 +280,8 @@ CRITICAL OPERATING RULES:
           _handleServerFrame,
           onError: (err) {
             debugPrint('Gemini Relay WS Error: $err');
-            if (!_disposed) {
-              _stateController.add(GeminiLiveState.error);
+            if (!_disposed && !_isExplicitDisconnect) {
+              _triggerReconnect();
             }
           },
           onDone: () {
@@ -274,7 +289,7 @@ CRITICAL OPERATING RULES:
             _setupCompleted = false;
             final code = _ws?.closeCode;
             debugPrint('Relay WS closed (code: $code)');
-            if (!_disposed) {
+            if (!_disposed && !_isExplicitDisconnect) {
               if (code == 4402) {
                 debugPrint('[GeminiLiveTranslator] Relay closed with code 4402 (MINUTES_EXHAUSTED / INSUFFICIENT_BALANCE)');
                 _billingUpdateController.add(const BillingUpdateEvent(
@@ -283,6 +298,7 @@ CRITICAL OPERATING RULES:
                   lowBalanceWarning: false,
                   isExhausted: true,
                 ));
+                _stateController.add(GeminiLiveState.disconnected);
               } else if (code == 4403) {
                 debugPrint('[GeminiLiveTranslator] Relay rejected with code 4403 (MISSING_API_KEY)');
                 _stateController.add(GeminiLiveState.error);
@@ -291,8 +307,11 @@ CRITICAL OPERATING RULES:
                   connect(langA: _langA, langB: _langB, forceDirect: true, callId: _callId);
                   return;
                 }
+              } else if (code == 1000) {
+                _stateController.add(GeminiLiveState.disconnected);
+              } else {
+                _triggerReconnect();
               }
-              _stateController.add(GeminiLiveState.disconnected);
             }
           },
         );
@@ -326,7 +345,9 @@ CRITICAL OPERATING RULES:
         debugPrint('Backend Relay connection attempt failed: $relayErr');
         // If relay failed and no direct API key is set, set error state
         if (apiKey.isEmpty) {
-          _stateController.add(GeminiLiveState.error);
+          if (!isReconnect) {
+            _stateController.add(GeminiLiveState.error);
+          }
           return false;
         }
       }
@@ -334,7 +355,9 @@ CRITICAL OPERATING RULES:
 
     // 2. Direct Fallback to Google Live endpoint if API key exists locally
     if (apiKey.isEmpty) {
-      _stateController.add(GeminiLiveState.error);
+      if (!isReconnect) {
+        _stateController.add(GeminiLiveState.error);
+      }
       return false;
     }
 
@@ -354,15 +377,20 @@ CRITICAL OPERATING RULES:
         _handleServerFrame,
         onError: (err) {
           debugPrint('Gemini Live WS Error: $err');
-          if (!_disposed) {
-            _stateController.add(GeminiLiveState.error);
+          if (!_disposed && !_isExplicitDisconnect) {
+            _triggerReconnect();
           }
         },
         onDone: () {
           _isConnected = false;
           _setupCompleted = false;
-          if (!_disposed) {
-            _stateController.add(GeminiLiveState.disconnected);
+          final code = _ws?.closeCode;
+          if (!_disposed && !_isExplicitDisconnect) {
+            if (code == 1000) {
+              _stateController.add(GeminiLiveState.disconnected);
+            } else {
+              _triggerReconnect();
+            }
           }
         },
       );
@@ -412,9 +440,64 @@ CRITICAL OPERATING RULES:
     } catch (e) {
       debugPrint('Failed to connect Gemini Live WS: $e');
       _isConnected = false;
-      _stateController.add(GeminiLiveState.error);
+      if (!isReconnect) {
+        _stateController.add(GeminiLiveState.error);
+      }
       return false;
     }
+  }
+
+  void _triggerReconnect() {
+    if (_disposed || _isExplicitDisconnect || _isReconnecting) return;
+    if (_reconnectAttempts >= maxReconnectAttempts) {
+      debugPrint('[GeminiLiveTranslator] Max reconnect attempts ($maxReconnectAttempts) exhausted. Falling back to offline direct audio.');
+      _isReconnecting = false;
+      _stateController.add(GeminiLiveState.disconnected);
+      _stateController.add(GeminiLiveState.error);
+      return;
+    }
+
+    _isReconnecting = true;
+    _reconnectAttempts++;
+    final delaySeconds = 1 << (_reconnectAttempts - 1); // 1s, 2s, 4s
+    debugPrint('[GeminiLiveTranslator] Connection dropped mid-call. Retrying in ${delaySeconds}s (attempt $_reconnectAttempts/$maxReconnectAttempts)...');
+    _stateController.add(GeminiLiveState.connecting);
+
+    _reconnectTimer?.cancel();
+    _reconnectTimer = Timer(Duration(seconds: delaySeconds), () async {
+      _isReconnecting = false;
+      if (_disposed || _isExplicitDisconnect) return;
+      try {
+        await _wsSubscription?.cancel();
+        _wsSubscription = null;
+        try {
+          await _ws?.close();
+        } catch (_) {}
+        _ws = null;
+
+        debugPrint('[GeminiLiveTranslator] Executing reconnect attempt #$_reconnectAttempts...');
+        final success = await connect(
+          langA: _langA,
+          langB: _langB,
+          bidirectional: _bidirectionalMode,
+          callId: _callId,
+          isReconnect: true,
+        );
+        if (success) {
+          debugPrint('[GeminiLiveTranslator] Reconnection #$_reconnectAttempts established successfully.');
+        } else {
+          debugPrint('[GeminiLiveTranslator] Reconnection #$_reconnectAttempts failed.');
+          if (!_disposed && !_isExplicitDisconnect) {
+            _triggerReconnect();
+          }
+        }
+      } catch (e) {
+        debugPrint('[GeminiLiveTranslator] Reconnect exception: $e');
+        if (!_disposed && !_isExplicitDisconnect) {
+          _triggerReconnect();
+        }
+      }
+    });
   }
 
   /// Dynamically switch language pair mid-call (reconnects session with new N x N pair)
@@ -497,6 +580,10 @@ CRITICAL OPERATING RULES:
         final eventType = data['type']?.toString();
         if (eventType == 'ready') {
           _setupCompleted = true;
+          _reconnectAttempts = 0;
+          _isReconnecting = false;
+          _reconnectTimer?.cancel();
+          _reconnectTimer = null;
           final role = data['role']?.toString();
           if (role == 'callee') {
             _billingUpdateController.add(const BillingUpdateEvent(
@@ -578,6 +665,10 @@ CRITICAL OPERATING RULES:
 
       if (data.containsKey('setupComplete')) {
         _setupCompleted = true;
+        _reconnectAttempts = 0;
+        _isReconnecting = false;
+        _reconnectTimer?.cancel();
+        _reconnectTimer = null;
         _stateController.add(GeminiLiveState.listening);
         return;
       }
@@ -692,6 +783,11 @@ CRITICAL OPERATING RULES:
   }
 
   Future<void> disconnect() async {
+    _isExplicitDisconnect = true;
+    _isReconnecting = false;
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    _reconnectAttempts = 0;
     _isConnected = false;
     _setupCompleted = false;
     await _wsSubscription?.cancel();

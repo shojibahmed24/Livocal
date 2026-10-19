@@ -1,10 +1,15 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:crypto/crypto.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:uuid/uuid.dart';
 
-/// Provides a persistent, tamper-resistant device fingerprint to enforce
-/// the 14-day 20-minute Freemium trial policy and prevent trial abuse.
+/// Provides a persistent, tamper-resistant device fingerprint bound to
+/// physical hardware to enforce the Freemium trial policy and prevent trial abuse.
 class DeviceFingerprintService {
   static const String _key = 'livocal_hardware_fingerprint';
   static final DeviceFingerprintService _instance = DeviceFingerprintService._internal();
@@ -19,7 +24,7 @@ class DeviceFingerprintService {
 
   String? _cachedFingerprint;
 
-  /// Retrieves or generates a permanent device fingerprint.
+  /// Retrieves or generates a permanent hardware-bound device fingerprint.
   Future<String> getDeviceFingerprint() async {
     if (_cachedFingerprint != null && _cachedFingerprint!.isNotEmpty) {
       return _cachedFingerprint!;
@@ -34,12 +39,11 @@ class DeviceFingerprintService {
         fingerprint = SharedPref.instance.getString(_key);
       }
 
-      // 3. Generate a new cryptographically unique hardware seed if completely new
+      // 3. Generate hardware-bound fingerprint using real device info
       if (fingerprint == null || fingerprint.isEmpty) {
-        fingerprint = 'dev_${const Uuid().v4()}';
+        fingerprint = await _generateHardwareFingerprint();
         await _saveFingerprint(fingerprint);
       } else {
-        // Ensure synchronization across both storage engines
         await _saveFingerprint(fingerprint);
       }
 
@@ -47,10 +51,52 @@ class DeviceFingerprintService {
       return fingerprint;
     } catch (e) {
       debugPrint('[DeviceFingerprintService] Keystore read error, falling back: $e');
-      final fallback = SharedPref.instance.getString(_key) ?? 'dev_${DateTime.now().millisecondsSinceEpoch}';
-      _cachedFingerprint = fallback;
-      SharedPref.instance.setString(_key, fallback);
-      return fallback;
+      final fallback = SharedPref.instance.getString(_key);
+      if (fallback != null && fallback.isNotEmpty) {
+        _cachedFingerprint = fallback;
+        return fallback;
+      }
+      final generated = await _generateHardwareFingerprint();
+      _cachedFingerprint = generated;
+      return generated;
+    }
+  }
+
+  Future<String> _generateHardwareFingerprint() async {
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      String rawHardwareId = '';
+
+      if (kIsWeb) {
+        final webInfo = await deviceInfo.webBrowserInfo;
+        rawHardwareId = 'web_${webInfo.vendor}_${webInfo.userAgent}';
+      } else if (Platform.isAndroid) {
+        final androidInfo = await deviceInfo.androidInfo;
+        // Bind to immutable hardware characteristics that survive app reinstall
+        rawHardwareId = 'android_${androidInfo.id}_${androidInfo.model}_${androidInfo.brand}_${androidInfo.hardware}';
+      } else if (Platform.isIOS) {
+        final iosInfo = await deviceInfo.iosInfo;
+        rawHardwareId = 'ios_${iosInfo.identifierForVendor ?? ''}_${iosInfo.model}';
+      } else if (Platform.isWindows) {
+        final windowsInfo = await deviceInfo.windowsInfo;
+        rawHardwareId = 'win_${windowsInfo.deviceId}_${windowsInfo.computerName}';
+      } else if (Platform.isMacOS) {
+        final macInfo = await deviceInfo.macOsInfo;
+        rawHardwareId = 'mac_${macInfo.systemGUID ?? ''}_${macInfo.model}';
+      } else if (Platform.isLinux) {
+        final linuxInfo = await deviceInfo.linuxInfo;
+        rawHardwareId = 'linux_${linuxInfo.machineId ?? ''}';
+      } else {
+        rawHardwareId = 'generic_${const Uuid().v4()}';
+      }
+
+      // Cryptographically hash the raw hardware specs into a clean, permanent 64-char hex string
+      final hash = sha256.convert(utf8.encode(rawHardwareId)).toString();
+      return 'hw_$hash';
+    } catch (e) {
+      debugPrint('[DeviceFingerprintService] Failed to read hardware info: $e');
+      final fallbackHash = sha256.convert(utf8.encode('${DateTime.now().toIso8601String()}_${const Uuid().v4()}')).toString();
+      return 'hw_$fallbackHash';
     }
   }
 

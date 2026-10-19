@@ -829,11 +829,62 @@ class CallController extends StateNotifier<CallControllerState> {
     _geminiStateSub = _geminiTranslator.stateStream.listen((gState) {
       _audioPipeline.setAiSpeakingState(gState == GeminiLiveState.speaking);
       state = state.copyWith(geminiState: gState);
-      if (gState == GeminiLiveState.error) {
-        // Fallback to original audio so participants are not left in silence!
+      if (gState == GeminiLiveState.error ||
+          (gState == GeminiLiveState.disconnected &&
+              state.activeSession?.status == CallStateStatus.connected &&
+              state.audioMode != CallAudioMode.originalOnly)) {
+        // Fallback to original WebRTC audio so participants are never left in silence!
         _webrtcClient.setMicrophoneMute(state.isMuted);
         _webrtcClient.setRemoteAudioVolume(1.0);
         setAudioMode(CallAudioMode.originalOnly);
+
+        if (!state.isTranslationExhausted) {
+          final fallbackBubble = LiveTranscriptEntry(
+            id: 'fb_${DateTime.now().millisecondsSinceEpoch}',
+            speakerId: 'system',
+            speakerName: 'AI Offline — Direct Voice Active',
+            isSelf: false,
+            sourceLangCode: myLang.code,
+            targetLangCode: peerLang.code,
+            originalText:
+                'AI Interpreter unavailable. Connected via direct WebRTC voice.',
+            translatedText:
+                AppStrings.get('aiUnavailableDirectFallback', _currentAppLang),
+            timestamp: DateTime.now(),
+          );
+          state = state.copyWith(
+            transcripts: [...state.transcripts, fallbackBubble],
+          );
+        }
+      } else if (gState == GeminiLiveState.listening &&
+          state.activeSession?.status == CallStateStatus.connected &&
+          state.translationEnabled &&
+          state.myLangCode != state.peerLangCode &&
+          state.audioMode == CallAudioMode.originalOnly &&
+          !state.isTranslationExhausted) {
+        // Auto-restored after successful reconnection!
+        setAudioMode(CallAudioMode.translatedOnly);
+        final chime =
+            GeminiLiveTranslator.generateTestVoiceTonePcm24k(durationMs: 360);
+        _audioPipeline.feedTranslatedAiPcm(chime);
+        final restoredBubble = LiveTranscriptEntry(
+          id: 'restored_${DateTime.now().millisecondsSinceEpoch}',
+          speakerId: 'system',
+          speakerName: 'AI Live Interpreter',
+          isSelf: false,
+          sourceLangCode: myLang.code,
+          targetLangCode: peerLang.code,
+          originalText:
+              'AI Interpreter reconnected. Live translation active.',
+          translatedText: AppStrings.get(
+                  'callTranslationActiveNotice', _currentAppLang)
+              .replaceAll('{langA}', state.myLanguage.nativeName)
+              .replaceAll('{langB}', state.peerLanguage.nativeName),
+          timestamp: DateTime.now(),
+        );
+        state = state.copyWith(
+          transcripts: [...state.transcripts, restoredBubble],
+        );
       }
     });
 

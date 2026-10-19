@@ -54,6 +54,8 @@ dependencies:
   flutter_callkit_incoming: 2.0.4
   flutter_secure_storage: ^10.3.4
   local_auth: ^3.0.2
+  device_info_plus: ^12.4.0
+  crypto: ^3.0.3
 
 dev_dependencies:
   flutter_test:

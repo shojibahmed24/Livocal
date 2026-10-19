@@ -3271,6 +3271,7 @@
 
       try {
         const secret = getAdminSecret();
+        const idempotencyKey = 'topup_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
         const res = await fetch('/api/admin/wallet/topup', {
           method: 'POST',
           headers: {
@@ -3282,6 +3283,7 @@
             minutes,
             amount,
             notes,
+            idempotencyKey,
             adminName: 'Admin Control Room',
           }),
         });
