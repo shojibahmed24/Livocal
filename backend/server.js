@@ -1449,13 +1449,53 @@ app.post('/api/admin/p2p-payment/action', authenticateAdmin, async (req, res) =>
   }
 });
 
+// Helper to read active deposit gateway configurations (with Firestore fallback for cloud permanence)
+async function getDepositGateways() {
+  let docData = null;
+  if (firestoreDb) {
+    try {
+      const doc = await firestoreDb.collection('system_config').doc('deposit_gateways').get();
+      if (doc.exists) {
+        docData = doc.data();
+      }
+    } catch (e) {
+      // Non-blocking fallback
+    }
+  }
+
+  const bkashNum = (docData?.bkashNumber || process.env.BKASH_NUMBER || '01721013902').trim();
+  const nagadNum = (docData?.nagadNumber || process.env.NAGAD_NUMBER || '01721013902').trim();
+  const binancePayId = (docData?.binancePayId || process.env.BINANCE_PAY_ID || '849201842').trim();
+  const trc20Addr = (docData?.cryptoUsdtTrc20 || process.env.CRYPTO_USDT_TRC20 || 'TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf').trim();
+  const bep20Addr = (docData?.cryptoUsdtBep20 || process.env.CRYPTO_USDT_BEP20 || '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97').trim();
+
+  return { bkashNum, nagadNum, binancePayId, trc20Addr, bep20Addr };
+}
+
+// Safely update backend/.env file on disk
+function updateEnvFile(updates) {
+  try {
+    const envPath = path.join(__dirname, '.env');
+    let content = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
+    for (const [key, val] of Object.entries(updates)) {
+      if (val === undefined || val === null) continue;
+      const cleanVal = String(val).trim();
+      const regex = new RegExp(`^${key}=.*$`, 'm');
+      if (regex.test(content)) {
+        content = content.replace(regex, `${key}=${cleanVal}`);
+      } else {
+        content += `\n${key}=${cleanVal}`;
+      }
+    }
+    fs.writeFileSync(envPath, content.trim() + '\n', 'utf8');
+  } catch (err) {
+    console.warn('[DepositGateways] Could not persist to .env on disk:', err.message);
+  }
+}
+
 // Public / authenticated endpoint for clients to get active deposit accounts & addresses dynamically
-app.get('/api/wallet/deposit-info', authenticateUserOrAdmin, (req, res) => {
-  const trc20Addr = process.env.CRYPTO_USDT_TRC20 || 'TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf';
-  const bep20Addr = process.env.CRYPTO_USDT_BEP20 || '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97';
-  const binancePayId = process.env.BINANCE_PAY_ID || '849201842';
-  const bkashNum = process.env.BKASH_NUMBER || '01721013902';
-  const nagadNum = process.env.NAGAD_NUMBER || '01721013902';
+app.get('/api/wallet/deposit-info', authenticateUserOrAdmin, async (req, res) => {
+  const { bkashNum, nagadNum, binancePayId, trc20Addr, bep20Addr } = await getDepositGateways();
 
   res.json({
     success: true,
@@ -1488,6 +1528,91 @@ app.get('/api/wallet/deposit-info', authenticateUserOrAdmin, (req, res) => {
       },
     },
     packs: OFFICIAL_PACKS,
+  });
+});
+
+// Admin update deposit gateway configuration endpoint
+app.post('/api/admin/deposit-gateways', authenticateAdmin, async (req, res) => {
+  const {
+    bkashNumber,
+    nagadNumber,
+    binancePayId,
+    cryptoUsdtTrc20,
+    cryptoUsdtBep20,
+  } = req.body || {};
+
+  // Validation
+  const cleanBkash = (bkashNumber || '').trim();
+  const cleanNagad = (nagadNumber || '').trim();
+  const cleanBinance = (binancePayId || '').trim();
+  const cleanTrc20 = (cryptoUsdtTrc20 || '').trim();
+  const cleanBep20 = (cryptoUsdtBep20 || '').trim();
+
+  if (cleanBkash && !/^[0-9+ ]{8,20}$/.test(cleanBkash)) {
+    return res.status(400).json({ error: 'Invalid bKash phone number format' });
+  }
+  if (cleanNagad && !/^[0-9+ ]{8,20}$/.test(cleanNagad)) {
+    return res.status(400).json({ error: 'Invalid Nagad phone number format' });
+  }
+  if (cleanBinance && !validateBinancePayId(cleanBinance)) {
+    return res.status(400).json({ error: 'Invalid Binance Pay ID (8-12 digits or email)' });
+  }
+  if (cleanTrc20 && !validateTronAddress(cleanTrc20)) {
+    return res.status(400).json({ error: 'Invalid Tron (TRC-20) address (Must start with T and have 34 Base58 characters)' });
+  }
+  if (cleanBep20 && !validateBscAddress(cleanBep20)) {
+    return res.status(400).json({ error: 'Invalid BSC (BEP-20) address (Must start with 0x and have 42 hex characters)' });
+  }
+
+  const updates = {};
+  if (cleanBkash) updates.bkashNumber = cleanBkash;
+  if (cleanNagad) updates.nagadNumber = cleanNagad;
+  if (cleanBinance) updates.binancePayId = cleanBinance;
+  if (cleanTrc20) updates.cryptoUsdtTrc20 = cleanTrc20;
+  if (cleanBep20) updates.cryptoUsdtBep20 = cleanBep20;
+
+  // 1. Update memory runtime
+  if (cleanBkash) process.env.BKASH_NUMBER = cleanBkash;
+  if (cleanNagad) process.env.NAGAD_NUMBER = cleanNagad;
+  if (cleanBinance) process.env.BINANCE_PAY_ID = cleanBinance;
+  if (cleanTrc20) process.env.CRYPTO_USDT_TRC20 = cleanTrc20;
+  if (cleanBep20) process.env.CRYPTO_USDT_BEP20 = cleanBep20;
+
+  // 2. Persist to backend/.env file on disk
+  updateEnvFile({
+    BKASH_NUMBER: cleanBkash,
+    NAGAD_NUMBER: cleanNagad,
+    BINANCE_PAY_ID: cleanBinance,
+    CRYPTO_USDT_TRC20: cleanTrc20,
+    CRYPTO_USDT_BEP20: cleanBep20,
+  });
+
+  // 3. Persist to Firestore system_config for cloud permanence
+  if (firestoreDb) {
+    try {
+      await firestoreDb.collection('system_config').doc('deposit_gateways').set({
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      }, { merge: true });
+    } catch (err) {
+      console.warn('[DepositGateways] Could not persist to Firestore:', err.message);
+    }
+  }
+
+  console.log('[DepositGateways] Admin updated gateway accounts:', updates);
+  const current = await getDepositGateways();
+  return res.json({
+    success: true,
+    message: 'Deposit gateway configuration updated successfully',
+    depositInfo: {
+      bkash: { number: current.bkashNum, type: 'Personal / Send Money' },
+      nagad: { number: current.nagadNum, type: 'Personal / Send Money' },
+      binancePay: { payId: current.binancePayId, name: 'Livocal Global' },
+      cryptoUsdt: {
+        trc20: { network: 'TRC-20', networkName: 'Tron (TRC-20)', address: current.trc20Addr },
+        bep20: { network: 'BEP-20', networkName: 'BNB Smart Chain (BEP-20)', address: current.bep20Addr },
+      },
+    },
   });
 });
 

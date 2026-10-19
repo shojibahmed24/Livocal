@@ -2200,11 +2200,16 @@
         <div class="card-header-bar">
           <div class="card-title-group">
             <h2>🏦 Official Deposit Gateway Configuration</h2>
-            <p>Dynamic deposit accounts configured on the backend server. Update them anytime in <code>backend/.env</code> without client app updates.</p>
+            <p>Dynamic deposit accounts configured on the backend server. Update them anytime in <code>backend/.env</code> or click <b>Configure Gateways</b> to edit directly here.</p>
           </div>
-          <button class="btn btn-secondary" onclick="loadDepositInfo()">
-            🔄 Refresh Gateways
-          </button>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <button class="btn btn-secondary" onclick="loadDepositInfo()">
+              🔄 Refresh Gateways
+            </button>
+            <button class="btn btn-primary" onclick="openEditGatewaysModal()" style="display:inline-flex; align-items:center; gap:6px;">
+              ⚙️ Configure Gateways
+            </button>
+          </div>
         </div>
 
         <div class="deposit-cards-grid">
@@ -2380,6 +2385,52 @@
           <button type="button" class="btn btn-primary" onclick="saveAdminSecretFromModal()">Save Secret</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal: Configure Official Deposit Gateways -->
+  <div class="modal-backdrop" id="editGatewaysModal">
+    <div class="modal-box" style="max-width: 580px;">
+      <div class="modal-header">
+        <div class="modal-title">⚙️ Configure Official Deposit Gateways</div>
+        <button class="modal-close-btn" onclick="closeEditGatewaysModal()">&times;</button>
+      </div>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
+        Update your real payment receiving accounts. Changes immediately reflect in the mobile app and persist across server restarts.
+      </p>
+      <form id="editGatewaysForm" onsubmit="handleEditGatewaysSubmit(event)">
+        <div class="form-group">
+          <label class="form-label">📱 bKash Number (Merchant / Personal Send Money)</label>
+          <input type="text" id="egBkash" class="form-control" placeholder="e.g. 01721013902" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">📱 Nagad Number (Personal Send Money)</label>
+          <input type="text" id="egNagad" class="form-control" placeholder="e.g. 01721013902" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">🟡 Official Binance Pay ID (8-12 digits or Pay Email)</label>
+          <input type="text" id="egBinance" class="form-control" placeholder="e.g. 849201842" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">💎 Tron USDT (TRC-20) Deposit Address</label>
+          <input type="text" id="egTrc20" class="form-control" placeholder="e.g. TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf" required style="font-family:var(--font-mono); font-size:12px;">
+          <small style="color:var(--text-muted); font-size:11px;">Must be a valid 34-character Base58 Tron address starting with 'T'.</small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">💎 BNB Smart Chain USDT (BEP-20) Deposit Address</label>
+          <input type="text" id="egBep20" class="form-control" placeholder="e.g. 0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97" required style="font-family:var(--font-mono); font-size:12px;">
+          <small style="color:var(--text-muted); font-size:11px;">Must be a valid 42-character EVM address starting with '0x'.</small>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:22px;">
+          <button type="button" class="btn btn-secondary" onclick="closeEditGatewaysModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnSubmitGateways">💾 Save Gateway Configuration</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -3250,6 +3301,66 @@
         btn.innerText = 'Confirm & Credit Minutes';
       }
     }
+
+    function openEditGatewaysModal() {
+      document.getElementById('egBkash').value = (document.getElementById('gwBkash').innerText || '').trim();
+      document.getElementById('egNagad').value = (document.getElementById('gwNagad').innerText || '').trim();
+      document.getElementById('egBinance').value = (document.getElementById('gwBinance').innerText || '').trim();
+      document.getElementById('egTrc20').value = (document.getElementById('gwTrc20').innerText || '').trim();
+      document.getElementById('egBep20').value = (document.getElementById('gwBep20').innerText || '').trim();
+      document.getElementById('editGatewaysModal').classList.add('active');
+    }
+
+    function closeEditGatewaysModal() {
+      document.getElementById('editGatewaysModal').classList.remove('active');
+    }
+
+    async function handleEditGatewaysSubmit(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSubmitGateways');
+      const oldText = btn.innerText;
+      btn.innerText = 'Saving...';
+      btn.disabled = true;
+
+      const payload = {
+        bkashNumber: document.getElementById('egBkash').value.trim(),
+        nagadNumber: document.getElementById('egNagad').value.trim(),
+        binancePayId: document.getElementById('egBinance').value.trim(),
+        cryptoUsdtTrc20: document.getElementById('egTrc20').value.trim(),
+        cryptoUsdtBep20: document.getElementById('egBep20').value.trim(),
+      };
+
+      const secret = getAdminSecret();
+      try {
+        const res = await fetch('/api/admin/deposit-gateways', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-secret': secret,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to update gateways');
+
+        showToast('✅ Deposit gateway configuration updated and saved!');
+        closeEditGatewaysModal();
+        if (data.depositInfo) {
+          if (data.depositInfo.bkash?.number) document.getElementById('gwBkash').innerText = data.depositInfo.bkash.number;
+          if (data.depositInfo.nagad?.number) document.getElementById('gwNagad').innerText = data.depositInfo.nagad.number;
+          if (data.depositInfo.binancePay?.payId) document.getElementById('gwBinance').innerText = data.depositInfo.binancePay.payId;
+          if (data.depositInfo.cryptoUsdt?.trc20?.address) document.getElementById('gwTrc20').innerText = data.depositInfo.cryptoUsdt.trc20.address;
+          if (data.depositInfo.cryptoUsdt?.bep20?.address) document.getElementById('gwBep20').innerText = data.depositInfo.cryptoUsdt.bep20.address;
+        }
+      } catch (err) {
+        showToast('❌ Error: ' + err.message, true);
+        alert('Error saving gateways: ' + err.message);
+      } finally {
+        btn.innerText = oldText;
+        btn.disabled = false;
+      }
+    }
   </script>
     <script>
 /* ============================================================
@@ -3540,6 +3651,7 @@
     { group: 'Tabs', icon: '💳', label: 'Recharge ledger', hint: 'tab', run: function () { switchTab('recharges'); } },
     { group: 'Tabs', icon: '📊', label: 'Call billing ledger', hint: 'tab', run: function () { switchTab('ledger'); } },
     { group: 'Tabs', icon: '🏦', label: 'Deposit gateways', hint: 'tab', run: function () { switchTab('gateways'); } },
+    { group: 'Actions', icon: '⚙️', label: 'Configure deposit gateways', hint: 'action', run: function () { if (window.openEditGatewaysModal) openEditGatewaysModal(); } },
     { group: 'Actions', icon: '➕', label: 'Credit minutes (quick top-up)', hint: 'action', run: function () { if (window.openTopUpModal) openTopUpModal(); } },
     { group: 'Actions', icon: '🔄', label: 'Refresh dashboard data', hint: 'action', run: function () { if (window.fetchDashboardData) fetchDashboardData(); } },
     { group: 'Actions', icon: '🌙', label: 'Toggle light / dark theme', hint: 'action', run: function () { toggleAdminTheme(); } },
