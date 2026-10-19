@@ -12,6 +12,22 @@ import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/utils/network_tracker.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
+class BillingUpdateEvent {
+  final int billedMinutes;
+  final int remainingMinutes;
+  final bool lowBalanceWarning;
+  final bool isCallee;
+  final bool isExhausted;
+
+  const BillingUpdateEvent({
+    required this.billedMinutes,
+    required this.remainingMinutes,
+    required this.lowBalanceWarning,
+    this.isCallee = false,
+    this.isExhausted = false,
+  });
+}
+
 class GeminiModelPreset {
   final String id;
   final String title;
@@ -123,12 +139,18 @@ class GeminiLiveTranslator {
       StreamController<LiveTranscriptEntry>.broadcast();
   final StreamController<bool> _interruptedController =
       StreamController<bool>.broadcast();
+  final StreamController<BillingUpdateEvent> _billingUpdateController =
+      StreamController<BillingUpdateEvent>.broadcast();
 
   Stream<Uint8List> get translatedAudioStream => _translatedPcmController.stream;
   Stream<GeminiLiveState> get stateStream => _stateController.stream;
   Stream<LiveTranscriptEntry> get transcriptStream =>
       _transcriptController.stream;
   Stream<bool> get interruptedStream => _interruptedController.stream;
+  Stream<BillingUpdateEvent> get billingUpdateStream =>
+      _billingUpdateController.stream;
+
+  String? _callId;
 
   String _pendingInputTranscript = '';
   String _pendingOutputTranscript = '';
@@ -203,10 +225,14 @@ CRITICAL OPERATING RULES:
     required CallLanguage langB,
     bool bidirectional = true,
     bool forceDirect = false,
+    String? callId,
   }) async {
     _langA = langA;
     _langB = langB;
     _bidirectionalMode = bidirectional;
+    if (callId != null && callId.isNotEmpty) {
+      _callId = callId;
+    }
     _disposed = false;
     _setupCompleted = false;
 
@@ -249,12 +275,20 @@ CRITICAL OPERATING RULES:
             final code = _ws?.closeCode;
             debugPrint('Relay WS closed (code: $code)');
             if (!_disposed) {
-              if (code == 4403) {
+              if (code == 4402) {
+                debugPrint('[GeminiLiveTranslator] Relay closed with code 4402 (MINUTES_EXHAUSTED / INSUFFICIENT_BALANCE)');
+                _billingUpdateController.add(const BillingUpdateEvent(
+                  billedMinutes: 0,
+                  remainingMinutes: 0,
+                  lowBalanceWarning: false,
+                  isExhausted: true,
+                ));
+              } else if (code == 4403) {
                 debugPrint('[GeminiLiveTranslator] Relay rejected with code 4403 (MISSING_API_KEY)');
                 _stateController.add(GeminiLiveState.error);
                 if (apiKey.isNotEmpty) {
                   debugPrint('Attempting auto-fallback to direct Gemini endpoint with saved API key');
-                  connect(langA: _langA, langB: _langB, forceDirect: true);
+                  connect(langA: _langA, langB: _langB, forceDirect: true, callId: _callId);
                   return;
                 }
               }
@@ -267,6 +301,7 @@ CRITICAL OPERATING RULES:
         final setupPayload = {
           'type': 'setup',
           if (idToken != null) 'token': idToken,
+          if (_callId != null && _callId!.isNotEmpty) 'callId': _callId,
           'model': modelId,
           'voice': voiceName,
           'autoDetect': true,
@@ -462,7 +497,28 @@ CRITICAL OPERATING RULES:
         final eventType = data['type']?.toString();
         if (eventType == 'ready') {
           _setupCompleted = true;
+          final role = data['role']?.toString();
+          if (role == 'callee') {
+            _billingUpdateController.add(const BillingUpdateEvent(
+              billedMinutes: 0,
+              remainingMinutes: 9999,
+              lowBalanceWarning: false,
+              isCallee: true,
+            ));
+          }
           _stateController.add(GeminiLiveState.listening);
+          return;
+        } else if (eventType == 'billing_update') {
+          final billed = data['billedMinutes'] as int? ?? 1;
+          final remaining = data['remainingMinutes'] as int? ?? 0;
+          final isWarning = data['lowBalanceWarning'] as bool? ?? (remaining <= 2);
+          final role = data['role']?.toString();
+          _billingUpdateController.add(BillingUpdateEvent(
+            billedMinutes: billed,
+            remainingMinutes: remaining,
+            lowBalanceWarning: isWarning,
+            isCallee: role == 'callee',
+          ));
           return;
         } else if (eventType == 'audio_out') {
           final b64Audio = data['data']?.toString();
@@ -500,12 +556,20 @@ CRITICAL OPERATING RULES:
         } else if (eventType == 'error') {
           final errCode = data['code']?.toString();
           debugPrint('Backend Relay Error: ${data['message']} (code: $errCode)');
+          if (errCode == 'MINUTES_EXHAUSTED' || errCode == 'INSUFFICIENT_BALANCE') {
+            _billingUpdateController.add(const BillingUpdateEvent(
+              billedMinutes: 0,
+              remainingMinutes: 0,
+              lowBalanceWarning: false,
+              isExhausted: true,
+            ));
+          }
           _stateController.add(GeminiLiveState.error);
           if (errCode == 'MISSING_API_KEY') {
             final savedKey = getSavedApiKey();
             if (savedKey.isNotEmpty) {
               debugPrint('MISSING_API_KEY received: falling back to direct API key');
-              connect(langA: _langA, langB: _langB, forceDirect: true);
+              connect(langA: _langA, langB: _langB, forceDirect: true, callId: _callId);
             }
           }
           return;
@@ -647,5 +711,6 @@ CRITICAL OPERATING RULES:
     await _stateController.close();
     await _transcriptController.close();
     await _interruptedController.close();
+    await _billingUpdateController.close();
   }
 }

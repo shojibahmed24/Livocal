@@ -1539,27 +1539,6 @@ async function getDepositGateways() {
   return { bkashNum, nagadNum, binancePayId, trc20Addr, bep20Addr };
 }
 
-// Safely update backend/.env file on disk
-function updateEnvFile(updates) {
-  try {
-    const envPath = path.join(__dirname, '.env');
-    let content = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
-    for (const [key, val] of Object.entries(updates)) {
-      if (val === undefined || val === null) continue;
-      const cleanVal = String(val).trim();
-      const regex = new RegExp(`^${key}=.*$`, 'm');
-      if (regex.test(content)) {
-        content = content.replace(regex, `${key}=${cleanVal}`);
-      } else {
-        content += `\n${key}=${cleanVal}`;
-      }
-    }
-    fs.writeFileSync(envPath, content.trim() + '\n', 'utf8');
-  } catch (err) {
-    console.warn('[DepositGateways] Could not persist to .env on disk:', err.message);
-  }
-}
-
 // Public / authenticated endpoint for clients to get active deposit accounts & addresses dynamically
 app.get('/api/wallet/deposit-info', authenticateUserOrAdmin, async (req, res) => {
   const { bkashNum, nagadNum, binancePayId, trc20Addr, bep20Addr } = await getDepositGateways();
@@ -1638,6 +1617,10 @@ app.post('/api/admin/deposit-gateways', authenticateAdmin, async (req, res) => {
   if (cleanTrc20) updates.cryptoUsdtTrc20 = cleanTrc20;
   if (cleanBep20) updates.cryptoUsdtBep20 = cleanBep20;
 
+  if (Object.keys(updates).length === 0) {
+    return res.status(400).json({ error: 'No valid non-empty gateway parameters provided to update' });
+  }
+
   // 1. Persist to Firestore system_config for cloud permanence across container restarts
   if (firestoreDb) {
     try {
@@ -1658,20 +1641,7 @@ app.post('/api/admin/deposit-gateways', authenticateAdmin, async (req, res) => {
   if (cleanTrc20) process.env.CRYPTO_USDT_TRC20 = cleanTrc20;
   if (cleanBep20) process.env.CRYPTO_USDT_BEP20 = cleanBep20;
 
-  // 3. Opportunistic local .env backup (gracefully ignored on read-only/ephemeral container runtimes)
-  try {
-    updateEnvFile({
-      BKASH_NUMBER: cleanBkash,
-      NAGAD_NUMBER: cleanNagad,
-      BINANCE_PAY_ID: cleanBinance,
-      CRYPTO_USDT_TRC20: cleanTrc20,
-      CRYPTO_USDT_BEP20: cleanBep20,
-    });
-  } catch (envErr) {
-    console.warn('[DepositGateways] Non-fatal: Local .env update skipped on containerized environment:', envErr.message);
-  }
-
-  console.log('[DepositGateways] Admin updated gateway accounts:', updates);
+  console.log('[DepositGateways] Admin updated gateway configuration fields:', Object.keys(updates));
   const current = await getDepositGateways();
   return res.json({
     success: true,
@@ -2565,9 +2535,12 @@ wss.on('connection', (clientWs, req) => {
   let lastAudioSecond = Date.now();
   const MAX_AUDIO_CHUNKS_PER_SEC = 50;
 
-  // Server-side minute metering interval and billing tracker
+  // Server-side minute metering interval, call tracking, and billing role
   let minuteMeteringInterval = null;
   let billedMinutes = 0;
+  let activeCallId = null;
+  let isCallee = false;
+  let isCaller = true;
 
   // Pre-auth Handshake Timeout: Stalled unauthenticated connections killed after 15 seconds
   const preAuthTimeout = setTimeout(() => {
@@ -2820,13 +2793,48 @@ wss.on('connection', (clientWs, req) => {
           autoDetect: msg.autoDetect !== false,
         };
 
+        // Determine Call Role (Caller vs Callee) via Firestore call record:
+        activeCallId = typeof msg.callId === 'string' && msg.callId.trim().length > 0 ? msg.callId.trim() : null;
+        isCallee = false;
+        isCaller = true;
+
+        if (activeCallId && firestoreDb) {
+          try {
+            const callDoc = await firestoreDb.collection('calls').doc(activeCallId).get();
+            if (callDoc.exists) {
+              const callData = callDoc.data() || {};
+              if (callData.callerId && callData.callerId !== authenticatedUid && callData.calleeId === authenticatedUid) {
+                // Authenticated user is the CALLEE!
+                isCallee = true;
+                isCaller = false;
+                console.log(`[${clientId}] User ${authenticatedUid} identified as CALLEE for call ${activeCallId}. Translation granted free under telecom caller-pays policy.`);
+              } else if (callData.callerId === authenticatedUid) {
+                isCaller = true;
+                isCallee = false;
+                console.log(`[${clientId}] User ${authenticatedUid} identified as CALLER for call ${activeCallId}. Relay minute metering active.`);
+              }
+            }
+          } catch (callLookupErr) {
+            console.warn(`[${clientId}] Could not inspect call document for callId ${activeCallId}:`, callLookupErr.message);
+          }
+        }
+
         // 1.5. SERVER-SIDE PRE-CALL MINUTE & WALLET METERING GUARD:
-        // Verify caller has sufficient prepaid / trial minute balance before opening Gemini Live upstream session
-        if (firestoreDb) {
+        // Callees are exempt from billing under telecom caller-pays model.
+        // For Callers / Standalone interpreters: Verify sufficient prepaid / trial balance before opening Gemini Live upstream session.
+        if (!isCallee && firestoreDb) {
           try {
             const walletRef = firestoreDb.collection('users').doc(authenticatedUid).collection('wallet').doc('current');
-            const walletSnap = await walletRef.get();
-            if (!walletSnap.exists) {
+            let walletSnap = null;
+            try {
+              walletSnap = await walletRef.get();
+            } catch (transientErr) {
+              console.warn(`[${clientId}] Transient wallet check error for ${authenticatedUid}, retrying in 300ms:`, transientErr.message);
+              await new Promise((resolve) => setTimeout(resolve, 300));
+              walletSnap = await walletRef.get();
+            }
+
+            if (!walletSnap || !walletSnap.exists) {
               console.warn(`[${clientId}] User ${authenticatedUid} has no wallet record in Firestore. Rejecting live session.`);
               if (clientWs.readyState === WebSocket.OPEN) {
                 clientWs.send(
@@ -2850,7 +2858,7 @@ wss.on('connection', (clientWs, req) => {
             const totalEffectiveMinutes = usableTrial + usableBalance;
 
             if (totalEffectiveMinutes <= 0) {
-              console.warn(`[${clientId}] Quota rejection: User ${authenticatedUid} has 0 minutes. Connection rejected.`);
+              console.warn(`[${clientId}] Quota rejection: Caller ${authenticatedUid} has 0 minutes. Connection rejected.`);
               if (clientWs.readyState === WebSocket.OPEN) {
                 clientWs.send(
                   JSON.stringify({
@@ -2865,9 +2873,21 @@ wss.on('connection', (clientWs, req) => {
               return;
             }
 
-            console.log(`[${clientId}] User ${authenticatedUid} authorized for Gemini Live. Usable balance: ${totalEffectiveMinutes} min(s).`);
+            console.log(`[${clientId}] Caller ${authenticatedUid} authorized for Gemini Live. Usable balance: ${totalEffectiveMinutes} min(s).`);
           } catch (walletCheckErr) {
-            console.error(`[${clientId}] Error validating caller wallet balance:`, walletCheckErr.message);
+            console.error(`[${clientId}] Fail-Closed: Error validating wallet balance for ${authenticatedUid}:`, walletCheckErr.message);
+            if (clientWs.readyState === WebSocket.OPEN) {
+              clientWs.send(
+                JSON.stringify({
+                  type: 'error',
+                  code: 'WALLET_CHECK_UNAVAILABLE',
+                  message: 'Unable to verify translation minutes. Please check your connection and retry.',
+                })
+              );
+              clientWs.close(4402, 'INSUFFICIENT_BALANCE');
+            }
+            cleanup();
+            return;
           }
         }
 
@@ -3026,8 +3046,10 @@ wss.on('connection', (clientWs, req) => {
             console.log(`[${clientId}] Gemini setup completed! Ready for bidirectional audio.`);
             isGeminiReady = true;
 
-            // Immediately deduct minute 1 upfront (Standard Telecom model: 0s-59s billed on connect)
-            if (firestoreDb && authenticatedUid) {
+            // Immediately deduct minute 1 upfront for CALLER only (Standard Telecom model: 0s-59s billed on connect)
+            // Callees are 100% free under telecom caller-pays policy.
+            // Also guard against re-deduction on language swaps (billedMinutes === 0 check).
+            if (!isCallee && firestoreDb && authenticatedUid && billedMinutes === 0) {
               (async () => {
                 try {
                   const walletRef = firestoreDb.collection('users').doc(authenticatedUid).collection('wallet').doc('current');
@@ -3075,11 +3097,11 @@ wss.on('connection', (clientWs, req) => {
 
                     t.set(billingRef, {
                       recordId: billingRef.id,
-                      callId: `ws_live_${authenticatedUid.substring(0, 6)}_${Date.now()}`,
+                      callId: activeCallId || `ws_live_${authenticatedUid.substring(0, 6)}_${Date.now()}`,
                       callerId: authenticatedUid,
                       isTranslatedCall: true,
                       durationSeconds: 60,
-                      minuteIndex: newTotalUsed,
+                      minuteIndex: 1,
                       geminiCostUsd,
                       retailBdt,
                       costBdt,
@@ -3096,7 +3118,7 @@ wss.on('connection', (clientWs, req) => {
                   });
 
                   billedMinutes = 1;
-                  console.log(`[${clientId}] [SaaS Relay Metering] Upfront minute 1 deducted from ${authenticatedUid}. Remaining: ${deductionResult.remainingMinutes}`);
+                  console.log(`[${clientId}] [SaaS Relay Metering] Upfront minute 1 deducted from caller ${authenticatedUid}. Remaining: ${deductionResult.remainingMinutes}`);
 
                   if (clientWs.readyState === WebSocket.OPEN) {
                     clientWs.send(
@@ -3105,12 +3127,13 @@ wss.on('connection', (clientWs, req) => {
                         billedMinutes,
                         remainingMinutes: deductionResult.remainingMinutes,
                         lowBalanceWarning: deductionResult.remainingMinutes <= 2,
+                        role: 'caller',
                       })
                     );
                   }
 
                   if (deductionResult.exhausted) {
-                    console.warn(`[${clientId}] Minute quota exhausted for user ${authenticatedUid} on connect. Terminating.`);
+                    console.warn(`[${clientId}] Minute quota exhausted for caller ${authenticatedUid} on connect. Terminating.`);
                     if (clientWs.readyState === WebSocket.OPEN) {
                       clientWs.send(
                         JSON.stringify({
@@ -3135,12 +3158,15 @@ wss.on('connection', (clientWs, req) => {
                 state: 'ready',
                 voice: sessionConfig.voice,
                 languages: `${sessionConfig.langA.englishName} ⇄ ${sessionConfig.langB.englishName}`,
+                role: isCallee ? 'callee' : 'caller',
+                isBilled: !isCallee,
               })
             );
 
-            // Server-Side 60s Minute Metering Interval:
-            // Prevents malicious/tampered clients from streaming audio indefinitely without billing.
-            if (!minuteMeteringInterval && firestoreDb && authenticatedUid) {
+            // Server-Side 60s Minute Metering Interval (CALLER ONLY):
+            // Prevents caller from streaming audio indefinitely without billing.
+            // Callee is completely exempt from 60s metering.
+            if (!isCallee && !minuteMeteringInterval && firestoreDb && authenticatedUid) {
               minuteMeteringInterval = setInterval(async () => {
                 if (isClosing || clientWs.readyState !== WebSocket.OPEN) return;
                 try {
@@ -3189,11 +3215,11 @@ wss.on('connection', (clientWs, req) => {
 
                     t.set(billingRef, {
                       recordId: billingRef.id,
-                      callId: `ws_live_${authenticatedUid.substring(0, 6)}_${Date.now()}`,
+                      callId: activeCallId || `ws_live_${authenticatedUid.substring(0, 6)}_${Date.now()}`,
                       callerId: authenticatedUid,
                       isTranslatedCall: true,
                       durationSeconds: 60,
-                      minuteIndex: newTotalUsed,
+                      minuteIndex: billedMinutes + 1,
                       geminiCostUsd,
                       retailBdt,
                       costBdt,
@@ -3210,7 +3236,7 @@ wss.on('connection', (clientWs, req) => {
                   });
 
                   billedMinutes += 1;
-                  console.log(`[${clientId}] [SaaS Relay Metering] Deducted 1 min from ${authenticatedUid}. Remaining: ${deductionResult.remainingMinutes}`);
+                  console.log(`[${clientId}] [SaaS Relay Metering] Deducted 1 min from caller ${authenticatedUid}. Remaining: ${deductionResult.remainingMinutes}`);
 
                   if (clientWs.readyState === WebSocket.OPEN) {
                     clientWs.send(
@@ -3219,12 +3245,13 @@ wss.on('connection', (clientWs, req) => {
                         billedMinutes,
                         remainingMinutes: deductionResult.remainingMinutes,
                         lowBalanceWarning: deductionResult.remainingMinutes <= 2,
+                        role: 'caller',
                       })
                     );
                   }
 
                   if (deductionResult.exhausted) {
-                    console.warn(`[${clientId}] Minute quota exhausted for user ${authenticatedUid}. Terminating session.`);
+                    console.warn(`[${clientId}] Minute quota exhausted for caller ${authenticatedUid}. Terminating session.`);
                     if (clientWs.readyState === WebSocket.OPEN) {
                       clientWs.send(
                         JSON.stringify({
@@ -3238,7 +3265,7 @@ wss.on('connection', (clientWs, req) => {
                     cleanup();
                   }
                 } catch (meterErr) {
-                  console.error(`[${clientId}] Server-side minute metering transaction error:`, meterErr.message);
+                  console.error(`[${clientId}] Periodic minute deduction error:`, meterErr.message);
                 }
               }, 60000);
             }

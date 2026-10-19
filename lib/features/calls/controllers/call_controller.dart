@@ -143,6 +143,7 @@ class CallController extends StateNotifier<CallControllerState> {
   StreamSubscription<GeminiLiveState>? _geminiStateSub;
   StreamSubscription<LiveTranscriptEntry>? _geminiTranscriptSub;
   StreamSubscription<bool>? _geminiInterruptedSub;
+  StreamSubscription<BillingUpdateEvent>? _geminiBillingSub;
   StreamSubscription<CallSession?>? _firestoreCallSub;
   StreamSubscription<Uint8List>? _webrtcRemoteTranslatedAudioSub;
   StreamSubscription<WebRtcCallState>? _webrtcStateSub;
@@ -319,6 +320,7 @@ class CallController extends StateNotifier<CallControllerState> {
           langA: langA,
           langB: langB,
           bidirectional: state.isBidirectionalSingleDevice,
+          callId: state.activeSession?.callId,
         );
       } else {
         await _geminiTranslator.updateLanguagePair(
@@ -498,6 +500,7 @@ class CallController extends StateNotifier<CallControllerState> {
               langA: langA,
               langB: langB,
               bidirectional: state.isBidirectionalSingleDevice,
+              callId: remote.callId,
             );
           } else {
             _geminiTranslator.updateLanguagePair(
@@ -704,29 +707,13 @@ class CallController extends StateNotifier<CallControllerState> {
       );
     });
 
-    // Deduct Minute 1 upfront immediately upon call connection (Standard Telecom model)
-    int lastBilledMinute = 0;
-    if (!connectedSession.isIncoming && connectedSession.isTranslatedCall) {
-      lastBilledMinute = 1;
-      _processInCallHeartbeatDeduction(1, 0);
-    }
-
-    // 1. Start call duration timer with in-call 60s heartbeat metering (Wall-clock immune to Android Doze mode)
+    // 1. Start call duration timer (Wall-clock immune to Android Doze mode)
+    // Server-side relay is the authoritative single source of truth for minute metering.
     _callDurationTimer?.cancel();
     final connectedAt = connectedSession.connectedAt ?? DateTime.now();
     _callDurationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       final actualElapsed = DateTime.now().difference(connectedAt).inSeconds;
       state = state.copyWith(elapsedSeconds: actualElapsed);
-
-      // Trigger 60s heartbeat pulse for translated calls (caller pays) based on real wall-clock elapsed minutes
-      final currentMinuteIndex = 1 + (actualElapsed ~/ 60);
-      if (currentMinuteIndex > lastBilledMinute) {
-        lastBilledMinute = currentMinuteIndex;
-        final session = state.activeSession;
-        if (session != null && !session.isIncoming && session.isTranslatedCall) {
-          _processInCallHeartbeatDeduction(currentMinuteIndex, actualElapsed);
-        }
-      }
     });
 
     final isSameLanguage = state.myLangCode == state.peerLangCode;
@@ -841,10 +828,54 @@ class CallController extends StateNotifier<CallControllerState> {
       repo.sendTranscriptToCall(connectedSession.callId, entry);
     });
 
+    _geminiBillingSub?.cancel();
+    _geminiBillingSub =
+        _geminiTranslator.billingUpdateStream.listen((bEvent) {
+      if (bEvent.isCallee) {
+        debugPrint('[CallController] Callee role confirmed: Translation is free.');
+        return;
+      }
+      if (bEvent.lowBalanceWarning && !_lowBalanceAlerted) {
+        _lowBalanceAlerted = true;
+        final warningBubble = LiveTranscriptEntry(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          speakerId: 'system',
+          speakerName: 'Livocal Billing',
+          isSelf: true,
+          sourceLangCode: 'en',
+          targetLangCode: _currentAppLang,
+          originalText: '⚠️ Low Balance Warning: You have ${bEvent.remainingMinutes} minute(s) remaining.',
+          translatedText: AppStrings.get('callWarningRemainingMinutes', _currentAppLang)
+              .replaceAll('{minutes}', '${bEvent.remainingMinutes}'),
+          timestamp: DateTime.now(),
+        );
+        state = state.copyWith(transcripts: [...state.transcripts, warningBubble]);
+      }
+      if (bEvent.isExhausted) {
+        final exhaustedBubble = LiveTranscriptEntry(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          speakerId: 'system',
+          speakerName: 'Livocal Billing',
+          isSelf: true,
+          sourceLangCode: 'en',
+          targetLangCode: _currentAppLang,
+          originalText: '🛑 Minutes Exhausted: Your call balance has reached 0 minutes. Call disconnected.',
+          translatedText: AppStrings.get('callTerminatedExhausted', _currentAppLang),
+          timestamp: DateTime.now(),
+        );
+        state = state.copyWith(
+          transcripts: [...state.transcripts, exhaustedBubble],
+          error: 'MINUTES_EXHAUSTED',
+        );
+        endCall(recordAsMissed: false);
+      }
+    });
+
     final connectedWs = await _geminiTranslator.connect(
       langA: myLang,
       langB: peerLang,
       bidirectional: state.isBidirectionalSingleDevice,
+      callId: connectedSession.callId,
     );
 
     if (!connectedWs) {
@@ -955,6 +986,7 @@ class CallController extends StateNotifier<CallControllerState> {
             langA: state.myLanguage,
             langB: state.peerLanguage,
             bidirectional: state.isBidirectionalSingleDevice,
+            callId: state.activeSession?.callId,
           );
           if (!ok) {
             _webrtcClient.setMicrophoneMute(state.isMuted);
@@ -978,6 +1010,7 @@ class CallController extends StateNotifier<CallControllerState> {
       langA: state.myLanguage,
       langB: state.peerLanguage,
       bidirectional: state.isBidirectionalSingleDevice,
+      callId: state.activeSession?.callId,
     );
     if (!ok) {
       state = state.copyWith(geminiState: GeminiLiveState.error);
@@ -1000,60 +1033,6 @@ class CallController extends StateNotifier<CallControllerState> {
 
   bool _lowBalanceAlerted = false;
 
-  /// In-call 60s heartbeat pulse: deducts 1 minute for translated calls.
-  /// Warns user at 2 minutes remaining, and auto-disconnects if balance is exhausted.
-  Future<void> _processInCallHeartbeatDeduction(int minuteIndex, int durationSeconds) async {
-    final session = state.activeSession;
-    if (session == null) return;
-
-    final wRepo = walletRepo ?? ref?.read(walletRepositoryProvider);
-    if (wRepo == null) return;
-
-    final result = await wRepo.deductMinute(
-      callId: session.callId,
-      callerId: session.callerId,
-      calleeId: session.calleeId,
-      isTranslatedCall: session.isTranslatedCall,
-      durationSeconds: durationSeconds,
-      minuteIndex: minuteIndex,
-    );
-
-    if (result.lowBalanceWarning && !_lowBalanceAlerted) {
-      _lowBalanceAlerted = true;
-      final warningBubble = LiveTranscriptEntry(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        speakerId: 'system',
-        speakerName: 'Livocal Billing',
-        isSelf: true,
-        sourceLangCode: 'en',
-        targetLangCode: _currentAppLang,
-        originalText: '⚠️ Low Balance Warning: You have ${result.remainingMinutes} minute(s) remaining.',
-        translatedText: AppStrings.get('callWarningRemainingMinutes', _currentAppLang)
-            .replaceAll('{minutes}', '${result.remainingMinutes}'),
-        timestamp: DateTime.now(),
-      );
-      state = state.copyWith(transcripts: [...state.transcripts, warningBubble]);
-    }
-
-    if (result.exhausted) {
-      final exhaustedBubble = LiveTranscriptEntry(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        speakerId: 'system',
-        speakerName: 'Livocal Billing',
-        isSelf: true,
-        sourceLangCode: 'en',
-        targetLangCode: _currentAppLang,
-        originalText: '🛑 Minutes Exhausted: Your call balance has reached 0 minutes. Call disconnected.',
-        translatedText: AppStrings.get('callTerminatedExhausted', _currentAppLang),
-        timestamp: DateTime.now(),
-      );
-      state = state.copyWith(
-        transcripts: [...state.transcripts, exhaustedBubble],
-        error: 'MINUTES_EXHAUSTED',
-      );
-      await endCall(recordAsMissed: false);
-    }
-  }
 
   Future<void> endCall({bool recordAsMissed = false}) async {
     if (_isEndingCall) return;
@@ -1130,6 +1109,7 @@ class CallController extends StateNotifier<CallControllerState> {
     await _geminiStateSub?.cancel();
     await _geminiTranscriptSub?.cancel();
     await _geminiInterruptedSub?.cancel();
+    await _geminiBillingSub?.cancel();
     await _firestoreCallSub?.cancel();
     await _webrtcRemoteTranslatedAudioSub?.cancel();
     _webrtcRemoteTranslatedAudioSub = null;
