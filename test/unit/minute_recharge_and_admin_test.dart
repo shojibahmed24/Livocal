@@ -219,6 +219,7 @@ void main() {
     test('BEP-20 BSC-USD transfer log recipient and 18-decimal amount parsing', () {
       const expectedDeposit = '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97';
       const cleanExpected = '4838b106fce9647bdf1e7877bf73ce8b0bad5f97';
+      expect(expectedDeposit.toLowerCase().contains(cleanExpected), isTrue);
       final paddedTopic = '0x000000000000000000000000$cleanExpected';
 
       // Simulate Transfer event log
@@ -246,7 +247,7 @@ void main() {
 
       String getDepositAccount(String method) {
         if (depositInfo == null) return '';
-        if (method == 'bKash') return depositInfo!['bkash']?['number'] as String? ?? '';
+        if (method == 'bKash') return depositInfo['bkash']?['number'] as String? ?? '';
         return '';
       }
 
@@ -388,8 +389,8 @@ void main() {
       expect(auditLog['toUserId'], equals(toUid));
 
       // Balance transfer calculation
-      final newSenderBalance = initialSenderBalance - transferMinutes;
-      final newReceiverBalance = initialReceiverBalance + transferMinutes;
+      const newSenderBalance = initialSenderBalance - transferMinutes;
+      const newReceiverBalance = initialReceiverBalance + transferMinutes;
       expect(newSenderBalance, equals(35));
       expect(newReceiverBalance, equals(25));
     });
@@ -500,6 +501,7 @@ void main() {
     test('Recipient Crypto deposit addresses generate valid formats for all 3 networks', () {
       const recipientId = 'user_recip_998877';
       const recipientPhone = '+8801812345678';
+      expect(recipientPhone.startsWith('+880'), isTrue);
 
       // Binance Pay 9-digit ID
       final binancePayId = recipientId.hashCode.abs().toString().padLeft(9, '8').substring(0, 9);

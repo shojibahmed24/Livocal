@@ -10,6 +10,9 @@ import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
+import 'package:flutter_contacts/flutter_contacts.dart' as fc;
+import 'package:share_plus/share_plus.dart';
+import 'package:livocal/features/chat/views/verify_security_code_screen.dart';
 import 'package:livocal/theme/color_theme.dart';
 
 class ContactProfileScreen extends ConsumerStatefulWidget {
@@ -79,39 +82,94 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.share, color: Colors.white),
-                onPressed: () {
-                  showSnackBar(
-                    context: context,
-                    content: 'Share contact: ${widget.contactName}',
-                    type: SnacBarType.info,
-                  );
-                },
+                tooltip: 'Share contact',
+                onPressed: _shareContact,
               ),
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert, color: Colors.white),
                 onSelected: (value) {
-                  if (value == 'block') {
-                    _showBlockConfirmation(context);
-                  } else if (value == 'report') {
-                    _showReportConfirmation(context);
+                  switch (value) {
+                    case 'share':
+                      _shareContact();
+                      break;
+                    case 'edit':
+                      _editContact();
+                      break;
+                    case 'view_in_address_book':
+                      _viewInAddressBook();
+                      break;
+                    case 'verify_security':
+                      _verifySecurityCode();
+                      break;
+                    case 'block':
+                      _showBlockConfirmation(context);
+                      break;
+                    case 'report':
+                      _showReportConfirmation(context);
+                      break;
                   }
                 },
                 itemBuilder: (ctx) => [
                   const PopupMenuItem(
                     value: 'share',
-                    child: Text('Share contact'),
+                    child: Row(
+                      children: [
+                        Icon(Icons.share_outlined, size: 20, color: Color(0xFF8696A0)),
+                        SizedBox(width: 12),
+                        Text('Share contact'),
+                      ],
+                    ),
                   ),
                   const PopupMenuItem(
                     value: 'edit',
-                    child: Text('Edit contact'),
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit_outlined, size: 20, color: Color(0xFF8696A0)),
+                        SizedBox(width: 12),
+                        Text('Edit contact'),
+                      ],
+                    ),
                   ),
                   const PopupMenuItem(
                     value: 'view_in_address_book',
-                    child: Text('View in address book'),
+                    child: Row(
+                      children: [
+                        Icon(Icons.contacts_outlined, size: 20, color: Color(0xFF8696A0)),
+                        SizedBox(width: 12),
+                        Text('View in address book'),
+                      ],
+                    ),
                   ),
                   const PopupMenuItem(
                     value: 'verify_security',
-                    child: Text('Verify security code'),
+                    child: Row(
+                      children: [
+                        Icon(Icons.verified_user_outlined, size: 20, color: Color(0xFF8696A0)),
+                        SizedBox(width: 12),
+                        Text('Verify security code'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuDivider(),
+                  const PopupMenuItem(
+                    value: 'block',
+                    child: Row(
+                      children: [
+                        Icon(Icons.block_flipped, size: 20, color: Colors.redAccent),
+                        SizedBox(width: 12),
+                        Text('Block contact', style: TextStyle(color: Colors.redAccent)),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'report',
+                    child: Row(
+                      children: [
+                        Icon(Icons.thumb_down_outlined, size: 20, color: Colors.redAccent),
+                        SizedBox(width: 12),
+                        Text('Report contact', style: TextStyle(color: Colors.redAccent)),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -383,11 +441,15 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     leading: const Icon(Icons.lock_outline, color: Color(0xFF8696A0)),
                     title: const Text('Encryption & Security'),
                     subtitle: const Text(
-                      'Messages and calls are private and secured. Tap to learn more.',
+                      'Messages and calls are private and secured. Tap to verify.',
                       style: TextStyle(fontSize: 12),
                     ),
-                    trailing: const Icon(Icons.lock, color: AppColors.primary, size: 18),
-                    onTap: () => _showEncryptionDialog(context),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.info_outline, color: Color(0xFF8696A0), size: 20),
+                      tooltip: 'Encryption details',
+                      onPressed: () => _showEncryptionDialog(context),
+                    ),
+                    onTap: _verifySecurityCode,
                   ),
                   const Divider(height: 1, indent: 56),
                   ListTile(
@@ -545,6 +607,134 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
           ),
         );
       },
+    );
+  }
+
+  void _shareContact() {
+    final phone = widget.other.phone.getFormattedNumber();
+    Share.share(
+      'Contact: ${widget.contactName}\nPhone: $phone\nChat and make real-time translated voice calls on Livocal: https://livocal.app/u/${widget.other.id}',
+      subject: 'Livocal Contact: ${widget.contactName}',
+    );
+  }
+
+  Future<void> _editContact() async {
+    try {
+      final hasPermission = await fc.FlutterContacts.requestPermission(readonly: true);
+      fc.Contact? matched;
+
+      if (hasPermission) {
+        final digitsOnly = widget.other.phone.getFormattedNumber().replaceAll(RegExp(r'\D'), '');
+        final contacts = await fc.FlutterContacts.getContacts(withProperties: true);
+
+        for (final c in contacts) {
+          for (final p in c.phones) {
+            final pClean = p.number.replaceAll(RegExp(r'\D'), '');
+            if (digitsOnly.isNotEmpty && (pClean.contains(digitsOnly) || digitsOnly.contains(pClean))) {
+              matched = c;
+              break;
+            }
+          }
+          if (matched != null) break;
+        }
+      }
+
+      if (matched != null) {
+        await fc.FlutterContacts.openExternalEdit(matched.id);
+      } else {
+        final newContact = fc.Contact(
+          name: fc.Name(first: widget.contactName),
+          phones: [fc.Phone(widget.other.phone.getFormattedNumber())],
+        );
+        await fc.FlutterContacts.openExternalInsert(newContact);
+      }
+    } catch (e) {
+      debugPrint('[ContactProfileScreen] _editContact error: $e');
+      if (mounted) {
+        showSnackBar(
+          context: context,
+          content: 'Could not open device contacts editor',
+          type: SnacBarType.error,
+        );
+      }
+    }
+  }
+
+  Future<void> _viewInAddressBook() async {
+    try {
+      final hasPermission = await fc.FlutterContacts.requestPermission(readonly: true);
+      fc.Contact? matched;
+
+      if (hasPermission) {
+        final digitsOnly = widget.other.phone.getFormattedNumber().replaceAll(RegExp(r'\D'), '');
+        final contacts = await fc.FlutterContacts.getContacts(withProperties: true);
+
+        for (final c in contacts) {
+          for (final p in c.phones) {
+            final pClean = p.number.replaceAll(RegExp(r'\D'), '');
+            if (digitsOnly.isNotEmpty && (pClean.contains(digitsOnly) || digitsOnly.contains(pClean))) {
+              matched = c;
+              break;
+            }
+          }
+          if (matched != null) break;
+        }
+      }
+
+      if (matched != null) {
+        await fc.FlutterContacts.openExternalView(matched.id);
+      } else {
+        if (mounted) {
+          showAppDialog(
+            context: context,
+            icon: Icons.person_add_alt_1_rounded,
+            iconColor: AppColors.primary,
+            title: 'Not in Address Book',
+            contentText:
+                '${widget.contactName} (${widget.other.phone.getFormattedNumber()}) is not yet saved to your device contacts.',
+            actions: [
+              AppDialogAction(
+                label: 'CANCEL',
+                onPressed: () => Navigator.pop(context),
+              ),
+              AppDialogAction(
+                label: 'SAVE TO CONTACTS',
+                isPrimary: true,
+                onPressed: () async {
+                  Navigator.pop(context);
+                  final newContact = fc.Contact(
+                    name: fc.Name(first: widget.contactName),
+                    phones: [fc.Phone(widget.other.phone.getFormattedNumber())],
+                  );
+                  await fc.FlutterContacts.openExternalInsert(newContact);
+                },
+              ),
+            ],
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('[ContactProfileScreen] _viewInAddressBook error: $e');
+      if (mounted) {
+        showSnackBar(
+          context: context,
+          content: 'Could not open address book',
+          type: SnacBarType.error,
+        );
+      }
+    }
+  }
+
+  void _verifySecurityCode() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => VerifySecurityCodeScreen(
+          contactName: widget.contactName,
+          contactPhone: widget.other.phone.getFormattedNumber(),
+          selfId: widget.self.id,
+          otherId: widget.other.id,
+        ),
+      ),
     );
   }
 
