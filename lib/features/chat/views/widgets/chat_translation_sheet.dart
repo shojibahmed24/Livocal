@@ -126,15 +126,19 @@ class _ChatTranslationSheetContentState
   }
 
   Future<void> _savePreferences() async {
-    final prefs = SharedPref.instance;
-    for (final p in _candidatePrefixes) {
-      await prefs.setBool('${p}_enabled', _liveTranslationEnabled);
-      await prefs.setBool('${p}_auto_incoming', _autoTranslateIncoming);
-      await prefs.setBool('${p}_auto_voice', _autoTranscribeVoiceNotes);
-      await prefs.setString('${p}_my_lang', _myLanguage.code);
-      await prefs.setString('${p}_peer_lang', _peerLanguage.code);
+    try {
+      final prefs = SharedPref.instance;
+      for (final p in _candidatePrefixes) {
+        await prefs.setBool('${p}_enabled', _liveTranslationEnabled);
+        await prefs.setBool('${p}_auto_incoming', _autoTranslateIncoming);
+        await prefs.setBool('${p}_auto_voice', _autoTranscribeVoiceNotes);
+        await prefs.setString('${p}_my_lang', _myLanguage.code);
+        await prefs.setString('${p}_peer_lang', _peerLanguage.code);
+      }
+      widget.onSettingsChanged?.call();
+    } catch (e) {
+      debugPrint('[ChatTranslationSheet] _savePreferences error: $e');
     }
-    widget.onSettingsChanged?.call();
   }
 
   void _runQuickTest() async {
@@ -306,10 +310,10 @@ class _ChatTranslationSheetContentState
                                 ),
                               )
                               .toList(),
-                          onChanged: (val) {
+                          onChanged: (val) async {
                             if (val != null) {
                               setState(() => _myLanguage = val);
-                              _savePreferences();
+                              await _savePreferences();
                             }
                           },
                         ),
@@ -321,13 +325,13 @@ class _ChatTranslationSheetContentState
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: IconButton(
                     icon: const Icon(Icons.swap_horiz, color: AppColors.primary),
-                    onPressed: () {
+                    onPressed: () async {
                       setState(() {
                         final temp = _myLanguage;
                         _myLanguage = _peerLanguage;
                         _peerLanguage = temp;
                       });
-                      _savePreferences();
+                      await _savePreferences();
                     },
                   ),
                 ),
@@ -369,10 +373,10 @@ class _ChatTranslationSheetContentState
                                 ),
                               )
                               .toList(),
-                          onChanged: (val) {
+                          onChanged: (val) async {
                             if (val != null) {
                               setState(() => _peerLanguage = val);
-                              _savePreferences();
+                              await _savePreferences();
                             }
                           },
                         ),
@@ -399,9 +403,9 @@ class _ChatTranslationSheetContentState
                     ? AppColors.primary
                     : null,
               ),
-              onChanged: (val) {
+              onChanged: (val) async {
                 setState(() => _autoTranslateIncoming = val ?? true);
-                _savePreferences();
+                await _savePreferences();
               },
             ),
             CheckboxListTile(
@@ -420,9 +424,9 @@ class _ChatTranslationSheetContentState
                     ? AppColors.primary
                     : null,
               ),
-              onChanged: (val) {
+              onChanged: (val) async {
                 setState(() => _autoTranscribeVoiceNotes = val ?? true);
-                _savePreferences();
+                await _savePreferences();
               },
             ),
             const Divider(height: 20),

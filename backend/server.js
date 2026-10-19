@@ -52,6 +52,11 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
 // Whitelist of valid Gemini 3.5 Live Translation voices
 const ALLOWED_VOICES = new Set(['Puck', 'Charon', 'Kore', 'Fenrir', 'Aoede']);
 
+function sanitizeBoundedNote(val, maxLen = 500) {
+  if (val === undefined || val === null) return '';
+  return String(val).trim().slice(0, maxLen);
+}
+
 // Concurrent WebSocket session tracking per user UID & per IP (Rate Limiting)
 const activeUserSessions = new Map();
 const ipWsConnections = new Map();
@@ -1450,7 +1455,7 @@ app.post('/api/wallet/p2p-transfer', authenticateRequest, async (req, res) => {
         minutes: mins,
         senderBalanceBefore: senderBalance,
         senderBalanceAfter: senderBalance - mins,
-        note: (note || '').toString().trim(),
+        note: sanitizeBoundedNote(note, 500),
         status: 'completed',
         method: 'Livocal Wallet',
         createdAt: nowIso,
@@ -1572,7 +1577,7 @@ app.post('/api/admin/p2p-payment/action', authenticateAdmin, async (req, res) =>
 
     await payRef.set({
       status: targetStatus,
-      adminNote: (note || '').toString().trim(),
+      adminNote: sanitizeBoundedNote(note, 500),
       updatedAt: new Date().toISOString(),
     }, { merge: true });
 
@@ -2157,7 +2162,7 @@ app.post('/api/admin/payment-request/action', authenticateAdmin, async (req, res
           status: 'approved',
           approvedAt: nowIso,
           approvedBy: adminName || 'Admin',
-          notes: notes || 'Verified and approved',
+          notes: sanitizeBoundedNote(notes || 'Verified and approved', 500),
         });
       });
 
@@ -2180,7 +2185,7 @@ app.post('/api/admin/payment-request/action', authenticateAdmin, async (req, res
           status: 'rejected',
           rejectedAt: nowIso,
           rejectedBy: adminName || 'Admin',
-          notes: notes || 'Payment rejected by admin',
+          notes: sanitizeBoundedNote(notes || 'Payment rejected by admin', 500),
         });
       });
 
@@ -2488,7 +2493,7 @@ app.post('/api/admin/wallet/topup', authenticateAdmin, async (req, res) => {
         amountPaid: Number(amount) || 0,
         currency: 'BDT',
         paymentMethod: 'Admin Manual Credit',
-        notes: notes || `Credited by ${adminName || 'SuperAdmin'}`,
+        notes: sanitizeBoundedNote(notes || `Credited by ${adminName || 'SuperAdmin'}`, 500),
         status: 'completed',
         createdAt: nowIso,
       });

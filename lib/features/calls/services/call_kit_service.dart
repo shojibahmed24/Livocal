@@ -12,13 +12,19 @@ class CallKitService {
 
   void Function(String callId)? onCallAccepted;
   void Function(String callId)? onCallDeclined;
+  void Function(String callId)? onCallTimeout;
+  void Function(String callId)? onCallEnded;
 
   void init({
     void Function(String callId)? onAccept,
     void Function(String callId)? onDecline,
+    void Function(String callId)? onTimeout,
+    void Function(String callId)? onEnded,
   }) {
     onCallAccepted = onAccept;
     onCallDeclined = onDecline;
+    onCallTimeout = onTimeout;
+    onCallEnded = onEnded;
 
     _callKitSubscription?.cancel();
     _callKitSubscription =
@@ -37,9 +43,13 @@ class CallKitService {
           debugPrint('User declined call from CallKit: $callId');
           onCallDeclined?.call(callId);
           break;
-        case Event.actionCallEnded:
         case Event.actionCallTimeout:
-          debugPrint('Call ended or timed out in CallKit');
+          debugPrint('Call timed out in CallKit: $callId');
+          onCallTimeout?.call(callId);
+          break;
+        case Event.actionCallEnded:
+          debugPrint('Call ended in CallKit: $callId');
+          onCallEnded?.call(callId);
           break;
         default:
           break;

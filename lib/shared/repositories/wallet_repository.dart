@@ -279,27 +279,7 @@ class WalletRepository {
         }
       }
 
-      // Local Firestore fallback if backend unreachable
-      final docRef = _walletRef(userId);
-      if (docRef != null && firestore != null) {
-        await firestore!.runTransaction((tx) async {
-          final snap = await tx.get(docRef);
-          int currentBalance = 0;
-          int currentPurchased = 0;
-          if (snap.exists && snap.data() != null) {
-            final d = snap.data()!;
-            currentBalance = (d['balanceMinutes'] as num?)?.toInt() ?? 0;
-            currentPurchased = (d['totalMinutesPurchased'] as num?)?.toInt() ?? 0;
-          }
-          tx.set(docRef, {
-            'balanceMinutes': currentBalance + minutes,
-            'totalMinutesPurchased': currentPurchased + minutes,
-            'updatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
-        });
-        return true;
-      }
-
+      // Fail-closed: Never allow client-side balance self-granting
       return false;
     } catch (e) {
       debugPrint('[WalletRepository] rechargeWallet error: $e');

@@ -181,7 +181,16 @@ class CallController extends StateNotifier<CallControllerState> {
           );
         },
         onDecline: (callId) {
-          endCall();
+          debugPrint('[CallController] CallKit onDecline for $callId');
+          endCall(recordAsMissed: true);
+        },
+        onTimeout: (callId) {
+          debugPrint('[CallController] CallKit onTimeout for $callId');
+          endCall(recordAsMissed: true);
+        },
+        onEnded: (callId) {
+          debugPrint('[CallController] CallKit onEnded for $callId');
+          endCall(recordAsMissed: true);
         },
       );
       FlutterCallkitIncoming.activeCalls().then((calls) {
@@ -586,6 +595,34 @@ class CallController extends StateNotifier<CallControllerState> {
       hasApiKey: GeminiLiveTranslator.getSavedApiKey().isNotEmpty,
     );
 
+    // 30-second unanswered incoming call timeout -> auto-dismiss and record as missed call
+    _callTimeoutTimer?.cancel();
+    _callTimeoutTimer = Timer(const Duration(seconds: 30), () {
+      if (state.activeSession?.callId == session.callId &&
+          state.activeSession?.status == CallStateStatus.ringing) {
+        debugPrint('[CallController] Incoming call timed out after 30s unanswered. Auto-dismissing and marking as missed call.');
+        CallKitService().endAllCalls();
+        endCall(recordAsMissed: true);
+      }
+    });
+
+    // Watch incoming call session in Firestore while ringing. If caller hangs up before answer, dismiss ringing UI immediately
+    _firestoreCallSub?.cancel();
+    _firestoreCallSub = repo
+        .watchCallSession(session.callId, self.id)
+        .listen((remote) {
+      if (remote == null) return;
+      if (remote.status == CallStateStatus.ended ||
+          remote.status == CallStateStatus.rejected ||
+          remote.status == CallStateStatus.missed) {
+        debugPrint('[CallController] Remote caller cancelled incoming call while ringing. Dismissing ringing UI.');
+        _callTimeoutTimer?.cancel();
+        _callTimeoutTimer = null;
+        CallKitService().endAllCalls();
+        endCall(recordAsMissed: true);
+      }
+    });
+
     return session;
   }
 
@@ -607,6 +644,8 @@ class CallController extends StateNotifier<CallControllerState> {
     if (current == null) return;
 
     await CallKitService().endCall(current.callId);
+    _callTimeoutTimer?.cancel();
+    _callTimeoutTimer = null;
 
     final enableTrans = withTranslation ?? state.translationEnabled;
     final connectedSession = current.copyWith(
@@ -639,15 +678,14 @@ class CallController extends StateNotifier<CallControllerState> {
     }
 
     // Listen for remote call updates (Caller or Callee ending the call, changing languages, etc.)
-    if (_firestoreCallSub == null) {
-      final ownUser = getCurrentUser();
-      _firestoreCallSub = repo
-          .watchCallSession(current.callId, ownUser?.id ?? current.calleeId)
-          .listen((remote) {
-        if (remote == null) return;
-        _handleRemoteCallUpdate(remote);
-      });
-    }
+    await _firestoreCallSub?.cancel();
+    final ownUser = getCurrentUser();
+    _firestoreCallSub = repo
+        .watchCallSession(current.callId, ownUser?.id ?? current.calleeId)
+        .listen((remote) {
+      if (remote == null) return;
+      _handleRemoteCallUpdate(remote);
+    });
 
     // Exchange languages and auto-sync peer language code
     if (current.isIncoming) {
@@ -1261,13 +1299,21 @@ class CallController extends StateNotifier<CallControllerState> {
     _networkDropTimer = null;
 
     await _micStreamSub?.cancel();
+    _micStreamSub = null;
     await _micRmsSub?.cancel();
+    _micRmsSub = null;
     await _geminiAudioSub?.cancel();
+    _geminiAudioSub = null;
     await _geminiStateSub?.cancel();
+    _geminiStateSub = null;
     await _geminiTranscriptSub?.cancel();
+    _geminiTranscriptSub = null;
     await _geminiInterruptedSub?.cancel();
+    _geminiInterruptedSub = null;
     await _geminiBillingSub?.cancel();
+    _geminiBillingSub = null;
     await _firestoreCallSub?.cancel();
+    _firestoreCallSub = null;
     await _webrtcRemoteTranslatedAudioSub?.cancel();
     _webrtcRemoteTranslatedAudioSub = null;
     await _webrtcStateSub?.cancel();

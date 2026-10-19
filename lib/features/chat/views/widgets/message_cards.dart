@@ -279,6 +279,14 @@ class _MessageCardState extends State<MessageCard>
                         }
                       } catch (e) {
                         debugPrint('Resend failed: $e');
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('Failed to resend message. Please check connection.'),
+                              backgroundColor: Colors.red.shade700,
+                            ),
+                          );
+                        }
                       }
                     },
                   ),

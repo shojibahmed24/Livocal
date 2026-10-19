@@ -369,6 +369,15 @@ class _SendPaymentSheetContentState
           });
         } catch (err) {
           debugPrint('[PaymentSheet] Error logging to p2p_payments: $err');
+          if (mounted) {
+            setState(() => _isProcessing = false);
+            showSnackBar(
+              context: context,
+              content: 'Failed to record payment verification. Please check connection and try again.',
+              type: SnacBarType.error,
+            );
+          }
+          return;
         }
       }
 
