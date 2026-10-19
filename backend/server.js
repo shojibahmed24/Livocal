@@ -1663,6 +1663,122 @@ app.post('/api/admin/deposit-gateways', authenticateAdmin, async (req, res) => {
   });
 });
 
+// Fetch recipient's payment receiving accounts for P2P transfers
+app.get('/api/wallet/recipient-payment-settings', authenticateRequest, async (req, res) => {
+  const recipientId = (req.query.recipientId || req.query.userId || '').trim();
+  if (!recipientId) {
+    return res.status(400).json({ error: 'recipientId is required' });
+  }
+
+  if (!firestoreDb) {
+    return res.status(503).json({ error: 'Database service unavailable' });
+  }
+
+  try {
+    const userDocRef = firestoreDb.collection('users').doc(recipientId);
+    const [userDoc, walletSettingsDoc] = await Promise.all([
+      userDocRef.get(),
+      userDocRef.collection('wallet').doc('payment_settings').get()
+    ]);
+
+    if (!userDoc.exists && !walletSettingsDoc.exists) {
+      return res.status(404).json({ error: 'Recipient not found' });
+    }
+
+    const userData = userDoc.exists ? userDoc.data() : {};
+    const walletData = walletSettingsDoc.exists ? walletSettingsDoc.data() : {};
+
+    const binancePayId = (walletData.binancePayId || userData.binancePayId || '').trim();
+    const cryptoUsdtTrc20 = (walletData.cryptoUsdtTrc20 || userData.cryptoUsdtTrc20 || '').trim();
+    const cryptoUsdtBep20 = (walletData.cryptoUsdtBep20 || userData.cryptoUsdtBep20 || '').trim();
+    const bkashNumber = (walletData.bkashNumber || userData.bkashNumber || '').trim();
+    const nagadNumber = (walletData.nagadNumber || userData.nagadNumber || '').trim();
+
+    return res.json({
+      success: true,
+      recipientId,
+      binancePayId: binancePayId || null,
+      cryptoUsdtTrc20: cryptoUsdtTrc20 || null,
+      cryptoUsdtBep20: cryptoUsdtBep20 || null,
+      bkashNumber: bkashNumber || null,
+      nagadNumber: nagadNumber || null,
+      isConfigured: !!(binancePayId || cryptoUsdtTrc20 || cryptoUsdtBep20 || bkashNumber || nagadNumber),
+    });
+  } catch (err) {
+    console.error('[Wallet] recipient-payment-settings error:', err);
+    return res.status(500).json({ error: 'Failed to fetch recipient payment settings' });
+  }
+});
+
+// Authenticated user updates their own receiving payment accounts
+app.post('/api/wallet/my-payment-settings', authenticateRequest, async (req, res) => {
+  const userId = req.user.uid;
+  const {
+    binancePayId,
+    cryptoUsdtTrc20,
+    cryptoUsdtBep20,
+    bkashNumber,
+    nagadNumber,
+  } = req.body || {};
+
+  if (!firestoreDb) {
+    return res.status(503).json({ error: 'Database service unavailable' });
+  }
+
+  // Address validations
+  const cleanBinance = typeof binancePayId === 'string' ? binancePayId.trim() : '';
+  const cleanTrc20 = typeof cryptoUsdtTrc20 === 'string' ? cryptoUsdtTrc20.trim() : '';
+  const cleanBep20 = typeof cryptoUsdtBep20 === 'string' ? cryptoUsdtBep20.trim() : '';
+  const cleanBkash = typeof bkashNumber === 'string' ? bkashNumber.trim() : '';
+  const cleanNagad = typeof nagadNumber === 'string' ? nagadNumber.trim() : '';
+
+  if (cleanTrc20 && !/^T[a-zA-HJ-NP-Z0-9]{33}$/.test(cleanTrc20)) {
+    return res.status(400).json({ error: 'Invalid TRC-20 USDT address format. Must start with T and be 34 characters.' });
+  }
+
+  if (cleanBep20 && !/^0x[a-fA-F0-9]{40}$/.test(cleanBep20)) {
+    return res.status(400).json({ error: 'Invalid BEP-20 USDT address format. Must start with 0x and be 42 characters.' });
+  }
+
+  const payload = {
+    binancePayId: cleanBinance,
+    cryptoUsdtTrc20: cleanTrc20,
+    cryptoUsdtBep20: cleanBep20,
+    bkashNumber: cleanBkash,
+    nagadNumber: cleanNagad,
+    updatedAt: new Date().toISOString(),
+  };
+
+  try {
+    const userRef = firestoreDb.collection('users').doc(userId);
+    const batch = firestoreDb.batch();
+
+    // 1. Save in user's wallet/payment_settings subcollection
+    const settingsRef = userRef.collection('wallet').doc('payment_settings');
+    batch.set(settingsRef, payload, { merge: true });
+
+    // 2. Also mirror into user's top-level document for public read access
+    batch.set(userRef, {
+      binancePayId: cleanBinance,
+      cryptoUsdtTrc20: cleanTrc20,
+      cryptoUsdtBep20: cleanBep20,
+      bkashNumber: cleanBkash,
+      nagadNumber: cleanNagad,
+    }, { merge: true });
+
+    await batch.commit();
+
+    return res.json({
+      success: true,
+      message: 'Payment settings saved successfully',
+      settings: payload,
+    });
+  } catch (err) {
+    console.error('[Wallet] my-payment-settings error:', err);
+    return res.status(500).json({ error: 'Failed to update payment settings' });
+  }
+});
+
 // Freelancer submits payment verification request (bKash, Nagad, Binance Pay, USDT TRC20/BEP20)
 app.post('/api/wallet/payment-request', authenticateRequest, async (req, res) => {
   const userId = req.user.uid;

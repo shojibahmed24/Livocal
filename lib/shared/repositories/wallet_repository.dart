@@ -193,10 +193,13 @@ class WalletRepository {
         lowBalanceWarning: remaining <= 2 && remaining > 0,
         exhausted: !hasMin,
       );
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[WalletRepository] deductMinute fallback error: $e');
       return const MinuteDeductionResult(
-        success: true,
-        remainingMinutes: 1,
+        success: false,
+        remainingMinutes: 0,
+        exhausted: true,
+        message: 'BILLING_GATEWAY_UNAVAILABLE',
       );
     }
   }

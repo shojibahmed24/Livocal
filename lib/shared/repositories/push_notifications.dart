@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -44,7 +44,7 @@ class PushNotificationsRepo {
       debugPrint('[PushNotificationsRepo] requestPermission error: $e\n$st');
     }
 
-    FirebaseMessaging.onBackgroundMessage(_handleBackgroundMessage);
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     FirebaseMessaging.onMessageOpenedApp.listen(onMessageOpenedApp);
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       debugPrint('[PushNotificationsRepo] Foreground notification received: ${message.data}');
@@ -106,8 +106,14 @@ class PushNotificationsRepo {
   }
 }
 
-Future<void> _handleBackgroundMessage(RemoteMessage message) async {
-  await Firebase.initializeApp();
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint('[PushNotificationsRepo] Background Firebase.initializeApp error: $e');
+  }
   final data = message.data;
 
   // 1. Wake up phone for Incoming Voice Call

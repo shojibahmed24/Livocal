@@ -70,4 +70,10 @@ class AppConfig {
 
   static String get walletP2pTransferUrl =>
       '$relayHttpBaseUrl/api/wallet/p2p-transfer';
+
+  static String get walletRecipientPaymentSettingsUrl =>
+      '$relayHttpBaseUrl/api/wallet/recipient-payment-settings';
+
+  static String get walletMyPaymentSettingsUrl =>
+      '$relayHttpBaseUrl/api/wallet/my-payment-settings';
 }

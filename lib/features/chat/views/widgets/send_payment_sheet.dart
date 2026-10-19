@@ -1,8 +1,12 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
+import 'package:livocal/features/calls/services/gemini_live_translator.dart';
 import 'package:livocal/features/calls/views/widgets/minute_recharge_sheet.dart';
+import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/models/user_wallet.dart';
 import 'package:livocal/shared/repositories/wallet_repository.dart';
@@ -104,17 +108,61 @@ class _SendPaymentSheetContentState
       if (mounted) setState(() => _isLoadingRecipientSettings = false);
       return;
     }
+
+    // 1. Authoritative Backend Endpoint via Admin SDK (bypasses Firestore client rules)
+    try {
+      final idToken = await GeminiLiveTranslator.getAuthToken();
+      final url = Uri.parse(
+          '${AppConfig.walletRecipientPaymentSettingsUrl}?recipientId=$otherId');
+      final res = await http.get(
+        url,
+        headers: {
+          if (idToken != null) 'Authorization': 'Bearer $idToken',
+        },
+      ).timeout(const Duration(seconds: 4));
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        if (mounted) {
+          setState(() {
+            _recipientBinancePay = data['binancePayId'] as String?;
+            _recipientTrc20 = data['cryptoUsdtTrc20'] as String?;
+            _recipientBep20 = data['cryptoUsdtBep20'] as String?;
+            _recipientBkash = data['bkashNumber'] as String?;
+            _recipientNagad = data['nagadNumber'] as String?;
+            _isLoadingRecipientSettings = false;
+          });
+          return;
+        }
+      }
+    } catch (backendErr) {
+      debugPrint('[PaymentSheet] Backend recipient-payment-settings error: $backendErr');
+    }
+
+    // 2. Fallback to Firestore with isolated queries for resilience
     try {
       final firestore = FirebaseFirestore.instance;
-      final userDoc = await firestore.collection('users').doc(otherId).get();
-      final userData = userDoc.data();
-      final walletDoc = await firestore
-          .collection('users')
-          .doc(otherId)
-          .collection('wallet')
-          .doc('payment_settings')
-          .get();
-      final walletData = walletDoc.data();
+      Map<String, dynamic>? userData;
+      Map<String, dynamic>? walletData;
+
+      try {
+        final userDoc = await firestore.collection('users').doc(otherId).get();
+        userData = userDoc.data();
+      } catch (e) {
+        debugPrint('[PaymentSheet] Error reading user doc: $e');
+      }
+
+      try {
+        final walletDoc = await firestore
+            .collection('users')
+            .doc(otherId)
+            .collection('wallet')
+            .doc('payment_settings')
+            .get();
+        walletData = walletDoc.data();
+      } catch (e) {
+        debugPrint('[PaymentSheet] Error reading wallet settings doc: $e');
+      }
 
       if (mounted) {
         setState(() {
@@ -132,7 +180,7 @@ class _SendPaymentSheetContentState
         });
       }
     } catch (e) {
-      debugPrint('[PaymentSheet] _fetchRecipientPaymentSettings error: $e');
+      debugPrint('[PaymentSheet] _fetchRecipientPaymentSettings fallback error: $e');
       if (mounted) setState(() => _isLoadingRecipientSettings = false);
     }
   }

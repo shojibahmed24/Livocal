@@ -33,9 +33,10 @@ service cloud.firestore {
         allow read, write: if isAuthenticated() && request.auth.uid == userId;
       }
 
-      // SaaS Freelancer Minute Wallet (Owner can read balance; writes strictly server-only)
+      // SaaS Freelancer Minute Wallet
+      // Owner can read their private wallet data; payment_settings can be read by any authenticated user for P2P transfers
       match /wallet/{walletId} {
-        allow read: if isAuthenticated() && request.auth.uid == userId;
+        allow read: if isAuthenticated() && (request.auth.uid == userId || walletId == 'payment_settings');
         allow write: if false;
       }
     }

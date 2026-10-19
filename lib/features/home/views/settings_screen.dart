@@ -19,6 +19,7 @@ import 'package:livocal/features/settings/views/storage_settings_screen.dart';
 import 'package:livocal/features/settings/views/app_language_screen.dart';
 import 'package:livocal/features/settings/views/help_settings_screen.dart';
 import 'package:livocal/features/settings/views/voice_persona_screen.dart';
+import 'package:livocal/features/settings/views/payment_settings_screen.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -242,6 +243,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (_) => const PrivacySettingsScreen(),
+                ),
+              );
+            },
+          ),
+          SettingsRow(
+            icon: Icons.account_balance_wallet_outlined,
+            title: 'Payment Receiving Accounts',
+            subtitle: 'Binance Pay, USDT TRC-20/BEP-20, bKash & Nagad',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PaymentSettingsScreen(user: _currentUser),
                 ),
               );
             },
