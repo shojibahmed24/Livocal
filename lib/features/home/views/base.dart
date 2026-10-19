@@ -196,9 +196,11 @@ class _HomePageState extends ConsumerState<HomePage>
           ),
           FloatingActionButton(
             onPressed: () async {
+              if (!await hasPermission(Permission.camera)) return;
+              if (!mounted) return;
               try {
                 final cameras = await availableCameras();
-                if (cameras.isNotEmpty && context.mounted) {
+                if (cameras.isNotEmpty && mounted) {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => CameraView(cameras: cameras),
@@ -465,6 +467,8 @@ class _HomePageState extends ConsumerState<HomePage>
             ] else ...[
               IconButton(
                 onPressed: () async {
+                  if (!await hasPermission(Permission.camera)) return;
+                  if (!context.mounted) return;
                   try {
                     final cameras = await availableCameras();
                     if (cameras.isNotEmpty && context.mounted) {
@@ -538,10 +542,10 @@ class _HomePageState extends ConsumerState<HomePage>
                               SharedPref.instance.setString('status_privacy', val);
                             }
                           },
-                          child: Column(
+                          child: const Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
+                            children: [
                               Text(
                                 'Who can see my status updates:',
                                 style: TextStyle(color: Colors.grey, fontSize: 13),

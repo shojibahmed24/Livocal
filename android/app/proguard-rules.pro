@@ -28,3 +28,22 @@
 # Keep models & annotations
 -keepattributes *Annotation*
 -keepattributes Signature
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
+# Flutter Sound & Audio Session
+-keep class com.dooboolab.fluttersound.** { *; }
+-dontwarn com.dooboolab.fluttersound.**
+-keep class com.ryanheise.audio_session.** { *; }
+-dontwarn com.ryanheise.audio_session.**
+-dontwarn com.hiennv.flutter_callkit_incoming.**
+
+# Photo Manager & Glide (Media Picker)
+-keep class com.fluttercandies.photo_manager.** { *; }
+-dontwarn com.fluttercandies.photo_manager.**
+-keep public class * implements com.bumptech.glide.module.AppGlideModule
+-keep public class * extends com.bumptech.glide.module.AppGlideModule
+-keep public class * implements com.bumptech.glide.module.LibraryGlideModule
+-keep class com.bumptech.glide.** { *; }
+-dontwarn com.bumptech.glide.**

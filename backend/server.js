@@ -1579,32 +1579,37 @@ app.post('/api/admin/deposit-gateways', authenticateAdmin, async (req, res) => {
   if (cleanTrc20) updates.cryptoUsdtTrc20 = cleanTrc20;
   if (cleanBep20) updates.cryptoUsdtBep20 = cleanBep20;
 
-  // 1. Update memory runtime
-  if (cleanBkash) process.env.BKASH_NUMBER = cleanBkash;
-  if (cleanNagad) process.env.NAGAD_NUMBER = cleanNagad;
-  if (cleanBinance) process.env.BINANCE_PAY_ID = cleanBinance;
-  if (cleanTrc20) process.env.CRYPTO_USDT_TRC20 = cleanTrc20;
-  if (cleanBep20) process.env.CRYPTO_USDT_BEP20 = cleanBep20;
-
-  // 2. Persist to backend/.env file on disk
-  updateEnvFile({
-    BKASH_NUMBER: cleanBkash,
-    NAGAD_NUMBER: cleanNagad,
-    BINANCE_PAY_ID: cleanBinance,
-    CRYPTO_USDT_TRC20: cleanTrc20,
-    CRYPTO_USDT_BEP20: cleanBep20,
-  });
-
-  // 3. Persist to Firestore system_config for cloud permanence
+  // 1. Persist to Firestore system_config for cloud permanence across container restarts
   if (firestoreDb) {
     try {
       await firestoreDb.collection('system_config').doc('deposit_gateways').set({
         ...updates,
         updatedAt: new Date().toISOString(),
       }, { merge: true });
+      console.log('[DepositGateways] Successfully persisted gateways to Firestore system_config/deposit_gateways');
     } catch (err) {
       console.warn('[DepositGateways] Could not persist to Firestore:', err.message);
     }
+  }
+
+  // 2. Update memory runtime
+  if (cleanBkash) process.env.BKASH_NUMBER = cleanBkash;
+  if (cleanNagad) process.env.NAGAD_NUMBER = cleanNagad;
+  if (cleanBinance) process.env.BINANCE_PAY_ID = cleanBinance;
+  if (cleanTrc20) process.env.CRYPTO_USDT_TRC20 = cleanTrc20;
+  if (cleanBep20) process.env.CRYPTO_USDT_BEP20 = cleanBep20;
+
+  // 3. Opportunistic local .env backup (gracefully ignored on read-only/ephemeral container runtimes)
+  try {
+    updateEnvFile({
+      BKASH_NUMBER: cleanBkash,
+      NAGAD_NUMBER: cleanNagad,
+      BINANCE_PAY_ID: cleanBinance,
+      CRYPTO_USDT_TRC20: cleanTrc20,
+      CRYPTO_USDT_BEP20: cleanBep20,
+    });
+  } catch (envErr) {
+    console.warn('[DepositGateways] Non-fatal: Local .env update skipped on containerized environment:', envErr.message);
   }
 
   console.log('[DepositGateways] Admin updated gateway accounts:', updates);
@@ -2499,6 +2504,10 @@ wss.on('connection', (clientWs, req) => {
   let lastAudioSecond = Date.now();
   const MAX_AUDIO_CHUNKS_PER_SEC = 50;
 
+  // Server-side minute metering interval and billing tracker
+  let minuteMeteringInterval = null;
+  let billedMinutes = 0;
+
   // Pre-auth Handshake Timeout: Stalled unauthenticated connections killed after 15 seconds
   const preAuthTimeout = setTimeout(() => {
     if (!authenticatedUid && !isClosing) {
@@ -2539,6 +2548,11 @@ wss.on('connection', (clientWs, req) => {
     clearInterval(heartbeatInterval);
     clearTimeout(sessionLimitTimer);
 
+    if (minuteMeteringInterval) {
+      clearInterval(minuteMeteringInterval);
+      minuteMeteringInterval = null;
+    }
+
     const ipCount = ipWsConnections.get(clientIp) || 1;
     if (ipCount <= 1) {
       ipWsConnections.delete(clientIp);
@@ -2554,9 +2568,15 @@ wss.on('connection', (clientWs, req) => {
       }
     }
 
-    if (geminiWs && geminiWs.readyState === WebSocket.OPEN) {
-      console.log(`[${clientId}] Closing upstream Gemini session`);
-      geminiWs.close(1000, 'Client closed');
+    // Terminate upstream Gemini WebSocket unconditionally if CONNECTING or OPEN to prevent zombie sessions
+    if (geminiWs && (geminiWs.readyState === WebSocket.OPEN || geminiWs.readyState === WebSocket.CONNECTING)) {
+      console.log(`[${clientId}] Terminating upstream Gemini session (state: ${geminiWs.readyState})`);
+      try {
+        geminiWs.removeAllListeners();
+        geminiWs.terminate();
+      } catch (wsErr) {
+        console.warn(`[${clientId}] Error terminating upstream Gemini socket:`, wsErr.message);
+      }
       geminiWs = null;
     }
 
@@ -2739,6 +2759,57 @@ wss.on('connection', (clientWs, req) => {
           autoDetect: msg.autoDetect !== false,
         };
 
+        // 1.5. SERVER-SIDE PRE-CALL MINUTE & WALLET METERING GUARD:
+        // Verify caller has sufficient prepaid / trial minute balance before opening Gemini Live upstream session
+        if (firestoreDb) {
+          try {
+            const walletRef = firestoreDb.collection('users').doc(authenticatedUid).collection('wallet').doc('current');
+            const walletSnap = await walletRef.get();
+            if (!walletSnap.exists) {
+              console.warn(`[${clientId}] User ${authenticatedUid} has no wallet record in Firestore. Rejecting live session.`);
+              if (clientWs.readyState === WebSocket.OPEN) {
+                clientWs.send(
+                  JSON.stringify({
+                    type: 'error',
+                    code: 'INSUFFICIENT_BALANCE',
+                    message: 'No wallet found. Please initialize your wallet or recharge.',
+                  })
+                );
+                clientWs.close(4402, 'INSUFFICIENT_BALANCE');
+              }
+              cleanup();
+              return;
+            }
+
+            const wData = walletSnap.data() || {};
+            const now = new Date();
+            const trialActive = wData.trialActive && (!wData.trialExpiresAt || new Date(wData.trialExpiresAt) > now);
+            const usableTrial = trialActive ? (wData.trialMinutes || 0) : 0;
+            const usableBalance = wData.balanceMinutes || 0;
+            const totalEffectiveMinutes = usableTrial + usableBalance;
+
+            if (totalEffectiveMinutes <= 0) {
+              console.warn(`[${clientId}] Quota rejection: User ${authenticatedUid} has 0 minutes. Connection rejected.`);
+              if (clientWs.readyState === WebSocket.OPEN) {
+                clientWs.send(
+                  JSON.stringify({
+                    type: 'error',
+                    code: 'INSUFFICIENT_BALANCE',
+                    message: 'Your translation minute balance is 0. Please recharge to use live translation.',
+                  })
+                );
+                clientWs.close(4402, 'INSUFFICIENT_BALANCE');
+              }
+              cleanup();
+              return;
+            }
+
+            console.log(`[${clientId}] User ${authenticatedUid} authorized for Gemini Live. Usable balance: ${totalEffectiveMinutes} min(s).`);
+          } catch (walletCheckErr) {
+            console.error(`[${clientId}] Error validating caller wallet balance:`, walletCheckErr.message);
+          }
+        }
+
         await initGeminiSession();
         return;
       }
@@ -2901,6 +2972,111 @@ wss.on('connection', (clientWs, req) => {
                 languages: `${sessionConfig.langA.englishName} ⇄ ${sessionConfig.langB.englishName}`,
               })
             );
+
+            // Server-Side 60s Minute Metering Interval:
+            // Prevents malicious/tampered clients from streaming audio indefinitely without billing.
+            if (!minuteMeteringInterval && firestoreDb && authenticatedUid) {
+              minuteMeteringInterval = setInterval(async () => {
+                if (isClosing || clientWs.readyState !== WebSocket.OPEN) return;
+                try {
+                  const walletRef = firestoreDb.collection('users').doc(authenticatedUid).collection('wallet').doc('current');
+                  const deductionResult = await firestoreDb.runTransaction(async (t) => {
+                    const snap = await t.get(walletRef);
+                    if (!snap.exists) {
+                      return { success: false, exhausted: true, remainingMinutes: 0 };
+                    }
+                    const data = snap.data() || {};
+                    const now = new Date();
+                    const trialActive = data.trialActive && (!data.trialExpiresAt || new Date(data.trialExpiresAt) > now);
+                    const usableTrial = trialActive ? (data.trialMinutes || 0) : 0;
+                    const usableBalance = data.balanceMinutes || 0;
+                    const totalEffective = usableTrial + usableBalance;
+
+                    if (totalEffective <= 0) {
+                      return { success: false, exhausted: true, remainingMinutes: 0 };
+                    }
+
+                    let newTrial = data.trialMinutes || 0;
+                    let newBalance = data.balanceMinutes || 0;
+                    if (trialActive && newTrial > 0) {
+                      newTrial -= 1;
+                    } else if (newBalance > 0) {
+                      newBalance -= 1;
+                    }
+
+                    const newTotalUsed = (data.totalMinutesUsed || 0) + 1;
+                    const remainingMinutes = (trialActive ? newTrial : 0) + newBalance;
+
+                    t.update(walletRef, {
+                      trialMinutes: newTrial,
+                      balanceMinutes: newBalance,
+                      totalMinutesUsed: newTotalUsed,
+                      updatedAt: now.toISOString(),
+                    });
+
+                    // Audit ledger record in call_billing_records
+                    const billingRef = firestoreDb.collection('call_billing_records').doc();
+                    const geminiCostUsd = 0.035;
+                    const retailBdt = 20.0;
+                    const usdToBdt = 120.0;
+                    const costBdt = geminiCostUsd * usdToBdt;
+                    const netProfitBdt = retailBdt - costBdt;
+
+                    t.set(billingRef, {
+                      recordId: billingRef.id,
+                      callId: `ws_live_${authenticatedUid.substring(0, 6)}_${Date.now()}`,
+                      callerId: authenticatedUid,
+                      isTranslatedCall: true,
+                      durationSeconds: 60,
+                      minuteIndex: newTotalUsed,
+                      geminiCostUsd,
+                      retailBdt,
+                      costBdt,
+                      netProfitBdt,
+                      remainingMinutesAfter: remainingMinutes,
+                      timestamp: now.toISOString(),
+                    });
+
+                    return {
+                      success: true,
+                      exhausted: remainingMinutes <= 0,
+                      remainingMinutes,
+                    };
+                  });
+
+                  billedMinutes += 1;
+                  console.log(`[${clientId}] [SaaS Relay Metering] Deducted 1 min from ${authenticatedUid}. Remaining: ${deductionResult.remainingMinutes}`);
+
+                  if (clientWs.readyState === WebSocket.OPEN) {
+                    clientWs.send(
+                      JSON.stringify({
+                        type: 'billing_update',
+                        billedMinutes,
+                        remainingMinutes: deductionResult.remainingMinutes,
+                        lowBalanceWarning: deductionResult.remainingMinutes <= 2,
+                      })
+                    );
+                  }
+
+                  if (deductionResult.exhausted) {
+                    console.warn(`[${clientId}] Minute quota exhausted for user ${authenticatedUid}. Terminating session.`);
+                    if (clientWs.readyState === WebSocket.OPEN) {
+                      clientWs.send(
+                        JSON.stringify({
+                          type: 'error',
+                          code: 'MINUTES_EXHAUSTED',
+                          message: 'Translation minutes exhausted. Session ended.',
+                        })
+                      );
+                      clientWs.close(4402, 'MINUTES_EXHAUSTED');
+                    }
+                    cleanup();
+                  }
+                } catch (meterErr) {
+                  console.error(`[${clientId}] Server-side minute metering transaction error:`, meterErr.message);
+                }
+              }, 60000);
+            }
             return;
           }
 
@@ -2946,38 +3122,52 @@ wss.on('connection', (clientWs, req) => {
       geminiWs.on('error', (err) => {
         console.error(`[${clientId}] Upstream Gemini error:`, err);
         if (clientWs.readyState === WebSocket.OPEN) {
-          clientWs.send(
-            JSON.stringify({
-              type: 'error',
-              code: 'GEMINI_UPSTREAM_ERROR',
-              message: 'Translation service error occurred. Please try again.',
-            })
-          );
+          try {
+            clientWs.send(
+              JSON.stringify({
+                type: 'error',
+                code: 'GEMINI_UPSTREAM_ERROR',
+                message: 'Translation service error occurred. Please try again.',
+              })
+            );
+            clientWs.close(4502, 'Gemini Upstream Error');
+          } catch (e) {}
         }
+        cleanup();
       });
 
       geminiWs.on('close', (code, reason) => {
         console.log(`[${clientId}] Gemini upstream closed (${code}: ${reason || 'normal'})`);
         isGeminiReady = false;
         if (clientWs.readyState === WebSocket.OPEN) {
-          clientWs.send(
-            JSON.stringify({
-              type: 'status',
-              state: 'disconnected',
-              message: 'Gemini Live session disconnected',
-            })
-          );
+          try {
+            clientWs.send(
+              JSON.stringify({
+                type: 'status',
+                state: 'disconnected',
+                message: 'Gemini Live session disconnected',
+              })
+            );
+            clientWs.close(1000, 'Upstream closed');
+          } catch (e) {}
         }
+        cleanup();
       });
     } catch (err) {
       console.error(`[${clientId}] Failed to connect to Gemini:`, err);
-      clientWs.send(
-        JSON.stringify({
-          type: 'error',
-          code: 'CONNECTION_FAILED',
-          message: 'Failed to establish connection with translation service.',
-        })
-      );
+      if (clientWs.readyState === WebSocket.OPEN) {
+        try {
+          clientWs.send(
+            JSON.stringify({
+              type: 'error',
+              code: 'CONNECTION_FAILED',
+              message: 'Failed to establish connection with translation service.',
+            })
+          );
+          clientWs.close(4503, 'Connection failed');
+        } catch (e) {}
+      }
+      cleanup();
     }
   }
 });

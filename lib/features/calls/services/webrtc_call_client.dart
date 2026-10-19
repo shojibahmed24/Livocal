@@ -562,8 +562,49 @@ class WebRtcCallClient {
   Future<void> restartIce() async {
     if (_peerConnection == null) return;
     try {
-      debugPrint('[WebRtcCallClient] Triggering ICE restart');
+      debugPrint('[WebRtcCallClient] Triggering ICE restart (isCaller: $_isCaller, callId: $_currentCallId)');
       await _peerConnection!.restartIce();
+
+      if (_isCaller) {
+        final offer = await _peerConnection!.createOffer({
+          'iceRestart': true,
+          'offerToReceiveAudio': 1,
+          'offerToReceiveVideo': 0,
+        });
+        final tunedOfferSdp = tuneAudioSdp(offer.sdp ?? '');
+        final tunedOffer = RTCSessionDescription(tunedOfferSdp, offer.type);
+        await _peerConnection!.setLocalDescription(tunedOffer);
+
+        if (firestore != null && _currentCallId != null) {
+          await firestore!.collection('calls').doc(_currentCallId!).set({
+            'offer': {
+              'sdp': tunedOffer.sdp,
+              'type': tunedOffer.type,
+            },
+            'iceRestart': DateTime.now().millisecondsSinceEpoch,
+          }, SetOptions(merge: true));
+        }
+        debugPrint('[WebRtcCallClient] ICE restart offer generated & committed to Firestore');
+      } else {
+        final answer = await _peerConnection!.createAnswer({
+          'offerToReceiveAudio': 1,
+          'offerToReceiveVideo': 0,
+        });
+        final tunedAnswerSdp = tuneAudioSdp(answer.sdp ?? '');
+        final tunedAnswer = RTCSessionDescription(tunedAnswerSdp, answer.type);
+        await _peerConnection!.setLocalDescription(tunedAnswer);
+
+        if (firestore != null && _currentCallId != null) {
+          await firestore!.collection('calls').doc(_currentCallId!).set({
+            'answer': {
+              'sdp': tunedAnswer.sdp,
+              'type': tunedAnswer.type,
+            },
+            'iceRestart': DateTime.now().millisecondsSinceEpoch,
+          }, SetOptions(merge: true));
+        }
+        debugPrint('[WebRtcCallClient] ICE restart answer generated & committed to Firestore');
+      }
     } catch (e) {
       debugPrint('[WebRtcCallClient] restartIce failed: $e');
     }

@@ -64,6 +64,8 @@ class CameraViewState extends ConsumerState<CameraView>
       } catch (e, st) {
         debugPrint('[Camera] setFlashMode error: $e\n$st');
       }
+    }).catchError((e, st) {
+      debugPrint('[Camera] initialize error: $e\n$st');
     });
     _animationController = AnimationController(
       value: 1,

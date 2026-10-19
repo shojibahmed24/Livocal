@@ -5,8 +5,11 @@ import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/utils/abc.dart';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import 'package:livocal/shared/utils/navigator_key.dart';
+import 'package:livocal/features/calls/views/active_call_screen.dart';
 import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/features/calls/models/call_model.dart';
 import 'package:livocal/features/calls/repositories/call_repository.dart';
@@ -133,6 +136,7 @@ class CallController extends StateNotifier<CallControllerState> {
   Timer? _callDurationTimer;
   Timer? _callTimeoutTimer;
   Timer? _networkDropTimer;
+  bool _isEndingCall = false;
   StreamSubscription<Uint8List>? _micStreamSub;
   StreamSubscription<double>? _micRmsSub;
   StreamSubscription<Uint8List>? _geminiAudioSub;
@@ -164,8 +168,11 @@ class CallController extends StateNotifier<CallControllerState> {
         ) {
     try {
       CallKitService().init(
-        onAccept: (callId) {
-          acceptAndConnectCall(callId: callId);
+        onAccept: (callId) async {
+          await acceptAndConnectCall(callId: callId);
+          appNavigatorKey.currentState?.push(
+            MaterialPageRoute(builder: (_) => const ActiveCallScreen()),
+          );
         },
         onDecline: (callId) {
           endCall();
@@ -176,7 +183,11 @@ class CallController extends StateNotifier<CallControllerState> {
           final activeCall = calls.first;
           final callId = activeCall['id'] as String?;
           if (callId != null && callId.isNotEmpty) {
-            acceptAndConnectCall(callId: callId);
+            acceptAndConnectCall(callId: callId).then((_) {
+              appNavigatorKey.currentState?.push(
+                MaterialPageRoute(builder: (_) => const ActiveCallScreen()),
+              );
+            });
           }
         }
       }).catchError((err, st) {
@@ -693,18 +704,21 @@ class CallController extends StateNotifier<CallControllerState> {
       );
     });
 
-    // 1. Start call duration timer with in-call 60s heartbeat metering
+    // 1. Start call duration timer with in-call 60s heartbeat metering (Wall-clock immune to Android Doze mode)
     _callDurationTimer?.cancel();
+    final connectedAt = connectedSession.connectedAt ?? DateTime.now();
+    int lastBilledMinute = 0;
     _callDurationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      final newElapsed = state.elapsedSeconds + 1;
-      state = state.copyWith(elapsedSeconds: newElapsed);
+      final actualElapsed = DateTime.now().difference(connectedAt).inSeconds;
+      state = state.copyWith(elapsedSeconds: actualElapsed);
 
-      // Trigger 60s heartbeat pulse for translated calls (caller pays)
-      if (newElapsed > 0 && newElapsed % 60 == 0) {
+      // Trigger 60s heartbeat pulse for translated calls (caller pays) based on real wall-clock elapsed minutes
+      final currentMinuteIndex = actualElapsed ~/ 60;
+      if (currentMinuteIndex > lastBilledMinute) {
+        lastBilledMinute = currentMinuteIndex;
         final session = state.activeSession;
         if (session != null && !session.isIncoming && session.isTranslatedCall) {
-          final minuteIndex = newElapsed ~/ 60;
-          _processInCallHeartbeatDeduction(minuteIndex, newElapsed);
+          _processInCallHeartbeatDeduction(currentMinuteIndex, actualElapsed);
         }
       }
     });
@@ -1036,57 +1050,63 @@ class CallController extends StateNotifier<CallControllerState> {
   }
 
   Future<void> endCall({bool recordAsMissed = false}) async {
-    final current = state.activeSession;
-    final duration = state.elapsedSeconds;
+    if (_isEndingCall) return;
+    _isEndingCall = true;
+    try {
+      final current = state.activeSession;
+      final duration = state.elapsedSeconds;
 
-    if (current != null) {
-      await CallKitService().endCall(current.callId);
-      await repo.updateCallStatus(
-        current.callId,
-        recordAsMissed ? CallStateStatus.missed : CallStateStatus.ended,
-      );
-
-      // Finalize call billing record if caller in translated call
-      if (!current.isIncoming && current.isTranslatedCall) {
-        final totalMinutesBilled = (duration + 59) ~/ 60;
-        final wRepo = walletRepo ?? ref?.read(walletRepositoryProvider);
-        wRepo?.finalizeCallBilling(
-          callId: current.callId,
-          totalDurationSeconds: duration,
-          totalMinutesBilled: totalMinutesBilled,
-          isTranslatedCall: true,
+      if (current != null) {
+        await CallKitService().endCall(current.callId);
+        await repo.updateCallStatus(
+          current.callId,
+          recordAsMissed ? CallStateStatus.missed : CallStateStatus.ended,
         );
+
+        // Finalize call billing record if caller in translated call
+        if (!current.isIncoming && current.isTranslatedCall) {
+          final totalMinutesBilled = (duration + 59) ~/ 60;
+          final wRepo = walletRepo ?? ref?.read(walletRepositoryProvider);
+          wRepo?.finalizeCallBilling(
+            callId: current.callId,
+            totalDurationSeconds: duration,
+            totalMinutesBilled: totalMinutesBilled,
+            isTranslatedCall: true,
+          );
+        }
+
+        final record = CallHistoryRecord(
+          callId: current.callId,
+          peerId: current.peerId,
+          peerName: current.peerName,
+          peerAvatar: current.peerAvatar,
+          peerPhone: current.peerPhone,
+          timestamp: DateTime.now(),
+          durationSeconds: duration,
+          isIncoming: current.isIncoming,
+          isMissed: recordAsMissed,
+          translationEnabled: state.translationEnabled,
+          myLangCode: state.myLangCode,
+          peerLangCode: state.peerLangCode,
+        );
+
+        await repo.addCallHistoryRecord(record);
       }
 
-      final record = CallHistoryRecord(
-        callId: current.callId,
-        peerId: current.peerId,
-        peerName: current.peerName,
-        peerAvatar: current.peerAvatar,
-        peerPhone: current.peerPhone,
-        timestamp: DateTime.now(),
-        durationSeconds: duration,
-        isIncoming: current.isIncoming,
-        isMissed: recordAsMissed,
-        translationEnabled: state.translationEnabled,
-        myLangCode: state.myLangCode,
-        peerLangCode: state.peerLangCode,
+      await _cleanupActiveResources();
+
+      state = state.copyWith(
+        clearSession: true,
+        elapsedSeconds: 0,
+        micRmsLevel: 0.0,
+        geminiState: GeminiLiveState.ready,
+        callHistory: repo.getCallHistory(),
+        networkQuality: CallNetworkQuality.good,
+        isLowDataModeAutoEnabled: false,
       );
-
-      await repo.addCallHistoryRecord(record);
+    } finally {
+      _isEndingCall = false;
     }
-
-    await _cleanupActiveResources();
-
-    state = state.copyWith(
-      clearSession: true,
-      elapsedSeconds: 0,
-      micRmsLevel: 0.0,
-      geminiState: GeminiLiveState.ready,
-      callHistory: repo.getCallHistory(),
-      networkQuality: CallNetworkQuality.good,
-      isLowDataModeAutoEnabled: false,
-    );
   }
 
   Future<void> _cleanupActiveResources() async {

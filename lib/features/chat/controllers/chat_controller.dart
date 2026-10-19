@@ -536,8 +536,11 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
   }
 
   Future<void> navigateToCameraView(BuildContext context) async {
+    if (!await hasPermission(Permission.camera)) return;
+    if (!context.mounted) return;
     final cameras = await availableCameras();
-    if (!mounted) return;
+    if (cameras.isEmpty) return;
+    if (!context.mounted) return;
 
     Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => CameraView(cameras: cameras)),
