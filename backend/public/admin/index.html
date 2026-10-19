@@ -2330,6 +2330,7 @@
         <button class="modal-close-btn" onclick="closeTopUpModal()">&times;</button>
       </div>
       <form id="topUpForm" onsubmit="handleTopUpSubmit(event)">
+        <input type="hidden" id="topupIdempotencyKey" value="">
         <div class="form-group">
           <label class="form-label">Freelancer Phone Number or UID</label>
           <input type="text" id="topupPhone" class="form-control" placeholder="e.g. +8801721013902 or UID" required>
@@ -3236,6 +3237,9 @@
 
     function openTopUpModal() {
       document.getElementById('topUpModal').classList.add('active');
+      if (!document.getElementById('topupIdempotencyKey').value) {
+        document.getElementById('topupIdempotencyKey').value = 'topup_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+      }
     }
 
     function openTopUpForUser(identifier) {
@@ -3245,6 +3249,7 @@
 
     function closeTopUpModal() {
       document.getElementById('topUpModal').classList.remove('active');
+      document.getElementById('topupIdempotencyKey').value = '';
     }
 
     function selectMinuteChip(mins) {
@@ -3271,7 +3276,14 @@
 
       try {
         const secret = getAdminSecret();
-        const idempotencyKey = 'topup_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+        // Stable idempotency key per modal session:
+        // Reusing the same key across retries prevents duplicate credits on network hiccups!
+        let idempotencyKey = document.getElementById('topupIdempotencyKey').value;
+        if (!idempotencyKey) {
+          idempotencyKey = 'topup_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+          document.getElementById('topupIdempotencyKey').value = idempotencyKey;
+        }
+
         const res = await fetch('/api/admin/wallet/topup', {
           method: 'POST',
           headers: {
@@ -3290,7 +3302,11 @@
 
         const data = await res.json();
         if (res.ok && data.success) {
-          showToast(`Success! ${minutes} minutes credited. New balance: ${data.wallet.balanceMinutes}m`);
+          if (data.alreadyProcessed) {
+            showToast(`Already processed: ${minutes}m previously credited (Idempotent retry).`);
+          } else {
+            showToast(`Success! ${minutes} minutes credited. New balance: ${data.wallet ? data.wallet.balanceMinutes : 'Updated'}m`);
+          }
           closeTopUpModal();
           fetchDashboardData();
         } else {

@@ -793,7 +793,12 @@ CRITICAL OPERATING RULES:
     await _wsSubscription?.cancel();
     _wsSubscription = null;
     try {
-      await _ws?.close();
+      if (_ws != null) {
+        try {
+          _ws!.add(jsonEncode({'type': 'call_ended'}));
+        } catch (_) {}
+        await _ws?.close(1000, 'Call Ended');
+      }
     } catch (e, st) {
       debugPrint('[GeminiLiveTranslator] _ws.close error: $e\n$st');
     }

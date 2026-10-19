@@ -867,35 +867,50 @@ class CallController extends StateNotifier<CallControllerState> {
     _geminiStateSub = _geminiTranslator.stateStream.listen((gState) {
       _audioPipeline.setAiSpeakingState(gState == GeminiLiveState.speaking);
       state = state.copyWith(geminiState: gState);
-      if (gState == GeminiLiveState.error ||
-          (gState == GeminiLiveState.disconnected &&
-              state.activeSession?.status == CallStateStatus.connected &&
-              state.audioMode != CallAudioMode.originalOnly)) {
-        // Fallback to original WebRTC audio so participants are never left in silence!
-        _webrtcClient.setMicrophoneMute(state.isMuted);
-        _webrtcClient.setRemoteAudioVolume(1.0);
-        setAudioMode(CallAudioMode.originalOnly);
 
-        if (!state.isTranslationExhausted) {
-          final fallbackBubble = LiveTranscriptEntry(
-            id: 'fb_${DateTime.now().millisecondsSinceEpoch}',
-            speakerId: 'system',
-            speakerName: 'AI Offline — Direct Voice Active',
-            isSelf: false,
-            sourceLangCode: myLang.code,
-            targetLangCode: peerLang.code,
-            originalText:
-                'AI Interpreter unavailable. Connected via direct WebRTC voice.',
-            translatedText:
-                AppStrings.get('aiUnavailableDirectFallback', _currentAppLang),
-            timestamp: DateTime.now(),
-          );
-          state = state.copyWith(
-            transcripts: [...state.transcripts, fallbackBubble],
-          );
+      final isCallConnected =
+          state.activeSession?.status == CallStateStatus.connected;
+
+      if (gState == GeminiLiveState.error ||
+          gState == GeminiLiveState.disconnected ||
+          (gState == GeminiLiveState.connecting && isCallConnected)) {
+        if (state.audioMode != CallAudioMode.originalOnly) {
+          // Immediately fallback to direct WebRTC voice so users are NEVER left in silence (eliminates dead-air gap)!
+          _webrtcClient.setMicrophoneMute(state.isMuted);
+          _webrtcClient.setRemoteAudioVolume(1.0);
+          setAudioMode(CallAudioMode.originalOnly);
+
+          if (!state.isTranslationExhausted) {
+            final hasRecentFallback = state.transcripts.isNotEmpty &&
+                (state.transcripts.last.id.startsWith('fb_') ||
+                    state.transcripts.last.id.startsWith('reconnecting_'));
+            if (!hasRecentFallback) {
+              final fallbackBubble = LiveTranscriptEntry(
+                id: (gState == GeminiLiveState.connecting)
+                    ? 'reconnecting_${DateTime.now().millisecondsSinceEpoch}'
+                    : 'fb_${DateTime.now().millisecondsSinceEpoch}',
+                speakerId: 'system',
+                speakerName: (gState == GeminiLiveState.connecting)
+                    ? 'AI Reconnecting — Direct Voice Active'
+                    : 'AI Offline — Direct Voice Active',
+                isSelf: false,
+                sourceLangCode: myLang.code,
+                targetLangCode: peerLang.code,
+                originalText: (gState == GeminiLiveState.connecting)
+                    ? 'AI Interpreter reconnecting. Switched to direct WebRTC voice.'
+                    : 'AI Interpreter unavailable. Connected via direct WebRTC voice.',
+                translatedText:
+                    AppStrings.get('aiUnavailableDirectFallback', _currentAppLang),
+                timestamp: DateTime.now(),
+              );
+              state = state.copyWith(
+                transcripts: [...state.transcripts, fallbackBubble],
+              );
+            }
+          }
         }
       } else if (gState == GeminiLiveState.listening &&
-          state.activeSession?.status == CallStateStatus.connected &&
+          isCallConnected &&
           state.translationEnabled &&
           state.myLangCode != state.peerLangCode &&
           state.audioMode == CallAudioMode.originalOnly &&

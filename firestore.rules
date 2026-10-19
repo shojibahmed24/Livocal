@@ -34,9 +34,11 @@ service cloud.firestore {
       }
 
       // SaaS Freelancer Minute Wallet
-      // Owner can read their private wallet data; payment_settings can be read by any authenticated user for P2P transfers
+      // Owner can read their private wallet data; payment_settings can be fetched directly by authenticated users for P2P transfers
+      // Disallow list across wallet collections to prevent user enumeration and phone scraping
       match /wallet/{walletId} {
-        allow read: if isAuthenticated() && (request.auth.uid == userId || walletId == 'payment_settings');
+        allow get: if isAuthenticated() && (request.auth.uid == userId || walletId == 'payment_settings');
+        allow list: if isAuthenticated() && request.auth.uid == userId;
         allow write: if false;
       }
     }

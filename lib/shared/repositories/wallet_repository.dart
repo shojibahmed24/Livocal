@@ -59,7 +59,7 @@ class WalletRepository {
       return await initializeOrGetWallet(userId: userId);
     } catch (e) {
       debugPrint('[WalletRepository] getWallet error: $e');
-      return UserWallet.newTrial();
+      return UserWallet.noTrial();
     }
   }
 
@@ -114,7 +114,7 @@ class WalletRepository {
       debugPrint('[WalletRepository] Firestore fallback read error: $e');
     }
 
-    return UserWallet.newTrial();
+    return UserWallet.noTrial();
   }
 
   /// Deducts 1 minute for an active translated call via backend transaction.
@@ -182,27 +182,13 @@ class WalletRepository {
       debugPrint('[WalletRepository] deductMinute error: $e');
     }
 
-    // Fallback: check local Firestore wallet
-    try {
-      final wallet = await getWallet(callerId);
-      final hasMin = wallet.hasMinutes;
-      final remaining = wallet.effectiveRemainingMinutes;
-      return MinuteDeductionResult(
-        success: hasMin,
-        deducted: hasMin ? 1 : 0,
-        remainingMinutes: remaining,
-        lowBalanceWarning: remaining <= 2 && remaining > 0,
-        exhausted: !hasMin,
-      );
-    } catch (e) {
-      debugPrint('[WalletRepository] deductMinute fallback error: $e');
-      return const MinuteDeductionResult(
-        success: false,
-        remainingMinutes: 0,
-        exhausted: true,
-        message: 'BILLING_GATEWAY_UNAVAILABLE',
-      );
-    }
+    // Fail-closed: Never perform local fallback deduction without backend verification
+    return const MinuteDeductionResult(
+      success: false,
+      remainingMinutes: 0,
+      exhausted: true,
+      message: 'BILLING_GATEWAY_UNAVAILABLE',
+    );
   }
 
   /// Finalizes call billing record on hang up.

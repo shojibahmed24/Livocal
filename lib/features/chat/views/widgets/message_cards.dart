@@ -42,6 +42,7 @@ class _MessageCardState extends State<MessageCard>
   late final Animation<Offset> _slideAnim;
   String? _translatedContent;
   bool _isTranslating = false;
+  static final Map<String, Stream<DocumentSnapshot<Map<String, dynamic>>>> _p2pDocStreams = {};
 
   @override
   void initState() {
@@ -448,6 +449,9 @@ class _MessageCardState extends State<MessageCard>
                 isDark: isDark,
                 isWallet: isWallet,
                 recordId: recordId,
+                expectedSenderId: widget.message.senderId,
+                expectedRecipientId: widget.message.receiverId,
+                expectedAmount: amount,
               ),
             ],
           ),
@@ -513,6 +517,9 @@ class _MessageCardState extends State<MessageCard>
     required bool isDark,
     required bool isWallet,
     required String recordId,
+    required String expectedSenderId,
+    required String expectedRecipientId,
+    required String expectedAmount,
   }) {
     // If Firebase isn't initialized (e.g. unit tests):
     if (Firebase.apps.isEmpty) {
@@ -533,12 +540,17 @@ class _MessageCardState extends State<MessageCard>
     }
 
     final collectionName = isWallet ? 'p2p_transfers' : 'p2p_payments';
-
-    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
+    final streamKey = '$collectionName/$recordId';
+    final stream = _p2pDocStreams.putIfAbsent(
+      streamKey,
+      () => FirebaseFirestore.instance
           .collection(collectionName)
           .doc(recordId)
           .snapshots(),
+    );
+
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: stream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return _buildBadgeChip(
@@ -567,6 +579,41 @@ class _MessageCardState extends State<MessageCard>
         }
 
         final data = doc.data() ?? {};
+
+        // Security Guard: Cryptographic/Data Binding
+        // Verify that the record actually belongs to the sender and recipient of this message!
+        final recordSender = (data['senderId'] ?? data['fromUserId'])?.toString();
+        final recordRecipient = (data['recipientId'] ?? data['toUserId'])?.toString();
+
+        final isParticipantsBound = (recordSender == expectedSenderId && recordRecipient == expectedRecipientId) ||
+            (recordSender == expectedRecipientId && recordRecipient == expectedSenderId);
+
+        if (!isParticipantsBound) {
+          // Spoofed/copied [id:...] token from another user's transaction!
+          return _buildBadgeChip(
+            label: 'UNVERIFIED',
+            icon: Icons.gpp_bad_rounded,
+            color: Colors.redAccent,
+          );
+        }
+
+        // Amount Verification Guard:
+        if (expectedAmount.isNotEmpty && (data.containsKey('amount') || data.containsKey('bdtAmount') || data.containsKey('minutes'))) {
+          final rawDocAmount = (data['amount'] ?? data['bdtAmount'] ?? data['minutes'])?.toString();
+          if (rawDocAmount != null && rawDocAmount.isNotEmpty) {
+            final docNum = double.tryParse(rawDocAmount.replaceAll(RegExp(r'[^0-9.]'), ''));
+            final msgNum = double.tryParse(expectedAmount.replaceAll(RegExp(r'[^0-9.]'), ''));
+            if (docNum != null && msgNum != null && (docNum - msgNum).abs() > 0.05) {
+              // Amount mismatch: Claimed amount does not match audit record!
+              return _buildBadgeChip(
+                label: 'UNVERIFIED',
+                icon: Icons.gpp_bad_rounded,
+                color: Colors.redAccent,
+              );
+            }
+          }
+        }
+
         final rawStatus = (data['status'] as String? ?? 'pending').toLowerCase();
 
         if (isWallet) {

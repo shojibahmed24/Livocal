@@ -6,6 +6,7 @@ import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/wallet_repository.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
+import 'package:livocal/shared/models/user_wallet.dart';
 
 class MockCallRepo extends CallRepository {
   CallStatusUpdate? lastStatusUpdate;
@@ -39,6 +40,18 @@ class MockWalletRepo extends WalletRepository {
   bool lastFinalized = false;
 
   MockWalletRepo({required this.remainingMinutes}) : super();
+
+  @override
+  Future<UserWallet> getWallet(String userId) async {
+    return UserWallet(
+      balanceMinutes: remainingMinutes,
+      trialMinutes: 0,
+      trialActive: false,
+      trialExpiresAt: DateTime.now().add(const Duration(days: 14)),
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+  }
 
   @override
   Future<MinuteDeductionResult> deductMinute({
