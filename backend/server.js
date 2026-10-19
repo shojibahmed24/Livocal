@@ -619,7 +619,7 @@ app.post(
 );
 
 // Secure ICE Servers endpoint (Provides STUN / TURN servers with Ephemeral HMAC-SHA1 support)
-app.get('/api/webrtc/ice-servers', authenticateRequest, (req, res) => {
+app.get(['/api/webrtc/ice-servers', '/api/turn-credentials'], authenticateRequest, (req, res) => {
   const iceServers = [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
@@ -627,8 +627,8 @@ app.get('/api/webrtc/ice-servers', authenticateRequest, (req, res) => {
   ];
 
   if (process.env.TURN_URL && process.env.TURN_SECRET) {
-    // RFC 5766 / Coturn REST API Ephemeral Time-Limited TURN Credentials (HMAC-SHA1)
-    const ttlSeconds = parseInt(process.env.TURN_TTL_SECONDS || '86400', 10);
+    // RFC 5766 / Coturn REST API Ephemeral Time-Limited TURN Credentials (HMAC-SHA1, 2-hour TTL)
+    const ttlSeconds = parseInt(process.env.TURN_TTL_SECONDS || '7200', 10);
     const expiry = Math.floor(Date.now() / 1000) + ttlSeconds;
     const username = `${expiry}:${req.user.uid}`;
     const hmac = crypto.createHmac('sha1', process.env.TURN_SECRET);
@@ -868,7 +868,7 @@ app.post('/api/wallet/deduct-minute', authenticateRequest, async (req, res) => {
   }
 });
 
-// Finalize call billing record on hang-up
+// Finalize call billing record on hang-up with strict reconciliation
 app.post('/api/wallet/call-end', authenticateRequest, async (req, res) => {
   const callerUid = req.user.uid;
   const { callId, totalDurationSeconds, totalMinutesBilled, isTranslatedCall } = req.body || {};
@@ -879,15 +879,74 @@ app.post('/api/wallet/call-end', authenticateRequest, async (req, res) => {
 
   try {
     const summaryRef = firestoreDb.collection('call_summaries').doc(callId || `call_${Date.now()}`);
-    const geminiCostUsd = isTranslatedCall ? (totalMinutesBilled || 0) * 0.035 : 0;
-    const retailBdt = isTranslatedCall ? (totalMinutesBilled || 0) * 20.0 : 0;
+    let finalBilledMinutes = totalMinutesBilled || 0;
+
+    // Strict Reconciliation: Charge remaining unbilled seconds rounded up
+    if (isTranslatedCall && (totalDurationSeconds || 0) > 0) {
+      const expectedMinutes = Math.ceil(totalDurationSeconds / 60);
+      if (finalBilledMinutes < expectedMinutes) {
+        const unbilled = expectedMinutes - finalBilledMinutes;
+        const walletRef = firestoreDb.collection('users').doc(callerUid).collection('wallet').doc('current');
+
+        try {
+          await firestoreDb.runTransaction(async (t) => {
+            const snap = await t.get(walletRef);
+            if (!snap.exists) return;
+            const data = snap.data() || {};
+            const now = new Date();
+            const trialActive = data.trialActive && (!data.trialExpiresAt || new Date(data.trialExpiresAt) > now);
+            let newTrial = data.trialMinutes || 0;
+            let newBalance = data.balanceMinutes || 0;
+
+            let toDeduct = unbilled;
+            if (trialActive && newTrial > 0) {
+              const fromTrial = Math.min(newTrial, toDeduct);
+              newTrial -= fromTrial;
+              toDeduct -= fromTrial;
+            }
+            if (toDeduct > 0 && newBalance > 0) {
+              const fromBal = Math.min(newBalance, toDeduct);
+              newBalance -= fromBal;
+              toDeduct -= fromBal;
+            }
+
+            t.update(walletRef, {
+              trialMinutes: newTrial,
+              balanceMinutes: newBalance,
+              totalMinutesUsed: (data.totalMinutesUsed || 0) + (unbilled - toDeduct),
+              updatedAt: now.toISOString(),
+            });
+
+            // Ledger record
+            const billingRef = firestoreDb.collection('call_billing_records').doc();
+            t.set(billingRef, {
+              recordId: billingRef.id,
+              callId: callId || 'unknown',
+              callerId: callerUid,
+              isTranslatedCall: true,
+              durationSeconds: totalDurationSeconds,
+              minuteIndex: (data.totalMinutesUsed || 0) + (unbilled - toDeduct),
+              deductedAtEnd: unbilled,
+              timestamp: now.toISOString(),
+            });
+          });
+          finalBilledMinutes = expectedMinutes;
+          console.log(`[SaaS Billing] Reconciled and deducted ${unbilled} remaining minute(s) at call-end for ${callerUid}`);
+        } catch (recErr) {
+          console.error('[SaaS Billing] Error during call-end minute reconciliation:', recErr.message);
+        }
+      }
+    }
+
+    const geminiCostUsd = isTranslatedCall ? finalBilledMinutes * 0.035 : 0;
+    const retailBdt = isTranslatedCall ? finalBilledMinutes * 20.0 : 0;
     const netProfitBdt = isTranslatedCall ? retailBdt - (geminiCostUsd * 120.0) : 0;
 
     await summaryRef.set({
       callId,
       callerId: callerUid,
       totalDurationSeconds: totalDurationSeconds || 0,
-      totalMinutesBilled: totalMinutesBilled || 0,
+      totalMinutesBilled: finalBilledMinutes,
       isTranslatedCall: !!isTranslatedCall,
       geminiCostUsd,
       retailBdt,
@@ -895,7 +954,7 @@ app.post('/api/wallet/call-end', authenticateRequest, async (req, res) => {
       endedAt: new Date().toISOString(),
     }, { merge: true });
 
-    return res.json({ success: true });
+    return res.json({ success: true, finalBilledMinutes });
   } catch (err) {
     console.warn('[SaaS Billing] Error saving call summary:', err.message);
     return res.json({ success: false, error: err.message });
@@ -1722,7 +1781,8 @@ app.post('/api/wallet/payment-request', authenticateRequest, async (req, res) =>
   const nowIso = new Date().toISOString();
 
   try {
-    const reqId = `pay_${cleanTrx.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+    const normalizedTrx = cleanTrx.toUpperCase().replace(/^0X/, '');
+    const reqId = `pay_${normalizedTrx.replace(/[^A-Z0-9_-]/g, '_')}`;
     const reqRef = firestoreDb.collection('payment_requests').doc(reqId);
 
     const paymentData = {
@@ -1733,6 +1793,7 @@ app.post('/api/wallet/payment-request', authenticateRequest, async (req, res) =>
       senderPhone: !isCrypto ? identifier : '',
       senderCryptoWalletOrBinanceId: isCrypto ? identifier : '',
       trxId: cleanTrx,
+      normalizedTrxId: normalizedTrx,
       packId: selectedPack.id,
       packName: selectedPack.name,
       baseMinutes: selectedPack.baseMinutes,
@@ -2964,6 +3025,110 @@ wss.on('connection', (clientWs, req) => {
           if (resp.setupComplete) {
             console.log(`[${clientId}] Gemini setup completed! Ready for bidirectional audio.`);
             isGeminiReady = true;
+
+            // Immediately deduct minute 1 upfront (Standard Telecom model: 0s-59s billed on connect)
+            if (firestoreDb && authenticatedUid) {
+              (async () => {
+                try {
+                  const walletRef = firestoreDb.collection('users').doc(authenticatedUid).collection('wallet').doc('current');
+                  const deductionResult = await firestoreDb.runTransaction(async (t) => {
+                    const snap = await t.get(walletRef);
+                    if (!snap.exists) {
+                      return { success: false, exhausted: true, remainingMinutes: 0 };
+                    }
+                    const data = snap.data() || {};
+                    const now = new Date();
+                    const trialActive = data.trialActive && (!data.trialExpiresAt || new Date(data.trialExpiresAt) > now);
+                    const usableTrial = trialActive ? (data.trialMinutes || 0) : 0;
+                    const usableBalance = data.balanceMinutes || 0;
+                    const totalEffective = usableTrial + usableBalance;
+
+                    if (totalEffective <= 0) {
+                      return { success: false, exhausted: true, remainingMinutes: 0 };
+                    }
+
+                    let newTrial = data.trialMinutes || 0;
+                    let newBalance = data.balanceMinutes || 0;
+                    if (trialActive && newTrial > 0) {
+                      newTrial -= 1;
+                    } else if (newBalance > 0) {
+                      newBalance -= 1;
+                    }
+
+                    const newTotalUsed = (data.totalMinutesUsed || 0) + 1;
+                    const remainingMinutes = (trialActive ? newTrial : 0) + newBalance;
+
+                    t.update(walletRef, {
+                      trialMinutes: newTrial,
+                      balanceMinutes: newBalance,
+                      totalMinutesUsed: newTotalUsed,
+                      updatedAt: now.toISOString(),
+                    });
+
+                    // Audit ledger record in call_billing_records
+                    const billingRef = firestoreDb.collection('call_billing_records').doc();
+                    const geminiCostUsd = 0.035;
+                    const retailBdt = 20.0;
+                    const usdToBdt = 120.0;
+                    const costBdt = geminiCostUsd * usdToBdt;
+                    const netProfitBdt = retailBdt - costBdt;
+
+                    t.set(billingRef, {
+                      recordId: billingRef.id,
+                      callId: `ws_live_${authenticatedUid.substring(0, 6)}_${Date.now()}`,
+                      callerId: authenticatedUid,
+                      isTranslatedCall: true,
+                      durationSeconds: 60,
+                      minuteIndex: newTotalUsed,
+                      geminiCostUsd,
+                      retailBdt,
+                      costBdt,
+                      netProfitBdt,
+                      remainingMinutesAfter: remainingMinutes,
+                      timestamp: now.toISOString(),
+                    });
+
+                    return {
+                      success: true,
+                      exhausted: remainingMinutes <= 0,
+                      remainingMinutes,
+                    };
+                  });
+
+                  billedMinutes = 1;
+                  console.log(`[${clientId}] [SaaS Relay Metering] Upfront minute 1 deducted from ${authenticatedUid}. Remaining: ${deductionResult.remainingMinutes}`);
+
+                  if (clientWs.readyState === WebSocket.OPEN) {
+                    clientWs.send(
+                      JSON.stringify({
+                        type: 'billing_update',
+                        billedMinutes,
+                        remainingMinutes: deductionResult.remainingMinutes,
+                        lowBalanceWarning: deductionResult.remainingMinutes <= 2,
+                      })
+                    );
+                  }
+
+                  if (deductionResult.exhausted) {
+                    console.warn(`[${clientId}] Minute quota exhausted for user ${authenticatedUid} on connect. Terminating.`);
+                    if (clientWs.readyState === WebSocket.OPEN) {
+                      clientWs.send(
+                        JSON.stringify({
+                          type: 'error',
+                          code: 'MINUTES_EXHAUSTED',
+                          message: 'Translation minutes exhausted. Session ended.',
+                        })
+                      );
+                      clientWs.close(4402, 'MINUTES_EXHAUSTED');
+                    }
+                    cleanup();
+                  }
+                } catch (initialMeterErr) {
+                  console.error(`[${clientId}] Initial minute deduction error:`, initialMeterErr.message);
+                }
+              })();
+            }
+
             clientWs.send(
               JSON.stringify({
                 type: 'ready',

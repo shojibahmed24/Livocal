@@ -95,7 +95,10 @@ class IsarDb {
           .messageIdEqualTo(message.id)
           .findFirst();
       if (existing != null) {
-        existing.status = message.status;
+        // Enforce monotonic receipt status: seen (3) > delivered (2) > sent (1) > pending (0)
+        if (message.status.index >= existing.status.index) {
+          existing.status = message.status;
+        }
         if (message.content.isNotEmpty) existing.content = message.content;
         if (message.attachment != null && existing.attachment != null) {
           existing.attachment!.url = message.attachment!.url;
@@ -116,7 +119,10 @@ class IsarDb {
             .messageIdEqualTo(message.id)
             .findFirst();
         if (existing != null) {
-          existing.status = message.status;
+          // Enforce monotonic receipt status: seen (3) > delivered (2) > sent (1) > pending (0)
+          if (message.status.index >= existing.status.index) {
+            existing.status = message.status;
+          }
           if (message.content.isNotEmpty) existing.content = message.content;
           if (message.attachment != null && existing.attachment != null) {
             existing.attachment!.url = message.attachment!.url;
@@ -169,7 +175,10 @@ class IsarDb {
       if (msg == null) return;
 
       msg.content = content ?? msg.content;
-      msg.status = status ?? msg.status;
+      // Enforce monotonic status updates: never downgrade seen -> delivered or delivered -> sent
+      if (status != null && status.index >= msg.status.index) {
+        msg.status = status;
+      }
 
       if (attachment != null) {
         msg.attachment = EmbeddedAttachment(
@@ -291,6 +300,49 @@ class IsarDb {
     }
   }
 
+  static Message toMessage(StoredMessage msg) {
+    return Message(
+      id: msg.messageId,
+      content: msg.content,
+      senderId: msg.senderId,
+      receiverId: msg.receiverId,
+      timestamp: Timestamp.fromDate(msg.timestamp),
+      status: msg.status,
+      attachment: msg.attachment != null
+          ? Attachment(
+              fileName: msg.attachment!.fileName ?? '',
+              fileExtension: msg.attachment!.fileExtension ?? '',
+              fileSize: msg.attachment!.fileSize ?? 0,
+              width: msg.attachment!.width,
+              height: msg.attachment!.height,
+              uploadStatus: msg.attachment!.uploadStatus ?? UploadStatus.notUploading,
+              autoDownload: msg.attachment!.autoDownload ?? false,
+              url: msg.attachment!.url ?? '',
+              type: msg.attachment!.type ?? AttachmentType.document,
+              samples: msg.attachment!.samples,
+            )
+          : null,
+      isDeleted: msg.content == '🚫 This message was deleted' ||
+          msg.content.contains('message was deleted'),
+    );
+  }
+
+  static Future<List<Message>> getPendingMessages() async {
+    final isarInstance = instance;
+    if (isarInstance == null) return [];
+    try {
+      final pending = await isarInstance.storedMessages
+          .filter()
+          .statusEqualTo(MessageStatus.pending)
+          .sortByTimestampDesc()
+          .findAll();
+      return pending.map((m) => toMessage(m)).toList();
+    } catch (e) {
+      debugPrint('[IsarDb] Error fetching pending messages: $e');
+      return [];
+    }
+  }
+
   static Stream<List<Message>> getChatStream(String chatId, {int limit = 100}) {
     // Opportunistically run disappearing messages purge
     purgeDisappearingMessages();
@@ -302,34 +354,7 @@ class IsarDb {
         .limit(limit)
         .build()
         .watch(fireImmediately: true)
-        .map((event) => event
-            .map(
-              (msg) => Message(
-                id: msg.messageId,
-                content: msg.content,
-                senderId: msg.senderId,
-                receiverId: msg.receiverId,
-                timestamp: Timestamp.fromDate(msg.timestamp),
-                status: msg.status,
-                attachment: msg.attachment != null
-                    ? Attachment(
-                        fileName: msg.attachment!.fileName!,
-                        fileExtension: msg.attachment!.fileExtension!,
-                        fileSize: msg.attachment!.fileSize!,
-                        width: msg.attachment!.width,
-                        height: msg.attachment!.height,
-                        uploadStatus: msg.attachment!.uploadStatus!,
-                        autoDownload: msg.attachment!.autoDownload ?? false,
-                        url: msg.attachment!.url!,
-                        type: msg.attachment!.type!,
-                        samples: msg.attachment!.samples,
-                      )
-                    : null,
-                isDeleted: msg.content == '🚫 This message was deleted' ||
-                    msg.content.contains('message was deleted'),
-              ),
-            )
-            .toList());
+        .map((event) => event.map((msg) => toMessage(msg)).toList());
   }
 
   static Stream<List<RecentChat>> getRecentChatStream(WidgetRef ref) {

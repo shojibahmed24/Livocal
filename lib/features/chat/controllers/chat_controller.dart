@@ -404,6 +404,31 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
     }
   }
 
+  static bool _isFlushingPending = false;
+
+  /// Flushes pending offline messages across all chats upon network recovery or app resume.
+  Future<void> flushPendingOutbox() async {
+    if (_isFlushingPending) return;
+    _isFlushingPending = true;
+    try {
+      final pendingMessages = await IsarDb.getPendingMessages();
+      if (pendingMessages.isEmpty) return;
+      debugPrint('[ChatController] Flushing ${pendingMessages.length} pending offline messages');
+      for (final msg in pendingMessages) {
+        if (msg.attachment == null) {
+          await retrySendMessage(msg);
+        } else if (msg.attachment!.uploadStatus == UploadStatus.uploaded &&
+            (msg.attachment!.url.isNotEmpty)) {
+          await retrySendMessage(msg);
+        }
+      }
+    } catch (e) {
+      debugPrint('[ChatController] flushPendingOutbox error: $e');
+    } finally {
+      _isFlushingPending = false;
+    }
+  }
+
   void sendMessageWithAttachments(Message message) async {
     if (_other != null) await IsarDb.saveUser(_other!);
     if ({

@@ -8,11 +8,18 @@ part 'messages.g.dart';
 @collection
 class StoredMessage {
   Id id = Isar.autoIncrement;
+
+  @Index(unique: true, replace: true)
   String messageId;
+
+  @Index()
   String chatId;
+
   String content;
   String senderId;
   String receiverId;
+
+  @Index()
   DateTime timestamp;
   EmbeddedAttachment? attachment;
 

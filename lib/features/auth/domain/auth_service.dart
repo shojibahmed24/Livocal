@@ -10,6 +10,8 @@ import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/repositories/firebase_storage.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:livocal/shared/utils/secure_pin_service.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
 final authControllerProvider = Provider((ref) {
@@ -115,6 +117,28 @@ class AuthController {
       await SharedPref.instance.remove('call_history_records_v1');
     } catch (e) {
       debugPrint('Logout SharedPref clear error: $e');
+    }
+
+    try {
+      await SecurePinService.wipe();
+    } catch (e) {
+      debugPrint('Logout SecurePinService.wipe error: $e');
+    }
+
+    try {
+      final tempDir = await getTemporaryDirectory();
+      if (await tempDir.exists()) {
+        final entities = tempDir.listSync(recursive: true, followLinks: false);
+        for (final entity in entities) {
+          if (entity is File) {
+            try {
+              entity.deleteSync();
+            } catch (_) {}
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Logout tempDir clear error: $e');
     }
 
     try {

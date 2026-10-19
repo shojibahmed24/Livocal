@@ -704,16 +704,22 @@ class CallController extends StateNotifier<CallControllerState> {
       );
     });
 
+    // Deduct Minute 1 upfront immediately upon call connection (Standard Telecom model)
+    int lastBilledMinute = 0;
+    if (!connectedSession.isIncoming && connectedSession.isTranslatedCall) {
+      lastBilledMinute = 1;
+      _processInCallHeartbeatDeduction(1, 0);
+    }
+
     // 1. Start call duration timer with in-call 60s heartbeat metering (Wall-clock immune to Android Doze mode)
     _callDurationTimer?.cancel();
     final connectedAt = connectedSession.connectedAt ?? DateTime.now();
-    int lastBilledMinute = 0;
     _callDurationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       final actualElapsed = DateTime.now().difference(connectedAt).inSeconds;
       state = state.copyWith(elapsedSeconds: actualElapsed);
 
       // Trigger 60s heartbeat pulse for translated calls (caller pays) based on real wall-clock elapsed minutes
-      final currentMinuteIndex = actualElapsed ~/ 60;
+      final currentMinuteIndex = 1 + (actualElapsed ~/ 60);
       if (currentMinuteIndex > lastBilledMinute) {
         lastBilledMinute = currentMinuteIndex;
         final session = state.activeSession;

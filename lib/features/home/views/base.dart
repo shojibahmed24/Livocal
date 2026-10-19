@@ -43,6 +43,7 @@ import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/features/home/views/linked_devices_screen.dart';
 import 'package:livocal/features/home/views/starred_messages_screen.dart';
+import 'package:livocal/features/chat/controllers/chat_controller.dart';
 import 'package:livocal/features/status/views/text_status_composer_screen.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -70,6 +71,7 @@ class _HomePageState extends ConsumerState<HomePage>
         ref.read(firebaseFirestoreRepositoryProvider).setActivityStatus(
             userId: widget.user.id,
             statusValue: UserActivityStatus.online.value);
+        ref.read(chatControllerProvider.notifier).flushPendingOutbox();
         break;
       default:
         ref.read(firebaseFirestoreRepositoryProvider).setActivityStatus(
@@ -87,6 +89,9 @@ class _HomePageState extends ConsumerState<HomePage>
       userId: widget.user.id,
       statusValue: UserActivityStatus.online.value,
     );
+
+    // Opportunistically flush pending offline outbox messages
+    ref.read(chatControllerProvider.notifier).flushPendingOutbox();
 
     // Initialize or verify SaaS minute wallet & 14-day 20-min trial
     ref.read(walletRepositoryProvider).initializeOrGetWallet(

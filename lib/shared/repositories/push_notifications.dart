@@ -13,6 +13,8 @@ import '../../features/chat/models/message.dart';
 import '../../features/calls/services/call_kit_service.dart';
 import '../../features/calls/services/gemini_live_translator.dart';
 import '../../features/calls/services/ringtone_manager.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/constants/app_config.dart';
 
 final pushNotificationsRepoProvider = Provider(
@@ -112,27 +114,58 @@ Future<void> _handleBackgroundMessage(RemoteMessage message) async {
   if (data['type'] == 'INCOMING_CALL') {
     final callId = data['callId'] ?? '';
     final callerName = data['callerName'] ?? 'Incoming Call';
-    final callerNumber = data['callerNumber'] ?? '';
+    final callerPhone = data['callerNumber'] ?? data['callerPhone'] ?? '';
     await CallKitService().showIncomingCall(
       callId: callId,
       callerName: callerName,
-      callerPhone: callerNumber,
+      callerPhone: callerPhone,
     );
     return;
   }
 
-  // 2. Chat message delivered status update
+  // 2. Chat message delivered status update & local Isar persistence
   if (data['messageId'] != null) {
-    await ProviderContainer()
-        .read(firebaseFirestoreRepositoryProvider)
-        .sendSystemMessage(
-          message: SystemMessage(
-            targetId: data['messageId'],
-            action: MessageAction.statusUpdate,
-            update: MessageStatus.delivered.value,
-          ),
-          receiverId: data['authorId'],
-        );
+    try {
+      await IsarDb.init();
+      final msgId = data['messageId'] as String;
+      final authorId = data['authorId'] as String? ?? '';
+      final content = data['messageContent'] as String? ?? data['body'] as String? ?? '';
+      final rawUser = SharedPref.instance.getString('user');
+      String currentUid = '';
+      if (rawUser != null) {
+        try {
+          final u = jsonDecode(rawUser);
+          currentUid = u['id'] ?? '';
+        } catch (_) {}
+      }
+      if (msgId.isNotEmpty && authorId.isNotEmpty) {
+        await IsarDb.addMessage(Message(
+          id: msgId,
+          content: content,
+          status: MessageStatus.delivered,
+          senderId: authorId,
+          receiverId: currentUid,
+          timestamp: Timestamp.now(),
+        ));
+      }
+    } catch (e) {
+      debugPrint('[PushNotificationsRepo] Background message Isar save error: $e');
+    }
+
+    try {
+      await ProviderContainer()
+          .read(firebaseFirestoreRepositoryProvider)
+          .sendSystemMessage(
+            message: SystemMessage(
+              targetId: data['messageId'],
+              action: MessageAction.statusUpdate,
+              update: MessageStatus.delivered.value,
+            ),
+            receiverId: data['authorId'],
+          );
+    } catch (e) {
+      debugPrint('[PushNotificationsRepo] Background delivered status update error: $e');
+    }
   }
 }
 

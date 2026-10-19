@@ -133,4 +133,19 @@ class SecurePinService {
       debugPrint('[SecurePinService] disablePin error: $e');
     }
   }
+
+  /// Completely wipes all PINs and secure keys from hardware storage on user logout.
+  static Future<void> wipe() async {
+    try {
+      await _secureStorage.deleteAll();
+      await SharedPref.instance.remove(_attemptsKey);
+      await SharedPref.instance.remove(_lockoutUntilKey);
+      await SharedPref.instance.remove('two_step_pin');
+      await SharedPref.instance.remove('two_step_verification_enabled');
+      await SharedPref.instance.remove('two_step_verification_pin');
+      debugPrint('[SecurePinService] Wiped all hardware secure storage and PIN keys');
+    } catch (e) {
+      debugPrint('[SecurePinService] wipe error: $e');
+    }
+  }
 }

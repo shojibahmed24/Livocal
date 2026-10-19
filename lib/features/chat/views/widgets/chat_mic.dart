@@ -36,6 +36,20 @@ class ChatInputMic extends ConsumerWidget {
         }
         ref.read(chatControllerProvider.notifier).onRecordingDone();
       },
+      onLongPressEnd: (details) {
+        if (recordingState != RecordingState.notRecording &&
+            recordingState != RecordingState.recordingLocked &&
+            recordingState != RecordingState.paused) {
+          ref.read(chatControllerProvider.notifier).onRecordingDone();
+        }
+      },
+      onLongPressCancel: () {
+        if (recordingState != RecordingState.notRecording &&
+            recordingState != RecordingState.recordingLocked &&
+            recordingState != RecordingState.paused) {
+          ref.read(chatControllerProvider.notifier).cancelRecording();
+        }
+      },
       onLongPressMoveUpdate: (details) async {
         ref.read(chatControllerProvider.notifier).onMicDragLeft(
               details.globalPosition.dx,

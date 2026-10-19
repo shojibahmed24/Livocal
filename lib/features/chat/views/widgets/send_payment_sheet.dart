@@ -68,12 +68,20 @@ class _SendPaymentSheetContentState
   bool _isProcessing = false;
   UserWallet? _wallet;
 
+  String? _recipientBinancePay;
+  String? _recipientTrc20;
+  String? _recipientBep20;
+  String? _recipientBkash;
+  String? _recipientNagad;
+  bool _isLoadingRecipientSettings = true;
+
   final List<String> _quickAmounts = ['5', '10', '25', '50', '100'];
 
   @override
   void initState() {
     super.initState();
     _fetchWallet();
+    _fetchRecipientPaymentSettings();
   }
 
   Future<void> _fetchWallet() async {
@@ -87,6 +95,45 @@ class _SendPaymentSheetContentState
       }
     } catch (e) {
       debugPrint('[PaymentSheet] _fetchWallet error: $e');
+    }
+  }
+
+  Future<void> _fetchRecipientPaymentSettings() async {
+    final otherId = widget.other.id;
+    if (otherId.isEmpty) {
+      if (mounted) setState(() => _isLoadingRecipientSettings = false);
+      return;
+    }
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final userDoc = await firestore.collection('users').doc(otherId).get();
+      final userData = userDoc.data();
+      final walletDoc = await firestore
+          .collection('users')
+          .doc(otherId)
+          .collection('wallet')
+          .doc('payment_settings')
+          .get();
+      final walletData = walletDoc.data();
+
+      if (mounted) {
+        setState(() {
+          _recipientBinancePay = walletData?['binancePayId'] as String? ??
+              userData?['binancePayId'] as String?;
+          _recipientTrc20 = walletData?['cryptoUsdtTrc20'] as String? ??
+              userData?['cryptoUsdtTrc20'] as String?;
+          _recipientBep20 = walletData?['cryptoUsdtBep20'] as String? ??
+              userData?['cryptoUsdtBep20'] as String?;
+          _recipientBkash = walletData?['bkashNumber'] as String? ??
+              userData?['bkashNumber'] as String?;
+          _recipientNagad = walletData?['nagadNumber'] as String? ??
+              userData?['nagadNumber'] as String?;
+          _isLoadingRecipientSettings = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('[PaymentSheet] _fetchRecipientPaymentSettings error: $e');
+      if (mounted) setState(() => _isLoadingRecipientSettings = false);
     }
   }
 
@@ -107,40 +154,38 @@ class _SendPaymentSheetContentState
     return '+8801700000000';
   }
 
+  String get _targetMfsNumber {
+    if (_mfsType == 'bKash' &&
+        _recipientBkash != null &&
+        _recipientBkash!.trim().isNotEmpty) {
+      return _recipientBkash!.trim();
+    }
+    if (_mfsType == 'Nagad' &&
+        _recipientNagad != null &&
+        _recipientNagad!.trim().isNotEmpty) {
+      return _recipientNagad!.trim();
+    }
+    return _recipientPhone;
+  }
+
   double get _calculatedBdtAmount {
     final amt = double.tryParse(_amountController.text.trim()) ?? 0.0;
     return amt * _usdToBdtRate;
   }
 
-  String get _recipientBinancePayId {
-    final seed = widget.other.id.isNotEmpty ? widget.other.id : _recipientPhone;
-    final code = seed.hashCode.abs().toString().padLeft(9, '8');
-    return code.substring(0, 9);
-  }
-
-  String get _recipientTrc20Address {
-    final seed = '${widget.other.id.isNotEmpty ? widget.other.id : _recipientPhone}_trc20';
-    final hex = seed.hashCode.abs().toRadixString(16).padRight(33, '7c89f10a2b4e5d6a8f1c');
-    return 'T${hex.substring(0, 33).toUpperCase()}';
-  }
-
-  String get _recipientBep20Address {
-    final seed = '${widget.other.id.isNotEmpty ? widget.other.id : _recipientPhone}_bep20';
-    final hex = seed.hashCode.abs().toRadixString(16).padRight(40, '3e4f5a6b7c8d9e0f1a2b3c4d');
-    return '0x${hex.substring(0, 40).toLowerCase()}';
-  }
-
   String get _currentCryptoDepositAddress {
     switch (_cryptoNetwork) {
       case 'USDT TRC-20':
-        return _recipientTrc20Address;
+        return (_recipientTrc20 ?? '').trim();
       case 'USDT BEP-20':
-        return _recipientBep20Address;
+        return (_recipientBep20 ?? '').trim();
       case 'Binance Pay':
       default:
-        return _recipientBinancePayId;
+        return (_recipientBinancePay ?? '').trim();
     }
   }
+
+  bool get _isCurrentCryptoConfigured => _currentCryptoDepositAddress.isNotEmpty;
 
   int get _calculatedMinutesForAmount {
     final amt = double.tryParse(_amountController.text.trim()) ?? 0;
@@ -217,6 +262,15 @@ class _SendPaymentSheetContentState
         }
         txId = trx.toUpperCase();
       } else {
+        if (!_isCurrentCryptoConfigured) {
+          setState(() => _isProcessing = false);
+          showSnackBar(
+            context: context,
+            content: '${widget.contactName} has not configured a verified $_cryptoNetwork address. Please send minutes via Livocal Wallet.',
+            type: SnacBarType.error,
+          );
+          return;
+        }
         methodDisplay = 'Crypto ($_cryptoNetwork)';
         final hash = _trxIdController.text.trim();
         final hashRegex = RegExp(r'^[A-Za-z0-9]{8,80}$');
@@ -229,7 +283,7 @@ class _SendPaymentSheetContentState
           );
           return;
         }
-        txId = hash;
+        txId = hash.toUpperCase();
       }
 
       // Log central audit record in p2p_payments for manual MFS and Crypto transfers
@@ -690,7 +744,7 @@ class _SendPaymentSheetContentState
                                 ),
                               ),
                               Text(
-                                _recipientPhone,
+                                _targetMfsNumber,
                                 style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
@@ -707,12 +761,12 @@ class _SendPaymentSheetContentState
                           ),
                           onPressed: () {
                             Clipboard.setData(
-                              ClipboardData(text: _recipientPhone),
+                              ClipboardData(text: _targetMfsNumber),
                             );
                             showSnackBar(
                               context: context,
                               content:
-                                  '$_recipientPhone copied to clipboard!',
+                                  '$_targetMfsNumber copied to clipboard!',
                               type: SnacBarType.info,
                             );
                           },
@@ -779,62 +833,102 @@ class _SendPaymentSheetContentState
                       }).toList(),
                     ),
                     const SizedBox(height: 10),
-                    // Recipient's Crypto Deposit Address with 1-Tap Copy
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E282D) : Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+                    if (_isLoadingRecipientSettings) ...[
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(12),
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
                       ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${widget.contactName}\'s ${_cryptoNetwork == "Binance Pay" ? "Binance Pay ID" : "$_cryptoNetwork Deposit Address"}:',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 3),
-                                SelectableText(
-                                  _currentCryptoDepositAddress,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.4,
-                                  ),
-                                ),
-                              ],
-                            ),
+                    ] else if (!_isCurrentCryptoConfigured) ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.amber.shade700.withValues(alpha: 0.5),
                           ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.copy_rounded,
-                              size: 19,
-                              color: Colors.orange,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.warning_amber_rounded,
+                              color: Colors.amber.shade800,
+                              size: 20,
                             ),
-                            tooltip: 'Copy Address',
-                            onPressed: () {
-                              Clipboard.setData(
-                                ClipboardData(text: _currentCryptoDepositAddress),
-                              );
-                              showSnackBar(
-                                context: context,
-                                content:
-                                    '$_cryptoNetwork address copied to clipboard!',
-                                type: SnacBarType.info,
-                              );
-                            },
-                          ),
-                        ],
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '${widget.contactName} has not added their verified $_cryptoNetwork address yet. To prevent loss of cryptocurrency, direct crypto transfer to this user is unavailable. Please transfer minutes via Livocal Wallet.',
+                                style: TextStyle(
+                                  color: isDark ? Colors.amber.shade200 : Colors.amber.shade900,
+                                  fontSize: 12,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                    ] else ...[
+                      // Recipient's Verified Crypto Deposit Address with 1-Tap Copy
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E282D) : Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${widget.contactName}\'s ${_cryptoNetwork == "Binance Pay" ? "Binance Pay ID" : "$_cryptoNetwork Deposit Address"}:',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  SelectableText(
+                                    _currentCryptoDepositAddress,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.4,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.copy_rounded,
+                                size: 19,
+                                color: Colors.orange,
+                              ),
+                              tooltip: 'Copy Address',
+                              onPressed: () {
+                                Clipboard.setData(
+                                  ClipboardData(text: _currentCryptoDepositAddress),
+                                );
+                                showSnackBar(
+                                  context: context,
+                                  content:
+                                      '$_cryptoNetwork address copied to clipboard!',
+                                  type: SnacBarType.info,
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 10),
                     TextField(
                       controller: _trxIdController,
@@ -878,7 +972,10 @@ class _SendPaymentSheetContentState
                   borderRadius: BorderRadius.circular(24),
                 ),
               ),
-              onPressed: _isProcessing ? null : _processPayment,
+              onPressed: (_isProcessing ||
+                      (_selectedMethod == 'crypto' && !_isCurrentCryptoConfigured))
+                  ? null
+                  : _processPayment,
               child: _isProcessing
                   ? const SizedBox(
                       width: 20,
