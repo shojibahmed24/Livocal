@@ -11,6 +11,7 @@ import 'package:livocal/features/home/views/contacts.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/models/user_wallet.dart';
 import 'package:livocal/shared/repositories/wallet_repository.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/theme.dart';
 
@@ -116,13 +117,13 @@ class _CallsTabState extends ConsumerState<CallsTab>
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: isExhausted
-                    ? Colors.amber.withOpacity(0.12)
+                    ? Colors.amber.withValues(alpha: 0.12)
                     : (isTrial ? const Color(0xFF0D2820) : const Color(0xFF131F2E)),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: isExhausted
-                      ? Colors.amber.withOpacity(0.5)
-                      : (isTrial ? AppColors.primary.withOpacity(0.4) : const Color(0xFF06B6D4).withOpacity(0.4)),
+                      ? Colors.amber.withValues(alpha: 0.5)
+                      : (isTrial ? AppColors.primary.withValues(alpha: 0.4) : const Color(0xFF06B6D4).withValues(alpha: 0.4)),
                   width: 1.2,
                 ),
               ),
@@ -132,7 +133,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
                     padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
                       color: (isExhausted ? Colors.amber : (isTrial ? AppColors.primary : const Color(0xFF06B6D4)))
-                          .withOpacity(0.2),
+                          .withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -148,10 +149,10 @@ class _CallsTabState extends ConsumerState<CallsTab>
                       children: [
                         Text(
                           isTrial
-                              ? '⏱️ ট্রায়াল: ${wallet.trialMinutes} মিনিট বাকি'
+                              ? AppStrings.trParams(ref, 'trialRemainingBadge', {'minutes': '${wallet.trialMinutes}'})
                               : (isExhausted
-                                  ? '⚠️ ব্যালেন্স শেষ (০ মিনিট)'
-                                  : '💎 ব্যালেন্স: ${wallet.balanceMinutes} মিনিট'),
+                                  ? AppStrings.tr(ref, 'balanceExhaustedBadge')
+                                  : AppStrings.trParams(ref, 'balanceMinutesBadge', {'minutes': '${wallet.balanceMinutes}'})),
                           style: TextStyle(
                             color: isExhausted ? Colors.amber[200] : Colors.white,
                             fontWeight: FontWeight.bold,
@@ -160,10 +161,10 @@ class _CallsTabState extends ConsumerState<CallsTab>
                         ),
                         Text(
                           isTrial
-                              ? '${wallet.daysRemainingInTrial} দিন অবশিষ্ট • লোকাল কল ফ্রি'
+                              ? AppStrings.trParams(ref, 'trialDaysLeftNotice', {'days': '${wallet.daysRemainingInTrial}'})
                               : (isExhausted
-                                  ? 'অনুবাদ কলের জন্য রিচার্জ করুন • লোকাল কল ফ্রি'
-                                  : 'অনুবাদিত কল প্রতি মিনিটে ১ মিনিট • লোকাল কল ফ্রি'),
+                                  ? AppStrings.tr(ref, 'rechargeForTranslationNotice')
+                                  : AppStrings.tr(ref, 'translationRateNotice')),
                           style: TextStyle(
                             color: isExhausted ? Colors.amber[300] : Colors.white60,
                             fontSize: 10.5,
@@ -186,7 +187,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
                     ),
                     onPressed: () => showMinuteRechargeSheet(context, user: widget.user),
                     child: Text(
-                      isExhausted ? 'রিচার্জ' : '+ রিচার্জ',
+                      isExhausted ? AppStrings.tr(ref, 'recharge') : AppStrings.tr(ref, 'rechargePlus'),
                       style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -211,11 +212,11 @@ class _CallsTabState extends ConsumerState<CallsTab>
             ),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: AppColors.primary.withOpacity(0.45),
+              color: AppColors.primary.withValues(alpha: 0.45),
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.18),
+                color: Colors.black.withValues(alpha: 0.18),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -229,7 +230,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.22),
+                      color: AppColors.primary.withValues(alpha: 0.22),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -243,16 +244,16 @@ class _CallsTabState extends ConsumerState<CallsTab>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Gemini 3.5 Live Voice Translation',
-                          style: TextStyle(
+                        Text(
+                          AppStrings.tr(ref, 'geminiLiveVoiceTranslation'),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
                           ),
                         ),
                         Text(
-                          '${CallLanguageRegistry.allLanguages.length}+ Languages • Universal Any-to-Any Pair',
+                          AppStrings.trParams(ref, 'universalLanguagePairSub', {'count': '${CallLanguageRegistry.allLanguages.length}'}),
                           style: const TextStyle(
                             color: AppColors.primary,
                             fontSize: 11.5,
@@ -274,7 +275,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
                       onTap: () async {
                         final picked = await showUniversalLanguagePicker(
                           context,
-                          title: 'Select Your Language',
+                          title: AppStrings.tr(ref, 'selectYourLanguage'),
                           selectedCode: myLang.code,
                         );
                         if (picked != null) {
@@ -296,9 +297,9 @@ class _CallsTabState extends ConsumerState<CallsTab>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'MY LANGUAGE (SPEAK & HEAR)',
-                              style: TextStyle(
+                            Text(
+                              AppStrings.tr(ref, 'myLanguageLabel'),
+                              style: const TextStyle(
                                 color: Colors.white54,
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.bold,
@@ -348,7 +349,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.25),
+                          color: AppColors.primary.withValues(alpha: 0.25),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -365,7 +366,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
                       onTap: () async {
                         final picked = await showUniversalLanguagePicker(
                           context,
-                          title: 'Select Peer Language',
+                          title: AppStrings.tr(ref, 'selectPeerLanguage'),
                           selectedCode: peerLang.code,
                         );
                         if (picked != null) {
@@ -387,9 +388,9 @@ class _CallsTabState extends ConsumerState<CallsTab>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'PEER LANGUAGE (SPEAK & HEAR)',
-                              style: TextStyle(
+                            Text(
+                              AppStrings.tr(ref, 'peerLanguageLabel'),
+                              style: const TextStyle(
                                 color: Colors.white54,
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.bold,
@@ -450,9 +451,9 @@ class _CallsTabState extends ConsumerState<CallsTab>
                     elevation: 1,
                   ),
                   icon: const Icon(Icons.dialpad_rounded, size: 20),
-                  label: const Text(
-                    'Dial Number',
-                    style: TextStyle(
+                  label: Text(
+                    AppStrings.tr(ref, 'dialNumber'),
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
@@ -475,9 +476,9 @@ class _CallsTabState extends ConsumerState<CallsTab>
                     ),
                   ),
                   icon: const Icon(Icons.contacts_rounded, size: 20),
-                  label: const Text(
-                    'Contacts',
-                    style: TextStyle(
+                  label: Text(
+                    AppStrings.tr(ref, 'contacts'),
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
@@ -499,7 +500,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
         Padding(
           padding: const EdgeInsets.fromLTRB(18, 12, 18, 6),
           child: Text(
-            'Recent Translated & Voice Calls',
+            AppStrings.tr(ref, 'recentCallsHeader'),
             style: TextStyle(
               color: colorTheme.greyColor,
               fontWeight: FontWeight.bold,
@@ -513,7 +514,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
             padding: const EdgeInsets.all(32.0),
             child: Center(
               child: Text(
-                'No recent calls yet. Tap a contact or "Start Live AI Call" above.',
+                AppStrings.tr(ref, 'noRecentCalls'),
                 textAlign: TextAlign.center,
                 style: TextStyle(color: colorTheme.greyColor),
               ),
@@ -555,6 +556,8 @@ class _CallsTabState extends ConsumerState<CallsTab>
               ),
               title: Text(
                 record.peerName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: isMissed ? Colors.redAccent : colorTheme.textColor1,
                   fontWeight: FontWeight.w600,
@@ -600,7 +603,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.14),
+                        color: AppColors.primary.withValues(alpha: 0.14),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -620,7 +623,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.teal.withOpacity(0.14),
+                        color: Colors.teal.withValues(alpha: 0.14),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Text(

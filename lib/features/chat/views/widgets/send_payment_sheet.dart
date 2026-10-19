@@ -472,96 +472,93 @@ class _SendPaymentSheetContentState
                 border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Column(
-                children: [
-                  RadioListTile<String>(
-                    value: 'wallet',
-                    groupValue: _selectedMethod,
-                    title: Row(
-                      children: [
-                        const Icon(
-                          Icons.account_balance_wallet,
-                          size: 20,
-                          color: AppColors.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Livocal In-App Wallet',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+              child: RadioGroup<String>(
+                groupValue: _selectedMethod,
+                onChanged: (val) {
+                  if (val != null) setState(() => _selectedMethod = val);
+                },
+                child: Column(
+                  children: [
+                    RadioListTile<String>(
+                      value: 'wallet',
+                      title: Row(
+                        children: [
+                          const Icon(
+                            Icons.account_balance_wallet,
+                            size: 20,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Livocal In-App Wallet',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                'Balance: $availableMinutes mins (transfers $neededMinutes mins)',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: hasEnoughWallet
-                                      ? const Color(0xFF25D366)
-                                      : Colors.redAccent,
+                                Text(
+                                  'Balance: $availableMinutes mins (transfers $neededMinutes mins)',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: hasEnoughWallet
+                                        ? const Color(0xFF25D366)
+                                        : Colors.redAccent,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    activeColor: AppColors.primary,
-                    onChanged: (val) => setState(() => _selectedMethod = val!),
-                  ),
-                  const Divider(height: 1),
-                  RadioListTile<String>(
-                    value: 'mfs',
-                    groupValue: _selectedMethod,
-                    title: const Row(
-                      children: [
-                        Icon(
-                          Icons.phone_android,
-                          size: 20,
-                          color: Colors.pinkAccent,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'bKash / Nagad MFS (Direct Send)',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                    const Divider(height: 1),
+                    const RadioListTile<String>(
+                      value: 'mfs',
+                      title: Row(
+                        children: [
+                          Icon(
+                            Icons.phone_android,
+                            size: 20,
+                            color: Colors.pinkAccent,
                           ),
-                        ),
-                      ],
-                    ),
-                    activeColor: AppColors.primary,
-                    onChanged: (val) => setState(() => _selectedMethod = val!),
-                  ),
-                  const Divider(height: 1),
-                  RadioListTile<String>(
-                    value: 'crypto',
-                    groupValue: _selectedMethod,
-                    title: const Row(
-                      children: [
-                        Icon(
-                          Icons.currency_bitcoin,
-                          size: 20,
-                          color: Colors.orange,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Crypto (Binance Pay / USDT)',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                          SizedBox(width: 8),
+                          Text(
+                            'bKash / Nagad MFS (Direct Send)',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    activeColor: AppColors.primary,
-                    onChanged: (val) => setState(() => _selectedMethod = val!),
-                  ),
-                ],
+                    const Divider(height: 1),
+                    const RadioListTile<String>(
+                      value: 'crypto',
+                      title: Row(
+                        children: [
+                          Icon(
+                            Icons.currency_bitcoin,
+                            size: 20,
+                            color: Colors.orange,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Crypto (Binance Pay / USDT)',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -665,7 +662,7 @@ class _SendPaymentSheetContentState
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              'Live Rate: \$1.00 ≈ ${_usdToBdtRate.toInt()} BDT  |  Total: ৳${_calculatedBdtAmount.toStringAsFixed(0)} BDT',
+                              'Live Rate: \$1.00 ≈ ${_usdToBdtRate.toInt()} BDT  |  Total: ${_calculatedBdtAmount.toStringAsFixed(0)} BDT',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,

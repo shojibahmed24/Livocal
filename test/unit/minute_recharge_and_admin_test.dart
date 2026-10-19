@@ -220,7 +220,7 @@ void main() {
       const expectedDeposit = '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97';
       const cleanExpected = '4838b106fce9647bdf1e7877bf73ce8b0bad5f97';
       expect(expectedDeposit.toLowerCase().contains(cleanExpected), isTrue);
-      final paddedTopic = '0x000000000000000000000000$cleanExpected';
+      const paddedTopic = '0x000000000000000000000000$cleanExpected';
 
       // Simulate Transfer event log
       final log = {

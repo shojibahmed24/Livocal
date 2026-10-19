@@ -20,8 +20,6 @@ class CallAudioPipeline {
       FlutterSoundRecorder(logLevel: Level.error);
   final FlutterSoundPlayer _aiPlayer =
       FlutterSoundPlayer(logLevel: Level.error);
-  final FlutterSoundPlayer _peerRawPlayer =
-      FlutterSoundPlayer(logLevel: Level.error);
 
   StreamController<Uint8List>? _micRawController;
   StreamSubscription<Uint8List>? _micRawSubscription;
@@ -44,6 +42,14 @@ class CallAudioPipeline {
   bool get isMuted => _isMuted;
   bool get isSpeakerphoneOn => _isSpeakerphoneOn;
   CallAudioMode get audioMode => _audioMode;
+  static const double vadSilenceThreshold = 0.04; // Voice threshold above room noise floor
+  static const double bargeInThreshold = 0.13; // Calibrated barge-in threshold during AI speakerphone playback (C3)
+  static const int vadHangoverFrames = 7; // ~420ms hangover window (7 * 60ms) to preserve word endings
+
+  int _vadSilenceFramesCount = 0;
+  bool _isVadActive = false;
+
+  bool get isVadVoiceActive => _isVadActive;
 
   Future<void> configureVoiceSession({bool defaultToSpeaker = true}) async {
     final session = await AudioSession.instance;
@@ -83,22 +89,13 @@ class CallAudioPipeline {
 
     await _recorder.openRecorder();
     await _aiPlayer.openPlayer();
-    await _peerRawPlayer.openPlayer();
 
     await _aiPlayer.startPlayerFromStream(
       codec: Codec.pcm16,
       interleaved: true,
       numChannels: numChannels,
       sampleRate: outputSampleRate,
-      bufferSize: 4096,
-    );
-
-    await _peerRawPlayer.startPlayerFromStream(
-      codec: Codec.pcm16,
-      interleaved: true,
-      numChannels: numChannels,
-      sampleRate: inputSampleRate,
-      bufferSize: 4096,
+      bufferSize: 2048, // (C1) Reduced from 4096 to 2048 (~85ms @ 24kHz)
     );
 
     await _applyVolumesForMode(_audioMode);
@@ -109,14 +106,37 @@ class CallAudioPipeline {
     _micRawSubscription = _micRawController!.stream.listen((Uint8List data) {
       if (_isMuted || data.isEmpty) {
         _micRmsController.add(0.0);
+        _isVadActive = false;
+        _vadSilenceFramesCount = 0;
+        chunkBuffer.clear();
         return;
       }
 
       final rms = _computeNormalizedRms(data);
       _micRmsController.add(rms);
 
-      // Echo Gate safety: if speakerphone is on and AI is speaking, require barge-in threshold
-      if (_isSpeakerphoneOn && _isAiCurrentlySpeaking && rms < 0.18) {
+      // Determine active dynamic threshold:
+      // When speakerphone is on and AI is speaking, require calibrated barge-in threshold (0.13) to avoid echo loop.
+      // Otherwise use VAD speech threshold (0.04) to distinguish voice from room silence.
+      final activeThreshold = (_isSpeakerphoneOn && _isAiCurrentlySpeaking)
+          ? bargeInThreshold
+          : vadSilenceThreshold;
+
+      if (rms >= activeThreshold) {
+        _isVadActive = true;
+        _vadSilenceFramesCount = 0;
+      } else {
+        _vadSilenceFramesCount++;
+        if (_vadSilenceFramesCount > vadHangoverFrames) {
+          _isVadActive = false;
+        }
+      }
+
+      // If VAD is inactive (prolonged silence), drop the audio frame to save uplink bandwidth & Gemini input tokens
+      if (!_isVadActive) {
+        if (chunkBuffer.length > 0) {
+          chunkBuffer.clear();
+        }
         return;
       }
 
@@ -138,9 +158,11 @@ class CallAudioPipeline {
       codec: Codec.pcm16,
       numChannels: numChannels,
       sampleRate: inputSampleRate,
-      bufferSize: 2048,
+      bufferSize: 1024, // (C1) Reduced from 2048 to 1024 (~64ms @ 16kHz)
       enableVoiceProcessing: true,
-      enableNoiseSuppression: true,
+      // Disable redundant software noise suppression when VoiceProcessing is active
+      // to avoid double-processing robotic/metallic voice distortion
+      enableNoiseSuppression: false,
       enableEchoCancellation: true,
     );
 
@@ -157,12 +179,6 @@ class CallAudioPipeline {
     _aiPlayer.uint8ListSink?.add(pcm24kChunk);
   }
 
-  void feedOriginalPeerPcm(Uint8List pcm16kChunk) {
-    if (!_isInitialized || pcm16kChunk.isEmpty) return;
-    if (_audioMode == CallAudioMode.translatedOnly) return;
-    _peerRawPlayer.uint8ListSink?.add(pcm16kChunk);
-  }
-
   Future<void> flushAiPlayerBuffer() async {
     if (!_isInitialized) return;
     try {
@@ -172,7 +188,7 @@ class CallAudioPipeline {
         interleaved: true,
         numChannels: numChannels,
         sampleRate: outputSampleRate,
-        bufferSize: 4096,
+        bufferSize: 2048, // (C1) Reduced from 4096 to 2048 (~85ms @ 24kHz)
       );
       await _applyVolumesForMode(_audioMode);
     } catch (e) {
@@ -189,16 +205,11 @@ class CallAudioPipeline {
   Future<void> _applyVolumesForMode(CallAudioMode mode) async {
     switch (mode) {
       case CallAudioMode.translatedOnly:
-        await _aiPlayer.setVolume(1.0);
-        await _peerRawPlayer.setVolume(0.0);
-        break;
       case CallAudioMode.ducking:
         await _aiPlayer.setVolume(1.0);
-        await _peerRawPlayer.setVolume(0.15);
         break;
       case CallAudioMode.originalOnly:
         await _aiPlayer.setVolume(0.0);
-        await _peerRawPlayer.setVolume(1.0);
         break;
     }
   }
@@ -241,12 +252,6 @@ class CallAudioPipeline {
       await _aiPlayer.closePlayer();
     } catch (e, st) {
       debugPrint('[CallAudioPipeline] closePlayer (ai) error: $e\n$st');
-    }
-    try {
-      if (_peerRawPlayer.isPlaying) await _peerRawPlayer.stopPlayer();
-      await _peerRawPlayer.closePlayer();
-    } catch (e, st) {
-      debugPrint('[CallAudioPipeline] closePlayer (peer) error: $e\n$st');
     }
     try {
       final session = await AudioSession.instance;

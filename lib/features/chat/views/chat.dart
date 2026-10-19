@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,6 +10,7 @@ import 'package:uuid/uuid.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:visibility_detector/visibility_detector.dart';
+import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'package:livocal/features/calls/views/outgoing_call_screen.dart';
 import 'package:livocal/features/chat/controllers/chat_controller.dart';
 import 'package:livocal/features/chat/models/message.dart';
@@ -71,7 +73,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     return Platform.isAndroid
         ? PopScope(
             canPop: false,
-            onPopInvoked: (didPop) async {
+            onPopInvokedWithResult: (didPop, result) async {
               if (!ref.read(chatControllerProvider).showEmojiPicker) {
                 Navigator.pop(context);
                 return;
@@ -229,15 +231,23 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             },
           ),
           IconButton(
-            tooltip: 'Voice Call with AI Translation',
+            tooltip: 'Voice Call',
             onPressed: recordingState == RecordingState.notRecording
                 ? () {
+                    final settings = CallRepository.getPeerTranslationSettings(
+                      peerId: widget.other.id,
+                      peerName: widget.otherUserContactName,
+                      peerPhone: widget.other.phone.number,
+                    );
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => OutgoingCallScreen(
                           caller: self,
                           callee: other,
                           calleeDisplayName: widget.otherUserContactName,
+                          overrideMyLangCode: settings.myLangCode,
+                          overridePeerLangCode: settings.peerLangCode,
+                          initialTranslationEnabled: settings.isTranslationEnabled,
                         ),
                       ),
                     );
@@ -444,11 +454,11 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
     );
 
     final systemBottomPadding = MediaQuery.of(context).padding.bottom;
+    final systemViewPaddingBottom = MediaQuery.of(context).viewPadding.bottom;
+    final gestureInset = math.max(systemBottomPadding, systemViewPaddingBottom);
     final dynamicBottomPadding = isKeyboardVisible
-        ? 0.0
-        : (systemBottomPadding > 0
-            ? systemBottomPadding + 4.0
-            : (Platform.isAndroid ? 8.0 : 24.0));
+        ? 6.0
+        : (gestureInset > 0 ? gestureInset + 4.0 : (Platform.isAndroid ? 10.0 : 24.0));
 
     return Theme(
       data: Theme.of(context).copyWith(
@@ -644,7 +654,7 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
         milliseconds: MediaQuery.of(context).viewInsets.bottom > 0 ? 300 : 0,
       ),
       () async {
-        if (!mounted) return;
+        if (!context.mounted) return;
         showDialog(
           barrierColor: null,
           context: context,

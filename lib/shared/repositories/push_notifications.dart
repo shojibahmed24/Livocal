@@ -21,7 +21,7 @@ final pushNotificationsRepoProvider = Provider(
 
 class PushNotificationsRepo {
   final FirebaseMessaging instance;
-  final ProviderRef ref;
+  final Ref ref;
 
   PushNotificationsRepo(this.instance, this.ref);
 
@@ -136,7 +136,7 @@ Future<void> _handleBackgroundMessage(RemoteMessage message) async {
   }
 }
 
-void handleTokenRefresh(String newToken, ProviderRef ref) {
+void handleTokenRefresh(String newToken, Ref ref) {
   final oldToken = SharedPref.instance.getString('fcmToken');
   if (newToken == oldToken) return;
 

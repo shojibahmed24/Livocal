@@ -86,26 +86,27 @@ class _NotificationsSettingsScreenState
     showAppDialog(
       context: context,
       title: title,
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: options
-            .map(
-              (opt) => RadioListTile<String>(
-                title: Text(_localizeOption(opt)),
-                value: opt,
-                groupValue: currentValue,
-                activeColor: AppColors.primary,
-                onChanged: (val) {
-                  if (val != null) {
-                    SystemSound.play(SystemSoundType.click);
-                    HapticFeedback.selectionClick();
-                    onSelected(val);
-                    Navigator.pop(context);
-                  }
-                },
-              ),
-            )
-            .toList(),
+      content: RadioGroup<String>(
+        groupValue: currentValue,
+        onChanged: (val) {
+          if (val != null) {
+            SystemSound.play(SystemSoundType.click);
+            HapticFeedback.selectionClick();
+            onSelected(val);
+            Navigator.pop(context);
+          }
+        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: options
+              .map(
+                (opt) => RadioListTile<String>(
+                  title: Text(_localizeOption(opt)),
+                  value: opt,
+                ),
+              )
+              .toList(),
+        ),
       ),
       actions: [
         AppDialogAction(
@@ -148,71 +149,66 @@ class _NotificationsSettingsScreenState
         builder: (dialogCtx, setDialogState) {
           final isDark = Theme.of(dialogCtx).brightness == Brightness.dark;
 
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ...presets.map((preset) {
-                final isSelected = currentSelection == preset;
-                final isPlaying = playingTone == preset;
+          return RadioGroup<String>(
+            groupValue: currentSelection,
+            onChanged: (val) {
+              if (val != null) {
+                setDialogState(() => currentSelection = val);
+              }
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ...presets.map((preset) {
+                  final isSelected = currentSelection == preset;
+                  final isPlaying = playingTone == preset;
 
-                return ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Radio<String>(
-                    value: preset,
-                    groupValue: currentSelection,
-                    activeColor: AppColors.primary,
-                    onChanged: (val) {
-                      if (val != null) {
-                        setDialogState(() => currentSelection = val);
-                      }
-                    },
-                  ),
-                  title: Text(
-                    _localizeOption(preset),
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                      color: isSelected
-                          ? AppColors.primary
-                          : (isDark ? Colors.white : Colors.black87),
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Radio<String>(
+                      value: preset,
                     ),
-                  ),
-                  trailing: IconButton(
-                    icon: Icon(
-                      isPlaying ? Icons.stop_circle_rounded : Icons.play_circle_fill_rounded,
-                      color: isPlaying ? const Color(0xFFE53935) : AppColors.primary,
-                      size: 28,
+                    title: Text(
+                      _localizeOption(preset),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                        color: isSelected
+                            ? AppColors.primary
+                            : (isDark ? Colors.white : Colors.black87),
+                      ),
                     ),
-                    onPressed: () async {
-                      if (isPlaying) {
-                        await RingtoneManager().stopPreview();
-                        setDialogState(() => playingTone = null);
-                      } else {
-                        setDialogState(() => playingTone = preset);
-                        await RingtoneManager().previewTone(preset);
-                      }
+                    trailing: IconButton(
+                      icon: Icon(
+                        isPlaying ? Icons.stop_circle_rounded : Icons.play_circle_fill_rounded,
+                        color: isPlaying ? const Color(0xFFE53935) : AppColors.primary,
+                        size: 28,
+                      ),
+                      onPressed: () async {
+                        if (isPlaying) {
+                          await RingtoneManager().stopPreview();
+                          setDialogState(() => playingTone = null);
+                        } else {
+                          setDialogState(() => playingTone = preset);
+                          await RingtoneManager().previewTone(preset);
+                        }
+                      },
+                    ),
+                    onTap: () {
+                      setDialogState(() => currentSelection = preset);
                     },
-                  ),
-                  onTap: () {
-                    setDialogState(() => currentSelection = preset);
-                  },
-                );
-              }),
-              const Divider(),
-              if (customPath != null &&
-                  customPath!.isNotEmpty &&
-                  File(customPath!).existsSync()) ...[
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Radio<String>(
-                    value: 'custom',
-                    groupValue: currentSelection == 'custom' ? 'custom' : null,
-                    activeColor: AppColors.primary,
-                    onChanged: (val) {
-                      setDialogState(() => currentSelection = 'custom');
-                    },
-                  ),
+                  );
+                }),
+                const Divider(),
+                if (customPath != null &&
+                    customPath!.isNotEmpty &&
+                    File(customPath!).existsSync()) ...[
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Radio<String>(
+                      value: 'custom',
+                    ),
                   title: Text(
                     '${AppStrings.tr(ref, 'customLabel')}${File(customPath!).uri.pathSegments.last}',
                     maxLines: 1,
@@ -286,8 +282,9 @@ class _NotificationsSettingsScreenState
                 },
               ),
             ],
-          );
-        },
+          ),
+        );
+      },
       ),
       actions: [
         AppDialogAction(

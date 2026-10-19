@@ -1,12 +1,14 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:livocal/features/calls/views/widgets/direct_dial_sheet.dart';
+import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'package:livocal/features/calls/views/outgoing_call_screen.dart';
+import 'package:livocal/features/calls/views/widgets/direct_dial_sheet.dart';
 import 'package:livocal/features/home/controllers/contacts_controller.dart';
 import 'package:livocal/shared/models/contact.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/widgets/search.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/theme.dart';
@@ -203,12 +205,12 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Dial Phone Number (সরাসরি কল/চ্যাট)',
+                                  AppStrings.tr(ref, 'dialPhoneNumber'),
                                   style: Theme.of(context).custom.textTheme.bold,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
-                                  'Enter number to call or chat directly',
+                                  AppStrings.tr(ref, 'dialPhoneNumberSub'),
                                   style: Theme.of(context).custom.textTheme.caption,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -240,8 +242,13 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                           const SizedBox(
                             width: 18.0,
                           ),
-                          Text('New contact',
-                              style: Theme.of(context).custom.textTheme.bold),
+                          Expanded(
+                            child: Text(
+                              'New contact',
+                              style: Theme.of(context).custom.textTheme.bold,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -287,8 +294,13 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                           const SizedBox(
                             width: 18.0,
                           ),
-                          Text('New Contact',
-                              style: Theme.of(context).custom.textTheme.bold),
+                          Expanded(
+                            child: Text(
+                              'New Contact',
+                              style: Theme.of(context).custom.textTheme.bold,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -316,8 +328,13 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                         const SizedBox(
                           width: 18.0,
                         ),
-                        Text('Share invite link',
-                            style: Theme.of(context).custom.textTheme.bold),
+                        Expanded(
+                          child: Text(
+                            'Share invite link',
+                            style: Theme.of(context).custom.textTheme.bold,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -343,8 +360,13 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                         const SizedBox(
                           width: 18.0,
                         ),
-                        Text('Contacts help',
-                            style: Theme.of(context).custom.textTheme.bold),
+                        Expanded(
+                          child: Text(
+                            'Contacts help',
+                            style: Theme.of(context).custom.textTheme.bold,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -558,12 +580,20 @@ class LivocalContactsList extends StatelessWidget {
                       final receiver =
                           await IsarDb.getUserById(contact.userId!);
                       if (receiver != null && context.mounted) {
+                        final settings = CallRepository.getPeerTranslationSettings(
+                          peerId: receiver.id,
+                          peerName: contact.displayName,
+                          peerPhone: receiver.phone.number,
+                        );
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) => OutgoingCallScreen(
                               caller: user,
                               callee: receiver,
                               calleeDisplayName: contact.displayName,
+                              overrideMyLangCode: settings.myLangCode,
+                              overridePeerLangCode: settings.peerLangCode,
+                              initialTranslationEnabled: settings.isTranslationEnabled,
                             ),
                           ),
                         );

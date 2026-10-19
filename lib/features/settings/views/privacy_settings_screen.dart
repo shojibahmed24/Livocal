@@ -78,24 +78,25 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
     showAppDialog(
       context: context,
       title: title,
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: options
-            .map(
-              (opt) => RadioListTile<String>(
-                title: Text(_localizeOption(opt)),
-                value: opt,
-                groupValue: currentValue,
-                activeColor: AppColors.primary,
-                onChanged: (val) {
-                  if (val != null) {
-                    onSelected(val);
-                    Navigator.pop(context);
-                  }
-                },
-              ),
-            )
-            .toList(),
+      content: RadioGroup<String>(
+        groupValue: currentValue,
+        onChanged: (val) {
+          if (val != null) {
+            onSelected(val);
+            Navigator.pop(context);
+          }
+        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: options
+              .map(
+                (opt) => RadioListTile<String>(
+                  title: Text(_localizeOption(opt)),
+                  value: opt,
+                ),
+              )
+              .toList(),
+        ),
       ),
       actions: [
         AppDialogAction(

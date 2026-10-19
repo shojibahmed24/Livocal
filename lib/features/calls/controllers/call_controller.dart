@@ -17,6 +17,8 @@ import 'package:livocal/features/calls/services/gemini_live_translator.dart';
 import 'package:livocal/features/calls/services/webrtc_call_client.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/wallet_repository.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
 
 final callControllerProvider =
     StateNotifierProvider<CallController, CallControllerState>((ref) {
@@ -40,6 +42,8 @@ class CallControllerState {
   final List<CallHistoryRecord> callHistory;
   final bool hasApiKey;
   final WebRtcCallState webrtcState;
+  final CallNetworkQuality networkQuality;
+  final bool isLowDataModeAutoEnabled;
   final String? error;
 
   const CallControllerState({
@@ -58,11 +62,17 @@ class CallControllerState {
     this.callHistory = const [],
     this.hasApiKey = false,
     this.webrtcState = WebRtcCallState.idle,
+    this.networkQuality = CallNetworkQuality.good,
+    this.isLowDataModeAutoEnabled = false,
     this.error,
   });
 
   CallLanguage get myLanguage => CallLanguageRegistry.fromCode(myLangCode);
   CallLanguage get peerLanguage => CallLanguageRegistry.fromCode(peerLangCode);
+
+  bool get isLowDataMode =>
+      isLowDataModeAutoEnabled ||
+      (SharedPref.instance.getBool('storage_less_data_calls') ?? false);
 
   CallControllerState copyWith({
     CallSession? activeSession,
@@ -81,6 +91,8 @@ class CallControllerState {
     List<CallHistoryRecord>? callHistory,
     bool? hasApiKey,
     WebRtcCallState? webrtcState,
+    CallNetworkQuality? networkQuality,
+    bool? isLowDataModeAutoEnabled,
     String? error,
     bool clearError = false,
   }) {
@@ -102,6 +114,9 @@ class CallControllerState {
       callHistory: callHistory ?? this.callHistory,
       hasApiKey: hasApiKey ?? this.hasApiKey,
       webrtcState: webrtcState ?? this.webrtcState,
+      networkQuality: networkQuality ?? this.networkQuality,
+      isLowDataModeAutoEnabled:
+          isLowDataModeAutoEnabled ?? this.isLowDataModeAutoEnabled,
       error: clearError ? null : (error ?? this.error),
     );
   }
@@ -127,6 +142,16 @@ class CallController extends StateNotifier<CallControllerState> {
   StreamSubscription<CallSession?>? _firestoreCallSub;
   StreamSubscription<Uint8List>? _webrtcRemoteTranslatedAudioSub;
   StreamSubscription<WebRtcCallState>? _webrtcStateSub;
+  StreamSubscription<CallNetworkQuality>? _webrtcQualitySub;
+
+  String get _currentAppLang {
+    try {
+      if (ref != null) {
+        return ref!.read(appLocaleProvider).languageCode;
+      }
+    } catch (_) {}
+    return 'en';
+  }
 
   CallController({required this.repo, this.ref, this.walletRepo})
       : super(
@@ -188,7 +213,18 @@ class CallController extends StateNotifier<CallControllerState> {
 
   Future<void> setPeerLanguage(String langCode) async {
     await CallRepository.setPeerLanguageCode(langCode);
-    state = state.copyWith(peerLangCode: langCode);
+    CallSession? updatedSession;
+    if (state.activeSession != null) {
+      final isSame = state.myLangCode.toLowerCase().trim() == langCode.toLowerCase().trim();
+      updatedSession = state.activeSession!.copyWith(
+        calleeLangCode: langCode,
+        translationEnabled: isSame ? false : state.activeSession!.translationEnabled,
+      );
+    }
+    state = state.copyWith(
+      peerLangCode: langCode,
+      activeSession: updatedSession ?? state.activeSession,
+    );
     if (state.activeSession != null &&
         state.activeSession!.status == CallStateStatus.connected) {
       await _applyLanguagePairUpdate(
@@ -203,7 +239,18 @@ class CallController extends StateNotifier<CallControllerState> {
     final oldPeer = state.peerLangCode;
     await CallRepository.setMyLanguageCode(oldPeer);
     await CallRepository.setPeerLanguageCode(oldMy);
-    state = state.copyWith(myLangCode: oldPeer, peerLangCode: oldMy);
+    CallSession? updatedSession;
+    if (state.activeSession != null) {
+      updatedSession = state.activeSession!.copyWith(
+        callerLangCode: oldPeer,
+        calleeLangCode: oldMy,
+      );
+    }
+    state = state.copyWith(
+      myLangCode: oldPeer,
+      peerLangCode: oldMy,
+      activeSession: updatedSession ?? state.activeSession,
+    );
     if (state.activeSession != null &&
         state.activeSession!.status == CallStateStatus.connected) {
       await _applyLanguagePairUpdate(newMyLang: oldPeer, newPeerLang: oldMy);
@@ -227,8 +274,14 @@ class CallController extends StateNotifier<CallControllerState> {
       targetLangCode: langB.code,
       originalText:
           'Switched live translation pair to: ${langA.shortBadge} ⇄ ${langB.shortBadge}',
-      translatedText:
-          '${langA.nativeName} ⇄ ${langB.nativeName} রিয়েল-টাইম অনুবাদ সক্রিয় করা হয়েছে',
+      translatedText: AppStrings.get(
+        'realtimeTranslationActive',
+        _currentAppLang,
+        args: {
+          'langA': langA.nativeName,
+          'langB': langB.nativeName,
+        },
+      ),
       timestamp: DateTime.now(),
     );
     state = state.copyWith(
@@ -281,14 +334,21 @@ class CallController extends StateNotifier<CallControllerState> {
     // Clear any previous error
     state = state.copyWith(clearError: true);
 
-    final myLang = overrideMyLangCode ?? state.myLangCode;
-    final inferredPeerLang = overridePeerLangCode ??
-        CallRepository.inferPeerLanguageCode(callee.id, calleeDisplayName);
+    final settings = CallRepository.getPeerTranslationSettings(
+      peerId: callee.id,
+      peerName: calleeDisplayName,
+      peerPhone: callee.phone.number,
+      explicitMyLang: overrideMyLangCode,
+      explicitPeerLang: overridePeerLangCode,
+      explicitTranslationEnabled: translationEnabled,
+    );
+
+    final myLang = settings.myLangCode;
+    final inferredPeerLang = settings.peerLangCode;
+    final effectiveTranslation = settings.isEffectivelyTranslated;
 
     await CallRepository.setMyLanguageCode(myLang);
     await CallRepository.setPeerLanguageCode(inferredPeerLang);
-
-    final effectiveTranslation = translationEnabled ?? state.translationEnabled;
 
     // Pre-call gatekeeper check:
     // Only translated calls (where translation is enabled AND languages differ) require minutes!
@@ -297,7 +357,7 @@ class CallController extends StateNotifier<CallControllerState> {
         (myLang.toLowerCase().trim() != inferredPeerLang.toLowerCase().trim());
 
     if (isTranslated) {
-      final wRepo = walletRepo ?? (ref != null ? ref!.read(walletRepositoryProvider) : null);
+      final wRepo = walletRepo ?? ref?.read(walletRepositoryProvider);
       if (wRepo != null) {
         final wallet = await wRepo.getWallet(caller.id);
         if (!wallet.hasMinutes) {
@@ -622,6 +682,17 @@ class CallController extends StateNotifier<CallControllerState> {
       }
     });
 
+    // Subscribe to network quality updates to dynamically toggle low data mode (B2 & B5)
+    _webrtcQualitySub?.cancel();
+    _webrtcQualitySub = _webrtcClient.networkQualityStream.listen((quality) {
+      final isPoor = quality == CallNetworkQuality.poor;
+      debugPrint('[CallController] Network quality changed to: $quality (autoLowData: $isPoor)');
+      state = state.copyWith(
+        networkQuality: quality,
+        isLowDataModeAutoEnabled: isPoor,
+      );
+    });
+
     // 1. Start call duration timer with in-call 60s heartbeat metering
     _callDurationTimer?.cancel();
     _callDurationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -657,8 +728,15 @@ class CallController extends StateNotifier<CallControllerState> {
             ? '📞 Direct Voice Call Active: Both participants speak ${myLang.nativeName} (${myLang.englishName}). WebRTC audio streaming directly with zero AI translation.'
             : '📞 Direct Voice Call Active: AI translation is turned off. Direct WebRTC audio active.',
         translatedText: isSameLanguage
-            ? 'উভয় ব্যবহারকারীর ভাষা একই (${myLang.nativeName})। সরাসরি আসল কণ্ঠে কোনো ট্রান্সলেশন ছাড়াই কথা বলুন।'
-            : 'সরাসরি ভয়েস কল সক্রিয় রয়েছে।',
+            ? AppStrings.get(
+                'sameLanguageDirectCallNotice',
+                _currentAppLang,
+                args: {'lang': myLang.nativeName},
+              )
+            : AppStrings.get(
+                'directVoiceCallActiveNotice',
+                _currentAppLang,
+              ),
         timestamp: DateTime.now(),
       );
 
@@ -688,8 +766,17 @@ class CallController extends StateNotifier<CallControllerState> {
       debugPrint('AudioPipeline start error: $e');
     }
 
-    // Mute WebRTC raw mic when neural interpreter pipeline is active to prevent audio collision
-    _webrtcClient.setMicrophoneMute(true);
+    // Apply WebRTC audio volume and mic mute based on active audioMode
+    if (state.audioMode == CallAudioMode.translatedOnly) {
+      _webrtcClient.setRemoteAudioVolume(0.0);
+      _webrtcClient.setMicrophoneMute(true);
+    } else if (state.audioMode == CallAudioMode.ducking) {
+      _webrtcClient.setRemoteAudioVolume(0.15);
+      _webrtcClient.setMicrophoneMute(state.isMuted);
+    } else {
+      _webrtcClient.setRemoteAudioVolume(1.0);
+      _webrtcClient.setMicrophoneMute(state.isMuted);
+    }
 
     // 3. Connect Gemini Live WebSocket Engine for (myLanguage <-> peerLanguage)
     _geminiStateSub = _geminiTranslator.stateStream.listen((gState) {
@@ -754,7 +841,7 @@ class CallController extends StateNotifier<CallControllerState> {
         sourceLangCode: myLang.code,
         targetLangCode: peerLang.code,
         originalText: 'AI Interpreter unavailable (missing key/relay). Connected via direct WebRTC voice.',
-        translatedText: 'এআই ইন্টারপ্রেটার অনুপলব্ধ। সরাসরি ভয়েস কলে সংযুক্ত করা হয়েছে।',
+        translatedText: AppStrings.get('aiUnavailableDirectFallback', _currentAppLang),
         timestamp: DateTime.now(),
       );
       state = state.copyWith(
@@ -779,8 +866,11 @@ class CallController extends StateNotifier<CallControllerState> {
       originalText: connectedWs
           ? '🟢 Live Neural Audio Interpreter Active: Speak in ${myLang.nativeName} (${myLang.englishName}) or ${peerLang.nativeName} (${peerLang.englishName}).'
           : '⚡ Live Interpreter Ready (${myLang.shortBadge} ⇄ ${peerLang.shortBadge}). Speak into mic or tap quick test phrases below.',
-      translatedText:
-          '${myLang.flagEmoji} ${myLang.nativeName} ⇄ ${peerLang.flagEmoji} ${peerLang.nativeName} রিয়েল-টাইম ভয়েস ট্রান্সলেশন চালু হয়েছে। যেকোনো ভাষায় কথা বলুন!',
+      translatedText: AppStrings.get('callTranslationActiveNotice', _currentAppLang)
+          .replaceAll('{myEmoji}', myLang.flagEmoji)
+          .replaceAll('{myName}', myLang.nativeName)
+          .replaceAll('{peerEmoji}', peerLang.flagEmoji)
+          .replaceAll('{peerName}', peerLang.nativeName),
       timestamp: DateTime.now(),
     );
 
@@ -795,10 +885,10 @@ class CallController extends StateNotifier<CallControllerState> {
   void toggleMute() {
     final nextMute = !state.isMuted;
     _audioPipeline.setMuted(nextMute);
-    if (!state.translationEnabled) {
+    if (!state.translationEnabled || state.audioMode != CallAudioMode.translatedOnly) {
       _webrtcClient.setMicrophoneMute(nextMute);
     } else {
-      // When live AI translation is enabled, raw mic must remain muted in WebRTC
+      // In translatedOnly mode, raw mic is kept muted to conserve mobile bandwidth
       _webrtcClient.setMicrophoneMute(true);
     }
     if (nextMute) {
@@ -818,10 +908,13 @@ class CallController extends StateNotifier<CallControllerState> {
     await _audioPipeline.setAudioMode(mode);
     if (mode == CallAudioMode.translatedOnly) {
       _webrtcClient.setRemoteAudioVolume(0.0);
+      _webrtcClient.setMicrophoneMute(true);
     } else if (mode == CallAudioMode.ducking) {
       _webrtcClient.setRemoteAudioVolume(0.15);
+      _webrtcClient.setMicrophoneMute(state.isMuted);
     } else {
       _webrtcClient.setRemoteAudioVolume(1.0);
+      _webrtcClient.setMicrophoneMute(state.isMuted);
     }
     state = state.copyWith(audioMode: mode);
   }
@@ -893,7 +986,7 @@ class CallController extends StateNotifier<CallControllerState> {
     final session = state.activeSession;
     if (session == null) return;
 
-    final wRepo = walletRepo ?? (ref != null ? ref!.read(walletRepositoryProvider) : null);
+    final wRepo = walletRepo ?? ref?.read(walletRepositoryProvider);
     if (wRepo == null) return;
 
     final result = await wRepo.deductMinute(
@@ -913,9 +1006,10 @@ class CallController extends StateNotifier<CallControllerState> {
         speakerName: 'Livocal Billing',
         isSelf: true,
         sourceLangCode: 'en',
-        targetLangCode: 'bn',
+        targetLangCode: _currentAppLang,
         originalText: '⚠️ Low Balance Warning: You have ${result.remainingMinutes} minute(s) remaining.',
-        translatedText: '⚠️ সতর্কবার্তা: আপনার অ্যাকাউন্টে আর মাত্র ${result.remainingMinutes} মিনিট বাকি আছে।',
+        translatedText: AppStrings.get('callWarningRemainingMinutes', _currentAppLang)
+            .replaceAll('{minutes}', '${result.remainingMinutes}'),
         timestamp: DateTime.now(),
       );
       state = state.copyWith(transcripts: [...state.transcripts, warningBubble]);
@@ -928,9 +1022,9 @@ class CallController extends StateNotifier<CallControllerState> {
         speakerName: 'Livocal Billing',
         isSelf: true,
         sourceLangCode: 'en',
-        targetLangCode: 'bn',
+        targetLangCode: _currentAppLang,
         originalText: '🛑 Minutes Exhausted: Your call balance has reached 0 minutes. Call disconnected.',
-        translatedText: '🛑 আপনার মিনিট শেষ হয়ে গেছে। কলটি সমাপ্ত করা হচ্ছে।',
+        translatedText: AppStrings.get('callTerminatedExhausted', _currentAppLang),
         timestamp: DateTime.now(),
       );
       state = state.copyWith(
@@ -955,7 +1049,7 @@ class CallController extends StateNotifier<CallControllerState> {
       // Finalize call billing record if caller in translated call
       if (!current.isIncoming && current.isTranslatedCall) {
         final totalMinutesBilled = (duration + 59) ~/ 60;
-        final wRepo = walletRepo ?? (ref != null ? ref!.read(walletRepositoryProvider) : null);
+        final wRepo = walletRepo ?? ref?.read(walletRepositoryProvider);
         wRepo?.finalizeCallBilling(
           callId: current.callId,
           totalDurationSeconds: duration,
@@ -990,6 +1084,8 @@ class CallController extends StateNotifier<CallControllerState> {
       micRmsLevel: 0.0,
       geminiState: GeminiLiveState.ready,
       callHistory: repo.getCallHistory(),
+      networkQuality: CallNetworkQuality.good,
+      isLowDataModeAutoEnabled: false,
     );
   }
 
@@ -1013,6 +1109,8 @@ class CallController extends StateNotifier<CallControllerState> {
     _webrtcRemoteTranslatedAudioSub = null;
     await _webrtcStateSub?.cancel();
     _webrtcStateSub = null;
+    await _webrtcQualitySub?.cancel();
+    _webrtcQualitySub = null;
 
     await _webrtcClient.endCall();
     await _geminiTranslator.disconnect();

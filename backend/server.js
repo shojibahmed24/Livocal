@@ -635,16 +635,24 @@ app.get('/api/webrtc/ice-servers', authenticateRequest, (req, res) => {
     hmac.update(username);
     const credential = hmac.digest('base64');
 
+    const turnUrls = process.env.TURN_URL.includes(',')
+      ? process.env.TURN_URL.split(',').map((u) => u.trim()).filter((u) => u.length > 0)
+      : process.env.TURN_URL.trim();
+
     iceServers.push({
-      urls: process.env.TURN_URL,
+      urls: turnUrls,
       username,
       credential,
     });
   } else if (process.env.TURN_URL && process.env.TURN_USERNAME && process.env.TURN_CREDENTIAL) {
+    const turnUrls = process.env.TURN_URL.includes(',')
+      ? process.env.TURN_URL.split(',').map((u) => u.trim()).filter((u) => u.length > 0)
+      : process.env.TURN_URL.trim();
+
     iceServers.push({
-      urls: process.env.TURN_URL,
-      username: process.env.TURN_USERNAME,
-      credential: process.env.TURN_CREDENTIAL,
+      urls: turnUrls,
+      username: process.env.TURN_USERNAME.trim(),
+      credential: process.env.TURN_CREDENTIAL.trim(),
     });
   }
   res.json({ iceServers });
@@ -2859,6 +2867,17 @@ wss.on('connection', (clientWs, req) => {
             systemInstruction: {
               parts: [{ text: systemPrompt }],
             },
+            realtimeInputConfig: {
+              automaticActivityDetection: {
+                disabled: false,
+                startOfSpeechSensitivity: 'START_SENSITIVITY_HIGH',
+                endOfSpeechSensitivity: 'END_SENSITIVITY_HIGH',
+                prefixPaddingMs: 40,
+                silenceDurationMs: 450,
+              },
+            },
+            inputAudioTranscription: {},
+            outputAudioTranscription: {},
           },
         };
 

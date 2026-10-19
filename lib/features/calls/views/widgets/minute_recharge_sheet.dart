@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/models/user_wallet.dart';
 import 'package:livocal/shared/repositories/wallet_repository.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
 
@@ -102,14 +103,14 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
       } else {
         setState(() {
           _isLoadingDepositInfo = false;
-          _depositInfoError = 'সার্ভার থেকে ডিপোজিট অ্যাকাউন্ট লোড করা যায়নি।';
+          _depositInfoError = AppStrings.tr(ref, 'depositAccountNotFound');
         });
       }
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _isLoadingDepositInfo = false;
-        _depositInfoError = 'ডিপোজিট অ্যাকাউন্ট লোড ব্যর্থ হয়েছে ($e)।';
+        _depositInfoError = '${AppStrings.tr(ref, 'depositAccountNotFound')} ($e)';
       });
     }
   }
@@ -138,7 +139,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
     if (_currentDepositAccount.isEmpty) {
       showSnackBar(
         context: context,
-        content: 'সার্ভার থেকে ডিপোজিট অ্যাকাউন্ট লোড হওয়া পর্যন্ত অপেক্ষা করুন বা রিফ্রেশ করুন।',
+        content: AppStrings.tr(ref, 'waitForDepositAccountSnack'),
         type: SnacBarType.error,
       );
       return;
@@ -151,10 +152,10 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
       showSnackBar(
         context: context,
         content: _selectedPaymentMethod == 'bKash / Nagad'
-            ? 'অনুগ্রহ করে টাকা পাঠানোর ফোন নম্বরটি লিখুন।'
+            ? AppStrings.tr(ref, 'enterSenderPhoneSnack')
             : (_selectedPaymentMethod == 'Binance Pay'
-                ? 'অনুগ্রহ করে আপনার Binance Pay ID বা ইমেইল লিখুন।'
-                : 'অনুগ্রহ করে আপনার প্রেরক ক্রিপ্টো ওয়ালেট অ্যাড্রেস লিখুন।'),
+                ? AppStrings.tr(ref, 'enterBinancePayIdSnack')
+                : AppStrings.tr(ref, 'enterSenderCryptoAddressSnack')),
         type: SnacBarType.error,
       );
       return;
@@ -164,8 +165,8 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
       showSnackBar(
         context: context,
         content: _selectedPaymentMethod == 'Crypto USDT'
-            ? 'অনুগ্রহ করে Blockchain TxHash লিখুন।'
-            : 'অনুগ্রহ করে ট্রানজেকশন আইডি (TrxID / Order ID) লিখুন।',
+            ? AppStrings.tr(ref, 'enterTxHashSnack')
+            : AppStrings.tr(ref, 'enterTrxIdSnack'),
         type: SnacBarType.error,
       );
       return;
@@ -176,7 +177,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
       if (_selectedCryptoNetwork == 'TRC-20' && (!identifier.startsWith('T') || identifier.length != 34)) {
         showSnackBar(
           context: context,
-          content: 'TRC-20 ওয়ালেট অ্যাড্রেস অবশ্যই T দিয়ে শুরু হতে হবে এবং ৩৪ অক্ষরের হতে হবে।',
+          content: AppStrings.tr(ref, 'trc20AddressLengthError'),
           type: SnacBarType.error,
         );
         return;
@@ -184,7 +185,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
       if (_selectedCryptoNetwork == 'BEP-20' && (!identifier.startsWith('0x') || identifier.length != 42)) {
         showSnackBar(
           context: context,
-          content: 'BEP-20 ওয়ালেট অ্যাড্রেস অবশ্যই 0x দিয়ে শুরু হতে হবে এবং ৪২ অক্ষরের হতে হবে।',
+          content: AppStrings.tr(ref, 'bep20AddressLengthError'),
           type: SnacBarType.error,
         );
         return;
@@ -193,7 +194,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
       if (cleanHash.length != 64) {
         showSnackBar(
           context: context,
-          content: 'সঠিক ৬৪ অক্ষরের Blockchain TxHash লিখুন।',
+          content: AppStrings.tr(ref, 'invalidTxHashError'),
           type: SnacBarType.error,
         );
         return;
@@ -236,13 +237,13 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
       widget.onRecharged?.call();
       showSnackBar(
         context: context,
-        content: 'পেমেন্ট রিকোয়েস্ট সফলভাবে জমা হয়েছে! অ্যাডমিন অনুমোদন করলেই মিনিট যোগ হবে।',
+        content: AppStrings.tr(ref, 'paymentSubmittedSuccess'),
         type: SnacBarType.info,
       );
     } else {
       showSnackBar(
         context: context,
-        content: result.message ?? 'পেমেন্ট রিকোয়েস্ট জমা দেওয়া যায়নি।',
+        content: result.message ?? AppStrings.tr(ref, 'paymentFailedSnack'),
         type: SnacBarType.error,
       );
     }
@@ -298,7 +299,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
               Container(
                 padding: const EdgeInsets.all(9),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.18),
+                  color: primaryColor.withValues(alpha: 0.18),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.diamond_rounded, color: AppColors.primary, size: 22),
@@ -309,7 +310,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'মিনিট রিচার্জ (Voice Minutes)',
+                      AppStrings.tr(ref, 'voiceMinutesRecharge'),
                       style: TextStyle(
                         color: textColor,
                         fontWeight: FontWeight.bold,
@@ -317,7 +318,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                       ),
                     ),
                     Text(
-                      'আন্তর্জাতিক ক্লায়েন্টদের সাথে কথা বলুন যেকোনো ভাষায়',
+                      AppStrings.tr(ref, 'talkToInternationalClients'),
                       style: TextStyle(
                         color: isDark ? Colors.white60 : Colors.black54,
                         fontSize: 12,
@@ -348,7 +349,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                           : [const Color(0xFFE8F5E9), const Color(0xFFE0F2F1)],
                     ),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: primaryColor.withOpacity(0.35)),
+                    border: Border.all(color: primaryColor.withValues(alpha: 0.35)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,7 +365,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'বর্তমান ব্যালেন্স: ${wallet.effectiveRemainingMinutes} মিনিট',
+                                AppStrings.trParams(ref, 'currentBalanceText', {'minutes': '${wallet.effectiveRemainingMinutes}'}),
                                 style: TextStyle(
                                   color: textColor,
                                   fontWeight: FontWeight.bold,
@@ -377,11 +378,11 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: primaryColor.withOpacity(0.2),
+                                color: primaryColor.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                'ট্রায়াল: ${wallet.trialMinutes} মি.',
+                                AppStrings.trParams(ref, 'trialBadgeText', {'minutes': '${wallet.trialMinutes}'}),
                                 style: const TextStyle(
                                   color: AppColors.primary,
                                   fontSize: 11,
@@ -394,8 +395,11 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                       const SizedBox(height: 6),
                       Text(
                         wallet.trialActive && !wallet.isTrialExpired
-                            ? 'ফ্রি ট্রায়ালের মেয়াদ বাকি: ${wallet.daysRemainingInTrial} দিন (পেইড ব্যালেন্স: ${wallet.balanceMinutes} মি.)'
-                            : 'পেইড ব্যালেন্স কখনো মেয়াদোত্তীর্ণ হয় না (Lifetime validity)',
+                            ? AppStrings.trParams(ref, 'trialValidityText', {
+                                'days': '${wallet.daysRemainingInTrial}',
+                                'paid': '${wallet.balanceMinutes}',
+                              })
+                            : AppStrings.tr(ref, 'paidBalanceLifetimeText'),
                         style: TextStyle(
                           color: isDark ? Colors.white70 : Colors.black54,
                           fontSize: 11.5,
@@ -408,7 +412,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              '🗣️ একই ভাষার লোকাল কল ১০০% ফ্রি (কোনো মিনিট কাটবে না)',
+                              AppStrings.tr(ref, 'sameLanguageFreeRule'),
                               style: TextStyle(
                                 color: isDark ? Colors.white70 : Colors.black87,
                                 fontSize: 11.5,
@@ -425,7 +429,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              '🤖 Gemini 3.5 Live AI অনুবাদিত কল: ১ মিনিট/মিনিট',
+                              AppStrings.tr(ref, 'geminiAiRateRule'),
                               style: TextStyle(
                                 color: isDark ? Colors.white70 : Colors.black87,
                                 fontSize: 11.5,
@@ -442,7 +446,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
 
                 // Package Selection Title
                 Text(
-                  'প্যাকেজ নির্বাচন করুন (Select Minute Pack)',
+                  AppStrings.tr(ref, 'selectMinutePack'),
                   style: TextStyle(
                     color: textColor,
                     fontWeight: FontWeight.bold,
@@ -454,10 +458,10 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                 // Pack 1: Starter Pack (60 Mins)
                 _buildPackCard(
                   packId: 'starter_60',
-                  title: 'স্টার্টার প্যাক (Starter Pack)',
+                  title: AppStrings.tr(ref, 'starterPackTitle'),
                   minutes: 60,
                   amount: 1200.0,
-                  subtitle: 'দ্রুত ক্লায়েন্ট ইন্টারভিউ ও প্রাথমিক ব্রিফের জন্য (~৳২০/মি.)',
+                  subtitle: AppStrings.tr(ref, 'starterPackDesc'),
                   badge: null,
                   isDark: isDark,
                   textColor: textColor,
@@ -467,11 +471,11 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                 // Pack 2: Freelancer Pro (180 Mins) - POPULAR
                 _buildPackCard(
                   packId: 'pro_180',
-                  title: 'ফ্রিল্যান্সার প্রো (Freelancer Pro)',
+                  title: AppStrings.tr(ref, 'proPackTitle'),
                   minutes: 180,
                   amount: 3000.0,
-                  subtitle: 'সাপ্তাহিক প্রজেক্ট মিটিং ও নিয়মিত ফ্রিল্যান্সিং (~৳১৬.৬/মি., ১৭% সাশ্রয়)',
-                  badge: '⭐ সেরা পছন্দ (POPULAR)',
+                  subtitle: AppStrings.tr(ref, 'proPackDesc'),
+                  badge: AppStrings.tr(ref, 'popularBadge'),
                   isPopular: true,
                   isDark: isDark,
                   textColor: textColor,
@@ -481,11 +485,11 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                 // Pack 3: Agency Pack (500 Mins) - BEST VALUE
                 _buildPackCard(
                   packId: 'agency_500',
-                  title: 'এজেন্সি প্যাক (Agency / Heavy Pack)',
+                  title: AppStrings.tr(ref, 'agencyPackTitle'),
                   minutes: 500,
                   amount: 7200.0,
-                  subtitle: 'এজেন্সি টিম ও দীর্ঘ আন্তর্জাতিক কলের জন্য (~৳১৪.৪/মি., ২৮% সাশ্রয়)',
-                  badge: '💎 সর্বোচ্চ ভ্যালু (BEST VALUE)',
+                  subtitle: AppStrings.tr(ref, 'agencyPackDesc'),
+                  badge: AppStrings.tr(ref, 'bestValueBadge'),
                   isDark: isDark,
                   textColor: textColor,
                 ),
@@ -493,7 +497,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
 
                 // Payment Method Selector
                 Text(
-                  'পেমেন্ট মাধ্যম (Payment Method)',
+                  AppStrings.tr(ref, 'paymentMethod'),
                   style: TextStyle(
                     color: textColor,
                     fontWeight: FontWeight.bold,
@@ -506,7 +510,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                     Expanded(
                       child: _buildPaymentMethodTile(
                         title: 'bKash / Nagad',
-                        subtitle: '৳ BDT লোকাল',
+                        subtitle: AppStrings.tr(ref, 'bdtLocal'),
                         icon: Icons.account_balance_wallet_rounded,
                         isDark: isDark,
                       ),
@@ -540,12 +544,12 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       child: Row(
-                        children: const [
-                          Icon(Icons.discount_outlined, color: AppColors.primary, size: 16),
-                          SizedBox(width: 6),
+                        children: [
+                          const Icon(Icons.discount_outlined, color: AppColors.primary, size: 16),
+                          const SizedBox(width: 6),
                           Text(
-                            'প্রোমো কোড বা ভাউচার আছে? ক্লিক করুন',
-                            style: TextStyle(
+                            AppStrings.tr(ref, 'havePromoCode'),
+                            style: const TextStyle(
                               color: AppColors.primary,
                               fontSize: 12.5,
                               fontWeight: FontWeight.bold,
@@ -582,14 +586,26 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                         onPressed: () {
                           final code = _promoController.text.trim().toUpperCase();
                           if (code == 'LIVOCAL2026') {
-                            showSnackBar(context: context, content: 'কোড প্রযোজ্য! +২০ মিনিট বোনাস পাবেন।', type: SnacBarType.info);
+                            showSnackBar(
+                              context: context,
+                              content: AppStrings.trParams(ref, 'promoAppliedBonus', {'bonus': '20'}),
+                              type: SnacBarType.info,
+                            );
                           } else if (code == 'FREELANCERPRO') {
-                            showSnackBar(context: context, content: 'কোড প্রযোজ্য! +৩০ মিনিট বোনাস পাবেন।', type: SnacBarType.info);
+                            showSnackBar(
+                              context: context,
+                              content: AppStrings.trParams(ref, 'promoAppliedBonus', {'bonus': '30'}),
+                              type: SnacBarType.info,
+                            );
                           } else {
-                            showSnackBar(context: context, content: 'মেয়াদোত্তীর্ণ বা অবৈধ প্রোমো কোড।', type: SnacBarType.error);
+                            showSnackBar(
+                              context: context,
+                              content: AppStrings.tr(ref, 'invalidPromoCode'),
+                              type: SnacBarType.error,
+                            );
                           }
                         },
-                        child: const Text('প্রয়োগ', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: Text(AppStrings.tr(ref, 'apply'), style: const TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -601,7 +617,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: primaryColor.withOpacity(0.35)),
+                    border: Border.all(color: primaryColor.withValues(alpha: 0.35)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -620,10 +636,10 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                           const SizedBox(width: 8),
                           Text(
                             _selectedPaymentMethod == 'bKash / Nagad'
-                                ? 'রিয়েল পেমেন্ট নির্দেশিকা (bKash / Nagad)'
+                                ? AppStrings.tr(ref, 'realPaymentGuideBkash')
                                 : (_selectedPaymentMethod == 'Binance Pay'
-                                    ? 'Binance Pay USDT পেমেন্ট নির্দেশিকা'
-                                    : 'USDT ক্রিপ্টো ওয়ালেট ডিপোজিট নির্দেশিকা'),
+                                    ? AppStrings.tr(ref, 'realPaymentGuideBinance')
+                                    : AppStrings.tr(ref, 'realPaymentGuideCrypto')),
                             style: TextStyle(
                               color: textColor,
                               fontWeight: FontWeight.bold,
@@ -639,7 +655,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                         Row(
                           children: [
                             Text(
-                              'নেটওয়ার্ক নির্বাচন করুন:',
+                              AppStrings.tr(ref, 'selectNetwork'),
                               style: TextStyle(color: isDark ? Colors.white70 : Colors.black87, fontSize: 12, fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(width: 10),
@@ -647,14 +663,14 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                               label: const Text('TRC-20 (TRON)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                               selected: _selectedCryptoNetwork == 'TRC-20',
                               onSelected: (_) => setState(() => _selectedCryptoNetwork = 'TRC-20'),
-                              selectedColor: primaryColor.withOpacity(0.25),
+                              selectedColor: primaryColor.withValues(alpha: 0.25),
                             ),
                             const SizedBox(width: 6),
                             ChoiceChip(
                               label: const Text('BEP-20 (BSC)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                               selected: _selectedCryptoNetwork == 'BEP-20',
                               onSelected: (_) => setState(() => _selectedCryptoNetwork = 'BEP-20'),
-                              selectedColor: primaryColor.withOpacity(0.25),
+                              selectedColor: primaryColor.withValues(alpha: 0.25),
                             ),
                           ],
                         ),
@@ -670,20 +686,20 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                           border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
                         ),
                         child: _isLoadingDepositInfo
-                            ? const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 8),
+                            ? Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    SizedBox(
+                                    const SizedBox(
                                       width: 14,
                                       height: 14,
                                       child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
                                     ),
-                                    SizedBox(width: 10),
+                                    const SizedBox(width: 10),
                                     Text(
-                                      'সার্ভার থেকে ডিপোজিট অ্যাকাউন্ট লোড হচ্ছে...',
-                                      style: TextStyle(fontSize: 12, color: AppColors.primary),
+                                      AppStrings.tr(ref, 'loadingDepositAccount'),
+                                      style: const TextStyle(fontSize: 12, color: AppColors.primary),
                                     ),
                                   ],
                                 ),
@@ -695,14 +711,14 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                                       children: [
                                         Expanded(
                                           child: Text(
-                                            _depositInfoError ?? 'ডিপোজিট অ্যাকাউন্ট পাওয়া যায়নি।',
+                                            _depositInfoError ?? AppStrings.tr(ref, 'depositAccountNotFound'),
                                             style: const TextStyle(color: Colors.redAccent, fontSize: 11),
                                           ),
                                         ),
                                         IconButton(
                                           icon: const Icon(Icons.refresh, size: 18, color: AppColors.primary),
                                           onPressed: _fetchDepositInfo,
-                                          tooltip: 'পুনরায় চেষ্টা করুন',
+                                          tooltip: AppStrings.tr(ref, 'retryTooltip'),
                                         ),
                                       ],
                                     ),
@@ -716,10 +732,10 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                                           children: [
                                             Text(
                                               _selectedPaymentMethod == 'bKash / Nagad'
-                                                  ? 'bKash / Nagad পার্সোনাল / মার্চেন্ট নম্বর:'
+                                                  ? AppStrings.tr(ref, 'bkashMerchantNumber')
                                                   : (_selectedPaymentMethod == 'Binance Pay'
-                                                      ? 'Livocal অফিসিয়াল Binance Pay ID:'
-                                                      : 'Livocal অফিসিয়াল $_selectedCryptoNetwork ডিপোজিট অ্যাড্রেস:'),
+                                                      ? AppStrings.tr(ref, 'binancePayOfficialId')
+                                                      : AppStrings.trParams(ref, 'cryptoOfficialDepositAddress', {'network': _selectedCryptoNetwork})),
                                               style: TextStyle(
                                                 color: isDark ? Colors.white60 : Colors.black54,
                                                 fontSize: 11,
@@ -743,12 +759,12 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                                       TextButton.icon(
                                         style: TextButton.styleFrom(
                                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                          backgroundColor: primaryColor.withOpacity(0.12),
+                                          backgroundColor: primaryColor.withValues(alpha: 0.12),
                                         ),
                                         icon: const Icon(Icons.copy_rounded, size: 16, color: AppColors.primary),
-                                        label: const Text(
-                                          'কপি করুন',
-                                          style: TextStyle(
+                                        label: Text(
+                                          AppStrings.tr(ref, 'copyBtn'),
+                                          style: const TextStyle(
                                             color: AppColors.primary,
                                             fontSize: 12,
                                             fontWeight: FontWeight.bold,
@@ -759,7 +775,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                                           Clipboard.setData(ClipboardData(text: textToCopy));
                                           showSnackBar(
                                             context: context,
-                                            content: 'অ্যাড্রেস/নম্বর $textToCopy ক্লিপবোর্ডে কপি করা হয়েছে!',
+                                            content: AppStrings.trParams(ref, 'copiedToClipboardSnack', {'text': textToCopy}),
                                             type: SnacBarType.info,
                                           );
                                         },
@@ -770,10 +786,10 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                       const SizedBox(height: 10),
                       Text(
                         _selectedPaymentMethod == 'bKash / Nagad'
-                            ? '১. আপনার bKash বা Nagad অ্যাপ থেকে Send Money বা পেমেন্ট করুন ৳${_selectedPackAmount.toStringAsFixed(0)}।\n২. সফল ট্রানজেকশনের পর নিচের ঘরে আপনার প্রেরক নম্বর ও TrxID লিখুন:'
+                            ? AppStrings.trParams(ref, 'paymentInstructionBkash', {'amount': _selectedPackAmount.toStringAsFixed(0)})
                             : (_selectedPaymentMethod == 'Binance Pay'
-                                ? '১. Binance অ্যাপে Pay > Send to Binance ID-তে ${_selectedPackAmountUsdt.toStringAsFixed(0)} USDT পাঠান।\n২. সফল পাঠানোর পর আপনার Binance ID ও Pay Order ID নিচে লিখুন:'
-                                : '১. আপনার ক্রিপ্টো ওয়ালেট থেকে ${_selectedPackAmountUsdt.toStringAsFixed(0)} USDT ($_selectedCryptoNetwork) পাঠান।\n২. ট্রানজেকশনের পর আপনার প্রেরক ওয়ালেট অ্যাড্রেস ও TxHash নিচে লিখুন:'),
+                                ? AppStrings.trParams(ref, 'paymentInstructionBinance', {'amount': _selectedPackAmountUsdt.toStringAsFixed(0)})
+                                : AppStrings.trParams(ref, 'paymentInstructionCrypto', {'amount': _selectedPackAmountUsdt.toStringAsFixed(0), 'network': _selectedCryptoNetwork})),
                         style: TextStyle(
                           color: isDark ? Colors.white70 : Colors.black87,
                           fontSize: 11.5,
@@ -787,14 +803,14 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                         style: TextStyle(color: textColor, fontSize: 13),
                         decoration: InputDecoration(
                           labelText: _selectedPaymentMethod == 'bKash / Nagad'
-                              ? 'আপনার টাকা পাঠানোর ফোন নম্বর (Sender Number)'
+                              ? AppStrings.tr(ref, 'senderNumberInputLabel')
                               : (_selectedPaymentMethod == 'Binance Pay'
-                                  ? 'আপনার Binance Pay ID বা ইমেইল'
-                                  : 'আপনার প্রেরক ওয়ালেট অ্যাড্রেস (Sender Address)'),
+                                  ? AppStrings.tr(ref, 'binancePayIdInputLabel')
+                                  : AppStrings.tr(ref, 'senderAddressInputLabel')),
                           labelStyle: TextStyle(color: isDark ? Colors.white60 : Colors.black54, fontSize: 12),
                           hintText: _selectedPaymentMethod == 'bKash / Nagad'
                               ? '017xxxxxxxx'
-                              : (_selectedPaymentMethod == 'Binance Pay' ? '849201842 বা user@gmail.com' : 'TXvJ... বা 0x48...'),
+                              : (_selectedPaymentMethod == 'Binance Pay' ? '849201842' : 'TXvJ... / 0x48...'),
                           hintStyle: TextStyle(color: isDark ? Colors.white30 : Colors.black38, fontSize: 12),
                           prefixIcon: Icon(
                             _selectedPaymentMethod == 'bKash / Nagad' ? Icons.phone_android_rounded : Icons.account_box_rounded,
@@ -817,14 +833,14 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                         style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.bold),
                         decoration: InputDecoration(
                           labelText: _selectedPaymentMethod == 'bKash / Nagad'
-                              ? 'bKash / Nagad TrxID (Transaction ID)'
+                              ? AppStrings.tr(ref, 'trxIdInputLabel')
                               : (_selectedPaymentMethod == 'Binance Pay'
-                                  ? 'Binance Pay Order ID / Transaction ID'
-                                  : 'Blockchain TxHash (Transaction Hash)'),
+                                  ? AppStrings.tr(ref, 'binancePayOrderIdInputLabel')
+                                  : AppStrings.tr(ref, 'txHashInputLabel')),
                           labelStyle: TextStyle(color: isDark ? Colors.white60 : Colors.black54, fontSize: 12),
                           hintText: _selectedPaymentMethod == 'bKash / Nagad'
                               ? 'e.g. BKA8X92K4L'
-                              : (_selectedPaymentMethod == 'Binance Pay' ? 'e.g. 293847291039485' : 'e.g. 0x8a9b... বা 7c4e...'),
+                              : (_selectedPaymentMethod == 'Binance Pay' ? 'e.g. 293847291039485' : 'e.g. 0x8a9b... / 7c4e...'),
                           hintStyle: TextStyle(color: isDark ? Colors.white30 : Colors.black38, fontSize: 12),
                           prefixIcon: const Icon(Icons.tag_rounded, size: 18),
                           isDense: true,
@@ -868,8 +884,8 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                     )
                   : Text(
                       _selectedPaymentMethod == 'bKash / Nagad'
-                          ? '৳${_selectedPackAmount.toStringAsFixed(0)} পেমেন্ট ভেরিফিকেশন জমা দিন'
-                          : '\$${_selectedPackAmountUsdt.toStringAsFixed(0)} USDT পেমেন্ট ভেরিফিকেশন জমা দিন',
+                          ? AppStrings.trParams(ref, 'submitPaymentBdt', {'amount': _selectedPackAmount.toStringAsFixed(0)})
+                          : AppStrings.trParams(ref, 'submitPaymentUsdt', {'amount': _selectedPackAmountUsdt.toStringAsFixed(0)}),
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
@@ -903,13 +919,13 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected
-              ? primaryColor.withOpacity(isDark ? 0.16 : 0.08)
+              ? primaryColor.withValues(alpha: isDark ? 0.16 : 0.08)
               : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected
                 ? primaryColor
-                : (isPopular ? const Color(0xFFF59E0B).withOpacity(0.5) : (isDark ? Colors.white12 : Colors.black12)),
+                : (isPopular ? const Color(0xFFF59E0B).withValues(alpha: 0.5) : (isDark ? Colors.white12 : Colors.black12)),
             width: isSelected ? 1.8 : 1,
           ),
         ),
@@ -938,7 +954,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: isPopular ? const Color(0xFFF59E0B).withOpacity(0.2) : primaryColor.withOpacity(0.2),
+                      color: isPopular ? const Color(0xFFF59E0B).withValues(alpha: 0.2) : primaryColor.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -968,7 +984,11 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                     ),
                   ),
                   Text(
-                    '৳${amount.toStringAsFixed(0)}',
+                    AppStrings.tr(
+                      ref,
+                      'bdtAmount',
+                      args: {'amount': amount.toStringAsFixed(0)},
+                    ),
                     style: TextStyle(
                       color: isSelected ? primaryColor : textColor,
                       fontWeight: FontWeight.w800,
@@ -1000,7 +1020,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? primaryColor.withOpacity(isDark ? 0.16 : 0.08)
+              ? primaryColor.withValues(alpha: isDark ? 0.16 : 0.08)
               : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(

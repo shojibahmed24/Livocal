@@ -45,46 +45,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       context: context,
       title: AppStrings.tr(ref, 'chooseTheme'),
       icon: Icons.brightness_6_rounded,
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          RadioListTile<ThemeMode>(
-            title: Text(AppStrings.tr(ref, 'systemDefault')),
-            value: ThemeMode.system,
-            groupValue: currentTheme,
-            activeColor: AppColors.primary,
-            onChanged: (mode) {
-              if (mode != null) {
-                ref.read(themeModeProvider.notifier).setThemeMode(mode);
-                Navigator.pop(context);
-              }
-            },
-          ),
-          RadioListTile<ThemeMode>(
-            title: Text(AppStrings.tr(ref, 'light')),
-            value: ThemeMode.light,
-            groupValue: currentTheme,
-            activeColor: AppColors.primary,
-            onChanged: (mode) {
-              if (mode != null) {
-                ref.read(themeModeProvider.notifier).setThemeMode(mode);
-                Navigator.pop(context);
-              }
-            },
-          ),
-          RadioListTile<ThemeMode>(
-            title: Text(AppStrings.tr(ref, 'dark')),
-            value: ThemeMode.dark,
-            groupValue: currentTheme,
-            activeColor: AppColors.primary,
-            onChanged: (mode) {
-              if (mode != null) {
-                ref.read(themeModeProvider.notifier).setThemeMode(mode);
-                Navigator.pop(context);
-              }
-            },
-          ),
-        ],
+      content: RadioGroup<ThemeMode>(
+        groupValue: currentTheme,
+        onChanged: (mode) {
+          if (mode != null) {
+            ref.read(themeModeProvider.notifier).setThemeMode(mode);
+            Navigator.pop(context);
+          }
+        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RadioListTile<ThemeMode>(
+              title: Text(AppStrings.tr(ref, 'systemDefault')),
+              value: ThemeMode.system,
+            ),
+            RadioListTile<ThemeMode>(
+              title: Text(AppStrings.tr(ref, 'light')),
+              value: ThemeMode.light,
+            ),
+            RadioListTile<ThemeMode>(
+              title: Text(AppStrings.tr(ref, 'dark')),
+              value: ThemeMode.dark,
+            ),
+          ],
+        ),
       ),
       actions: [
         AppDialogAction(

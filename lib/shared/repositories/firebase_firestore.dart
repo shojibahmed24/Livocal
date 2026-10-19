@@ -19,7 +19,7 @@ final firebaseFirestoreRepositoryProvider = Provider(
 
 class FirebaseFirestoreRepo {
   final FirebaseFirestore firestore;
-  final ProviderRef ref;
+  final Ref ref;
 
   const FirebaseFirestoreRepo({
     required this.firestore,

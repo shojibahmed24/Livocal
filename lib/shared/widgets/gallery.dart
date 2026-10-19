@@ -507,7 +507,7 @@ class _AlbumViewState extends ConsumerState<AlbumView> {
       backgroundColor: colorTheme.backgroundColor,
       body: PopScope(
         canPop: false,
-        onPopInvoked: (didPop) {
+        onPopInvokedWithResult: (didPop, result) {
           if (canSelect) {
             ref.read(galleryStateProvider.notifier).toggleCanSelect();
             return;
@@ -842,7 +842,7 @@ class GalleryStateController extends StateNotifier<GalleryState> {
         .read(chatControllerProvider.notifier)
         .createAttachmentsFromFiles(files);
 
-    if (!mounted) return;
+    if (!context.mounted) return;
     if (shouldReturnFiles) {
       Navigator.popUntil(
         context,

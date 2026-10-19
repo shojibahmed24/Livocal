@@ -93,8 +93,7 @@ class _AvoidBottomInsetState extends State<AvoidBottomInset>
         isKeyboardVisible || widget.conditions.every((element) => element);
 
     return Padding(
-      padding:
-          !shouldAvoid ? widget.padding ?? EdgeInsets.zero : EdgeInsets.zero,
+      padding: !isKeyboardVisible ? (widget.padding ?? EdgeInsets.zero) : EdgeInsets.zero,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -111,8 +110,7 @@ class _AvoidBottomInsetState extends State<AvoidBottomInset>
                       height: keyboardHeight,
                     ),
                     if (widget.offstage != null) ...[
-                      Container(
-                        color: Colors.red,
+                      SizedBox(
                         height: keyboardHeight,
                         child: widget.offstage!,
                       )

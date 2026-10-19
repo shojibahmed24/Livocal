@@ -6,6 +6,7 @@ import 'package:livocal/features/calls/controllers/call_controller.dart';
 import 'package:livocal/features/calls/models/call_model.dart';
 import 'package:livocal/features/calls/services/webrtc_call_client.dart';
 import 'package:livocal/features/calls/views/widgets/language_picker_sheet.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/theme/color_theme.dart';
 import 'package:livocal/theme/theme.dart';
 
@@ -82,10 +83,10 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
           }
           if (error == 'MINUTES_EXHAUSTED') {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('আপনার মিনিট শেষ হয়ে গেছে। কথা চালিয়ে যেতে রিচার্জ করুন।'),
+              SnackBar(
+                content: Text(AppStrings.tr(ref, 'minutesExhaustedAlert')),
                 backgroundColor: Colors.redAccent,
-                duration: Duration(seconds: 4),
+                duration: const Duration(seconds: 4),
               ),
             );
           }
@@ -156,19 +157,87 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                                 width: 8,
                                 height: 8,
                                 decoration: BoxDecoration(
-                                  color: colorTheme.greenColor,
+                                  color: callState.networkQuality == CallNetworkQuality.poor
+                                      ? Colors.redAccent
+                                      : (callState.networkQuality == CallNetworkQuality.fair
+                                          ? Colors.amber
+                                          : colorTheme.greenColor),
                                   shape: BoxShape.circle,
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              Text(
-                                '$formattedTime • $dynamicLanguageIndicator',
-                                style: TextStyle(
-                                  color: colorTheme.greyColor,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
+                              Flexible(
+                                child: Text(
+                                  '$formattedTime • $dynamicLanguageIndicator',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: colorTheme.greyColor,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
+                              if (callState.networkQuality != CallNetworkQuality.good) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 5,
+                                    vertical: 1.5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: callState.networkQuality == CallNetworkQuality.poor
+                                        ? Colors.red.shade900.withValues(alpha: 0.85)
+                                        : Colors.amber.shade900.withValues(alpha: 0.85),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        callState.networkQuality.emoji,
+                                        style: const TextStyle(fontSize: 8.5),
+                                      ),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        callState.networkQuality.label,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              if (callState.isLowDataMode && callState.networkQuality == CallNetworkQuality.good) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 5,
+                                    vertical: 1.5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.shade900.withValues(alpha: 0.85),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.bolt, color: Colors.white, size: 10),
+                                      SizedBox(width: 2),
+                                      Text(
+                                        'Low Data',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ],
@@ -197,7 +266,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                   margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.red.shade900.withOpacity(0.9),
+                    color: Colors.red.shade900.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
@@ -257,6 +326,33 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                                 ),
                               ),
                             ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              if (callState.webrtcState == WebRtcCallState.connected &&
+                  callState.networkQuality == CallNetworkQuality.poor)
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade900.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.wifi_off_rounded, color: Colors.white, size: 16),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Unstable internet detected • Adaptive Low-Data mode active (16kbps voice)',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -418,7 +514,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                             child: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: colorTheme.greenColor.withOpacity(0.18),
+                                color: colorTheme.greenColor.withValues(alpha: 0.18),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
@@ -681,7 +777,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
         return Colors.amberAccent;
       case GeminiLiveState.listening:
       case GeminiLiveState.ready:
-        return green.withOpacity(0.5);
+        return green.withValues(alpha: 0.5);
       case GeminiLiveState.error:
         return Colors.redAccent;
       default:
@@ -723,7 +819,7 @@ class _AnimatedVoicePulseDot extends StatelessWidget {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: dotColor.withOpacity(0.55),
+                color: dotColor.withValues(alpha: 0.55),
                 blurRadius: 8,
                 spreadRadius: 2,
               ),
@@ -869,7 +965,7 @@ class _CallControlButton extends StatelessWidget {
           CircleAvatar(
             radius: 24,
             backgroundColor:
-                isActive ? activeColor.withOpacity(0.25) : Colors.white10,
+                isActive ? activeColor.withValues(alpha: 0.25) : Colors.white10,
             child: Icon(
               icon,
               color: isActive ? activeColor : Colors.white,

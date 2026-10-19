@@ -61,7 +61,7 @@ class _UniversalLanguagePickerSheetState
             color: colorTheme.backgroundColor,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             border: Border.all(
-              color: colorTheme.greenColor.withOpacity(0.25),
+              color: colorTheme.greenColor.withValues(alpha: 0.25),
               width: 1,
             ),
           ),
@@ -72,7 +72,7 @@ class _UniversalLanguagePickerSheetState
                 width: 42,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: colorTheme.greyColor.withOpacity(0.4),
+                  color: colorTheme.greyColor.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -181,7 +181,7 @@ class _UniversalLanguagePickerSheetState
                         side: BorderSide(
                           color: isSelected
                               ? colorTheme.greenColor
-                              : colorTheme.greyColor.withOpacity(0.25),
+                              : colorTheme.greyColor.withValues(alpha: 0.25),
                         ),
                         label: Text(
                           '${lang.flagEmoji} ${lang.nativeName}',
@@ -295,7 +295,7 @@ class _GeminiLiveSettingsSheetState extends State<_GeminiLiveSettingsSheet> {
         decoration: BoxDecoration(
           color: colorTheme.backgroundColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          border: Border.all(color: colorTheme.greenColor.withOpacity(0.3)),
+          border: Border.all(color: colorTheme.greenColor.withValues(alpha: 0.3)),
         ),
         child: SingleChildScrollView(
           child: Column(
@@ -307,7 +307,7 @@ class _GeminiLiveSettingsSheetState extends State<_GeminiLiveSettingsSheet> {
                   width: 42,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: colorTheme.greyColor.withOpacity(0.4),
+                    color: colorTheme.greyColor.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -339,10 +339,10 @@ class _GeminiLiveSettingsSheetState extends State<_GeminiLiveSettingsSheet> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.12),
+                  color: AppColors.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AppColors.primary.withOpacity(0.35),
+                    color: AppColors.primary.withValues(alpha: 0.35),
                   ),
                 ),
                 child: Row(
@@ -368,7 +368,7 @@ class _GeminiLiveSettingsSheetState extends State<_GeminiLiveSettingsSheet> {
                           Text(
                             'Live API keys and audio pipelines are securely managed on the backend server.',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
+                              color: Colors.white.withValues(alpha: 0.8),
                               fontSize: 11.5,
                             ),
                           ),

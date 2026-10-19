@@ -199,7 +199,7 @@ class _AttachmentMessageSenderState
     final colorTheme = Theme.of(context).custom.colorTheme;
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) {
           return;
         }
@@ -337,7 +337,7 @@ class _AttachmentMessageSenderState
                                                   color: AppColors.primary,
                                                   boxShadow: [
                                                     BoxShadow(
-                                                      color: AppColors.primary.withOpacity(0.35),
+                                                      color: AppColors.primary.withValues(alpha: 0.35),
                                                       blurRadius: 8,
                                                       offset: const Offset(0, 2),
                                                     ),

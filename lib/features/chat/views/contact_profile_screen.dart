@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
+import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'package:livocal/features/calls/views/outgoing_call_screen.dart';
 import 'package:livocal/features/chat/views/chat_media_viewer_screen.dart';
 import 'package:livocal/shared/models/messages.dart';
@@ -191,9 +192,9 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.black.withOpacity(0.4),
+                          Colors.black.withValues(alpha: 0.4),
                           Colors.transparent,
-                          Colors.black.withOpacity(0.75),
+                          Colors.black.withValues(alpha: 0.75),
                         ],
                       ),
                     ),
@@ -219,7 +220,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                         Text(
                           widget.other.phone.getFormattedNumber(),
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.85),
+                            color: Colors.white.withValues(alpha: 0.85),
                             fontSize: 16,
                           ),
                         ),
@@ -244,12 +245,20 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     label: 'Audio Call',
                     color: AppColors.primary,
                     onTap: () {
+                      final settings = CallRepository.getPeerTranslationSettings(
+                        peerId: widget.other.id,
+                        peerName: widget.contactName,
+                        peerPhone: widget.other.phone.number,
+                      );
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => OutgoingCallScreen(
                             caller: widget.self,
                             callee: widget.other,
                             calleeDisplayName: widget.contactName,
+                            overrideMyLangCode: settings.myLangCode,
+                            overridePeerLangCode: settings.peerLangCode,
+                            initialTranslationEnabled: settings.isTranslationEnabled,
                           ),
                         ),
                       );
@@ -409,7 +418,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     title: const Text('Mute notifications'),
                     subtitle: const Text('Silence alerts for new messages from this contact'),
                     value: _isMuted,
-                    activeColor: AppColors.primary,
+                    activeThumbColor: AppColors.primary,
                     onChanged: (val) {
                       setState(() {
                         _isMuted = val;
@@ -535,7 +544,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
           children: [
             CircleAvatar(
               radius: 22,
-              backgroundColor: color.withOpacity(0.15),
+              backgroundColor: color.withValues(alpha: 0.15),
               child: Icon(icon, color: color, size: 22),
             ),
             const SizedBox(height: 6),
@@ -592,12 +601,20 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                 label: const Text('Start Translated Voice Call'),
                 onPressed: () {
                   Navigator.pop(ctx);
+                  final settings = CallRepository.getPeerTranslationSettings(
+                    peerId: widget.other.id,
+                    peerName: widget.contactName,
+                    peerPhone: widget.other.phone.number,
+                  );
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => OutgoingCallScreen(
                         caller: widget.self,
                         callee: widget.other,
                         calleeDisplayName: widget.contactName,
+                        overrideMyLangCode: settings.myLangCode,
+                        overridePeerLangCode: settings.peerLangCode,
+                        initialTranslationEnabled: settings.isTranslationEnabled,
                       ),
                     ),
                   );

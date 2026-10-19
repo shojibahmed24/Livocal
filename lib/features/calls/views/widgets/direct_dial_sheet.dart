@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/calls/controllers/call_controller.dart';
+import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'package:livocal/features/calls/views/outgoing_call_screen.dart';
 import 'package:livocal/features/calls/views/widgets/minute_recharge_sheet.dart';
 import 'package:livocal/features/chat/views/chat.dart';
@@ -12,6 +13,7 @@ import 'package:livocal/shared/models/user_wallet.dart';
 import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/repositories/wallet_repository.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
 
@@ -134,12 +136,22 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
 
     Navigator.of(context).pop();
 
+    final calleeName = _foundUser != null ? _foundUser!.name : phone;
+    final settings = CallRepository.getPeerTranslationSettings(
+      peerId: targetUser.id,
+      peerName: calleeName,
+      peerPhone: phone,
+    );
+
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => OutgoingCallScreen(
           caller: widget.currentUser,
           callee: targetUser,
-          calleeDisplayName: _foundUser != null ? _foundUser!.name : phone,
+          calleeDisplayName: calleeName,
+          overrideMyLangCode: settings.myLangCode,
+          overridePeerLangCode: settings.peerLangCode,
+          initialTranslationEnabled: settings.isTranslationEnabled,
         ),
       ),
     );
@@ -196,7 +208,7 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? AppColors.darkSurface : AppColors.lightBackground;
     final textColor = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
-    final primaryColor = AppColors.primary;
+    const primaryColor = AppColors.primary;
 
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
@@ -237,10 +249,10 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.16),
+                    color: primaryColor.withValues(alpha: 0.16),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.dialpad_rounded, color: primaryColor, size: 22),
+                  child: const Icon(Icons.dialpad_rounded, color: primaryColor, size: 22),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -248,7 +260,7 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Direct Call / Chat by Number',
+                        AppStrings.tr(ref, 'directCallByNumber'),
                         style: TextStyle(
                           color: textColor,
                           fontWeight: FontWeight.bold,
@@ -256,7 +268,7 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                         ),
                       ),
                       Text(
-                        'যেকোনো ফোন নম্বর লিখে সরাসরি কল বা চ্যাট করুন',
+                        AppStrings.tr(ref, 'directDialSubtitle'),
                         style: TextStyle(
                           color: isDark ? Colors.white60 : Colors.black54,
                           fontSize: 12,
@@ -317,7 +329,7 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(color: primaryColor, width: 1.5),
+                  borderSide: const BorderSide(color: primaryColor, width: 1.5),
                 ),
               ),
             ),
@@ -328,9 +340,9 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.12),
+                  color: primaryColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: primaryColor.withOpacity(0.35)),
+                  border: Border.all(color: primaryColor.withValues(alpha: 0.35)),
                 ),
                 child: Row(
                   children: [
@@ -369,6 +381,8 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                           ),
                           Text(
                             'Registered Livocal User (${_foundUser!.phone.getFormattedNumber()})',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: AppColors.primary,
                               fontSize: 11.5,
@@ -386,9 +400,9 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.12),
+                  color: Colors.amber.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.amber.withOpacity(0.4)),
+                  border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
                 ),
                 child: Row(
                   children: [
@@ -422,13 +436,13 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: isSameLang
-                        ? AppColors.primary.withOpacity(0.1)
-                        : (wallet.hasMinutes ? const Color(0xFF06B6D4).withOpacity(0.1) : Colors.amber.withOpacity(0.1)),
+                        ? AppColors.primary.withValues(alpha: 0.1)
+                        : (wallet.hasMinutes ? const Color(0xFF06B6D4).withValues(alpha: 0.1) : Colors.amber.withValues(alpha: 0.1)),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: isSameLang
-                          ? AppColors.primary.withOpacity(0.3)
-                          : (wallet.hasMinutes ? const Color(0xFF06B6D4).withOpacity(0.3) : Colors.amber.withOpacity(0.4)),
+                          ? AppColors.primary.withValues(alpha: 0.3)
+                          : (wallet.hasMinutes ? const Color(0xFF06B6D4).withValues(alpha: 0.3) : Colors.amber.withValues(alpha: 0.4)),
                     ),
                   ),
                   child: Row(
@@ -444,8 +458,8 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                       Expanded(
                         child: Text(
                           isSameLang
-                              ? '🗣️ ফ্রি লোকাল কল (Same Language - কোনো মিনিট কাটবে না)'
-                              : '🤖 AI অনুবাদ কল (১ মি./মি.) • ব্যালেন্স: ${wallet.effectiveRemainingMinutes} মি.',
+                              ? AppStrings.tr(ref, 'freeLocalCallBanner')
+                              : AppStrings.trParams(ref, 'aiTranslateCallBanner', {'minutes': '${wallet.effectiveRemainingMinutes}'}),
                           style: TextStyle(
                             color: isSameLang
                                 ? (isDark ? Colors.green[200] : Colors.green[800])
@@ -460,11 +474,11 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                       if (!isSameLang && !wallet.hasMinutes)
                         InkWell(
                           onTap: () => showMinuteRechargeSheet(context, user: widget.currentUser),
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 4),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: Text(
-                              'রিচার্জ',
-                              style: TextStyle(
+                              AppStrings.tr(ref, 'recharge'),
+                              style: const TextStyle(
                                 color: Colors.amber,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 11.5,
@@ -494,9 +508,9 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                       elevation: 0,
                     ),
                     icon: const Icon(Icons.call_rounded, size: 20),
-                    label: const Text(
-                      'Voice Call (AI)',
-                      style: TextStyle(
+                    label: Text(
+                      AppStrings.tr(ref, 'voiceCallAi'),
+                      style: const TextStyle(
                         fontSize: 14.5,
                         fontWeight: FontWeight.bold,
                       ),
@@ -509,16 +523,16 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       foregroundColor: primaryColor,
-                      side: BorderSide(color: primaryColor, width: 1.5),
+                      side: const BorderSide(color: primaryColor, width: 1.5),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                     icon: const Icon(Icons.chat_rounded, size: 20),
-                    label: const Text(
-                      'Message',
-                      style: TextStyle(
+                    label: Text(
+                      AppStrings.tr(ref, 'messageAction'),
+                      style: const TextStyle(
                         fontSize: 14.5,
                         fontWeight: FontWeight.bold,
                       ),

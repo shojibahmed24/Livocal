@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/theme/app_colors.dart';
 
 /// Modal bottom sheet shown when a user attempts an AI-translated call
 /// but has 0 minutes remaining in their wallet.
-class InsufficientMinutesSheet extends StatelessWidget {
+class InsufficientMinutesSheet extends ConsumerWidget {
   final VoidCallback onRechargePressed;
   final VoidCallback onCallWithoutTranslation;
 
@@ -30,7 +32,7 @@ class InsufficientMinutesSheet extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final surfaceColor = isDark ? const Color(0xFF1F2C34) : Colors.white;
     final textColor = isDark ? Colors.white : const Color(0xFF111B21);
@@ -43,7 +45,7 @@ class InsufficientMinutesSheet extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
@@ -62,7 +64,7 @@ class InsufficientMinutesSheet extends StatelessWidget {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.3),
+                  color: Colors.grey.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -74,7 +76,7 @@ class InsufficientMinutesSheet extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.amber.withOpacity(0.15),
+                    color: Colors.amber.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -89,7 +91,7 @@ class InsufficientMinutesSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'অনুবাদ মিনিট শেষ • Minutes Exhausted',
+                        AppStrings.tr(ref, 'minutesExhaustedTitle'),
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -98,7 +100,7 @@ class InsufficientMinutesSheet extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'AI লাইভ অনুবাদ কলের জন্য মিনিট ব্যালেন্স প্রয়োজন',
+                        AppStrings.tr(ref, 'minutesExhaustedSub'),
                         style: TextStyle(
                           fontSize: 12,
                           color: secondaryText,
@@ -125,7 +127,7 @@ class InsufficientMinutesSheet extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'একই ভাষার সাধারণ কল সম্পূর্ণ ফ্রি! শুধুমাত্র ভিন্ন ভাষার রিয়েল-টাইম AI অনুবাদের ক্ষেত্রে মিনিট প্রযোজ্য।',
+                      AppStrings.tr(ref, 'sameLanguageFreeNotice'),
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark ? Colors.grey[300] : const Color(0xFF3B4A54),
@@ -142,20 +144,22 @@ class InsufficientMinutesSheet extends StatelessWidget {
             // Package preview cards
             _buildBundleOption(
               context: context,
-              title: 'স্টার্টার প্যাক (Starter)',
-              minutes: '৬০ মিনিট',
-              price: '৳১,২০০ (\$৯.৯৯)',
+              title: AppStrings.tr(ref, 'starterPackTitle'),
+              minutes: AppStrings.tr(ref, 'starterBundleMinutes'),
+              price: AppStrings.tr(ref, 'starterPackPriceText'),
               isPopular: false,
               isDark: isDark,
+              popularText: AppStrings.tr(ref, 'popularBadge'),
             ),
             const SizedBox(height: 8),
             _buildBundleOption(
               context: context,
-              title: 'ফ্রিল্যান্সার প্রো (Pro)',
-              minutes: '১৮০ মিনিট',
-              price: '৳৩,০০০ (\$২৪.৯৯)',
+              title: AppStrings.tr(ref, 'proPackTitle'),
+              minutes: AppStrings.tr(ref, 'proBundleMinutes'),
+              price: AppStrings.tr(ref, 'proPackPriceText'),
               isPopular: true,
               isDark: isDark,
+              popularText: AppStrings.tr(ref, 'popularBadge'),
             ),
 
             const SizedBox(height: 18),
@@ -167,9 +171,9 @@ class InsufficientMinutesSheet extends StatelessWidget {
                 onRechargePressed();
               },
               icon: const Icon(Icons.flash_on_rounded, size: 20),
-              label: const Text(
-                'মিনিট রিচার্জ করুন • Buy Minutes',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              label: Text(
+                AppStrings.tr(ref, 'buyMinutes'),
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
@@ -191,9 +195,9 @@ class InsufficientMinutesSheet extends StatelessWidget {
                 onCallWithoutTranslation();
               },
               icon: const Icon(Icons.phone_outlined, size: 18),
-              label: const Text(
-                'অনুবাদ ছাড়া ফ্রি কল করুন • Call Free (No AI)',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              label: Text(
+                AppStrings.tr(ref, 'callFreeNoAi'),
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: isDark ? Colors.white : Colors.black87,
@@ -219,12 +223,13 @@ class InsufficientMinutesSheet extends StatelessWidget {
     required String price,
     required bool isPopular,
     required bool isDark,
+    required String popularText,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: isPopular
-            ? AppColors.primary.withOpacity(isDark ? 0.15 : 0.08)
+            ? AppColors.primary.withValues(alpha: isDark ? 0.15 : 0.08)
             : (isDark ? const Color(0xFF26343D) : Colors.grey[100]),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
@@ -256,9 +261,9 @@ class InsufficientMinutesSheet extends StatelessWidget {
                           color: AppColors.primary,
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Text(
-                          'সেরা পছন্দ',
-                          style: TextStyle(
+                        child: Text(
+                          popularText,
+                          style: const TextStyle(
                             fontSize: 10,
                             color: Colors.white,
                             fontWeight: FontWeight.bold,

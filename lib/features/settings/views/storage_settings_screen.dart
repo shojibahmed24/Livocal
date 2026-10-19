@@ -161,24 +161,25 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
     showAppDialog(
       context: context,
       title: title,
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: ['No media', 'Photos', 'Photos, Audio', 'All media']
-            .map(
-              (opt) => RadioListTile<String>(
-                title: Text(_localizeOption(opt)),
-                value: opt,
-                groupValue: current,
-                activeColor: AppColors.primary,
-                onChanged: (val) {
-                  if (val != null) {
-                    onSelected(val);
-                    Navigator.pop(context);
-                  }
-                },
-              ),
-            )
-            .toList(),
+      content: RadioGroup<String>(
+        groupValue: current,
+        onChanged: (val) {
+          if (val != null) {
+            onSelected(val);
+            Navigator.pop(context);
+          }
+        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: ['No media', 'Photos', 'Photos, Audio', 'All media']
+              .map(
+                (opt) => RadioListTile<String>(
+                  title: Text(_localizeOption(opt)),
+                  value: opt,
+                ),
+              )
+              .toList(),
+        ),
       ),
       actions: [
         AppDialogAction(

@@ -530,55 +530,40 @@ class _HomePageState extends ConsumerState<HomePage>
                       title: 'Status privacy',
                       icon: Icons.lock_outline_rounded,
                       content: StatefulBuilder(
-                        builder: (ctx, setDlgState) => Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Who can see my status updates:',
-                              style: TextStyle(color: Colors.grey, fontSize: 13),
-                            ),
-                            const SizedBox(height: 8),
-                            RadioListTile<String>(
-                              title: const Text('My contacts'),
-                              subtitle: const Text('Share with all contacts in phonebook'),
-                              value: 'contacts',
-                              groupValue: privacy,
-                              activeColor: AppColors.primary,
-                              onChanged: (val) {
-                                if (val != null) {
-                                  setDlgState(() => privacy = val);
-                                  SharedPref.instance.setString('status_privacy', val);
-                                }
-                              },
-                            ),
-                            RadioListTile<String>(
-                              title: const Text('My contacts except...'),
-                              subtitle: const Text('Hide status from selected contacts'),
-                              value: 'except',
-                              groupValue: privacy,
-                              activeColor: AppColors.primary,
-                              onChanged: (val) {
-                                if (val != null) {
-                                  setDlgState(() => privacy = val);
-                                  SharedPref.instance.setString('status_privacy', val);
-                                }
-                              },
-                            ),
-                            RadioListTile<String>(
-                              title: const Text('Only share with...'),
-                              subtitle: const Text('Share only with chosen friends'),
-                              value: 'only',
-                              groupValue: privacy,
-                              activeColor: AppColors.primary,
-                              onChanged: (val) {
-                                if (val != null) {
-                                  setDlgState(() => privacy = val);
-                                  SharedPref.instance.setString('status_privacy', val);
-                                }
-                              },
-                            ),
-                          ],
+                        builder: (ctx, setDlgState) => RadioGroup<String>(
+                          groupValue: privacy,
+                          onChanged: (val) {
+                            if (val != null) {
+                              setDlgState(() => privacy = val);
+                              SharedPref.instance.setString('status_privacy', val);
+                            }
+                          },
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'Who can see my status updates:',
+                                style: TextStyle(color: Colors.grey, fontSize: 13),
+                              ),
+                              SizedBox(height: 8),
+                              RadioListTile<String>(
+                                title: Text('My contacts'),
+                                subtitle: Text('Share with all contacts in phonebook'),
+                                value: 'contacts',
+                              ),
+                              RadioListTile<String>(
+                                title: Text('My contacts except...'),
+                                subtitle: Text('Hide status from selected contacts'),
+                                value: 'except',
+                              ),
+                              RadioListTile<String>(
+                                title: Text('Only share with...'),
+                                subtitle: Text('Share only with chosen friends'),
+                                value: 'only',
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       actions: [

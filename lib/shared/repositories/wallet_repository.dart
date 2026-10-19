@@ -342,25 +342,25 @@ class WalletRepository {
         if (response.statusCode == 200 && data['success'] == true) {
           return PaymentSubmissionResult(
             success: true,
-            message: 'পেমেন্ট রিকোয়েস্ট সফলভাবে জমা হয়েছে।',
+            message: 'Payment request submitted successfully.',
             paymentData: data['payment'] is Map<String, dynamic> ? data['payment'] : null,
           );
         } else {
           return PaymentSubmissionResult(
             success: false,
-            message: data['error']?.toString() ?? 'পেমেন্ট রিকোয়েস্ট প্রক্রিয়াকরণ করা যায়নি।',
+            message: data['error']?.toString() ?? 'Payment request could not be processed.',
           );
         }
       }
       return const PaymentSubmissionResult(
         success: false,
-        message: 'ইউজার লগইন সেশন মেয়াদোত্তীর্ণ। পুনরায় লগইন করুন।',
+        message: 'User session expired. Please log in again.',
       );
     } catch (e) {
       debugPrint('[WalletRepository] submitPaymentRequest error: $e');
       return PaymentSubmissionResult(
         success: false,
-        message: 'নেটওয়ার্ক সংযোগ ত্রুটি: $e',
+        message: 'Network connection error: $e',
       );
     }
   }

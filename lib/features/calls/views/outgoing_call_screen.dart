@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/calls/controllers/call_controller.dart';
+import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/features/calls/models/call_model.dart';
+import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'package:livocal/features/calls/views/active_call_screen.dart';
 import 'package:livocal/features/calls/views/widgets/call_scaffold.dart';
 import 'package:livocal/features/calls/views/widgets/insufficient_minutes_sheet.dart';
@@ -36,6 +38,7 @@ class OutgoingCallScreen extends ConsumerStatefulWidget {
 class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ringController;
+  late final PeerTranslationSettings _resolvedSettings;
   bool _navigated = false;
 
   @override
@@ -47,15 +50,24 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
     )..repeat();
     // Note: Timer haptic spam removed; ringback tone & network state handle feedback.
 
+    _resolvedSettings = CallRepository.getPeerTranslationSettings(
+      peerId: widget.callee.id,
+      peerName: widget.calleeDisplayName,
+      peerPhone: widget.callee.phone.number,
+      explicitMyLang: widget.overrideMyLangCode,
+      explicitPeerLang: widget.overridePeerLangCode,
+      explicitTranslationEnabled: widget.initialTranslationEnabled,
+    );
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       final session = await ref.read(callControllerProvider.notifier).startOutgoingCall(
             caller: widget.caller,
             callee: widget.callee,
             calleeDisplayName: widget.calleeDisplayName,
-            overrideMyLangCode: widget.overrideMyLangCode,
-            overridePeerLangCode: widget.overridePeerLangCode,
-            translationEnabled: widget.initialTranslationEnabled,
+            overrideMyLangCode: _resolvedSettings.myLangCode,
+            overridePeerLangCode: _resolvedSettings.peerLangCode,
+            translationEnabled: _resolvedSettings.isTranslationEnabled,
           );
       if (session == null && mounted) {
         _navigated = true;
@@ -147,8 +159,14 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
 
     final callState = ref.watch(callControllerProvider);
     final session = callState.activeSession;
-    final myLang = session?.myLanguage ?? callState.myLanguage;
-    final peerLang = session?.peerLanguage ?? callState.peerLanguage;
+    final myLang = session?.myLanguage ??
+        (callState.activeSession != null
+            ? callState.myLanguage
+            : CallLanguageRegistry.fromCode(_resolvedSettings.myLangCode));
+    final peerLang = session?.peerLanguage ??
+        (callState.activeSession != null
+            ? callState.peerLanguage
+            : CallLanguageRegistry.fromCode(_resolvedSettings.peerLangCode));
     final status = session?.status ?? CallStateStatus.dialing;
 
     String statusText;
@@ -176,7 +194,10 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
         statusText = 'Calling...';
     }
 
-    final isTranslatedCall = callState.translationEnabled &&
+    final effectiveTrans = session != null
+        ? session.translationEnabled
+        : _resolvedSettings.isEffectivelyTranslated;
+    final isTranslatedCall = effectiveTrans &&
         (myLang.code.toLowerCase().trim() != peerLang.code.toLowerCase().trim());
 
     return CallScaffold(

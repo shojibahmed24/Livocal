@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:livocal/features/calls/models/call_language.dart';
+import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'package:livocal/shared/services/translation_service.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
@@ -57,8 +58,8 @@ class _ChatTranslationSheetContentState
   String _translatedPreview = '';
   bool _isTranslating = false;
 
-  String get _storagePrefix =>
-      'chat_trans_${widget.peerId ?? widget.peerName}';
+  List<String> get _candidatePrefixes =>
+      CallRepository.getCandidatePrefixes(widget.peerId ?? '', widget.peerName);
 
   @override
   void initState() {
@@ -68,14 +69,31 @@ class _ChatTranslationSheetContentState
 
   void _loadPreferences() {
     final prefs = SharedPref.instance;
-    final savedEnabled = prefs.getBool('${_storagePrefix}_enabled');
-    final savedAutoIncoming = prefs.getBool('${_storagePrefix}_auto_incoming');
-    final savedAutoVoice = prefs.getBool('${_storagePrefix}_auto_voice');
-    final savedMyLangCode = prefs.getString('${_storagePrefix}_my_lang');
-    final savedPeerLangCode = prefs.getString('${_storagePrefix}_peer_lang');
+    bool? savedEnabled;
+    bool? savedAutoIncoming;
+    bool? savedAutoVoice;
+    String? savedMyLangCode;
+    String? savedPeerLangCode;
+
+    for (final p in _candidatePrefixes) {
+      if (savedEnabled == null && prefs.containsKey('${p}_enabled')) {
+        savedEnabled = prefs.getBool('${p}_enabled');
+      }
+      if (savedAutoIncoming == null && prefs.containsKey('${p}_auto_incoming')) {
+        savedAutoIncoming = prefs.getBool('${p}_auto_incoming');
+      }
+      if (savedAutoVoice == null && prefs.containsKey('${p}_auto_voice')) {
+        savedAutoVoice = prefs.getBool('${p}_auto_voice');
+      }
+      if (savedMyLangCode == null && prefs.containsKey('${p}_my_lang')) {
+        savedMyLangCode = prefs.getString('${p}_my_lang');
+      }
+      if (savedPeerLangCode == null && prefs.containsKey('${p}_peer_lang')) {
+        savedPeerLangCode = prefs.getString('${p}_peer_lang');
+      }
+    }
 
     setState(() {
-      // If user hasn't explicitly saved a preference yet, default to false so it doesn't unexpectedly turn on
       _liveTranslationEnabled = savedEnabled ?? false;
       _autoTranslateIncoming = savedAutoIncoming ?? true;
       _autoTranscribeVoiceNotes = savedAutoVoice ?? true;
@@ -84,11 +102,24 @@ class _ChatTranslationSheetContentState
         final matches = CallLanguageRegistry.allLanguages
             .where((l) => l.code == savedMyLangCode);
         if (matches.isNotEmpty) _myLanguage = matches.first;
+      } else {
+        final myCode = CallRepository.getMyLanguageCode();
+        final matches = CallLanguageRegistry.allLanguages
+            .where((l) => l.code == myCode);
+        if (matches.isNotEmpty) _myLanguage = matches.first;
       }
 
       if (savedPeerLangCode != null) {
         final matches = CallLanguageRegistry.allLanguages
             .where((l) => l.code == savedPeerLangCode);
+        if (matches.isNotEmpty) _peerLanguage = matches.first;
+      } else {
+        final inferred = CallRepository.inferPeerLanguageCode(
+          widget.peerId ?? '',
+          widget.peerName,
+        );
+        final matches = CallLanguageRegistry.allLanguages
+            .where((l) => l.code == inferred);
         if (matches.isNotEmpty) _peerLanguage = matches.first;
       }
     });
@@ -96,26 +127,13 @@ class _ChatTranslationSheetContentState
 
   Future<void> _savePreferences() async {
     final prefs = SharedPref.instance;
-    await prefs.setBool(
-      '${_storagePrefix}_enabled',
-      _liveTranslationEnabled,
-    );
-    await prefs.setBool(
-      '${_storagePrefix}_auto_incoming',
-      _autoTranslateIncoming,
-    );
-    await prefs.setBool(
-      '${_storagePrefix}_auto_voice',
-      _autoTranscribeVoiceNotes,
-    );
-    await prefs.setString(
-      '${_storagePrefix}_my_lang',
-      _myLanguage.code,
-    );
-    await prefs.setString(
-      '${_storagePrefix}_peer_lang',
-      _peerLanguage.code,
-    );
+    for (final p in _candidatePrefixes) {
+      await prefs.setBool('${p}_enabled', _liveTranslationEnabled);
+      await prefs.setBool('${p}_auto_incoming', _autoTranslateIncoming);
+      await prefs.setBool('${p}_auto_voice', _autoTranscribeVoiceNotes);
+      await prefs.setString('${p}_my_lang', _myLanguage.code);
+      await prefs.setString('${p}_peer_lang', _peerLanguage.code);
+    }
     widget.onSettingsChanged?.call();
   }
 

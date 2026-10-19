@@ -18,6 +18,36 @@ enum WebRtcCallState {
   closed,
 }
 
+enum CallNetworkQuality {
+  good,
+  fair,
+  poor,
+}
+
+extension CallNetworkQualityX on CallNetworkQuality {
+  String get label {
+    switch (this) {
+      case CallNetworkQuality.good:
+        return 'Good';
+      case CallNetworkQuality.fair:
+        return 'Fair';
+      case CallNetworkQuality.poor:
+        return 'Poor';
+    }
+  }
+
+  String get emoji {
+    switch (this) {
+      case CallNetworkQuality.good:
+        return '🟢';
+      case CallNetworkQuality.fair:
+        return '🟡';
+      case CallNetworkQuality.poor:
+        return '🔴';
+    }
+  }
+}
+
 class WebRtcCallClient {
   final FirebaseFirestore? firestore;
 
@@ -32,6 +62,13 @@ class WebRtcCallClient {
       StreamController<WebRtcCallState>.broadcast();
   final StreamController<MediaStream> _remoteStreamController =
       StreamController<MediaStream>.broadcast();
+
+  final StreamController<CallNetworkQuality> _networkQualityController =
+      StreamController<CallNetworkQuality>.broadcast();
+  Stream<CallNetworkQuality> get networkQualityStream =>
+      _networkQualityController.stream;
+  CallNetworkQuality _currentNetworkQuality = CallNetworkQuality.good;
+  CallNetworkQuality get currentNetworkQuality => _currentNetworkQuality;
 
   RTCDataChannel? _dataChannel;
   final StreamController<Uint8List> _remoteTranslatedAudioController =
@@ -92,20 +129,111 @@ class WebRtcCallClient {
     }
   }
 
+  /// Tunes the SDP for voice clarity, forward error correction, and packet loss resilience:
+  /// - Enables Opus In-Band Forward Error Correction (FEC): useinbandfec=1
+  /// - Enables Discontinuous Transmission (DTX) for bandwidth savings during silence: usedtx=1
+  /// - Sets minptime=10 for lower latency voice framing
+  static String tuneAudioSdp(String sdp) {
+    if (sdp.isEmpty) return sdp;
+
+    // 1. Find the Opus payload type (e.g. a=rtpmap:111 opus/48000/2)
+    final opusRegex = RegExp(r'a=rtpmap:(\d+)\s+opus/48000/2', caseSensitive: false);
+    final match = opusRegex.firstMatch(sdp);
+    if (match == null) {
+      return sdp;
+    }
+
+    final pt = match.group(1);
+    if (pt == null || pt.isEmpty) return sdp;
+
+    final fmtpRegex = RegExp('a=fmtp:$pt\\s+([^\r\n]*)', caseSensitive: false);
+    final fmtpMatch = fmtpRegex.firstMatch(sdp);
+
+    if (fmtpMatch != null) {
+      final existingParams = fmtpMatch.group(1) ?? '';
+      final paramMap = <String, String>{};
+
+      for (final param in existingParams.split(';')) {
+        final kv = param.trim().split('=');
+        if (kv.isNotEmpty && kv[0].isNotEmpty) {
+          paramMap[kv[0].toLowerCase()] = kv.length > 1 ? kv[1] : '';
+        }
+      }
+
+      paramMap['useinbandfec'] = '1';
+      paramMap['usedtx'] = '1';
+      if (!paramMap.containsKey('maxaveragebitrate')) {
+        paramMap['maxaveragebitrate'] = '32000';
+      }
+      if (!paramMap.containsKey('minptime')) {
+        paramMap['minptime'] = '10';
+      }
+
+      final newParams = paramMap.entries
+          .map((e) => e.value.isNotEmpty ? '${e.key}=${e.value}' : e.key)
+          .join(';');
+
+      return sdp.replaceRange(
+        fmtpMatch.start,
+        fmtpMatch.end,
+        'a=fmtp:$pt $newParams',
+      );
+    } else {
+      final rtpmapLine = match.group(0)!;
+      final lineBreak = sdp.contains('\r\n') ? '\r\n' : '\n';
+      return sdp.replaceFirst(
+        rtpmapLine,
+        '$rtpmapLine${lineBreak}a=fmtp:$pt minptime=10;useinbandfec=1;usedtx=1;maxaveragebitrate=32000',
+      );
+    }
+  }
+
   Timer? _rtpStatsTimer;
   int _lastRtpBytesSent = 0;
   int _lastRtpBytesReceived = 0;
+  int _lastPacketsLost = 0;
+  int _lastPacketsReceived = 0;
+
+  /// Sets maximum audio bitrate in bps on RTCRtpSender encodings via setParameters (B2)
+  Future<void> setAudioBitrate(int bitrateBps) async {
+    if (_peerConnection == null) return;
+    try {
+      final senders = await _peerConnection!.getSenders();
+      for (final sender in senders) {
+        if (sender.track?.kind == 'audio') {
+          final params = sender.parameters;
+          if (params.encodings != null && params.encodings!.isNotEmpty) {
+            for (final encoding in params.encodings!) {
+              encoding.maxBitrate = bitrateBps;
+            }
+            await sender.setParameters(params);
+            debugPrint('[WebRtcCallClient] Set audio maxBitrate to $bitrateBps bps via RTCRtpSender');
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[WebRtcCallClient] setAudioBitrate note: $e');
+    }
+  }
 
   void _startRtpStatsTracking() {
     _stopRtpStatsTracking();
     _lastRtpBytesSent = 0;
     _lastRtpBytesReceived = 0;
+    _lastPacketsLost = 0;
+    _lastPacketsReceived = 0;
+
     _rtpStatsTimer = Timer.periodic(const Duration(seconds: 4), (_) async {
       if (_peerConnection == null) return;
       try {
         final reports = await _peerConnection!.getStats();
         int totalSent = 0;
         int totalReceived = 0;
+        int totalPacketsLost = 0;
+        int totalPacketsReceived = 0;
+        double lastRttSeconds = 0.0;
+        double lastJitterSeconds = 0.0;
+
         for (final report in reports) {
           if (report.type == 'outbound-rtp') {
             final bs = report.values['bytesSent'];
@@ -116,6 +244,23 @@ class WebRtcCallClient {
             final br = report.values['bytesReceived'];
             if (br != null) {
               totalReceived += int.tryParse(br.toString()) ?? 0;
+            }
+            final pl = report.values['packetsLost'];
+            if (pl != null) {
+              totalPacketsLost += int.tryParse(pl.toString()) ?? 0;
+            }
+            final pr = report.values['packetsReceived'];
+            if (pr != null) {
+              totalPacketsReceived += int.tryParse(pr.toString()) ?? 0;
+            }
+            final jit = report.values['jitter'];
+            if (jit != null) {
+              lastJitterSeconds = double.tryParse(jit.toString()) ?? 0.0;
+            }
+          } else if (report.type == 'candidate-pair' || report.type == 'remote-inbound-rtp') {
+            final rtt = report.values['currentRoundTripTime'] ?? report.values['roundTripTime'];
+            if (rtt != null) {
+              lastRttSeconds = double.tryParse(rtt.toString()) ?? 0.0;
             }
           }
         }
@@ -135,6 +280,57 @@ class WebRtcCallClient {
           NetworkTracker.recordBytesReceived(delta);
           _lastRtpBytesReceived = totalReceived;
         }
+
+        // Adaptive Network Quality & Bitrate Tuning (D1 & D3)
+        final deltaLost = totalPacketsLost - _lastPacketsLost;
+        final deltaReceived = totalPacketsReceived - _lastPacketsReceived;
+        _lastPacketsLost = totalPacketsLost;
+        _lastPacketsReceived = totalPacketsReceived;
+
+        double packetLossRate = 0.0;
+        if (deltaLost + deltaReceived > 0 && deltaLost >= 0) {
+          packetLossRate = deltaLost / (deltaLost + deltaReceived);
+        }
+
+        final rttMs = lastRttSeconds * 1000;
+        final jitterMs = lastJitterSeconds * 1000;
+
+        // Auto-Degrade Ladder (D3):
+        // 🔴 Poor: Loss > 5% or RTT > 400ms or Jitter > 80ms
+        // 🟡 Fair: Loss > 2% or RTT > 220ms or Jitter > 35ms
+        // 🟢 Good: Loss <= 2% and RTT <= 220ms and Jitter <= 35ms
+        CallNetworkQuality quality;
+        if (packetLossRate > 0.05 || rttMs > 400 || jitterMs > 80) {
+          quality = CallNetworkQuality.poor;
+        } else if (packetLossRate > 0.02 || rttMs > 220 || jitterMs > 35) {
+          quality = CallNetworkQuality.fair;
+        } else {
+          quality = CallNetworkQuality.good;
+        }
+
+        if (quality != _currentNetworkQuality) {
+          _currentNetworkQuality = quality;
+          if (!_networkQualityController.isClosed) {
+            _networkQualityController.add(quality);
+          }
+
+          // D3: 3-tier adaptive bitrate ladder
+          switch (quality) {
+            case CallNetworkQuality.poor:
+              setAudioBitrate(16000);
+              debugPrint('[WebRtcCallClient] 🔴 Poor network (loss: ${(packetLossRate * 100).toStringAsFixed(1)}%, RTT: ${rttMs.toStringAsFixed(0)}ms, jitter: ${jitterMs.toStringAsFixed(0)}ms). Degraded bitrate to 16kbps.');
+              break;
+            case CallNetworkQuality.fair:
+              setAudioBitrate(24000);
+              debugPrint('[WebRtcCallClient] 🟡 Fair network (loss: ${(packetLossRate * 100).toStringAsFixed(1)}%, RTT: ${rttMs.toStringAsFixed(0)}ms, jitter: ${jitterMs.toStringAsFixed(0)}ms). Step-down bitrate to 24kbps.');
+              break;
+            case CallNetworkQuality.good:
+              final lessDataManual = SharedPref.instance.getBool('storage_less_data_calls') ?? false;
+              setAudioBitrate(lessDataManual ? 16000 : 32000);
+              debugPrint('[WebRtcCallClient] 🟢 Good network restored. Bitrate set to ${lessDataManual ? 16000 : 32000}bps.');
+              break;
+          }
+        }
       } catch (e) {
         debugPrint('[WebRtcCallClient] RTP stats tracking error: $e');
       }
@@ -150,6 +346,8 @@ class WebRtcCallClient {
     _currentState = state;
     if (state == WebRtcCallState.connected) {
       _startRtpStatsTracking();
+      final lessData = SharedPref.instance.getBool('storage_less_data_calls') ?? false;
+      setAudioBitrate(lessData ? 16000 : 32000);
     } else if (state == WebRtcCallState.closed || state == WebRtcCallState.failed) {
       _stopRtpStatsTracking();
     }
@@ -198,14 +396,16 @@ class WebRtcCallClient {
         'offerToReceiveVideo': 0,
       });
 
-      await _peerConnection!.setLocalDescription(offer);
+      final tunedOfferSdp = tuneAudioSdp(offer.sdp ?? '');
+      final tunedOffer = RTCSessionDescription(tunedOfferSdp, offer.type);
+      await _peerConnection!.setLocalDescription(tunedOffer);
 
       // Save Offer to Firestore call document
       if (firestore != null) {
         await firestore!.collection('calls').doc(callId).set({
           'offer': {
-            'sdp': offer.sdp,
-            'type': offer.type,
+            'sdp': tunedOffer.sdp,
+            'type': tunedOffer.type,
           },
         }, SetOptions(merge: true));
 
@@ -223,12 +423,13 @@ class WebRtcCallClient {
               _peerConnection != null &&
               await _peerConnection?.getRemoteDescription() == null) {
             final answerMap = data['answer'] as Map<String, dynamic>;
+            final tunedAnswerSdp = tuneAudioSdp(answerMap['sdp'] ?? '');
             final answer = RTCSessionDescription(
-              answerMap['sdp'],
+              tunedAnswerSdp,
               answerMap['type'],
             );
             await _peerConnection!.setRemoteDescription(answer);
-            debugPrint('Caller successfully set remote answer description');
+            debugPrint('Caller successfully set remote answer description with Opus FEC');
             await _drainPendingCandidates();
           }
         });
@@ -273,9 +474,10 @@ class WebRtcCallClient {
     try {
       await _createPeerConnection();
 
-      // Set Remote Description from Caller's Offer
+      // Set Remote Description from Caller's Offer with Opus FEC tuning
+      final tunedRemoteOfferSdp = tuneAudioSdp(offerData['sdp'] ?? '');
       final offer = RTCSessionDescription(
-        offerData['sdp'],
+        tunedRemoteOfferSdp,
         offerData['type'],
       );
       await _peerConnection!.setRemoteDescription(offer);
@@ -287,14 +489,16 @@ class WebRtcCallClient {
         'offerToReceiveVideo': 0,
       });
 
-      await _peerConnection!.setLocalDescription(answer);
+      final tunedAnswerSdp = tuneAudioSdp(answer.sdp ?? '');
+      final tunedAnswer = RTCSessionDescription(tunedAnswerSdp, answer.type);
+      await _peerConnection!.setLocalDescription(tunedAnswer);
 
       // Save Answer to Firestore
       if (firestore != null) {
         await firestore!.collection('calls').doc(callId).set({
           'answer': {
-            'sdp': answer.sdp,
-            'type': answer.type,
+            'sdp': tunedAnswer.sdp,
+            'type': tunedAnswer.type,
           },
         }, SetOptions(merge: true));
 
@@ -379,6 +583,27 @@ class WebRtcCallClient {
       }
     }
 
+    // Configure Opus Codec Preferences with In-Band FEC on Audio Transceiver
+    try {
+      final transceivers = await _peerConnection!.getTransceivers();
+      for (final transceiver in transceivers) {
+        if (transceiver.receiver.track?.kind == 'audio' ||
+            transceiver.sender.track?.kind == 'audio') {
+          await transceiver.setCodecPreferences([
+            RTCRtpCodecCapability(
+              mimeType: 'audio/opus',
+              clockRate: 48000,
+              channels: 2,
+              sdpFmtpLine: 'minptime=10;useinbandfec=1;usedtx=1',
+            ),
+          ]);
+          debugPrint('[WebRtcCallClient] Set Opus FEC preferences on transceiver');
+        }
+      }
+    } catch (e) {
+      debugPrint('[WebRtcCallClient] Transceiver setCodecPreferences note: $e');
+    }
+
     // ICE Candidate gathering
     _peerConnection!.onIceCandidate = (RTCIceCandidate candidate) async {
       if (_currentCallId == null || firestore == null) return;
@@ -435,7 +660,7 @@ class WebRtcCallClient {
     if (_isCaller) {
       final dcInit = RTCDataChannelInit()
         ..ordered = false
-        ..maxRetransmits = 0;
+        ..maxRetransmits = 2; // (B3) Up to 2 retransmits eliminates glitches while maintaining under 80ms latency
       _dataChannel =
           await _peerConnection!.createDataChannel('liveTranslateAudio', dcInit);
       if (_dataChannel != null) {
@@ -537,6 +762,9 @@ class WebRtcCallClient {
     if (!_remoteStreamController.isClosed) _remoteStreamController.close();
     if (!_remoteTranslatedAudioController.isClosed) {
       _remoteTranslatedAudioController.close();
+    }
+    if (!_networkQualityController.isClosed) {
+      _networkQualityController.close();
     }
   }
 }
