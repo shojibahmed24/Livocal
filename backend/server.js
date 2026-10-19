@@ -1310,12 +1310,12 @@ app.get('/api/admin/recharges', authenticateAdmin, async (req, res) => {
   }
 });
 
-// P2P In-Chat Minute Transfer (Atomic User A -> User B)
+// P2P In-Chat Minute Transfer (Atomic User A -> User B) with Idempotency Protection
 app.post('/api/wallet/p2p-transfer', authenticateRequest, async (req, res) => {
   if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
 
   const fromUserId = req.user?.uid;
-  const { toUserId, minutes, note } = req.body || {};
+  const { toUserId, minutes, note, idempotencyKey } = req.body || {};
 
   if (!fromUserId) {
     return res.status(401).json({ error: 'Unauthorized: missing sender UID' });
@@ -1332,13 +1332,37 @@ app.post('/api/wallet/p2p-transfer', authenticateRequest, async (req, res) => {
     return res.status(400).json({ error: 'Minutes to transfer must be a positive integer' });
   }
 
+  // Idempotency key sanitization
+  const rawIdempotencyKey = idempotencyKey || req.headers['idempotency-key'];
+  const cleanIdempotencyKey = (typeof rawIdempotencyKey === 'string' && rawIdempotencyKey.trim().length > 0)
+    ? rawIdempotencyKey.trim().replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 64)
+    : null;
+
   try {
     const senderRef = firestoreDb.collection('users').doc(fromUserId).collection('wallet').doc('current');
     const receiverRef = firestoreDb.collection('users').doc(toUserId).collection('wallet').doc('current');
-    const transferId = `p2p_min_${Date.now()}_${fromUserId.length > 5 ? fromUserId.substring(0, 5) : fromUserId}`;
+    const transferId = cleanIdempotencyKey
+      ? `p2p_idem_${cleanIdempotencyKey}`
+      : `p2p_min_${Date.now()}_${fromUserId.length > 5 ? fromUserId.substring(0, 5) : fromUserId}`;
     const transferRef = firestoreDb.collection('p2p_transfers').doc(transferId);
 
     const result = await firestoreDb.runTransaction(async (tx) => {
+      // 1. Idempotency Check: if transfer was already executed, return existing record without double-debiting
+      const transferSnap = await tx.get(transferRef);
+      if (transferSnap.exists) {
+        const existingData = transferSnap.data() || {};
+        if (existingData.fromUserId && existingData.fromUserId !== fromUserId) {
+          throw new Error('Idempotency key collision from another user');
+        }
+        return {
+          alreadyProcessed: true,
+          transferId,
+          remainingMinutes: existingData.senderBalanceAfter ?? null,
+          transferredMinutes: existingData.minutes || mins,
+        };
+      }
+
+      // 2. Fetch sender wallet
       const senderSnap = await tx.get(senderRef);
       if (!senderSnap.exists) {
         throw new Error('Sender wallet does not exist');
@@ -1350,6 +1374,7 @@ app.post('/api/wallet/p2p-transfer', authenticateRequest, async (req, res) => {
         throw new Error(`Insufficient minute balance. Current: ${senderBalance}, Requested: ${mins}`);
       }
 
+      // 3. Fetch receiver wallet
       const receiverSnap = await tx.get(receiverRef);
       let receiverBalance = 0;
       let receiverPurchased = 0;
@@ -1361,26 +1386,28 @@ app.post('/api/wallet/p2p-transfer', authenticateRequest, async (req, res) => {
 
       const nowIso = new Date().toISOString();
 
-      // Deduct from sender
+      // 4. Atomic Deduct & Credit
       tx.set(senderRef, {
         balanceMinutes: senderBalance - mins,
         updatedAt: nowIso,
       }, { merge: true });
 
-      // Credit to receiver
       tx.set(receiverRef, {
         balanceMinutes: receiverBalance + mins,
         totalMinutesPurchased: receiverPurchased + mins,
         updatedAt: nowIso,
       }, { merge: true });
 
-      // Immutable central audit record for Admin Panel
+      // 5. Immutable central audit record for Admin Panel
       tx.set(transferRef, {
         id: transferId,
+        idempotencyKey: cleanIdempotencyKey || null,
         type: 'minute_transfer',
         fromUserId,
         toUserId,
         minutes: mins,
+        senderBalanceBefore: senderBalance,
+        senderBalanceAfter: senderBalance - mins,
         note: (note || '').toString().trim(),
         status: 'completed',
         method: 'Livocal Wallet',
@@ -1388,6 +1415,7 @@ app.post('/api/wallet/p2p-transfer', authenticateRequest, async (req, res) => {
       });
 
       return {
+        alreadyProcessed: false,
         transferId,
         remainingMinutes: senderBalance - mins,
       };
@@ -1395,7 +1423,9 @@ app.post('/api/wallet/p2p-transfer', authenticateRequest, async (req, res) => {
 
     return res.json({
       success: true,
-      message: `Successfully transferred ${mins} minutes`,
+      message: result.alreadyProcessed
+        ? `Transfer already processed (idempotent)`
+        : `Successfully transferred ${mins} minutes`,
       ...result,
     });
   } catch (err) {

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_emoji/flutter_emoji.dart';
@@ -322,6 +323,7 @@ class _MessageCardState extends State<MessageCard>
     String amount = '\$0.00';
     String method = '';
     String refId = '';
+    String recordId = '';
     String note = '';
 
     final lines = content.split('\n');
@@ -349,6 +351,14 @@ class _MessageCardState extends State<MessageCard>
       refId = matchRef.group(1)!.trim();
     }
 
+    // Extract genuine audit record ID from [id:...] token or fallback to refId if formatted as an audit ID
+    final matchId = RegExp(r'\[id:([a-zA-Z0-9_-]+)\]').firstMatch(mainLine);
+    if (matchId != null) {
+      recordId = matchId.group(1)!.trim();
+    } else if (refId.startsWith('p2p_pay_') || refId.startsWith('p2p_min_') || refId.startsWith('p2p_idem_')) {
+      recordId = refId;
+    }
+
     final isWallet = method.toLowerCase().contains('wallet');
     final isCrypto = method.toLowerCase().contains('usdt') ||
         method.toLowerCase().contains('binance');
@@ -357,8 +367,6 @@ class _MessageCardState extends State<MessageCard>
         : isCrypto
             ? const Color(0xFFF0B90B)
             : const Color(0xFFE2136E);
-    final isVerified = content.toLowerCase().contains('[verified]') ||
-        content.toLowerCase().contains('status: verified');
 
     return Container(
       constraints: const BoxConstraints(minWidth: 230, maxWidth: 280),
@@ -427,45 +435,11 @@ class _MessageCardState extends State<MessageCard>
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: (isWallet || isVerified
-                          ? AppColors.success
-                          : const Color(0xFFFF9800))
-                      .withValues(alpha: 0.15),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isWallet || isVerified
-                          ? (isVerified
-                              ? Icons.verified_rounded
-                              : Icons.check_circle_rounded)
-                          : Icons.schedule_rounded,
-                      size: 10,
-                      color: isWallet || isVerified
-                          ? AppColors.success
-                          : const Color(0xFFFF9800),
-                    ),
-                    const SizedBox(width: 3),
-                    Text(
-                      isWallet
-                          ? 'PAID'
-                          : (isVerified ? 'VERIFIED' : 'PENDING VERIFICATION'),
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                        color: isWallet || isVerified
-                            ? AppColors.success
-                            : const Color(0xFFFF9800),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
+              _buildPaymentVerificationBadge(
+                context: context,
+                isDark: isDark,
+                isWallet: isWallet,
+                recordId: recordId,
               ),
             ],
           ),
@@ -521,6 +495,153 @@ class _MessageCardState extends State<MessageCard>
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentVerificationBadge({
+    required BuildContext context,
+    required bool isDark,
+    required bool isWallet,
+    required String recordId,
+  }) {
+    // If Firebase isn't initialized (e.g. unit tests):
+    if (Firebase.apps.isEmpty) {
+      return _buildBadgeChip(
+        label: isWallet ? 'PAID' : (recordId.isNotEmpty ? 'VERIFIED' : 'PENDING VERIFICATION'),
+        icon: isWallet ? Icons.check_circle_rounded : (recordId.isNotEmpty ? Icons.verified_rounded : Icons.schedule_rounded),
+        color: isWallet || recordId.isNotEmpty ? AppColors.success : const Color(0xFFFF9800),
+      );
+    }
+
+    // An unlinked or spoofed payment message with no authentic audit record ID:
+    if (recordId.isEmpty) {
+      return _buildBadgeChip(
+        label: 'UNVERIFIED',
+        icon: Icons.gpp_bad_rounded,
+        color: Colors.redAccent,
+      );
+    }
+
+    final collectionName = isWallet ? 'p2p_transfers' : 'p2p_payments';
+
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection(collectionName)
+          .doc(recordId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return _buildBadgeChip(
+            label: 'UNVERIFIED',
+            icon: Icons.error_outline_rounded,
+            color: Colors.redAccent,
+          );
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+          return _buildBadgeChip(
+            label: isWallet ? 'PROCESSING' : 'PENDING',
+            icon: Icons.hourglass_empty_rounded,
+            color: const Color(0xFFFF9800),
+          );
+        }
+
+        final doc = snapshot.data;
+        if (doc == null || !doc.exists) {
+          // Document does NOT exist in Firestore -> It is an unverified / fake / spoofed payment!
+          return _buildBadgeChip(
+            label: 'UNVERIFIED',
+            icon: Icons.gpp_bad_rounded,
+            color: Colors.redAccent,
+          );
+        }
+
+        final data = doc.data() ?? {};
+        final rawStatus = (data['status'] as String? ?? 'pending').toLowerCase();
+
+        if (isWallet) {
+          if (rawStatus == 'completed') {
+            return _buildBadgeChip(
+              label: 'PAID',
+              icon: Icons.check_circle_rounded,
+              color: AppColors.success,
+            );
+          } else if (rawStatus == 'failed' || rawStatus == 'cancelled') {
+            return _buildBadgeChip(
+              label: 'FAILED',
+              icon: Icons.cancel_rounded,
+              color: Colors.redAccent,
+            );
+          } else {
+            return _buildBadgeChip(
+              label: 'PENDING',
+              icon: Icons.schedule_rounded,
+              color: const Color(0xFFFF9800),
+            );
+          }
+        } else {
+          // MFS or Crypto P2P Payment
+          if (rawStatus == 'verified') {
+            return _buildBadgeChip(
+              label: 'VERIFIED',
+              icon: Icons.verified_rounded,
+              color: AppColors.success,
+            );
+          } else if (rawStatus == 'flagged') {
+            return _buildBadgeChip(
+              label: 'FLAGGED',
+              icon: Icons.report_problem_rounded,
+              color: Colors.redAccent,
+            );
+          } else if (rawStatus == 'resolved') {
+            return _buildBadgeChip(
+              label: 'RESOLVED',
+              icon: Icons.task_alt_rounded,
+              color: AppColors.primary,
+            );
+          } else {
+            return _buildBadgeChip(
+              label: 'PENDING VERIFICATION',
+              icon: Icons.schedule_rounded,
+              color: const Color(0xFFFF9800),
+            );
+          }
+        }
+      },
+    );
+  }
+
+  Widget _buildBadgeChip({
+    required String label,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: color.withValues(alpha: 0.15),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 11,
+            color: color,
+          ),
+          const SizedBox(width: 3.5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+              color: color,
+              letterSpacing: 0.4,
+            ),
+          ),
         ],
       ),
     );

@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:livocal/shared/models/user_wallet.dart';
 import 'package:livocal/shared/services/device_fingerprint_service.dart';
 import 'package:livocal/shared/constants/app_config.dart';
+import 'package:uuid/uuid.dart';
 
 final walletRepositoryProvider = Provider<WalletRepository>((ref) {
   return WalletRepository(
@@ -392,16 +393,25 @@ class WalletRepository {
     }
   }
 
-  /// Atomically transfers minutes from sender's wallet to receiver's wallet and records audit log
-  Future<bool> transferMinutes({
+  /// Atomically transfers minutes from sender's wallet to receiver's wallet via authoritative backend.
+  /// Eliminates client-side balance manipulation risks and enforces server-side idempotency.
+  Future<MinuteTransferResult> transferMinutes({
     required String fromUserId,
     required String toUserId,
     required int minutes,
     String? note,
+    String? idempotencyKey,
   }) async {
-    if (minutes <= 0) return false;
+    if (minutes <= 0) {
+      return const MinuteTransferResult(
+        success: false,
+        message: 'Minutes to transfer must be greater than 0',
+      );
+    }
 
-    // 1. Try secure backend relay endpoint first (handles server transaction & audit)
+    final idemKey = idempotencyKey ?? const Uuid().v4();
+
+    // 1. Authoritative Backend Gateway
     try {
       final currentUser = fb.FirebaseAuth.instance.currentUser;
       final idToken = await currentUser?.getIdToken();
@@ -417,83 +427,65 @@ class WalletRepository {
             'toUserId': toUserId,
             'minutes': minutes,
             'note': note ?? '',
+            'idempotencyKey': idemKey,
           }),
         ).timeout(const Duration(seconds: 10));
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
           if (data['success'] == true) {
-            return true;
+            return MinuteTransferResult(
+              success: true,
+              transferId: data['transferId'] as String?,
+              remainingMinutes: (data['remainingMinutes'] as num?)?.toInt(),
+              message: data['message'] as String?,
+            );
           }
         } else {
           debugPrint('[WalletRepository] Backend p2p transfer returned ${response.statusCode}: ${response.body}');
+          try {
+            final errData = jsonDecode(response.body);
+            return MinuteTransferResult(
+              success: false,
+              message: errData['error'] as String? ?? 'Transfer rejected by server',
+            );
+          } catch (_) {}
         }
+      } else {
+        debugPrint('[WalletRepository] Missing authentication token for P2P transfer');
+        return const MinuteTransferResult(
+          success: false,
+          message: 'Authentication required for minute transfer',
+        );
       }
     } catch (e) {
-      debugPrint('[WalletRepository] Backend p2p transfer failed, trying direct Firestore: $e');
+      debugPrint('[WalletRepository] Backend p2p transfer error: $e');
+      return MinuteTransferResult(
+        success: false,
+        message: 'Network error during minute transfer: $e',
+      );
     }
 
-    // 2. Direct Firestore transaction fallback (for unit tests or offline/local fallback)
-    if (firestore == null) return false;
-    try {
-      final senderRef = _walletRef(fromUserId);
-      final receiverRef = _walletRef(toUserId);
-      if (senderRef == null || receiverRef == null) return false;
-
-      final transferId =
-          'p2p_min_${DateTime.now().millisecondsSinceEpoch}_${fromUserId.length > 5 ? fromUserId.substring(0, 5) : fromUserId}';
-      final transferRef = firestore!.collection('p2p_transfers').doc(transferId);
-
-      return await firestore!.runTransaction<bool>((tx) async {
-        final senderSnap = await tx.get(senderRef);
-        if (!senderSnap.exists || senderSnap.data() == null) return false;
-
-        final senderData = senderSnap.data()!;
-        final senderBalance = (senderData['balanceMinutes'] as num?)?.toInt() ?? 0;
-        if (senderBalance < minutes) return false;
-
-        final receiverSnap = await tx.get(receiverRef);
-        int receiverBalance = 0;
-        int receiverPurchased = 0;
-        if (receiverSnap.exists && receiverSnap.data() != null) {
-          final rData = receiverSnap.data()!;
-          receiverBalance = (rData['balanceMinutes'] as num?)?.toInt() ?? 0;
-          receiverPurchased = (rData['totalMinutesPurchased'] as num?)?.toInt() ?? 0;
-        }
-
-        // Deduct from sender
-        tx.set(senderRef, {
-          'balanceMinutes': senderBalance - minutes,
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
-
-        // Credit to receiver
-        tx.set(receiverRef, {
-          'balanceMinutes': receiverBalance + minutes,
-          'totalMinutesPurchased': receiverPurchased + minutes,
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
-
-        // Central audit record for Admin Panel
-        tx.set(transferRef, {
-          'id': transferId,
-          'type': 'minute_transfer',
-          'fromUserId': fromUserId,
-          'toUserId': toUserId,
-          'minutes': minutes,
-          'note': note ?? '',
-          'status': 'completed',
-          'method': 'Livocal Wallet',
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-
-        return true;
-      });
-    } catch (e) {
-      debugPrint('[WalletRepository] transferMinutes error: $e');
-      return false;
-    }
+    // Fail-closed: Never perform client-side direct balance mutation
+    return const MinuteTransferResult(
+      success: false,
+      message: 'Transfer gateway unreachable',
+    );
   }
+}
+
+class MinuteTransferResult {
+  final bool success;
+  final String? transferId;
+  final int? remainingMinutes;
+  final String? message;
+
+  const MinuteTransferResult({
+    required this.success,
+    this.transferId,
+    this.remainingMinutes,
+    this.message,
+  });
 }
 
 class PaymentSubmissionResult {

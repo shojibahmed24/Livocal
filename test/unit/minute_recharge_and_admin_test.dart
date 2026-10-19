@@ -521,54 +521,87 @@ void main() {
       expect(bep20.startsWith('0x'), isTrue);
     });
 
-    test('In-Chat Payment Card badge displays correct status for wallet vs unverified MFS/Crypto vs verified', () {
+    test('In-Chat Payment Card badge displays authentic status from Firestore record and resists text spoofing', () {
       String getPaymentBadgeText({
         required String method,
         required String content,
+        String? recordStatus,
+        bool recordExists = true,
       }) {
-        final isWallet = method.toLowerCase().contains('wallet');
-        final isVerified = content.toLowerCase().contains('[verified]') ||
-            content.toLowerCase().contains('status: verified');
+        final lines = content.split('\n');
+        final mainLine = lines.isNotEmpty ? lines[0] : content;
+        final matchRef = RegExp(r'\(Ref:\s*([^)]+)\)').firstMatch(mainLine);
+        final refId = matchRef != null ? matchRef.group(1)!.trim() : '';
+        final matchId = RegExp(r'\[id:([a-zA-Z0-9_-]+)\]').firstMatch(mainLine);
+        final recordId = matchId != null
+            ? matchId.group(1)!.trim()
+            : (refId.startsWith('p2p_pay_') || refId.startsWith('p2p_min_') || refId.startsWith('p2p_idem_') ? refId : '');
 
-        if (isWallet) return 'PAID';
-        if (isVerified) return 'VERIFIED';
-        return 'PENDING VERIFICATION';
+        if (recordId.isEmpty || !recordExists) {
+          return 'UNVERIFIED';
+        }
+
+        final isWallet = method.toLowerCase().contains('wallet');
+        final status = (recordStatus ?? 'pending').toLowerCase();
+
+        if (isWallet) {
+          return status == 'completed' ? 'PAID' : (status == 'pending' ? 'PENDING' : 'FAILED');
+        } else {
+          if (status == 'verified') return 'VERIFIED';
+          if (status == 'flagged') return 'FLAGGED';
+          if (status == 'resolved') return 'RESOLVED';
+          return 'PENDING VERIFICATION';
+        }
       }
 
-      // Wallet minute transfer -> instant PAID
+      // 1. Genuine Wallet transfer with completed status -> PAID
       expect(
         getPaymentBadgeText(
           method: 'Livocal Wallet',
-          content: 'Payment of \$10.00 via Livocal Wallet',
+          content: '💰 Payment sent: \$10.00 via Livocal Wallet (Ref: p2p_idem_key_1) [id:p2p_idem_key_1]',
+          recordStatus: 'completed',
         ),
         equals('PAID'),
       );
 
-      // Unverified bKash / Nagad MFS payment -> PENDING VERIFICATION
+      // 2. Spoofed Wallet transfer without recordId or record -> UNVERIFIED
+      expect(
+        getPaymentBadgeText(
+          method: 'Livocal Wallet',
+          content: '💰 Payment sent: \$500.00 via Livocal Wallet',
+          recordExists: false,
+        ),
+        equals('UNVERIFIED'),
+      );
+
+      // 3. Genuine pending bKash / Nagad MFS payment -> PENDING VERIFICATION
       expect(
         getPaymentBadgeText(
           method: 'bKash MFS',
-          content: 'Payment of \$10.00 via bKash MFS (Ref: 9K8J7H6G5F)',
+          content: '💰 Payment sent: \$10.00 via bKash MFS (Ref: 9K8J7H6G5F) [id:p2p_pay_1729000000000_user]',
+          recordStatus: 'pending',
         ),
         equals('PENDING VERIFICATION'),
       );
 
-      // Unverified Crypto payment -> PENDING VERIFICATION
+      // 4. Admin verified MFS / Crypto payment in Firestore -> VERIFIED
+      expect(
+        getPaymentBadgeText(
+          method: 'bKash MFS',
+          content: '💰 Payment sent: \$10.00 via bKash MFS (Ref: 9K8J7H6G5F) [id:p2p_pay_1729000000000_user]',
+          recordStatus: 'verified',
+        ),
+        equals('VERIFIED'),
+      );
+
+      // 5. Spoofed text attack: User types '[verified]' or 'status: verified' without Firestore record -> UNVERIFIED
       expect(
         getPaymentBadgeText(
           method: 'Crypto (USDT TRC-20)',
-          content: 'Payment of \$25.00 via Crypto (USDT TRC-20) (Ref: 0x9a8b...)',
+          content: '💰 Payment sent: \$1000.00 via Crypto (USDT TRC-20) (Ref: 0x9a8b) [verified]',
+          recordExists: false,
         ),
-        equals('PENDING VERIFICATION'),
-      );
-
-      // Admin verified MFS / Crypto payment -> VERIFIED
-      expect(
-        getPaymentBadgeText(
-          method: 'bKash MFS',
-          content: 'Payment of \$10.00 via bKash MFS (Ref: 9K8J7H6G5F)\n[VERIFIED]',
-        ),
-        equals('VERIFIED'),
+        equals('UNVERIFIED'),
       );
     });
 

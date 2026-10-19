@@ -13,13 +13,14 @@ import 'package:livocal/shared/repositories/wallet_repository.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/app_tokens.dart';
+import 'package:uuid/uuid.dart';
 
 void showSendPaymentSheet({
   required BuildContext context,
   required User self,
   required User other,
   required String contactName,
-  required Function(String amount, String note, [String? method, String? txId])
+  required Function(String amount, String note, [String? method, String? txId, String? paymentRecordId])
       onPaymentConfirmed,
 }) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -51,7 +52,7 @@ class _SendPaymentSheetContent extends ConsumerStatefulWidget {
   final User self;
   final User other;
   final String contactName;
-  final Function(String amount, String note, [String? method, String? txId])
+  final Function(String amount, String note, [String? method, String? txId, String? paymentRecordId])
       onPaymentConfirmed;
 
   @override
@@ -258,6 +259,7 @@ class _SendPaymentSheetContentState
     try {
       String methodDisplay = 'Livocal In-App Wallet';
       String txId = '';
+      String? paymentRecordId;
 
       if (_selectedMethod == 'wallet') {
         methodDisplay = 'Livocal Wallet';
@@ -275,26 +277,29 @@ class _SendPaymentSheetContentState
           return;
         }
 
-        final success =
+        final idempotencyKey = const Uuid().v4();
+        final transferResult =
             await ref.read(walletRepositoryProvider).transferMinutes(
                   fromUserId: widget.self.id,
                   toUserId: widget.other.id,
                   minutes: minutesToSend,
                   note: _noteController.text.trim(),
+                  idempotencyKey: idempotencyKey,
                 );
 
-        if (!success) {
+        if (!transferResult.success) {
           setState(() => _isProcessing = false);
           if (mounted) {
             showSnackBar(
               context: context,
-              content: 'Wallet transfer failed. Please try again.',
+              content: transferResult.message ?? 'Wallet transfer failed. Please try again.',
               type: SnacBarType.error,
             );
           }
           return;
         }
-        txId = 'LV-${DateTime.now().millisecondsSinceEpoch.toString().substring(6)}';
+        txId = transferResult.transferId ?? 'p2p_idem_$idempotencyKey';
+        paymentRecordId = txId;
       } else if (_selectedMethod == 'mfs') {
         methodDisplay = '$_mfsType MFS';
         final trx = _trxIdController.text.trim();
@@ -338,6 +343,7 @@ class _SendPaymentSheetContentState
       if (_selectedMethod != 'wallet') {
         final payRecordId =
             'p2p_pay_${DateTime.now().millisecondsSinceEpoch}_${widget.self.id.length > 4 ? widget.self.id.substring(0, 4) : widget.self.id}';
+        paymentRecordId = payRecordId;
         try {
           await FirebaseFirestore.instance
               .collection('p2p_payments')
@@ -375,6 +381,7 @@ class _SendPaymentSheetContentState
         _noteController.text.trim(),
         methodDisplay,
         txId,
+        paymentRecordId,
       );
 
       showSnackBar(
