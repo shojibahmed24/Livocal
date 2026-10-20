@@ -104,7 +104,7 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
     });
   }
 
-  void _startCall({required bool withAiTranslation}) {
+  void _startCall({required bool withAiTranslation}) async {
     final phone = _phoneController.text.trim();
     if (phone.isEmpty) {
       showSnackBar(
@@ -121,7 +121,12 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
         ? cleanPhone
         : (cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone);
 
-    final targetUser = _foundUser ??
+    User? resolvedUser = _foundUser;
+    if (resolvedUser == null) {
+      resolvedUser = await ref.read(firebaseFirestoreRepositoryProvider).getUserByPhone(cleanPhone);
+    }
+
+    final targetUser = resolvedUser ??
         User(
           id: 'phone_$cleanPhone',
           name: phone,
@@ -134,9 +139,10 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
           activityStatus: UserActivityStatus.online,
         );
 
+    if (!mounted) return;
     Navigator.of(context).pop();
 
-    final calleeName = _foundUser != null ? _foundUser!.name : phone;
+    final calleeName = resolvedUser != null ? resolvedUser.name : phone;
     final settings = CallRepository.getPeerTranslationSettings(
       peerId: targetUser.id,
       peerName: calleeName,
@@ -157,7 +163,7 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
     );
   }
 
-  void _startChat() {
+  void _startChat() async {
     final phone = _phoneController.text.trim();
     if (phone.isEmpty) {
       showSnackBar(
@@ -174,7 +180,12 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
         ? cleanPhone
         : (cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone);
 
-    final targetUser = _foundUser ??
+    User? resolvedUser = _foundUser;
+    if (resolvedUser == null) {
+      resolvedUser = await ref.read(firebaseFirestoreRepositoryProvider).getUserByPhone(cleanPhone);
+    }
+
+    final targetUser = resolvedUser ??
         User(
           id: 'phone_$cleanPhone',
           name: phone,
@@ -189,6 +200,7 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
 
     IsarDb.saveUser(targetUser);
 
+    if (!mounted) return;
     Navigator.of(context).pop();
 
     Navigator.of(context).push(
@@ -196,7 +208,7 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
         builder: (_) => ChatPage(
           self: widget.currentUser,
           other: targetUser,
-          otherUserContactName: _foundUser != null ? _foundUser!.name : phone,
+          otherUserContactName: resolvedUser != null ? resolvedUser.name : phone,
         ),
         settings: const RouteSettings(name: 'chat'),
       ),

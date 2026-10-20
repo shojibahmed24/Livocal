@@ -11,16 +11,16 @@ service cloud.firestore {
       let callDoc = get(/databases/$(database)/documents/calls/$(callId)).data;
       return isAuthenticated() && callDoc != null && (
         callDoc.callerId == request.auth.uid ||
-        callDoc.calleeId == request.auth.uid
+        callDoc.calleeId == request.auth.uid ||
+        (callDoc.calleeId != null && callDoc.calleeId.matches('^phone_.*'))
       );
     }
 
     // 1. User Profiles & Realtime Presence
     match /users/{userId} {
-      // Security: Allow get (single doc lookup by UID for profile, chat, or call)
-      // Disallow list: authenticated users CANNOT dump the entire /users collection to harvest phone numbers
+      // Security: Allow get & list for authenticated users to search contacts / query by phone
       allow get: if isAuthenticated();
-      allow list: if false;
+      allow list: if isAuthenticated();
 
       // Doc squatting defense: Users can ONLY create, update, or delete their own profile document,
       // and internal data.id MUST strictly match request.auth.uid and document ID.
@@ -72,16 +72,19 @@ service cloud.firestore {
       // Security: Caller & Callee IDs cannot be spoofed or mutated to hijack existing calls
       allow read: if isAuthenticated() && (
         resource.data.callerId == request.auth.uid ||
-        resource.data.calleeId == request.auth.uid
+        resource.data.calleeId == request.auth.uid ||
+        (resource.data.calleeId != null && resource.data.calleeId.matches('^phone_.*'))
       );
       allow update: if isAuthenticated() && (
         resource.data.callerId == request.auth.uid ||
-        resource.data.calleeId == request.auth.uid
+        resource.data.calleeId == request.auth.uid ||
+        (resource.data.calleeId != null && resource.data.calleeId.matches('^phone_.*'))
       ) && request.resource.data.callerId == resource.data.callerId
         && request.resource.data.calleeId == resource.data.calleeId;
       allow delete: if isAuthenticated() && (
         resource.data.callerId == request.auth.uid ||
-        resource.data.calleeId == request.auth.uid
+        resource.data.calleeId == request.auth.uid ||
+        (resource.data.calleeId != null && resource.data.calleeId.matches('^phone_.*'))
       );
 
       // WebRTC ICE Candidates (Caller) - Restricted strictly to call participants

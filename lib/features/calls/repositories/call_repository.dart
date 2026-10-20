@@ -293,11 +293,23 @@ class CallRepository {
         });
   }
 
-  Stream<CallSession?> watchIncomingCalls(String ownId) {
+  Stream<CallSession?> watchIncomingCalls(String ownId, {String? ownPhone}) {
     if (firestore == null) return const Stream.empty();
+
+    final targetIds = <String>{ownId};
+    if (ownPhone != null && ownPhone.isNotEmpty) {
+      final clean = ownPhone.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+      targetIds.add('phone_$clean');
+      if (clean.startsWith('+')) {
+        targetIds.add('phone_${clean.substring(1)}');
+      } else {
+        targetIds.add('phone_+$clean');
+      }
+    }
+
     return firestore!
         .collection('calls')
-        .where('calleeId', isEqualTo: ownId)
+        .where('calleeId', whereIn: targetIds.toList())
         .snapshots()
         .map((query) {
           if (query.docs.isEmpty) return null;

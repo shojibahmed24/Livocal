@@ -238,7 +238,10 @@ class _HomePageState extends ConsumerState<HomePage>
 
     _incomingCallSub = ref
         .read(callRepositoryProvider)
-        .watchIncomingCalls(widget.user.id)
+        .watchIncomingCalls(
+          widget.user.id,
+          ownPhone: widget.user.phone.rawNumber,
+        )
         .listen((incomingSession) {
       if (incomingSession == null) {
         final current = ref.read(callControllerProvider).activeSession;

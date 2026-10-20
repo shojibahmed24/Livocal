@@ -3,6 +3,15 @@ allprojects {
         google()
         mavenCentral()
     }
+    configurations.configureEach {
+        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+            if (details.requested.group == 'org.jetbrains.kotlin') {
+                if (details.requested.name.startsWith('kotlin-stdlib')) {
+                    details.useVersion '1.9.24'
+                }
+            }
+        }
+    }
 }
 
 rootProject.buildDir = '../build'
