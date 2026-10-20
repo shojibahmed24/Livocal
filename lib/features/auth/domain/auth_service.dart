@@ -1,3 +1,4 @@
+import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -79,6 +80,7 @@ class AuthController {
       avatarUrl: avatarUrl,
       phone: phone,
       activityStatus: UserActivityStatus.online,
+      spokenLanguage: CallRepository.getMyLanguageCode(),
     );
 
     try {

@@ -1,3 +1,4 @@
+import 'package:livocal/features/calls/views/widgets/different_language_call_sheet.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
@@ -10,8 +11,6 @@ import 'package:uuid/uuid.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:visibility_detector/visibility_detector.dart';
-import 'package:livocal/features/calls/repositories/call_repository.dart';
-import 'package:livocal/features/calls/views/outgoing_call_screen.dart';
 import 'package:livocal/features/chat/controllers/chat_controller.dart';
 import 'package:livocal/features/chat/models/message.dart';
 import 'package:livocal/features/chat/views/widgets/attachment_picker.dart';
@@ -234,22 +233,12 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             tooltip: 'Voice Call',
             onPressed: recordingState == RecordingState.notRecording
                 ? () {
-                    final settings = CallRepository.getPeerTranslationSettings(
-                      peerId: widget.other.id,
-                      peerName: widget.otherUserContactName,
-                      peerPhone: widget.other.phone.number,
-                    );
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => OutgoingCallScreen(
-                          caller: self,
-                          callee: other,
-                          calleeDisplayName: widget.otherUserContactName,
-                          overrideMyLangCode: settings.myLangCode,
-                          overridePeerLangCode: settings.peerLangCode,
-                          initialTranslationEnabled: settings.isTranslationEnabled,
-                        ),
-                      ),
+                    initiateSmartCall(
+                      context,
+                      ref,
+                      caller: self,
+                      callee: other,
+                      calleeDisplayName: widget.otherUserContactName,
                     );
                   }
                 : null,

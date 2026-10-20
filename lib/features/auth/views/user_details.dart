@@ -1,3 +1,7 @@
+import 'package:livocal/features/calls/repositories/call_repository.dart';
+import 'package:livocal/features/calls/models/call_language.dart';
+import 'package:livocal/features/calls/views/widgets/language_picker_sheet.dart';
+import 'package:livocal/theme/app_colors.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -346,7 +350,61 @@ class _UserProfileCreationPageState
                     ],
                   ),
                 ),
-                const SizedBox(height: 36.0),
+                const SizedBox(height: 24.0),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () async {
+                      final currentCode = CallRepository.getMyLanguageCode();
+                      final picked = await showUniversalLanguagePicker(
+                        context,
+                        title: 'Select Your Spoken Language',
+                        selectedCode: currentCode,
+                      );
+                      if (picked != null) {
+                        await CallRepository.setMyLanguageCode(picked.code);
+                        setState(() {});
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF1F2C34)
+                            : const Color(0xFFF0F2F5),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: colorTheme.greenColor.withValues(alpha: 0.5),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.language_rounded, color: AppColors.primary, size: 22),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Your Spoken Language (আপনার ভাষা)',
+                                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  CallLanguageRegistry.fromCode(CallRepository.getMyLanguageCode()).displayLabel,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.arrow_drop_down, color: Colors.grey),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24.0),
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 80,

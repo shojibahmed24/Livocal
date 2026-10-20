@@ -9,7 +9,6 @@ import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'package:livocal/features/calls/views/active_call_screen.dart';
 import 'package:livocal/features/calls/views/widgets/call_scaffold.dart';
 import 'package:livocal/features/calls/views/widgets/insufficient_minutes_sheet.dart';
-import 'package:livocal/features/calls/views/widgets/language_picker_sheet.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/theme/app_colors.dart';
 
@@ -217,182 +216,40 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
           : 'Free Direct Call • DTLS-SRTP Encrypted',
       badgeIcon: isTranslatedCall ? Icons.translate_rounded : Icons.lock_outline_rounded,
       pulseAnimation: _ringController,
-      middleWidget: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: const Color(0xFF18252D).withValues(alpha: 0.95),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: (isTranslatedCall ? AppColors.primary : Colors.tealAccent)
-                  .withValues(alpha: 0.45),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    isTranslatedCall ? Icons.translate_rounded : Icons.phone_in_talk_rounded,
-                    color: isTranslatedCall ? AppColors.primary : Colors.tealAccent,
-                    size: 16,
+      middleWidget: isTranslatedCall
+          ? Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF18252D).withValues(alpha: 0.95),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.35),
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    isTranslatedCall
-                        ? 'LIVE VOICE TRANSLATION PAIR (N × N)'
-                        : 'DIRECT AUDIO CALL (FREE)',
-                    style: TextStyle(
-                      color: isTranslatedCall ? AppColors.primary : Colors.tealAccent,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.7,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.auto_awesome_rounded, color: AppColors.primary, size: 16),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        "Live AI Translation: ${myLang.flagEmoji} ${myLang.nativeName} ⇄ ${peerLang.flagEmoji} ${peerLang.nativeName}",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () async {
-                        final picked = await showUniversalLanguagePicker(
-                          context,
-                          title: 'Your Language',
-                          selectedCode: myLang.code,
-                        );
-                        if (picked != null && mounted) {
-                          await ref
-                              .read(callControllerProvider.notifier)
-                              .setMyLanguage(picked.code);
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0F191F),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: AppColors.primary.withValues(alpha: 0.25),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'YOU SPEAK',
-                              style: TextStyle(
-                                color: Colors.white54,
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${myLang.flagEmoji} ${myLang.nativeName}',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        ref.read(callControllerProvider.notifier).swapLanguages();
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.swap_horiz_rounded,
-                          color: AppColors.primary,
-                          size: 18,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () async {
-                        final picked = await showUniversalLanguagePicker(
-                          context,
-                          title: 'Peer Language',
-                          selectedCode: peerLang.code,
-                        );
-                        if (picked != null && mounted) {
-                          await ref
-                              .read(callControllerProvider.notifier)
-                              .setPeerLanguage(picked.code);
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0F191F),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: AppColors.primary.withValues(alpha: 0.25),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'PEER HEARS',
-                              style: TextStyle(
-                                color: Colors.white54,
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${peerLang.flagEmoji} ${peerLang.nativeName}',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+            )
+          : null,
       bottomWidget: Container(
         margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),

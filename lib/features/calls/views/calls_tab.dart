@@ -1,10 +1,9 @@
+import 'package:livocal/features/calls/views/widgets/different_language_call_sheet.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/calls/controllers/call_controller.dart';
 import 'package:livocal/features/calls/models/call_language.dart';
-import 'package:livocal/features/calls/views/outgoing_call_screen.dart';
-import 'package:livocal/features/calls/views/widgets/language_picker_sheet.dart';
 import 'package:livocal/features/calls/views/widgets/direct_dial_sheet.dart';
 import 'package:livocal/features/calls/views/widgets/minute_recharge_sheet.dart';
 import 'package:livocal/features/chat/views/contact_profile_screen.dart';
@@ -64,8 +63,6 @@ class _CallsTabState extends ConsumerState<CallsTab>
     required String peerName,
     required String peerAvatar,
     required String peerPhone,
-    String? myLangCode,
-    String? peerLangCode,
   }) {
     final callee = User(
       id: peerId,
@@ -79,16 +76,12 @@ class _CallsTabState extends ConsumerState<CallsTab>
       activityStatus: UserActivityStatus.online,
     );
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => OutgoingCallScreen(
-          caller: widget.user,
-          callee: callee,
-          calleeDisplayName: peerName,
-          overrideMyLangCode: myLangCode,
-          overridePeerLangCode: peerLangCode,
-        ),
-      ),
+    initiateSmartCall(
+      context,
+      ref,
+      caller: widget.user,
+      callee: callee,
+      calleeDisplayName: peerName,
     );
   }
 
@@ -203,241 +196,6 @@ class _CallsTabState extends ConsumerState<CallsTab>
               ),
             );
           },
-        ),
-
-        // Universal N x N Live Translation Hub Card
-        Container(
-          margin: const EdgeInsets.fromLTRB(14, 14, 14, 10),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: isDark
-                  ? const [Color(0xFF0B2B24), Color(0xFF13222B)]
-                  : const [Color(0xFFE8F5F0), Color(0xFFE3F8F5)],
-            ),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.45),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isDark ? Colors.black.withValues(alpha: 0.18) : Colors.black.withValues(alpha: 0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.22),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.translate_rounded,
-                      color: AppColors.primary,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          AppStrings.tr(ref, 'geminiLiveVoiceTranslation'),
-                          style: TextStyle(
-                            color: isDark ? Colors.white : Colors.black87,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                          ),                        ),
-                        Text(
-                          AppStrings.trParams(ref, 'universalLanguagePairSub', {'count': '${CallLanguageRegistry.allLanguages.length}'}),
-                          style: const TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              // Language Pair Selector Row
-              Row(
-                children: [
-                  Expanded(
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () async {
-                        final picked = await showUniversalLanguagePicker(
-                          context,
-                          title: AppStrings.tr(ref, 'selectYourLanguage'),
-                          selectedCode: myLang.code,
-                        );
-                        if (picked != null) {
-                          await ref
-                              .read(callControllerProvider.notifier)
-                              .setMyLanguage(picked.code);
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.06),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              AppStrings.tr(ref, 'myLanguageLabel'),
-                              style: TextStyle(
-                                color: isDark ? Colors.white54 : Colors.black45,
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Text(
-                                  myLang.flagEmoji,
-                                  style: const TextStyle(fontSize: 18),
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    myLang.nativeName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: isDark ? Colors.white : Colors.black87,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13.5,
-                                    ),
-                                  ),
-                                ),
-                                Icon(
-                                  Icons.keyboard_arrow_down_rounded,
-                                  color: isDark ? Colors.white54 : Colors.black45,
-                                  size: 16,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(20),
-                      onTap: () {
-                        ref
-                            .read(callControllerProvider.notifier)
-                            .swapLanguages();
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.25),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.swap_horiz_rounded,
-                          color: AppColors.primary,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () async {
-                        final picked = await showUniversalLanguagePicker(
-                          context,
-                          title: AppStrings.tr(ref, 'selectPeerLanguage'),
-                          selectedCode: peerLang.code,
-                        );
-                        if (picked != null) {
-                          await ref
-                              .read(callControllerProvider.notifier)
-                              .setPeerLanguage(picked.code);
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.06),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                             Text(
-                              AppStrings.tr(ref, 'peerLanguageLabel'),
-                              style: TextStyle(
-                                color: isDark ? Colors.white54 : Colors.black45,
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Text(
-                                  peerLang.flagEmoji,
-                                  style: const TextStyle(fontSize: 18),
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    peerLang.nativeName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: isDark ? Colors.white : Colors.black87,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13.5,
-                                    ),
-                                  ),
-                                ),
-                                Icon(
-                                  Icons.keyboard_arrow_down_rounded,
-                                  color: isDark ? Colors.white54 : Colors.black45,
-                                  size: 16,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
         ),
 
         // Quick Call Actions
@@ -688,15 +446,24 @@ class _CallsTabState extends ConsumerState<CallsTab>
                   color: AppColors.primary,
                 ),
                 onPressed: () {
-                  _startCallToPeer(
+                  final otherUser = User(
+                    id: record.peerId,
+                    name: record.peerName,
+                    avatarUrl: record.peerAvatar,
+                    phone: Phone(
+                      code: '+880',
+                      number: record.peerPhone,
+                      formattedNumber: record.peerPhone,
+                    ),
+                    activityStatus: UserActivityStatus.offline,
+                    spokenLanguage: record.peerLangCode,
+                  );
+                  initiateSmartCall(
                     context,
                     ref,
-                    peerId: record.peerId,
-                    peerName: record.peerName,
-                    peerAvatar: record.peerAvatar,
-                    peerPhone: record.peerPhone,
-                    myLangCode: record.myLangCode,
-                    peerLangCode: record.peerLangCode,
+                    caller: widget.user,
+                    callee: otherUser,
+                    calleeDisplayName: record.peerName,
                   );
                 },
               ),

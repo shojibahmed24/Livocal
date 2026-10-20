@@ -1,3 +1,4 @@
+import 'package:livocal/features/calls/views/widgets/different_language_call_sheet.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -245,22 +246,12 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     label: 'Audio Call',
                     color: AppColors.primary,
                     onTap: () {
-                      final settings = CallRepository.getPeerTranslationSettings(
-                        peerId: widget.other.id,
-                        peerName: widget.contactName,
-                        peerPhone: widget.other.phone.number,
-                      );
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => OutgoingCallScreen(
-                            caller: widget.self,
-                            callee: widget.other,
-                            calleeDisplayName: widget.contactName,
-                            overrideMyLangCode: settings.myLangCode,
-                            overridePeerLangCode: settings.peerLangCode,
-                            initialTranslationEnabled: settings.isTranslationEnabled,
-                          ),
-                        ),
+                      initiateSmartCall(
+                        context,
+                        ref,
+                        caller: widget.self,
+                        callee: widget.other,
+                        calleeDisplayName: widget.contactName,
                       );
                     },
                   ),

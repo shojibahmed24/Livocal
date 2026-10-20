@@ -31,6 +31,8 @@ class User {
 
   @Enumerated(EnumType.value, 'value')
   UserActivityStatus activityStatus;
+  @ignore
+  String spokenLanguage;
 
   User({
     required this.id,
@@ -38,6 +40,7 @@ class User {
     required this.avatarUrl,
     required this.phone,
     required this.activityStatus,
+    this.spokenLanguage = 'bn',
   });
 
   factory User.fromMap(Map<String, dynamic> userData) {
@@ -47,6 +50,7 @@ class User {
       avatarUrl: userData['avatarUrl'],
       phone: Phone.fromMap(userData['phone']),
       activityStatus: UserActivityStatus.fromValue(userData['activityStatus']),
+      spokenLanguage: userData['spokenLanguage'] as String? ?? 'bn',
     );
   }
 
@@ -57,6 +61,7 @@ class User {
       'avatarUrl': avatarUrl,
       'phone': phone.toMap(),
       'activityStatus': activityStatus.value,
+      'spokenLanguage': spokenLanguage,
     };
   }
 
@@ -66,6 +71,7 @@ class User {
     String? avatarUrl,
     Phone? phone,
     UserActivityStatus? activityStatus,
+    String? spokenLanguage,
   }) {
     return User(
       id: id ?? this.id,
@@ -73,6 +79,7 @@ class User {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       phone: phone ?? this.phone,
       activityStatus: activityStatus ?? this.activityStatus,
+      spokenLanguage: spokenLanguage ?? this.spokenLanguage,
     );
   }
 
