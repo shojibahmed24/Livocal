@@ -422,7 +422,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
                                     ),
                                   ),
                                 ),
-                                const Icon(
+                                Icon(
                                   Icons.keyboard_arrow_down_rounded,
                                   color: isDark ? Colors.white54 : Colors.black45,
                                   size: 16,
@@ -539,15 +539,27 @@ class _CallsTabState extends ConsumerState<CallsTab>
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               onTap: () {
-                _startCallToPeer(
+                // Tapping name/row opens profile (call icon in trailing redials)
+                final otherUser = User(
+                  id: record.peerId,
+                  name: record.peerName,
+                  avatarUrl: record.peerAvatar,
+                  phone: Phone(
+                    code: '+880',
+                    number: record.peerPhone,
+                    formattedNumber: record.peerPhone,
+                  ),
+                  activityStatus: UserActivityStatus.offline,
+                );
+                Navigator.push(
                   context,
-                  ref,
-                  peerId: record.peerId,
-                  peerName: record.peerName,
-                  peerAvatar: record.peerAvatar,
-                  peerPhone: record.peerPhone,
-                  myLangCode: record.myLangCode,
-                  peerLangCode: record.peerLangCode,
+                  MaterialPageRoute(
+                    builder: (_) => ContactProfileScreen(
+                      self: widget.user,
+                      other: otherUser,
+                      contactName: record.peerName,
+                    ),
+                  ),
                 );
               },
               leading: GestureDetector(

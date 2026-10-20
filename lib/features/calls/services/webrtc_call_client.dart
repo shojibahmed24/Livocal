@@ -88,6 +88,10 @@ class WebRtcCallClient {
   int? _lastProcessedRestartTimestamp;
   int? _lastCalleeRestartReqTs;
 
+  // Track pending remote audio volume so we can re-apply it when the remote
+  // stream arrives via onTrack (which may fire AFTER setRemoteAudioVolume).
+  double _pendingRemoteVolume = 1.0;
+
   WebRtcCallClient({FirebaseFirestore? firestore})
       : firestore = firestore ?? _safeFirestore();
 
@@ -776,6 +780,11 @@ class WebRtcCallClient {
         _remoteStream = event.streams[0];
         _remoteStreamController.add(_remoteStream!);
         debugPrint('Received remote WebRTC audio track!');
+        // Re-apply any pending volume setting (set before track arrived)
+        for (final audioTrack in _remoteStream!.getAudioTracks()) {
+          audioTrack.enabled = _pendingRemoteVolume > 0.001;
+          Helper.setVolume(_pendingRemoteVolume, audioTrack);
+        }
       }
     };
 
@@ -830,6 +839,7 @@ class WebRtcCallClient {
 
   /// Sets remote audio track volume (e.g. 1.0 for normal, 0.15 for UN interpreter ducking, 0.0 for mute)
   void setRemoteAudioVolume(double volume) {
+    _pendingRemoteVolume = volume; // Always cache for when remote track arrives
     if (_remoteStream != null) {
       for (final audioTrack in _remoteStream!.getAudioTracks()) {
         audioTrack.enabled = volume > 0.001;
