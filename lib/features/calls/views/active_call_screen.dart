@@ -114,9 +114,32 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
-        if (!didPop) {
+        if (didPop) return;
+        final shouldEnd = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: const Color(0xFF1F2C34),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Text('End call?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            content: const Text('Are you sure you want to end this call?', style: TextStyle(color: Colors.white70)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Keep Talking', style: TextStyle(color: AppColors.primary)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('End Call', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        );
+        if (shouldEnd == true) {
           await controller.endCall();
-          if (context.mounted) Navigator.of(context).pop();
+          if (context.mounted && Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
         }
       },
       child: Scaffold(

@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
@@ -274,13 +274,14 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
 
     try {
       final apiKey = GeminiLiveTranslator.getSavedApiKey();
+      final modelId = GeminiLiveTranslator.getSavedModelId().replaceAll('models/', '');
       bool playedGemini = false;
 
-      // 1. Try real Gemini 2.0 Flash Audio synthesis with the EXACT prebuilt voice if API key exists
+      // 1. Try real Gemini Audio synthesis with the EXACT prebuilt voice if API key exists
       if (apiKey.isNotEmpty) {
         try {
           final url = Uri.parse(
-              'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey');
+              'https://generativelanguage.googleapis.com/v1beta/models/$modelId:generateContent?key=$apiKey');
           final response = await http.post(
             url,
             headers: {'Content-Type': 'application/json'},

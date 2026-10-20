@@ -200,7 +200,14 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
     final isTranslatedCall = effectiveTrans &&
         (myLang.code.toLowerCase().trim() != peerLang.code.toLowerCase().trim());
 
-    return CallScaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        debugPrint('[OutgoingCallScreen] User pressed back. Ending outgoing call cleanly.');
+        await _endCall();
+      },
+      child: CallScaffold(
       peerName: widget.calleeDisplayName,
       peerAvatar: widget.callee.avatarUrl,
       peerPhone: widget.callee.phone.getFormattedNumber(),
@@ -447,8 +454,9 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _DialControlButton extends StatelessWidget {

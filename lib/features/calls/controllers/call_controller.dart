@@ -641,12 +641,19 @@ class CallController extends StateNotifier<CallControllerState> {
       createdAt: DateTime.now(),
     );
 
-    CallKitService().showIncomingCall(
-      callId: session.callId,
-      callerName: callerName,
-      callerPhone: callerPhone,
-      callerAvatar: callerAvatar,
-    );
+    final isForeground =
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+    if (!isForeground) {
+      debugPrint('[CallController] App is in background/locked. Triggering native CallKit UI.');
+      CallKitService().showIncomingCall(
+        callId: session.callId,
+        callerName: callerName,
+        callerPhone: callerPhone,
+        callerAvatar: callerAvatar,
+      );
+    } else {
+      debugPrint('[CallController] App is in foreground. Suppressing CallKit heads-up banner.');
+    }
 
     state = state.copyWith(
       activeSession: session,

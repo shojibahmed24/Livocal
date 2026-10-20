@@ -111,7 +111,14 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
     final myLang = session?.myLanguage ?? callState.myLanguage;
     final peerLang = session?.peerLanguage ?? callState.peerLanguage;
 
-    return CallScaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        debugPrint('[IncomingCallScreen] User pressed back. Declining incoming call cleanly.');
+        await _declineCall();
+      },
+      child: CallScaffold(
       peerName: callerName,
       peerAvatar: callerAvatar,
       peerPhone: callerPhone,
@@ -260,6 +267,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
         onDecline: _declineCall,
         label: _answerWithTranslation ? 'Swipe to answer (AI)' : 'Swipe to answer',
       ),
-    );
+    ),
+  );
   }
 }
