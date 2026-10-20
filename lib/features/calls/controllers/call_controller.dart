@@ -1,7 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
+import 'package:livocal/features/chat/models/call_log_helper.dart';
+import 'package:livocal/features/chat/models/message.dart';
 import 'package:livocal/shared/constants/app_config.dart';
+import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/abc.dart';
 
 import 'package:flutter/foundation.dart';
@@ -50,6 +54,7 @@ class CallControllerState {
   final bool isLowDataModeAutoEnabled;
   final bool isTranslationExhausted;
   final String? error;
+  final CallHistoryRecord? lastEndedCall;
 
   const CallControllerState({
     this.activeSession,
@@ -71,6 +76,7 @@ class CallControllerState {
     this.isLowDataModeAutoEnabled = false,
     this.isTranslationExhausted = false,
     this.error,
+    this.lastEndedCall,
   });
 
   CallLanguage get myLanguage => CallLanguageRegistry.fromCode(myLangCode);
@@ -102,6 +108,8 @@ class CallControllerState {
     bool? isTranslationExhausted,
     String? error,
     bool clearError = false,
+    CallHistoryRecord? lastEndedCall,
+    bool clearLastEndedCall = false,
   }) {
     return CallControllerState(
       activeSession:
@@ -127,6 +135,7 @@ class CallControllerState {
       isTranslationExhausted:
           isTranslationExhausted ?? this.isTranslationExhausted,
       error: clearError ? null : (error ?? this.error),
+      lastEndedCall: clearLastEndedCall ? null : (lastEndedCall ?? this.lastEndedCall),
     );
   }
 }
@@ -1375,6 +1384,7 @@ class CallController extends StateNotifier<CallControllerState> {
   Future<void> endCall({bool recordAsMissed = false}) async {
     if (_isEndingCall) return;
     _isEndingCall = true;
+    CallHistoryRecord? lastEndedRecord;
     try {
       final current = state.activeSession;
       final duration = state.elapsedSeconds;
@@ -1398,6 +1408,9 @@ class CallController extends StateNotifier<CallControllerState> {
           );
         }
 
+        final isMissedCall = recordAsMissed || (duration == 0 && current.status != CallStateStatus.connected);
+        final statusStr = isMissedCall ? 'missed' : 'answered';
+
         final record = CallHistoryRecord(
           callId: current.callId,
           peerId: current.peerId,
@@ -1407,13 +1420,48 @@ class CallController extends StateNotifier<CallControllerState> {
           timestamp: DateTime.now(),
           durationSeconds: duration,
           isIncoming: current.isIncoming,
-          isMissed: recordAsMissed,
+          isMissed: isMissedCall,
           translationEnabled: state.translationEnabled,
           myLangCode: state.myLangCode,
           peerLangCode: state.peerLangCode,
         );
 
         await repo.addCallHistoryRecord(record);
+
+        // WhatsApp-style Inline Call Log message into chat conversation
+        try {
+          final logContent = CallLogHelper.encode(
+            direction: current.isIncoming ? 'incoming' : 'outgoing',
+            status: statusStr,
+            duration: duration,
+            isTranslated: current.isTranslatedCall,
+          );
+
+          final callLogMessage = Message(
+            id: 'call_${current.callId}',
+            content: logContent,
+            senderId: current.callerId,
+            receiverId: current.calleeId,
+            timestamp: Timestamp.now(),
+            status: MessageStatus.sent,
+          );
+
+          // 1. Save locally in Isar DB for immediate visibility
+          await IsarDb.addMessage(callLogMessage);
+
+          // 2. Broadcast to peer via Firestore messages subcollection
+          final fsRepo = ref?.read(firebaseFirestoreRepositoryProvider);
+          if (fsRepo != null) {
+            final remoteInbox = current.isIncoming ? current.callerId : current.calleeId;
+            fsRepo.sendMessage(callLogMessage.copyWith(receiverId: remoteInbox)).catchError((e) {
+              debugPrint('[CallController] Error pushing call log to remote Firestore: $e');
+            });
+          }
+        } catch (e) {
+          debugPrint('[CallController] Error creating call log message: $e');
+        }
+
+        lastEndedRecord = record;
       }
 
       await _cleanupActiveResources();
@@ -1426,6 +1474,7 @@ class CallController extends StateNotifier<CallControllerState> {
         callHistory: repo.getCallHistory(),
         networkQuality: CallNetworkQuality.good,
         isLowDataModeAutoEnabled: false,
+        lastEndedCall: lastEndedRecord,
       );
     } finally {
       _isEndingCall = false;

@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +7,8 @@ import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/features/calls/models/call_model.dart';
 import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'package:livocal/features/calls/views/active_call_screen.dart';
+import 'package:livocal/features/calls/views/widgets/call_ended_summary_sheet.dart';
+import 'package:livocal/shared/utils/navigator_key.dart';
 import 'package:livocal/features/calls/views/widgets/call_scaffold.dart';
 import 'package:livocal/features/calls/views/widgets/insufficient_minutes_sheet.dart';
 import 'package:livocal/shared/models/user.dart';
@@ -126,11 +128,23 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
     if (_navigated) return;
     _navigated = true;
     HapticFeedback.heavyImpact();
+    final duration = ref.read(callControllerProvider).elapsedSeconds;
     await ref.read(callControllerProvider.notifier).endCall(
           recordAsMissed: false,
         );
     if (mounted && Navigator.of(context).canPop()) {
       Navigator.of(context).pop();
+      final targetCtx = appNavigatorKey.currentContext;
+      if (targetCtx != null) {
+        CallEndedSummarySheet.show(
+          targetCtx,
+          peerUser: widget.callee,
+          currentUser: widget.caller,
+          durationSeconds: duration,
+          isMissed: duration == 0,
+          isTranslated: widget.initialTranslationEnabled ?? false,
+        );
+      }
     }
   }
 
@@ -152,6 +166,17 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
         _navigated = true;
         if (Navigator.of(context).canPop()) {
           Navigator.of(context).pop();
+          final targetCtx = appNavigatorKey.currentContext;
+          if (targetCtx != null) {
+            CallEndedSummarySheet.show(
+              targetCtx,
+              peerUser: widget.callee,
+              currentUser: widget.caller,
+              durationSeconds: 0,
+              isMissed: true,
+              isTranslated: widget.initialTranslationEnabled ?? false,
+            );
+          }
         }
       }
     });

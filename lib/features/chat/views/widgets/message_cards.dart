@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_emoji/flutter_emoji.dart';
+import 'package:livocal/features/chat/models/call_log_helper.dart';
 import 'package:livocal/features/chat/models/message.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/features/calls/models/call_language.dart';
@@ -702,17 +703,155 @@ class _MessageCardState extends State<MessageCard>
     );
   }
 
+  Widget _buildCallLogBubble(BuildContext context, bool isSentMessageCard, bool isDark) {
+    final data = CallLogHelper.parse(widget.message.content);
+    if (data == null) return const SizedBox.shrink();
+
+    final isMissed = data.isMissed;
+    final durationStr = CallLogHelper.formatDurationBengali(data.duration);
+    final time = widget.message.timestamp.toDate();
+    final hour = time.hour % 12 == 0 ? 12 : time.hour % 12;
+    final min = time.minute.toString().padLeft(2, '0');
+    final period = time.hour >= 12 ? 'PM' : 'AM';
+    final timeStr = "$hour:$min $period";
+
+    final statusColor = isMissed
+        ? Colors.redAccent
+        : (isDark ? Colors.tealAccent : AppColors.primary);
+
+    String title;
+    IconData iconData;
+    if (isMissed) {
+      iconData = Icons.call_missed_rounded;
+      title = isSentMessageCard ? 'আউটগোয়িং কল (মিসড)' : 'মিসড ভয়েস কল';
+    } else {
+      iconData = isSentMessageCard ? Icons.call_made_rounded : Icons.call_received_rounded;
+      title = isSentMessageCard ? 'আউটগোয়িং ভয়েস কল' : 'ইনকামিং ভয়েস কল';
+    }
+
+    final subtitle = isMissed ? 'কোনো উত্তর নেই' : 'কথা হয়েছে: $durationStr';
+
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.88),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF182229) : const Color(0xFFF0F2F5),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isMissed
+                ? Colors.redAccent.withValues(alpha: 0.3)
+                : (isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.06)),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: statusColor.withValues(alpha: 0.15),
+              ),
+              child: Icon(iconData, size: 20, color: statusColor),
+            ),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w600,
+                            color: isMissed
+                                ? Colors.redAccent
+                                : (isDark ? Colors.white : Colors.black87),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (data.isTranslated) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'AI',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? Colors.white60 : Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        "• $timeStr",
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? Colors.white38 : Colors.black38,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final isSentMessageCard = widget.currentUserId == widget.message.senderId;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (CallLogHelper.isCallLog(widget.message.content)) {
+      return _buildCallLogBubble(context, isSentMessageCard, isDark);
+    }
     final colorTheme = Theme.of(context).custom.colorTheme;
     final size = MediaQuery.of(context).size;
     final hasAttachment = !widget.message.isDeleted && widget.message.attachment != null;
     final attachmentType = widget.message.attachment?.type;
-    final isSentMessageCard = widget.currentUserId == widget.message.senderId;
     final messageHasText = widget.message.content.isNotEmpty;
 
     final showTimeStamp = !hasAttachment ||
@@ -754,7 +893,6 @@ class _MessageCardState extends State<MessageCard>
       height = width / aspectRatio;
     }
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDeleted = widget.message.isDeleted;
 
     return FadeTransition(

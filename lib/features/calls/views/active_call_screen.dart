@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/calls/controllers/call_controller.dart';
+import 'package:livocal/features/calls/views/widgets/call_ended_summary_sheet.dart';
+import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/utils/navigator_key.dart';
 import 'package:livocal/features/calls/models/call_model.dart';
 import 'package:livocal/features/calls/services/webrtc_call_client.dart';
 import 'package:livocal/features/calls/views/widgets/language_picker_sheet.dart';
@@ -80,8 +83,33 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
       (prev, next) {
         if (next == null && mounted) {
           final error = ref.read(callControllerProvider).error;
+          final lastEnded = ref.read(callControllerProvider).lastEndedCall;
+          final ownUser = getCurrentUser();
           if (Navigator.of(context).canPop()) {
             Navigator.of(context).pop();
+          }
+          final targetCtx = appNavigatorKey.currentContext;
+          if (targetCtx != null && lastEnded != null && ownUser != null) {
+            final peerUser = User(
+              id: lastEnded.peerId,
+              name: lastEnded.peerName,
+              avatarUrl: lastEnded.peerAvatar,
+              phone: Phone(
+                code: '+880',
+                number: lastEnded.peerPhone,
+                formattedNumber: lastEnded.peerPhone,
+              ),
+              activityStatus: UserActivityStatus.offline,
+            );
+            CallEndedSummarySheet.show(
+              targetCtx,
+              peerUser: peerUser,
+              currentUser: ownUser,
+              durationSeconds: lastEnded.durationSeconds,
+              isMissed: lastEnded.isMissed,
+              isTranslated: lastEnded.translationEnabled,
+              isIncoming: lastEnded.isIncoming,
+            );
           }
           if (error == 'MINUTES_EXHAUSTED') {
             ScaffoldMessenger.of(context).showSnackBar(

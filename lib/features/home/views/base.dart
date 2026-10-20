@@ -14,6 +14,7 @@ import 'package:livocal/features/calls/services/call_kit_service.dart';
 import 'package:livocal/features/calls/services/ringtone_manager.dart';
 import 'package:livocal/features/chat/models/attachement.dart';
 import 'package:livocal/features/chat/models/message.dart';
+import 'package:livocal/features/chat/models/call_log_helper.dart';
 import 'package:livocal/features/chat/models/recent_chat.dart';
 import 'package:livocal/features/chat/views/chat.dart';
 import 'package:livocal/features/chat/views/contact_profile_screen.dart';
@@ -1243,6 +1244,27 @@ class RecentChatWidget extends StatelessWidget {
 
     IconData? attachmentIcon;
     String? attachmentLabel;
+    Color? iconCustomColor;
+
+    if (CallLogHelper.isCallLog(msgContent)) {
+      final callData = CallLogHelper.parse(msgContent);
+      if (callData != null) {
+        final isSentByMe = chat.message.senderId == user.id;
+        final durStr = CallLogHelper.formatDurationShort(callData.duration);
+        if (callData.isMissed) {
+          attachmentIcon = isSentByMe ? Icons.call_missed_outgoing_rounded : Icons.call_missed_rounded;
+          iconCustomColor = Colors.redAccent;
+          attachmentLabel = isSentByMe ? 'মিসড কল' : 'মিসড ভয়েস কল';
+        } else {
+          attachmentIcon = isSentByMe ? Icons.call_made_rounded : Icons.call_received_rounded;
+          iconCustomColor = isDark ? Colors.tealAccent : const Color(0xFF00A884);
+          attachmentLabel = isSentByMe
+              ? (durStr.isNotEmpty ? "ভয়েস কল ($durStr)" : "ভয়েস কল")
+              : (durStr.isNotEmpty ? "ইনকামিং কল ($durStr)" : "ইনকামিং কল");
+        }
+        text = attachmentLabel;
+      }
+    } else
 
     if (chat.message.attachment != null) {
       switch (chat.message.attachment!.type) {
@@ -1285,7 +1307,7 @@ class RecentChatWidget extends StatelessWidget {
           Icon(
             attachmentIcon,
             size: 16.0,
-            color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
+            color: iconCustomColor ?? (isDark ? const Color(0xFF8696A0) : const Color(0xFF667781)),
           ),
           const SizedBox(width: 4.0),
         ],
