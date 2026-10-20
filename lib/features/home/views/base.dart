@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -16,6 +16,7 @@ import 'package:livocal/features/chat/models/attachement.dart';
 import 'package:livocal/features/chat/models/message.dart';
 import 'package:livocal/features/chat/models/recent_chat.dart';
 import 'package:livocal/features/chat/views/chat.dart';
+import 'package:livocal/features/chat/views/contact_profile_screen.dart';
 import 'package:livocal/features/home/data/repositories/contact_repository.dart';
 import 'package:livocal/shared/repositories/download_service.dart';
 import 'package:livocal/shared/repositories/firebase_firestore.dart';
@@ -1332,7 +1333,20 @@ class RecentChatWidget extends StatelessWidget {
           ),
         );
       },
-      leading: _buildAvatar(context, isDark),
+      leading: GestureDetector(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => ContactProfileScreen(
+                self: user,
+                other: chat.user,
+                contactName: title,
+              ),
+            ),
+          );
+        },
+        child: _buildAvatar(context, isDark),
+      ),
       title: Padding(
         padding: const EdgeInsets.only(bottom: 3.0),
         child: Text(

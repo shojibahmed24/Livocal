@@ -20,6 +20,7 @@ import 'package:livocal/features/calls/services/gemini_live_translator.dart';
 import 'package:livocal/features/calls/services/webrtc_call_client.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/wallet_repository.dart';
+import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
@@ -153,6 +154,7 @@ class CallController extends StateNotifier<CallControllerState> {
   StreamSubscription<Uint8List>? _webrtcRemoteTranslatedAudioSub;
   StreamSubscription<WebRtcCallState>? _webrtcStateSub;
   StreamSubscription<CallNetworkQuality>? _webrtcQualitySub;
+  bool _hasNavigatedToActiveCall = false;
 
   String get _currentAppLang {
     try {
@@ -407,13 +409,35 @@ class CallController extends StateNotifier<CallControllerState> {
       }
     }
 
+    _hasNavigatedToActiveCall = false;
+
+    // Resolve real callee Firestore UID if dialed with a dummy phone_ prefix
+    String resolvedCalleeId = callee.id;
+    if (resolvedCalleeId.startsWith('phone_') || resolvedCalleeId.isEmpty) {
+      try {
+        final fsRepo = ref?.read(firebaseFirestoreRepositoryProvider);
+        if (fsRepo != null) {
+          final phoneToLookup = callee.phone.formattedNumber ?? callee.phone.number ?? '';
+          if (phoneToLookup.isNotEmpty) {
+            final foundUser = await fsRepo.getUserByPhone(phoneToLookup);
+            if (foundUser != null && foundUser.id.isNotEmpty && !foundUser.id.startsWith('phone_')) {
+              resolvedCalleeId = foundUser.id;
+              debugPrint('[CallController] Resolved real callee UID: $resolvedCalleeId for phone: $phoneToLookup');
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('[CallController] Error resolving callee UID: $e');
+      }
+    }
+
     final session = CallSession(
       callId: const Uuid().v4(),
       callerId: caller.id,
       callerName: caller.name,
       callerAvatar: caller.avatarUrl,
       callerPhone: caller.phone.getFormattedNumber(),
-      calleeId: callee.id,
+      calleeId: resolvedCalleeId,
       calleeName: calleeDisplayName,
       calleeAvatar: callee.avatarUrl,
       calleePhone: callee.phone.getFormattedNumber(),
@@ -500,31 +524,21 @@ class CallController extends StateNotifier<CallControllerState> {
       // Caller side: do NOT call acceptAndConnectCall() — just update local state.
       // The caller transitions to connected state only via WebRTC answer exchange.
       else {
-        debugPrint('[CallController] Caller detected remote connected status. '
-            'WebRTC answer exchange drives caller audio state — skipping acceptAndConnectCall().');
-        // Update local session status to reflect connected (mirrors remote)
+        debugPrint('[CallController] Caller detected remote connected status. Initializing caller in-call audio engines...');
+        _callTimeoutTimer?.cancel();
+        _callTimeoutTimer = null;
+
         final updatedSession =
-            state.activeSession!.copyWith(status: CallStateStatus.connected);
+            state.activeSession!.copyWith(
+              status: CallStateStatus.connected,
+              connectedAt: remote.connectedAt ?? DateTime.now(),
+            );
         state = state.copyWith(
           activeSession: updatedSession,
           translationEnabled: updatedSession.translationEnabled,
         );
-        // Start call duration timer if not already running
-        if (_callDurationTimer == null || !(_callDurationTimer?.isActive ?? false)) {
-          _callDurationTimer?.cancel();
-          final connectedAt = updatedSession.connectedAt ?? DateTime.now();
-          _callDurationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-            final actualElapsed = DateTime.now().difference(connectedAt).inSeconds;
-            state = state.copyWith(elapsedSeconds: actualElapsed);
-          });
-        }
-        // Navigate to active call screen on caller side
-        final ctx = appNavigatorKey.currentContext;
-        if (ctx != null) {
-          appNavigatorKey.currentState?.pushReplacement(
-            MaterialPageRoute(builder: (_) => const ActiveCallScreen()),
-          );
-        }
+
+        _startInCallAudioEngines(updatedSession);
       }
     } else if (remote.status == CallStateStatus.rejected ||
         remote.status == CallStateStatus.ended ||
@@ -772,6 +786,11 @@ class CallController extends StateNotifier<CallControllerState> {
       }
     }
 
+    await _startInCallAudioEngines(connectedSession);
+  }
+
+  /// Shared engine initialization for BOTH Caller and Callee when call transitions to connected
+  Future<void> _startInCallAudioEngines(CallSession connectedSession) async {
     // Subscribe to WebRTC connection state to detect network drops & reconnect
     _webrtcStateSub?.cancel();
     _webrtcStateSub = _webrtcClient.stateStream.listen((wState) {
@@ -1182,7 +1201,19 @@ class CallController extends StateNotifier<CallControllerState> {
       transcripts: [initialBubble],
       hasApiKey: GeminiLiveTranslator.getSavedApiKey().isNotEmpty,
     );
+
+    // Ensure single push of ActiveCallScreen
+    if (!_hasNavigatedToActiveCall) {
+      _hasNavigatedToActiveCall = true;
+      final ctx = appNavigatorKey.currentContext;
+      if (ctx != null) {
+        appNavigatorKey.currentState?.pushReplacement(
+          MaterialPageRoute(builder: (_) => const ActiveCallScreen()),
+        );
+      }
+    }
   }
+
 
   void toggleMute() {
     final nextMute = !state.isMuted;

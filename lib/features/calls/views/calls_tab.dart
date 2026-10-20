@@ -223,7 +223,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.18),
+                color: isDark ? Colors.black.withValues(alpha: 0.18) : Colors.black.withValues(alpha: 0.04),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),

@@ -218,11 +218,11 @@ class _SwipeToAnswerState extends State<SwipeToAnswer> {
                   width: 1,
                 ),
               ),
-              child: Row(
+              child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.call_rounded, color: AppColors.primary, size: 18),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     'Tap to Answer',
                     style: TextStyle(

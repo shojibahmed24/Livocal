@@ -296,34 +296,66 @@ class CallRepository {
   Stream<CallSession?> watchIncomingCalls(String ownId, {String? ownPhone}) {
     if (firestore == null) return const Stream.empty();
 
-    // Query strictly with isEqualTo: ownId.
-    // In Firestore Security Rules: 'allow read: if resource.data.calleeId == request.auth.uid'
-    // Rules are NOT filters. Using whereIn with non-auth IDs causes Firestore to reject the query
-    // with PERMISSION_DENIED. Querying with calleeId == ownId is 100% secure and guaranteed to succeed.
-    return firestore!
+    final controller = StreamController<CallSession?>.broadcast();
+    final List<StreamSubscription> subs = [];
+    final seenCallIds = <String>{};
+
+    void processQuery(QuerySnapshot<Map<String, dynamic>> query) {
+      if (query.docs.isEmpty) return;
+      for (final doc in query.docs) {
+        final data = doc.data();
+        final session = CallSession.fromMap(data, ownId: ownId);
+        final isRinging = session.status == CallStateStatus.dialing ||
+            session.status == CallStateStatus.ringing;
+        if (!isRinging) continue;
+        final ageSec =
+            DateTime.now().difference(session.createdAt).inSeconds.abs();
+        if (ageSec <= 60 && !seenCallIds.contains(session.callId)) {
+          seenCallIds.add(session.callId);
+          controller.add(session);
+          return;
+        }
+      }
+    }
+
+    // 1. Primary listener: calleeId == ownId (User's Auth UID)
+    subs.add(firestore!
         .collection('calls')
         .where('calleeId', isEqualTo: ownId)
         .snapshots()
-        .map((query) {
-          if (query.docs.isEmpty) return null;
-          for (final doc in query.docs) {
-            final data = doc.data();
-            final session = CallSession.fromMap(data, ownId: ownId);
-            final isRinging = session.status == CallStateStatus.dialing ||
-                session.status == CallStateStatus.ringing;
-            if (!isRinging) continue;
-            final ageSec =
-                DateTime.now().difference(session.createdAt).inSeconds.abs();
-            if (ageSec <= 60) {
-              return session;
-            }
-          }
-          return null;
-        })
-        .handleError((e) {
-          debugPrint('watchIncomingCalls error: $e');
-          return null;
-        });
+        .listen(processQuery, onError: (e) => debugPrint('[CallRepository] watchIncomingCalls primary error: $e')));
+
+    // 2. Secondary listener: calleeId == 'phone_$clean' (when dialed by raw phone number)
+    if (ownPhone != null && ownPhone.trim().isNotEmpty) {
+      final clean = ownPhone.replaceAll(RegExp(r'[\s\-\(\)]'), '').trim();
+      final phoneCandidates = <String>{clean};
+      if (clean.startsWith('+')) {
+        phoneCandidates.add(clean.substring(1));
+      } else {
+        phoneCandidates.add('+$clean');
+        if (clean.startsWith('0')) {
+          phoneCandidates.add('+880${clean.substring(1)}');
+        } else {
+          phoneCandidates.add('+880$clean');
+        }
+      }
+
+      for (final p in phoneCandidates) {
+        subs.add(firestore!
+            .collection('calls')
+            .where('calleeId', isEqualTo: 'phone_$p')
+            .snapshots()
+            .listen(processQuery, onError: (e) => debugPrint('[CallRepository] watchIncomingCalls phone_$p error: $e')));
+      }
+    }
+
+    controller.onCancel = () {
+      for (final sub in subs) {
+        sub.cancel();
+      }
+    };
+
+    return controller.stream;
   }
 
   Stream<List<LiveTranscriptEntry>> watchCallTranscripts(

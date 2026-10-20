@@ -1,4 +1,8 @@
-﻿import 'package:audioplayers/audioplayers.dart';
+﻿import 'dart:convert';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -269,9 +273,71 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
     });
 
     try {
-      final sampleUrl =
-          'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en&q=${Uri.encodeComponent(persona.samplePreviewText)}';
-      await _audioPlayer.play(UrlSource(sampleUrl));
+      final apiKey = GeminiLiveTranslator.getSavedApiKey();
+      bool playedGemini = false;
+
+      // 1. Try real Gemini 2.0 Flash Audio synthesis with the EXACT prebuilt voice if API key exists
+      if (apiKey.isNotEmpty) {
+        try {
+          final url = Uri.parse(
+              'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey');
+          final response = await http.post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'contents': [
+                {
+                  'parts': [
+                    {'text': 'Say with natural tone: "${persona.samplePreviewText}"'}
+                  ]
+                }
+              ],
+              'generationConfig': {
+                'responseModalities': ['AUDIO'],
+                'speechConfig': {
+                  'voiceConfig': {
+                    'prebuiltVoiceConfig': {
+                      'voiceName': persona.id,
+                    }
+                  }
+                }
+              }
+            }),
+          ).timeout(const Duration(seconds: 5));
+
+          if (response.statusCode == 200) {
+            final json = jsonDecode(response.body);
+            final parts = json['candidates']?[0]?['content']?['parts'] as List?;
+            final inlineData = parts?.firstWhere(
+                (p) => p['inlineData'] != null,
+                orElse: () => null)?['inlineData'];
+            final base64Audio = inlineData?['data'] as String?;
+            if (base64Audio != null && base64Audio.isNotEmpty) {
+              final audioBytes = base64Decode(base64Audio);
+              final tempDir = await getTemporaryDirectory();
+              final tempFile = File('${tempDir.path}/gemini_voice_${persona.id}.wav');
+              await tempFile.writeAsBytes(audioBytes);
+              await _audioPlayer.setPlaybackRate(1.0);
+              await _audioPlayer.play(DeviceFileSource(tempFile.path));
+              playedGemini = true;
+            }
+          }
+        } catch (apiErr) {
+          debugPrint('[VoicePersonaScreen] Direct Gemini TTS note: $apiErr');
+        }
+      }
+
+      // 2. Fallback to gender-accurate pitch audio so Male is distinctly deep male & Female is melodious female
+      if (!playedGemini) {
+        final isMale = persona.gender.toLowerCase() == 'male';
+        // Distinct pitch/speed for male vs female:
+        await _audioPlayer.setPlaybackRate(isMale ? 0.80 : 1.06);
+
+        final sampleUrl =
+            'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en&q=${Uri.encodeComponent(persona.samplePreviewText)}';
+        await _audioPlayer.play(UrlSource(sampleUrl));
+      }
+
       if (mounted) {
         setState(() {
           _isLoadingAudio = false;
