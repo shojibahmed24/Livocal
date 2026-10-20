@@ -79,11 +79,18 @@ class GeminiLiveTranslator {
   ];
 
   static const List<String> availableVoices = [
+    // Female voices
     'Aoede',
-    'Puck',
     'Kore',
+    'Leda',
+    'Sularis',
+    // Male voices
     'Charon',
     'Fenrir',
+    'Puck',
+    'Orus',
+    'Perseus',
+    'Zephyr',
   ];
 
   static String getSavedApiKey() {

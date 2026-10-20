@@ -7,6 +7,7 @@ import 'package:livocal/features/calls/views/outgoing_call_screen.dart';
 import 'package:livocal/features/calls/views/widgets/language_picker_sheet.dart';
 import 'package:livocal/features/calls/views/widgets/direct_dial_sheet.dart';
 import 'package:livocal/features/calls/views/widgets/minute_recharge_sheet.dart';
+import 'package:livocal/features/chat/views/contact_profile_screen.dart';
 import 'package:livocal/features/home/views/contacts.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/models/user_wallet.dart';
@@ -97,6 +98,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
     final callState = ref.watch(callControllerProvider);
     final customTheme = Theme.of(context).custom;
     final colorTheme = customTheme.colorTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final myLang = callState.myLanguage;
     final peerLang = callState.peerLanguage;
     final history = callState.callHistory;
@@ -118,7 +120,9 @@ class _CallsTabState extends ConsumerState<CallsTab>
               decoration: BoxDecoration(
                 color: isExhausted
                     ? Colors.amber.withValues(alpha: 0.12)
-                    : (isTrial ? const Color(0xFF0D2820) : const Color(0xFF131F2E)),
+                    : (isDark
+                        ? (isTrial ? const Color(0xFF0D2820) : const Color(0xFF131F2E))
+                        : (isTrial ? const Color(0xFFE8F5F0) : const Color(0xFFE3F4FD))),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: isExhausted
@@ -154,7 +158,9 @@ class _CallsTabState extends ConsumerState<CallsTab>
                                   ? AppStrings.tr(ref, 'balanceExhaustedBadge')
                                   : AppStrings.trParams(ref, 'balanceMinutesBadge', {'minutes': '${wallet.balanceMinutes}'})),
                           style: TextStyle(
-                            color: isExhausted ? Colors.amber[200] : Colors.white,
+                            color: isExhausted
+                                ? Colors.amber[700]
+                                : (isDark ? Colors.white : Colors.black87),
                             fontWeight: FontWeight.bold,
                             fontSize: 13.5,
                           ),
@@ -166,7 +172,9 @@ class _CallsTabState extends ConsumerState<CallsTab>
                                   ? AppStrings.tr(ref, 'rechargeForTranslationNotice')
                                   : AppStrings.tr(ref, 'translationRateNotice')),
                           style: TextStyle(
-                            color: isExhausted ? Colors.amber[300] : Colors.white60,
+                            color: isExhausted
+                                ? Colors.amber[600]
+                                : (isDark ? Colors.white60 : Colors.black54),
                             fontSize: 10.5,
                           ),
                         ),
@@ -202,13 +210,12 @@ class _CallsTabState extends ConsumerState<CallsTab>
           margin: const EdgeInsets.fromLTRB(14, 14, 14, 10),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF0B2B24),
-                Color(0xFF13222B),
-              ],
+              colors: isDark
+                  ? const [Color(0xFF0B2B24), Color(0xFF13222B)]
+                  : const [Color(0xFFE8F5F0), Color(0xFFE3F8F5)],
             ),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
@@ -246,12 +253,11 @@ class _CallsTabState extends ConsumerState<CallsTab>
                       children: [
                         Text(
                           AppStrings.tr(ref, 'geminiLiveVoiceTranslation'),
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black87,
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
-                          ),
-                        ),
+                          ),                        ),
                         Text(
                           AppStrings.trParams(ref, 'universalLanguagePairSub', {'count': '${CallLanguageRegistry.allLanguages.length}'}),
                           style: const TextStyle(
@@ -290,17 +296,17 @@ class _CallsTabState extends ConsumerState<CallsTab>
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black26,
+                          color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.06),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white12),
+                          border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               AppStrings.tr(ref, 'myLanguageLabel'),
-                              style: const TextStyle(
-                                color: Colors.white54,
+                              style: TextStyle(
+                                color: isDark ? Colors.white54 : Colors.black45,
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -318,16 +324,16 @@ class _CallsTabState extends ConsumerState<CallsTab>
                                     myLang.nativeName,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Colors.white,
+                                    style: TextStyle(
+                                      color: isDark ? Colors.white : Colors.black87,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13.5,
                                     ),
                                   ),
                                 ),
-                                const Icon(
+                                Icon(
                                   Icons.keyboard_arrow_down_rounded,
-                                  color: Colors.white54,
+                                  color: isDark ? Colors.white54 : Colors.black45,
                                   size: 16,
                                 ),
                               ],
@@ -381,17 +387,17 @@ class _CallsTabState extends ConsumerState<CallsTab>
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black26,
+                          color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.06),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white12),
+                          border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                             Text(
                               AppStrings.tr(ref, 'peerLanguageLabel'),
-                              style: const TextStyle(
-                                color: Colors.white54,
+                              style: TextStyle(
+                                color: isDark ? Colors.white54 : Colors.black45,
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -409,8 +415,8 @@ class _CallsTabState extends ConsumerState<CallsTab>
                                     peerLang.nativeName,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Colors.white,
+                                    style: TextStyle(
+                                      color: isDark ? Colors.white : Colors.black87,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13.5,
                                     ),
@@ -418,7 +424,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
                                 ),
                                 const Icon(
                                   Icons.keyboard_arrow_down_rounded,
-                                  color: Colors.white54,
+                                  color: isDark ? Colors.white54 : Colors.black45,
                                   size: 16,
                                 ),
                               ],
@@ -544,15 +550,40 @@ class _CallsTabState extends ConsumerState<CallsTab>
                   peerLangCode: record.peerLangCode,
                 );
               },
-              leading: CircleAvatar(
-                radius: 24,
-                backgroundColor: const Color(0xFF1F2C34),
-                backgroundImage: record.peerAvatar.isNotEmpty
-                    ? CachedNetworkImageProvider(record.peerAvatar)
-                    : null,
-                child: record.peerAvatar.isEmpty
-                    ? const Icon(Icons.person, color: Colors.white70)
-                    : null,
+              leading: GestureDetector(
+                onTap: () {
+                  final otherUser = User(
+                    id: record.peerId,
+                    name: record.peerName,
+                    avatarUrl: record.peerAvatar,
+                    phone: Phone(
+                      code: '+880',
+                      number: record.peerPhone,
+                      formattedNumber: record.peerPhone,
+                    ),
+                    activityStatus: UserActivityStatus.offline,
+                  );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ContactProfileScreen(
+                        self: widget.user,
+                        other: otherUser,
+                        contactName: record.peerName,
+                      ),
+                    ),
+                  );
+                },
+                child: CircleAvatar(
+                  radius: 24,
+                  backgroundColor: const Color(0xFF1F2C34),
+                  backgroundImage: record.peerAvatar.isNotEmpty
+                      ? CachedNetworkImageProvider(record.peerAvatar)
+                      : null,
+                  child: record.peerAvatar.isEmpty
+                      ? const Icon(Icons.person, color: Colors.white70)
+                      : null,
+                ),
               ),
               title: Text(
                 record.peerName,

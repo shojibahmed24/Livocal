@@ -32,9 +32,8 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1600),
     )..repeat(reverse: true);
-    // Dismiss any native CallKit ringtone first to prevent double-tone
-    // when the app transitions from background (CallKit ringing) to foreground
-    CallKitService().endAllCalls();
+    // IMPORTANT: Do NOT call endAllCalls() here — it can kill the active call session.
+    // Only stop any existing native CallKit UI sound and start our in-app ringtone.
     RingtoneManager().startIncomingRingtone();
   }
 

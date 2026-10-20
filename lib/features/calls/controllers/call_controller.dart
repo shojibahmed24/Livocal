@@ -486,7 +486,46 @@ class CallController extends StateNotifier<CallControllerState> {
     // 1. Remote call state transitions
     if (remote.status == CallStateStatus.connected &&
         state.activeSession!.status != CallStateStatus.connected) {
-      acceptAndConnectCall();
+      // CRITICAL FIX: Only the CALLEE should call acceptAndConnectCall() when
+      // they detect a connected status transition.
+      // The CALLER should NEVER call acceptAndConnectCall() on remote connected signal —
+      // the caller is already in connecting state waiting for WebRTC answer.
+      // Calling acceptAndConnectCall() on the caller side resets the entire audio pipeline
+      // and causes call to go silent/dead after callee answers.
+      if (state.activeSession!.isIncoming) {
+        // Callee side: remote status changed to connected (e.g. by caller accepting
+        // a bidirectional scenario). Connect now.
+        acceptAndConnectCall();
+      }
+      // Caller side: do NOT call acceptAndConnectCall() — just update local state.
+      // The caller transitions to connected state only via WebRTC answer exchange.
+      else {
+        debugPrint('[CallController] Caller detected remote connected status. '
+            'WebRTC answer exchange drives caller audio state — skipping acceptAndConnectCall().');
+        // Update local session status to reflect connected (mirrors remote)
+        final updatedSession =
+            state.activeSession!.copyWith(status: CallStateStatus.connected);
+        state = state.copyWith(
+          activeSession: updatedSession,
+          translationEnabled: updatedSession.translationEnabled,
+        );
+        // Start call duration timer if not already running
+        if (_callDurationTimer == null || !(_callDurationTimer?.isActive ?? false)) {
+          _callDurationTimer?.cancel();
+          final connectedAt = updatedSession.connectedAt ?? DateTime.now();
+          _callDurationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+            final actualElapsed = DateTime.now().difference(connectedAt).inSeconds;
+            state = state.copyWith(elapsedSeconds: actualElapsed);
+          });
+        }
+        // Navigate to active call screen on caller side
+        final ctx = appNavigatorKey.currentContext;
+        if (ctx != null) {
+          appNavigatorKey.currentState?.pushReplacement(
+            MaterialPageRoute(builder: (_) => const ActiveCallScreen()),
+          );
+        }
+      }
     } else if (remote.status == CallStateStatus.rejected ||
         remote.status == CallStateStatus.ended ||
         remote.status == CallStateStatus.busy ||
@@ -678,11 +717,23 @@ class CallController extends StateNotifier<CallControllerState> {
     // If real incoming call, establish WebRTC answer
     if (current.isIncoming) {
       try {
-        final doc =
-            await repo.firestore?.collection('calls').doc(current.callId).get();
-        final offerData = doc?.data()?['offer'];
-        if (offerData != null && offerData is Map<String, dynamic>) {
+        // Retry up to 5 times with 600ms delay — caller may still be uploading the offer
+        Map<String, dynamic>? offerData;
+        for (int attempt = 0; attempt < 5; attempt++) {
+          final doc = await repo.firestore?.collection('calls').doc(current.callId).get();
+          final data = doc?.data();
+          if (data != null && data['offer'] is Map<String, dynamic>) {
+            offerData = data['offer'] as Map<String, dynamic>;
+            debugPrint('[CallController] WebRTC offer fetched on attempt ${attempt + 1}');
+            break;
+          }
+          debugPrint('[CallController] WebRTC offer not ready (attempt ${attempt + 1}/5), retrying in 600ms...');
+          await Future.delayed(const Duration(milliseconds: 600));
+        }
+        if (offerData != null) {
           await _webrtcClient.answerIncomingCall(current.callId, offerData);
+        } else {
+          debugPrint('[CallController] WebRTC offer was never available after retries. Falling back to direct audio.');
         }
       } catch (e) {
         debugPrint('WebRTC answerIncomingCall error: $e');
@@ -730,6 +781,27 @@ class CallController extends StateNotifier<CallControllerState> {
         final wasReconnecting = _networkDropTimer != null;
         _networkDropTimer?.cancel();
         _networkDropTimer = null;
+
+        // CRITICAL: When WebRTC peer connection becomes fully connected on CALLER side,
+        // update the session to connected state (remote Firestore update drives this too,
+        // but WebRTC connected is the authoritative local signal for audio readiness).
+        if (state.activeSession?.status != CallStateStatus.connected &&
+            !(state.activeSession?.isIncoming ?? true)) {
+          debugPrint('[CallController] WebRTC P2P connected on caller side. Marking session as connected.');
+          final updatedSession =
+              state.activeSession?.copyWith(status: CallStateStatus.connected, connectedAt: DateTime.now());
+          if (updatedSession != null) {
+            state = state.copyWith(activeSession: updatedSession);
+            repo.updateCallStatus(updatedSession.callId, CallStateStatus.connected);
+            // Ensure caller audio is fully open
+            _webrtcClient.setMicrophoneMute(false);
+            _webrtcClient.setRemoteAudioVolume(1.0);
+            // Navigate caller to active call screen
+            appNavigatorKey.currentState?.pushReplacement(
+              MaterialPageRoute(builder: (_) => const ActiveCallScreen()),
+            );
+          }
+        }
         if (wasReconnecting) {
           final reconnectedBubble = LiveTranscriptEntry(
             id: DateTime.now().millisecondsSinceEpoch.toString(),

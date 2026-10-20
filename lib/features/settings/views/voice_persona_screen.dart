@@ -1,4 +1,4 @@
-import 'package:audioplayers/audioplayers.dart';
+﻿import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,32 +47,79 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
   bool _isLoadingAudio = false;
 
   static const List<VoicePersonaItem> _personas = [
+    // ── Female Voices ──────────────────────────────────────────────
     VoicePersonaItem(
       id: 'Aoede',
       name: 'Aoede',
-      gender: 'Female • Default',
+      gender: 'Female',
       toneEn: 'Warm & Expressive',
       toneBn: 'উষ্ণ এবং সাবলীল',
       descriptionEn:
           'Clear, conversational female voice with natural inflections. Ideal for everyday chats and emotional clarity.',
       descriptionBn:
           'প্রাকৃতিক স্পষ্ট নারী কণ্ঠস্বর। দৈনন্দিন স্বাভাবিক কথোপকথনের জন্য সবচেয়ে উপযুক্ত।',
-      icon: Icons.record_voice_over_rounded,
+      icon: Icons.woman_rounded,
       accentColor: Color(0xFFE5A93B),
       samplePreviewText:
           'Hello! I am Aoede. I will translate your calls with a warm and expressive voice.',
     ),
     VoicePersonaItem(
+      id: 'Kore',
+      name: 'Kore',
+      gender: 'Female',
+      toneEn: 'Gentle & Melodious',
+      toneBn: 'কোমল এবং মিষ্টি',
+      descriptionEn:
+          'Soothing, soft, and relaxed female voice. Perfect for patient, calm, and friendly dialogue.',
+      descriptionBn:
+          'কোমল, শান্ত এবং মিষ্টি নারী কণ্ঠস্বর। ধৈর্যশীল এবং বন্ধুত্বপূর্ণ আলোচনার জন্য সেরা।',
+      icon: Icons.woman_2_rounded,
+      accentColor: Color(0xFFFF6B8B),
+      samplePreviewText:
+          'Hello! I am Kore. I will translate your calls with a gentle and soothing voice.',
+    ),
+    VoicePersonaItem(
+      id: 'Leda',
+      name: 'Leda',
+      gender: 'Female',
+      toneEn: 'Calm & Professional',
+      toneBn: 'শান্ত এবং পেশাদার',
+      descriptionEn:
+          'Composed, calm, and natural female voice with a professional tone. Ideal for formal calls and business meetings.',
+      descriptionBn:
+          'পেশাদার এবং শান্তিপ্রিয় নারী কণ্ঠস্বর। অফিশিয়াল এবং ব্যবসায়িক আলোচনার জন্য আদর্শ।',
+      icon: Icons.record_voice_over_rounded,
+      accentColor: Color(0xFF7C83E5),
+      samplePreviewText:
+          'Hello! I am Leda. I will translate your calls with a calm and professional tone.',
+    ),
+    VoicePersonaItem(
+      id: 'Sularis',
+      name: 'Sularis',
+      gender: 'Female',
+      toneEn: 'Warm & Reliable',
+      toneBn: 'আন্তরিক এবং নির্ভরযোগ্য',
+      descriptionEn:
+          'Warm, trustworthy female voice with a natural flow. Great for friendly conversations and support interactions.',
+      descriptionBn:
+          'আন্তরিক এবং বিশ্বাসযোগ্য নারী কণ্ঠস্বর। বন্ধুত্বপূর্ণ কথোপকথনের জন্য দারুণ।',
+      icon: Icons.spatial_audio_rounded,
+      accentColor: Color(0xFFFF9A66),
+      samplePreviewText:
+          'Hello! I am Sularis. I will translate your calls with a warm and reliable voice.',
+    ),
+    // ── Male Voices ────────────────────────────────────────────────
+    VoicePersonaItem(
       id: 'Charon',
       name: 'Charon',
-      gender: 'Male • Resonant',
+      gender: 'Male',
       toneEn: 'Deep & Authoritative',
-      toneBn: 'গম্ভীর এবং শান্ত',
+      toneBn: 'গম্ভীর এবং আত্মবিশ্বাসী',
       descriptionEn:
           'Deep, steady, and composed male voice. Well-suited for business discussions and professional audio.',
       descriptionBn:
-          'ভারী, শান্ত এবং গম্ভীর পুরুষ কণ্ঠস্বর। প্রফেশনাল ও অফিশিয়াল আলোচনার জন্য দারুণ।',
-      icon: Icons.record_voice_over_rounded,
+          'ভারী, শান্ত এবং গম্ভীর পুরুষ কণ্ঠস্বর। প্রফেশনাল ও অফিশিয়াল আলোচনার জন্য দারুণ।',
+      icon: Icons.man_rounded,
       accentColor: Color(0xFF5B8DEF),
       samplePreviewText:
           'Hello! I am Charon. I will translate your calls with a deep and composed tone.',
@@ -80,7 +127,7 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
     VoicePersonaItem(
       id: 'Fenrir',
       name: 'Fenrir',
-      gender: 'Male • Dynamic',
+      gender: 'Male',
       toneEn: 'Energetic & Crisp',
       toneBn: 'প্রাণবন্ত এবং স্পষ্ট',
       descriptionEn:
@@ -93,34 +140,64 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
           'Hello! I am Fenrir. I will translate your calls with an energetic and dynamic voice.',
     ),
     VoicePersonaItem(
-      id: 'Kore',
-      name: 'Kore',
-      gender: 'Female • Soothing',
-      toneEn: 'Gentle & Melodious',
-      toneBn: 'কোমল এবং মিষ্টি',
-      descriptionEn:
-          'Soothing, soft, and relaxed female voice. Perfect for patient, calm, and friendly dialogue.',
-      descriptionBn:
-          'কোমল, শান্ত এবং মিষ্টি নারী কণ্ঠস্বর। ধৈর্যশীল এবং বন্ধুত্বপূর্ণ আলোচনার জন্য সেরা।',
-      icon: Icons.spatial_audio_off_rounded,
-      accentColor: Color(0xFFFF6B8B),
-      samplePreviewText:
-          'Hello! I am Kore. I will translate your calls with a gentle and soothing voice.',
-    ),
-    VoicePersonaItem(
       id: 'Puck',
       name: 'Puck',
-      gender: 'Neutral / Youthful',
-      toneEn: 'Playful & Engaging',
-      toneBn: 'উচ্ছ্বল এবং বন্ধুত্বপূর্ণ',
+      gender: 'Male',
+      toneEn: 'Playful & Youthful',
+      toneBn: 'উচ্ছ্বল এবং প্রাণোচ্ছ্বল',
       descriptionEn:
-          'Crisp, playful, and cheerful tone. Adds a modern, friendly personality to translated speech.',
+          'Crisp, playful, and cheerful young male voice. Adds a modern, friendly personality to translated speech.',
       descriptionBn:
-          'হাসিখুশি, উজ্জ্বল এবং প্রাণোচ্ছ্বল কণ্ঠস্বর। আধুনিক ও সহজ কথোপকথনের উপযোগী।',
-      icon: Icons.hearing_rounded,
+          'হাসিখুশি, উজ্জ্বল এবং প্রাণোচ্ছ্বল যুবক পুরুষ কণ্ঠস্বর। আধুনিক ও সহজ কথোপকথনের উপযোগী।',
+      icon: Icons.man_2_rounded,
       accentColor: Color(0xFFA259FF),
       samplePreviewText:
           'Hello! I am Puck. I will translate your calls with a playful and friendly tone.',
+    ),
+    VoicePersonaItem(
+      id: 'Orus',
+      name: 'Orus',
+      gender: 'Male',
+      toneEn: 'Bold & Commanding',
+      toneBn: 'দৃঢ় এবং কর্তৃত্বপরায়ণ',
+      descriptionEn:
+          'Bold, clear, and commanding male voice. Perfect for assertive communication and leadership-style conversations.',
+      descriptionBn:
+          'দৃঢ়, স্পষ্ট এবং শক্তিশালী পুরুষ কণ্ঠস্বর। নেতৃত্বমূলক কথোপকথনের জন্য আদর্শ।',
+      icon: Icons.record_voice_over_rounded,
+      accentColor: Color(0xFFE05C5C),
+      samplePreviewText:
+          'Hello! I am Orus. I will translate your calls with a bold and commanding voice.',
+    ),
+    VoicePersonaItem(
+      id: 'Perseus',
+      name: 'Perseus',
+      gender: 'Male',
+      toneEn: 'Confident & Natural',
+      toneBn: 'আত্মবিশ্বাসী এবং স্বাভাবিক',
+      descriptionEn:
+          'Confident, natural, and clear male voice that feels approachable. Suitable for both formal and casual settings.',
+      descriptionBn:
+          'আত্মবিশ্বাসী, স্বাভাবিক এবং স্পষ্ট পুরুষ কণ্ঠস্বর। আনুষ্ঠানিক ও অনানুষ্ঠানিক উভয় পরিবেশে উপযুক্ত।',
+      icon: Icons.person_rounded,
+      accentColor: Color(0xFF3EB8A8),
+      samplePreviewText:
+          'Hello! I am Perseus. I will translate your calls with a confident and natural voice.',
+    ),
+    VoicePersonaItem(
+      id: 'Zephyr',
+      name: 'Zephyr',
+      gender: 'Male',
+      toneEn: 'Bright & Lively',
+      toneBn: 'উজ্জ্বল এবং সজীব',
+      descriptionEn:
+          'Bright, lively, and expressive male voice. Excellent for energetic conversations and casual interactions.',
+      descriptionBn:
+          'উজ্জ্বল, সজীব এবং প্রকাশমুখর পুরুষ কণ্ঠস্বর। প্রাণোচ্ছ্বল কথোপকথনের জন্য চমৎকার।',
+      icon: Icons.air_rounded,
+      accentColor: Color(0xFF00BCD4),
+      samplePreviewText:
+          'Hello! I am Zephyr. I will translate your calls with a bright and lively voice.',
     ),
   ];
 

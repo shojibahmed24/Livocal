@@ -39,7 +39,9 @@ service cloud.firestore {
       match /wallet/{walletId} {
         allow get: if isAuthenticated() && (request.auth.uid == userId || walletId == 'payment_settings');
         allow list: if isAuthenticated() && request.auth.uid == userId;
-        allow write: if false;
+        // Owner can write their own payment_settings (e.g. bKash/Nagad account details).
+        // All other wallet writes (balance, minutes) remain server-only via Admin SDK.
+        allow write: if isAuthenticated() && request.auth.uid == userId && walletId == 'payment_settings';
       }
     }
 

@@ -138,32 +138,33 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
       debugPrint('[PaymentSettings] Backend save error: $backendErr');
     }
 
-    // 2. Direct Firestore fallback
+    // 2. Direct Firestore fallback (now allowed by Firestore rules for payment_settings)
     if (!savedViaBackend) {
       try {
         final firestore = FirebaseFirestore.instance;
-        final userRef = firestore.collection('users').doc(uid);
-        final batch = firestore.batch();
+        final paymentSettingsRef = firestore
+            .collection('users')
+            .doc(uid)
+            .collection('wallet')
+            .doc('payment_settings');
 
-        batch.set(
-          userRef.collection('wallet').doc('payment_settings'),
-          payload,
-          SetOptions(merge: true),
-        );
+        await paymentSettingsRef.set({
+          'binancePayId': binancePay,
+          'cryptoUsdtTrc20': trc20,
+          'cryptoUsdtBep20': bep20,
+          'bkashNumber': bkash,
+          'nagadNumber': nagad,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
 
-        batch.set(
-          userRef,
-          {
-            'binancePayId': binancePay,
-            'cryptoUsdtTrc20': trc20,
-            'cryptoUsdtBep20': bep20,
-            'bkashNumber': bkash,
-            'nagadNumber': nagad,
-          },
-          SetOptions(merge: true),
-        );
-
-        await batch.commit();
+        // Also sync top-level user doc for quick lookup in P2P payments
+        await firestore.collection('users').doc(uid).set({
+          'binancePayId': binancePay,
+          'cryptoUsdtTrc20': trc20,
+          'cryptoUsdtBep20': bep20,
+          'bkashNumber': bkash,
+          'nagadNumber': nagad,
+        }, SetOptions(merge: true));
       } catch (e) {
         debugPrint('[PaymentSettings] Firestore save error: $e');
         if (mounted) {
