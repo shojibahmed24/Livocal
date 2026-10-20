@@ -182,15 +182,23 @@ class CallController extends StateNotifier<CallControllerState> {
         },
         onDecline: (callId) {
           debugPrint('[CallController] CallKit onDecline for $callId');
-          endCall(recordAsMissed: true);
+          if (state.activeSession?.callId == callId &&
+              state.activeSession?.status == CallStateStatus.ringing) {
+            endCall(recordAsMissed: true);
+          }
         },
         onTimeout: (callId) {
           debugPrint('[CallController] CallKit onTimeout for $callId');
-          endCall(recordAsMissed: true);
+          if (state.activeSession?.callId == callId &&
+              state.activeSession?.status == CallStateStatus.ringing) {
+            endCall(recordAsMissed: true);
+          }
         },
         onEnded: (callId) {
-          debugPrint('[CallController] CallKit onEnded for $callId');
-          endCall(recordAsMissed: true);
+          debugPrint('[CallController] CallKit onEnded for $callId (programmatic cleanup)');
+          // CallKit on Android emits actionCallEnded when endCall() or endAllCalls() is invoked
+          // programmatically or when an incoming call notification is dismissed after answer.
+          // Do NOT terminate active or dialing call sessions here to avoid false hangups.
         },
       );
       FlutterCallkitIncoming.activeCalls().then((calls) {
@@ -643,7 +651,6 @@ class CallController extends StateNotifier<CallControllerState> {
     }
     if (current == null) return;
 
-    await CallKitService().endCall(current.callId);
     _callTimeoutTimer?.cancel();
     _callTimeoutTimer = null;
 
@@ -660,6 +667,11 @@ class CallController extends StateNotifier<CallControllerState> {
       geminiState: GeminiLiveState.connecting,
       elapsedSeconds: 0,
     );
+
+    // Only callee needs to dismiss native CallKit notification
+    if (current.isIncoming) {
+      await CallKitService().endCall(current.callId);
+    }
 
     await repo.updateCallStatus(current.callId, CallStateStatus.connected);
 
@@ -794,8 +806,9 @@ class CallController extends StateNotifier<CallControllerState> {
       state = state.copyWith(elapsedSeconds: actualElapsed);
     });
 
+    final hasGeminiKey = GeminiLiveTranslator.getSavedApiKey().isNotEmpty;
     final isSameLanguage = state.myLangCode == state.peerLangCode;
-    final shouldTranslate = state.translationEnabled && !isSameLanguage;
+    final shouldTranslate = state.translationEnabled && !isSameLanguage && hasGeminiKey;
 
     if (!shouldTranslate) {
       // 100% Direct P2P Audio Call - WebRTC handles native mic & speaker with hardware AEC
@@ -805,13 +818,17 @@ class CallController extends StateNotifier<CallControllerState> {
       final directBubble = LiveTranscriptEntry(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         speakerId: 'system',
-        speakerName: isSameLanguage ? 'Direct Voice Call' : 'Direct Call (Translation Off)',
+        speakerName: isSameLanguage
+            ? 'Direct Voice Call'
+            : (!hasGeminiKey ? 'Direct Call (API Key Not Set)' : 'Direct Call (Translation Off)'),
         isSelf: false,
         sourceLangCode: myLang.code,
         targetLangCode: peerLang.code,
         originalText: isSameLanguage
             ? '📞 Direct Voice Call Active: Both participants speak ${myLang.nativeName} (${myLang.englishName}). WebRTC audio streaming directly with zero AI translation.'
-            : '📞 Direct Voice Call Active: AI translation is turned off. Direct WebRTC audio active.',
+            : (!hasGeminiKey
+                ? '📞 Direct Voice Call Active: Gemini API key not configured yet. Calling directly over WebRTC voice with zero delay.'
+                : '📞 Direct Voice Call Active: AI translation is turned off. Direct WebRTC audio active.'),
         translatedText: isSameLanguage
             ? AppStrings.get(
                 'sameLanguageDirectCallNotice',
@@ -829,7 +846,7 @@ class CallController extends StateNotifier<CallControllerState> {
         geminiState: GeminiLiveState.ready,
         audioMode: CallAudioMode.originalOnly,
         transcripts: [directBubble],
-        hasApiKey: GeminiLiveTranslator.getSavedApiKey().isNotEmpty,
+        hasApiKey: hasGeminiKey,
       );
       return;
     }
@@ -852,7 +869,8 @@ class CallController extends StateNotifier<CallControllerState> {
     }
 
     // Apply WebRTC audio volume and mic mute based on active audioMode
-    if (state.audioMode == CallAudioMode.translatedOnly) {
+    // During connecting phase, ensure direct voice remains open so users are never left in silence
+    if (state.audioMode == CallAudioMode.translatedOnly && _geminiTranslator.isConnected) {
       _webrtcClient.setRemoteAudioVolume(0.0);
       _webrtcClient.setMicrophoneMute(true);
     } else if (state.audioMode == CallAudioMode.ducking) {

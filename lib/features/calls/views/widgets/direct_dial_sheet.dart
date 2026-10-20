@@ -122,9 +122,7 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
         : (cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone);
 
     User? resolvedUser = _foundUser;
-    if (resolvedUser == null) {
-      resolvedUser = await ref.read(firebaseFirestoreRepositoryProvider).getUserByPhone(cleanPhone);
-    }
+    resolvedUser ??= await ref.read(firebaseFirestoreRepositoryProvider).getUserByPhone(cleanPhone);
 
     final targetUser = resolvedUser ??
         User(
@@ -147,6 +145,7 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
       peerId: targetUser.id,
       peerName: calleeName,
       peerPhone: phone,
+      explicitTranslationEnabled: withAiTranslation,
     );
 
     Navigator.of(context).push(
@@ -181,9 +180,7 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
         : (cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone);
 
     User? resolvedUser = _foundUser;
-    if (resolvedUser == null) {
-      resolvedUser = await ref.read(firebaseFirestoreRepositoryProvider).getUserByPhone(cleanPhone);
-    }
+    resolvedUser ??= await ref.read(firebaseFirestoreRepositoryProvider).getUserByPhone(cleanPhone);
 
     final targetUser = resolvedUser ??
         User(

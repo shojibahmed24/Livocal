@@ -296,20 +296,13 @@ class CallRepository {
   Stream<CallSession?> watchIncomingCalls(String ownId, {String? ownPhone}) {
     if (firestore == null) return const Stream.empty();
 
-    final targetIds = <String>{ownId};
-    if (ownPhone != null && ownPhone.isNotEmpty) {
-      final clean = ownPhone.replaceAll(RegExp(r'[\s\-\(\)]'), '');
-      targetIds.add('phone_$clean');
-      if (clean.startsWith('+')) {
-        targetIds.add('phone_${clean.substring(1)}');
-      } else {
-        targetIds.add('phone_+$clean');
-      }
-    }
-
+    // Query strictly with isEqualTo: ownId.
+    // In Firestore Security Rules: 'allow read: if resource.data.calleeId == request.auth.uid'
+    // Rules are NOT filters. Using whereIn with non-auth IDs causes Firestore to reject the query
+    // with PERMISSION_DENIED. Querying with calleeId == ownId is 100% secure and guaranteed to succeed.
     return firestore!
         .collection('calls')
-        .where('calleeId', whereIn: targetIds.toList())
+        .where('calleeId', isEqualTo: ownId)
         .snapshots()
         .map((query) {
           if (query.docs.isEmpty) return null;
