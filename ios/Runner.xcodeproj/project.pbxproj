@@ -11,6 +11,11 @@
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
 		437CD3772A456E0F00D2ABDE /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 437CD3762A456E0F00D2ABDE /* GoogleService-Info.plist */; };
+		B10000012A456E0F00D2ABDE /* classic_bell.wav in Resources */ = {isa = PBXBuildFile; fileRef = A10000012A456E0F00D2ABDE /* classic_bell.wav */; };
+		B10000022A456E0F00D2ABDE /* digital_pulse.wav in Resources */ = {isa = PBXBuildFile; fileRef = A10000022A456E0F00D2ABDE /* digital_pulse.wav */; };
+		B10000032A456E0F00D2ABDE /* livocal_harmony.wav in Resources */ = {isa = PBXBuildFile; fileRef = A10000032A456E0F00D2ABDE /* livocal_harmony.wav */; };
+		B10000042A456E0F00D2ABDE /* marimba_bloom.wav in Resources */ = {isa = PBXBuildFile; fileRef = A10000042A456E0F00D2ABDE /* marimba_bloom.wav */; };
+		B10000052A456E0F00D2ABDE /* silent.wav in Resources */ = {isa = PBXBuildFile; fileRef = A10000052A456E0F00D2ABDE /* silent.wav */; };
 		699C496166115C2C350992C2 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 047309FE658E7A13A72E52B7 /* Pods_Runner.framework */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
@@ -54,6 +59,11 @@
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
 		437CD3762A456E0F00D2ABDE /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		A10000012A456E0F00D2ABDE /* classic_bell.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = classic_bell.wav; sourceTree = "<group>"; };
+		A10000022A456E0F00D2ABDE /* digital_pulse.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = digital_pulse.wav; sourceTree = "<group>"; };
+		A10000032A456E0F00D2ABDE /* livocal_harmony.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = livocal_harmony.wav; sourceTree = "<group>"; };
+		A10000042A456E0F00D2ABDE /* marimba_bloom.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = marimba_bloom.wav; sourceTree = "<group>"; };
+		A10000052A456E0F00D2ABDE /* silent.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = silent.wav; sourceTree = "<group>"; };
 		4824A61DDDA764CCE4460FBF /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 		5FF7268728D3B3DD37C907E8 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Runner/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -158,6 +168,11 @@
 			isa = PBXGroup;
 			children = (
 				437CD3762A456E0F00D2ABDE /* GoogleService-Info.plist */,
+				A10000012A456E0F00D2ABDE /* classic_bell.wav */,
+				A10000022A456E0F00D2ABDE /* digital_pulse.wav */,
+				A10000032A456E0F00D2ABDE /* livocal_harmony.wav */,
+				A10000042A456E0F00D2ABDE /* marimba_bloom.wav */,
+				A10000052A456E0F00D2ABDE /* silent.wav */,
 				97C146FA1CF9000F007C117D /* Main.storyboard */,
 				97C146FD1CF9000F007C117D /* Assets.xcassets */,
 				97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */,
@@ -268,6 +283,11 @@
 				97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */,
 				3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */,
 				437CD3772A456E0F00D2ABDE /* GoogleService-Info.plist in Resources */,
+				B10000012A456E0F00D2ABDE /* classic_bell.wav in Resources */,
+				B10000022A456E0F00D2ABDE /* digital_pulse.wav in Resources */,
+				B10000032A456E0F00D2ABDE /* livocal_harmony.wav in Resources */,
+				B10000042A456E0F00D2ABDE /* marimba_bloom.wav in Resources */,
+				B10000052A456E0F00D2ABDE /* silent.wav in Resources */,
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
 				B921E4B09AF4FCE14BD2903C /* GoogleService-Info.plist in Resources */,

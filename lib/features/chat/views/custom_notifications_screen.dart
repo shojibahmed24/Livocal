@@ -1,4 +1,6 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/calls/services/ringtone_manager.dart';
@@ -229,6 +231,62 @@ class _CustomNotificationsScreenState
                     },
                   );
                 }),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.primary),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                  ),
+                  icon: const Icon(Icons.audio_file_outlined, size: 20),
+                  label: Text(AppStrings.tr(ref, 'chooseAudioFromPhone')),
+                  onPressed: () async {
+                    await RingtoneManager().stopPreview();
+                    final result = await FilePicker.platform.pickFiles(
+                      type: FileType.audio,
+                      allowMultiple: false,
+                    );
+                    if (result != null && result.files.single.path != null) {
+                      final path = result.files.single.path!;
+                      final name = result.files.single.name;
+                      setDialogState(() {
+                        currentSelection = name;
+                      });
+                      if (isCallRingtone) {
+                        setState(() => _callRingtone = name);
+                        await SharedPref.instance.setString(
+                          'contact_call_ringtone_$_contactId',
+                          name,
+                        );
+                        await SharedPref.instance.setString(
+                          'contact_custom_ringtone_path_$_contactId',
+                          path,
+                        );
+                      } else {
+                        setState(() => _msgTone = name);
+                        await SharedPref.instance.setString(
+                          'contact_tone_$_contactId',
+                          name,
+                        );
+                        await SharedPref.instance.setString(
+                          'contact_custom_tone_path_$_contactId',
+                          path,
+                        );
+                      }
+                      if (mounted && dialogCtx.mounted) {
+                        Navigator.pop(dialogCtx);
+                        showSnackBar(
+                          context: context,
+                          content: '$title set to custom audio: $name',
+                          type: SnacBarType.info,
+                        );
+                      }
+                    }
+                  },
+                ),
               ],
             ),
           );
@@ -252,11 +310,19 @@ class _CustomNotificationsScreenState
                 'contact_call_ringtone_$_contactId',
                 currentSelection,
               );
+              await SharedPref.instance.setString(
+                'contact_custom_ringtone_path_$_contactId',
+                '',
+              );
             } else {
               setState(() => _msgTone = currentSelection);
               await SharedPref.instance.setString(
                 'contact_tone_$_contactId',
                 currentSelection,
+              );
+              await SharedPref.instance.setString(
+                'contact_custom_tone_path_$_contactId',
+                '',
               );
             }
             if (mounted) Navigator.pop(context);

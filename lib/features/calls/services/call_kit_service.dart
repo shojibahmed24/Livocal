@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_callkit_incoming/entities/entities.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
@@ -84,9 +85,17 @@ class CallKitService {
         SharedPref.isInitialized &&
         (SharedPref.instance.getBool('custom_notif_enabled_$callerId') ?? false);
 
+    final customPath = customEnabled
+        ? (SharedPref.isInitialized ? SharedPref.instance.getString('contact_custom_ringtone_path_$callerId') : null)
+        : (SharedPref.isInitialized ? SharedPref.instance.getString('notif_custom_ringtone_path') : null);
+
     String ringtone = 'livocal_harmony';
     if (isMuted) {
       ringtone = 'silent';
+    } else if (customPath != null &&
+        customPath.isNotEmpty &&
+        File(customPath).existsSync()) {
+      ringtone = customPath;
     } else if (SharedPref.isInitialized) {
       final selectedTone = customEnabled
           ? (SharedPref.instance.getString('contact_call_ringtone_$callerId') ??
@@ -139,9 +148,11 @@ class CallKitService {
         backgroundColor: '#091014',
         actionColor: '#00A884',
         textColor: '#FFFFFF',
-        incomingCallNotificationChannelName: 'Livocal Incoming Calls',
+        incomingCallNotificationChannelName: isMuted
+            ? 'Livocal Muted Calls'
+            : 'Livocal Incoming Calls',
         missedCallNotificationChannelName: 'Livocal Missed Calls',
-        isShowFullLockedScreen: true,
+        isShowFullLockedScreen: !isMuted,
       ),
       ios: IOSParams(
         iconName: 'AppIcon',
@@ -150,14 +161,18 @@ class CallKitService {
         maximumCallGroups: 1,
         maximumCallsPerCallGroup: 1,
         audioSessionMode: 'voiceChat',
-        audioSessionActive: true,
+        audioSessionActive: !isMuted,
         audioSessionPreferredSampleRate: 44100.0,
         audioSessionPreferredIOBufferDuration: 0.005,
         supportsDTMF: true,
         supportsHolding: false,
         supportsGrouping: false,
         supportsUngrouping: false,
-        ringtonePath: ringtone,
+        ringtonePath: isMuted
+            ? 'silent.wav'
+            : (ringtone.contains('/')
+                ? ringtone
+                : (ringtone.endsWith('.wav') ? ringtone : '$ringtone.wav')),
       ),
     );
 

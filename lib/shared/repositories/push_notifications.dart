@@ -172,6 +172,9 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     }
 
     try {
+      if (callerId.isNotEmpty && data['isMuted'] == 'true' && SharedPref.isInitialized) {
+        await SharedPref.instance.setBool('contact_muted_$callerId', true);
+      }
       final callId = data['callId'] ?? '';
       final callerName = data['callerName'] ?? 'Incoming Call';
       final callerPhone = data['callerNumber'] ?? data['callerPhone'] ?? '';

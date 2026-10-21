@@ -492,6 +492,22 @@ app.post(
         return res.status(403).json({ error: 'Caller is blocked by recipient' });
       }
 
+      // Check if target user has muted the caller
+      let isMutedByRecipient = false;
+      try {
+        const muteDoc = await firestoreDb
+          .collection('users')
+          .doc(targetUserId)
+          .collection('muted_contacts')
+          .doc(callerUid)
+          .get();
+        if (muteDoc.exists && muteDoc.data().muted === true) {
+          isMutedByRecipient = true;
+        }
+      } catch (muteErr) {
+        console.warn(`[CallNotify] Could not check mute status for ${targetUserId}:`, muteErr.message);
+      }
+
       // 1. Authoritative caller identification: Lock caller to req.user.uid
       let verifiedCallerName = 'Livocal User';
       let verifiedCallerNumber = req.user.phone_number || '';
@@ -528,7 +544,7 @@ app.post(
         return res.status(404).json({ error: 'Target user has no registered FCM push token' });
       }
 
-      // High Priority Data Message for waking up Android / CallKit
+      // High Priority Data Message for waking up Android / CallKit (silent if recipient muted caller)
       const message = {
         token,
         data: {
@@ -538,15 +554,20 @@ app.post(
           callerName: String(verifiedCallerName),
           callerNumber: String(verifiedCallerNumber),
           timestamp: String(Date.now()),
+          isMuted: isMutedByRecipient ? 'true' : 'false',
         },
         android: {
           priority: 'high',
-          notification: {
-            channelId: 'livocal_messages',
-            priority: 'high',
-            defaultSound: true,
-            defaultVibrateTimings: true,
-          },
+          ...(isMutedByRecipient
+            ? {}
+            : {
+                notification: {
+                  channelId: 'livocal_messages',
+                  priority: 'high',
+                  defaultSound: true,
+                  defaultVibrateTimings: true,
+                },
+              }),
         },
       };
 
