@@ -20,6 +20,7 @@ import 'package:livocal/features/settings/views/app_language_screen.dart';
 import 'package:livocal/features/settings/views/help_settings_screen.dart';
 import 'package:livocal/features/settings/views/voice_persona_screen.dart';
 import 'package:livocal/features/settings/views/payment_settings_screen.dart';
+import 'package:livocal/features/settings/views/chat_settings_screen.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -37,48 +38,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void initState() {
     super.initState();
     _currentUser = widget.user;
-  }
-
-  void _showThemeSelectionDialog() {
-    final currentTheme = ref.read(themeModeProvider);
-
-    showAppDialog(
-      context: context,
-      title: AppStrings.tr(ref, 'chooseTheme'),
-      icon: Icons.brightness_6_rounded,
-      content: RadioGroup<ThemeMode>(
-        groupValue: currentTheme,
-        onChanged: (mode) {
-          if (mode != null) {
-            ref.read(themeModeProvider.notifier).setThemeMode(mode);
-            Navigator.pop(context);
-          }
-        },
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RadioListTile<ThemeMode>(
-              title: Text(AppStrings.tr(ref, 'systemDefault')),
-              value: ThemeMode.system,
-            ),
-            RadioListTile<ThemeMode>(
-              title: Text(AppStrings.tr(ref, 'light')),
-              value: ThemeMode.light,
-            ),
-            RadioListTile<ThemeMode>(
-              title: Text(AppStrings.tr(ref, 'dark')),
-              value: ThemeMode.dark,
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        AppDialogAction(
-          label: AppStrings.tr(ref, 'cancel').toUpperCase(),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ],
-    );
   }
 
   void _showLogoutDialog() {
@@ -268,7 +227,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: AppStrings.tr(ref, 'chatsAndTheme'),
             subtitle:
                 '${ref.watch(themeModeProvider).name.toUpperCase()}, ${AppStrings.tr(ref, 'chatsAndThemeSub')}',
-            onTap: _showThemeSelectionDialog,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ChatSettingsScreen(),
+                ),
+              );
+            },
           ),
           SettingsRow(
             icon: Icons.notifications_none_rounded,

@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -13,14 +13,20 @@ import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/shared/services/translation_service.dart';
 import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
-import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/app_tokens.dart';
+import 'package:livocal/theme/color_theme.dart';
 import 'package:livocal/theme/theme.dart';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:uuid/uuid.dart';
+import 'package:livocal/features/chat/controllers/chat_controller.dart';
+import 'package:livocal/shared/models/contact.dart';
+import 'package:livocal/shared/repositories/push_notifications.dart';
 import '../../models/attachement.dart';
 import '../attachment_viewer.dart';
 
-class MessageCard extends StatefulWidget {
+class MessageCard extends ConsumerStatefulWidget {
   const MessageCard({
     super.key,
     required this.message,
@@ -33,10 +39,10 @@ class MessageCard extends StatefulWidget {
   final String currentUserId;
 
   @override
-  State<MessageCard> createState() => _MessageCardState();
+  ConsumerState<MessageCard> createState() => _MessageCardState();
 }
 
-class _MessageCardState extends State<MessageCard>
+class _MessageCardState extends ConsumerState<MessageCard>
     with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
   late final AnimationController _animController;
   late final Animation<double> _fadeAnim;
@@ -174,6 +180,26 @@ class _MessageCardState extends State<MessageCard>
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
+                if (!isDeleted)
+                  ListTile(
+                    leading: const Icon(Icons.reply_rounded, color: AppColors.primary),
+                    title: const Text('Reply'),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      ref
+                          .read(chatControllerProvider.notifier)
+                          .setReplyingMessage(widget.message);
+                    },
+                  ),
+                if (!isDeleted && !widget.message.content.startsWith('💰'))
+                  ListTile(
+                    leading: Icon(Icons.forward_rounded, color: colorTheme.iconColor),
+                    title: const Text('Forward'),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _showForwardSheet(context, widget.message);
+                    },
+                  ),
                 if (!isDeleted && widget.message.content.isNotEmpty)
                   ListTile(
                     leading: Icon(Icons.copy_rounded, color: colorTheme.iconColor),
@@ -322,6 +348,209 @@ class _MessageCardState extends State<MessageCard>
         );
       },
     );
+  }
+
+  void _showForwardSheet(BuildContext context, Message message) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1F2C34)
+          : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.45,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (ctx, scrollController) {
+            return FutureBuilder<List<Contact>>(
+              future: IsarDb.getLivocalContacts(),
+              builder: (context, snapshot) {
+                final contacts = snapshot.data ?? [];
+                return Column(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.forward_rounded, color: AppColors.primary),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Forward message to...',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.pop(sheetCtx),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    if (snapshot.connectionState == ConnectionState.waiting)
+                      const Expanded(
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (contacts.isEmpty)
+                      const Expanded(
+                        child: Center(
+                          child: Text(
+                            'No contacts found',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
+                      )
+                    else
+                      Expanded(
+                        child: ListView.separated(
+                          controller: scrollController,
+                          itemCount: contacts.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final contact = contacts[index];
+                            return ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                                backgroundImage: (contact.avatarUrl != null && contact.avatarUrl!.isNotEmpty)
+                                    ? NetworkImage(contact.avatarUrl!)
+                                    : null,
+                                child: (contact.avatarUrl == null || contact.avatarUrl!.isEmpty)
+                                    ? Text(
+                                        contact.displayName.isNotEmpty
+                                            ? contact.displayName[0].toUpperCase()
+                                            : '?',
+                                        style: const TextStyle(
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                              title: Text(
+                                contact.displayName,
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              subtitle: Text(
+                                contact.phoneNumber,
+                                style: const TextStyle(fontSize: 13, color: Colors.grey),
+                              ),
+                              trailing: const Icon(Icons.send_rounded, color: AppColors.primary, size: 20),
+                              onTap: () async {
+                                Navigator.pop(sheetCtx);
+                                await _confirmAndForward(context, contact, message);
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmAndForward(
+    BuildContext context,
+    Contact targetContact,
+    Message message,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dlgCtx) => AlertDialog(
+        title: const Text('Forward message?'),
+        content: Text('Send this message to ${targetContact.displayName}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dlgCtx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(dlgCtx, true),
+            child: const Text('Forward'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? widget.currentUserId;
+      final targetUserId = targetContact.userId ?? targetContact.phoneNumber;
+
+      final forwarded = Message(
+        id: const Uuid().v4(),
+        content: message.content,
+        attachment: message.attachment != null
+            ? Attachment(
+                url: message.attachment!.url,
+                type: message.attachment!.type,
+                fileName: message.attachment!.fileName,
+                fileSize: message.attachment!.fileSize,
+                fileExtension: message.attachment!.fileExtension,
+                uploadStatus: UploadStatus.uploaded,
+              )
+            : null,
+        status: MessageStatus.sent,
+        senderId: currentUserId,
+        receiverId: targetUserId,
+        timestamp: Timestamp.now(),
+      );
+
+      await FirebaseFirestore.instance
+          .collection('chats')
+          .doc(targetUserId)
+          .collection('messages')
+          .doc(forwarded.id)
+          .set(forwarded.toMap());
+      await IsarDb.addMessage(forwarded);
+      ref.read(pushNotificationsRepoProvider).sendPushNotification(forwarded);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Message forwarded to ${targetContact.displayName}'),
+            backgroundColor: AppColors.primary,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('[Forward] Failed to forward message: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to forward message'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildPaymentCard(
@@ -837,6 +1066,151 @@ class _MessageCardState extends State<MessageCard>
     );
   }
 
+  Widget _buildMessageTextContent({
+    required BuildContext context,
+    required bool isDark,
+    required bool biggerFont,
+    required String textPadding,
+    required ColorTheme colorTheme,
+  }) {
+    final rawContent = widget.message.content;
+    final isQuote = rawContent.startsWith('💬 Replying to @');
+    String quoteHeader = '';
+    String actualText = rawContent;
+
+    if (isQuote) {
+      final newlineIndex = rawContent.indexOf('\n');
+      if (newlineIndex != -1) {
+        quoteHeader = rawContent.substring(0, newlineIndex);
+        actualText = rawContent.substring(newlineIndex + 1);
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (isQuote && quoteHeader.isNotEmpty) ...[
+          Container(
+            margin: const EdgeInsets.only(bottom: 6.0),
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.25)
+                  : Colors.black.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(6.0),
+              border: const Border(
+                left: BorderSide(
+                  color: AppColors.primary,
+                  width: 3.5,
+                ),
+              ),
+            ),
+            child: Text(
+              quoteHeader,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12.0,
+                fontStyle: FontStyle.italic,
+                fontWeight: FontWeight.w500,
+                color: isDark ? Colors.white70 : Colors.black87,
+              ),
+            ),
+          ),
+        ],
+        Text(
+          '$actualText $textPadding',
+          textWidthBasis: TextWidthBasis.longestLine,
+          style: Theme.of(context).custom.textTheme.bodyText1.copyWith(
+                fontSize: biggerFont ? 40 : 16,
+                color: colorTheme.textColor1,
+              ),
+          softWrap: true,
+        ),
+        if (_isTranslating) ...[
+          const SizedBox(height: 4),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(
+                width: 10,
+                height: 10,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.5,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Translating...',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontStyle: FontStyle.italic,
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.lightTextSecondary,
+                ),
+              ),
+            ],
+          ),
+        ] else if (_translatedContent != null) ...[
+          const SizedBox(height: 4),
+          Container(
+            margin: const EdgeInsets.only(top: 2, bottom: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.black.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(6),
+              border: const Border(
+                left: BorderSide(color: AppColors.primary, width: 2.5),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.translate_rounded,
+                      size: 10,
+                      color: AppColors.primary,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'Translated',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _translatedContent!,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontStyle: FontStyle.italic,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.lightTextPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
   @override
   bool get wantKeepAlive => true;
 
@@ -1029,127 +1403,12 @@ class _MessageCardState extends State<MessageCard>
                                   )
                                 : widget.message.content.startsWith('💰 Payment sent:')
                                     ? _buildPaymentCard(context, isDark, isSentMessageCard)
-                                    : Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            '${widget.message.content} $textPadding',
-                                            textWidthBasis:
-                                                TextWidthBasis.longestLine,
-                                            style: Theme.of(context)
-                                                .custom
-                                                .textTheme
-                                                .bodyText1
-                                                .copyWith(
-                                                  fontSize: biggerFont ? 40 : 16,
-                                                  color: colorTheme.textColor1,
-                                                ),
-                                            softWrap: true,
-                                          ),
-                                          if (_isTranslating) ...[
-                                            const SizedBox(height: 4),
-                                            Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                const SizedBox(
-                                                  width: 10,
-                                                  height: 10,
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                    strokeWidth: 1.5,
-                                                    color: AppColors.primary,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 6),
-                                                Text(
-                                                  'Translating...',
-                                                  style: TextStyle(
-                                                    fontSize: 11,
-                                                    fontStyle: FontStyle.italic,
-                                                    color: isDark
-                                                        ? AppColors
-                                                            .darkTextSecondary
-                                                        : AppColors
-                                                            .lightTextSecondary,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ] else if (_translatedContent !=
-                                              null) ...[
-                                            const SizedBox(height: 4),
-                                            Container(
-                                              margin: const EdgeInsets.only(
-                                                  top: 2, bottom: 2),
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 4),
-                                              decoration: BoxDecoration(
-                                                color: isDark
-                                                    ? Colors.white.withValues(
-                                                        alpha: 0.08)
-                                                    : Colors.black.withValues(
-                                                        alpha: 0.04),
-                                                borderRadius:
-                                                    BorderRadius.circular(6),
-                                                border: const Border(
-                                                  left: BorderSide(
-                                                      color: AppColors.primary,
-                                                      width: 2.5),
-                                                ),
-                                              ),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                mainAxisSize:
-                                                    MainAxisSize.min,
-                                                children: [
-                                                  const Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      Icon(
-                                                          Icons
-                                                              .translate_rounded,
-                                                          size: 10,
-                                                          color: AppColors
-                                                              .primary),
-                                                      SizedBox(width: 4),
-                                                      Text(
-                                                        'Translated',
-                                                        style: TextStyle(
-                                                          fontSize: 9.5,
-                                                          fontWeight:
-                                                              FontWeight.w700,
-                                                          color:
-                                                              AppColors.primary,
-                                                          letterSpacing: 0.2,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                    _translatedContent!,
-                                                    style: TextStyle(
-                                                      fontSize: 13.5,
-                                                      fontStyle:
-                                                          FontStyle.italic,
-                                                      color: isDark
-                                                          ? AppColors
-                                                              .darkTextPrimary
-                                                          : AppColors
-                                                              .lightTextPrimary,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ],
+                                    : _buildMessageTextContent(
+                                        context: context,
+                                        isDark: isDark,
+                                        biggerFont: biggerFont,
+                                        textPadding: textPadding,
+                                        colorTheme: colorTheme,
                                       ),
                           )
                         ],

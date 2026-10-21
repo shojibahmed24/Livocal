@@ -435,14 +435,34 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           ),
         ],
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: Theme.of(context).themedImage('chat_bg.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: Column(
+      body: Builder(
+        builder: (context) {
+          final wp =
+              SharedPref.instance.getString('chat_wallpaper') ?? 'Default';
+          BoxDecoration bgDecoration;
+          if (wp.startsWith('color_')) {
+            final colorInt =
+                int.tryParse(wp.replaceFirst('color_', '')) ?? 0xFF0B141A;
+            bgDecoration = BoxDecoration(color: Color(colorInt));
+          } else if (wp != 'Default' && File(wp).existsSync()) {
+            bgDecoration = BoxDecoration(
+              image: DecorationImage(
+                image: FileImage(File(wp)),
+                fit: BoxFit.cover,
+              ),
+            );
+          } else {
+            bgDecoration = BoxDecoration(
+              image: DecorationImage(
+                image: Theme.of(context).themedImage('chat_bg.png'),
+                fit: BoxFit.cover,
+              ),
+            );
+          }
+
+          return Container(
+            decoration: bgDecoration,
+            child: Column(
           children: [
             Expanded(
               child: Platform.isIOS
@@ -536,8 +556,10 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             ),
           ],
         ),
-      ),
-    );
+      );
+    },
+  ),
+);
   }
 }
 
@@ -615,6 +637,9 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
     final showEmojiPicker = ref.watch(
       chatControllerProvider.select((s) => s.showEmojiPicker),
     );
+    final replyingMessage = ref.watch(
+      chatControllerProvider.select((s) => s.replyingMessage),
+    );
 
     final systemBottomPadding = MediaQuery.of(context).padding.bottom;
     final systemViewPaddingBottom = MediaQuery.of(context).viewPadding.bottom;
@@ -644,58 +669,144 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
         ),
         child: recordingState != RecordingState.recordingLocked &&
                 recordingState != RecordingState.paused
-            ? Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(24.0),
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? colorTheme.appBarColor
-                              : colorTheme.backgroundColor,
-                        ),
-                        child: recordingState == RecordingState.notRecording
-                            ? _buildChatField(
-                                showEmojiPicker,
-                                context,
-                                hideElements,
-                                colorTheme,
-                              )
-                            : const VoiceRecorderField(),
-                      ),
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (replyingMessage != null)
+                    _buildReplyingBanner(
+                      replyingMessage,
+                      colorTheme,
+                      Theme.of(context).brightness == Brightness.dark,
                     ),
-                    const SizedBox(
-                      width: 4.0,
-                    ),
-                    hideElements
-                        ? InkWell(
-                            onTap: () async {
-                              HapticFeedback.lightImpact();
-                              ref
-                                  .read(chatControllerProvider.notifier)
-                                  .onSendBtnPressed(
-                                    ref,
-                                    widget.self,
-                                    widget.other,
-                                  );
-                            },
-                            child: CircleAvatar(
-                              radius: 24,
-                              backgroundColor: colorTheme.greenColor,
-                              child: const Icon(
-                                Icons.send,
-                                color: Colors.white,
-                              ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(24.0),
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? colorTheme.appBarColor
+                                  : colorTheme.backgroundColor,
                             ),
-                          )
-                        : const ChatInputMic(),
-                  ],
-                ),
+                            child: recordingState == RecordingState.notRecording
+                                ? _buildChatField(
+                                    showEmojiPicker,
+                                    context,
+                                    hideElements,
+                                    colorTheme,
+                                  )
+                                : const VoiceRecorderField(),
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 4.0,
+                        ),
+                        hideElements
+                            ? InkWell(
+                                onTap: () async {
+                                  HapticFeedback.lightImpact();
+                                  ref
+                                      .read(chatControllerProvider.notifier)
+                                      .onSendBtnPressed(
+                                        ref,
+                                        widget.self,
+                                        widget.other,
+                                      );
+                                },
+                                child: CircleAvatar(
+                                  radius: 24,
+                                  backgroundColor: colorTheme.greenColor,
+                                  child: const Icon(
+                                    Icons.send,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              )
+                            : const ChatInputMic(),
+                      ],
+                    ),
+                  ),
+                ],
               )
             : const VoiceRecorder(),
+      ),
+    );
+  }
+
+  Widget _buildReplyingBanner(
+    Message replyMsg,
+    ColorTheme colorTheme,
+    bool isDark,
+  ) {
+    final isSelf = replyMsg.senderId == widget.self.id;
+    final senderName = isSelf ? 'You' : widget.otherUserContactName;
+    String snippet = replyMsg.content.trim();
+    if (snippet.startsWith('💬 Replying to @')) {
+      final idx = snippet.indexOf('\n');
+      if (idx != -1) snippet = snippet.substring(idx + 1).trim();
+    }
+    if (snippet.isEmpty && replyMsg.attachment != null) {
+      snippet = replyMsg.attachment!.fileName.isNotEmpty
+          ? replyMsg.attachment!.fileName
+          : replyMsg.attachment!.type.name;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(left: 6.0, right: 6.0, bottom: 6.0),
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1F2C34) : const Color(0xFFEFEFEF),
+        borderRadius: BorderRadius.circular(12.0),
+        border: const Border(
+          left: BorderSide(
+            color: AppColors.primary,
+            width: 4.0,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.reply_rounded, size: 20, color: AppColors.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  senderName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  snippet,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close_rounded, size: 18),
+            splashRadius: 16,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: () {
+              ref.read(chatControllerProvider.notifier).clearReplyingMessage();
+            },
+          ),
+        ],
       ),
     );
   }

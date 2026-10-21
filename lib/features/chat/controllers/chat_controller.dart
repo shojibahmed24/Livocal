@@ -52,6 +52,7 @@ class ChatState {
     this.showScrollBtn = false,
     this.unreadCount = 0,
     this.showEmojiPicker = false,
+    this.replyingMessage,
     required this.recordingSamples,
     required this.soundRecorder,
     required this.messageController,
@@ -67,6 +68,7 @@ class ChatState {
   final int unreadCount;
   final List<RecordingDisposition> recordingSamples;
   final bool showEmojiPicker;
+  final Message? replyingMessage;
 
   void dispose() {
     fieldFocusNode.dispose();
@@ -81,6 +83,8 @@ class ChatState {
     int? unreadCount,
     bool? showEmojiPicker,
     List<RecordingDisposition>? recordingSamples,
+    Message? replyingMessage,
+    bool clearReplying = false,
   }) {
     return ChatState(
       hideElements: hideElements ?? this.hideElements,
@@ -92,6 +96,8 @@ class ChatState {
       fieldFocusNode: fieldFocusNode,
       soundRecorder: soundRecorder,
       recordingSamples: recordingSamples ?? this.recordingSamples,
+      replyingMessage:
+          clearReplying ? null : (replyingMessage ?? this.replyingMessage),
     );
   }
 }
@@ -108,6 +114,17 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
         );
 
   final AutoDisposeStateNotifierProviderRef ref;
+
+  void setReplyingMessage(Message? message) {
+    state = state.copyWith(replyingMessage: message);
+    if (message != null) {
+      state.fieldFocusNode.requestFocus();
+    }
+  }
+
+  void clearReplyingMessage() {
+    state = state.copyWith(clearReplying: true);
+  }
   User? _self;
   User? _other;
   String? _otherUserContactName;
@@ -355,10 +372,36 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
   }
 
   void onSendBtnPressed(WidgetRef ref, User sender, User receiver) async {
+    String textContent = state.messageController.text.trim();
+    if (textContent.isEmpty) return;
+
+    if (state.replyingMessage != null) {
+      final replyMsg = state.replyingMessage!;
+      final isSelf = replyMsg.senderId == sender.id;
+      final senderLabel = isSelf ? 'You' : (_other?.name ?? 'Contact');
+      String snippet = replyMsg.content.trim();
+      if (snippet.startsWith('💬 Replying to @')) {
+        final newlineIdx = snippet.indexOf('\n');
+        if (newlineIdx != -1) {
+          snippet = snippet.substring(newlineIdx + 1).trim();
+        }
+      }
+      if (snippet.isEmpty && replyMsg.attachment != null) {
+        snippet = replyMsg.attachment!.fileName.isNotEmpty
+            ? replyMsg.attachment!.fileName
+            : replyMsg.attachment!.type.name;
+      }
+      if (snippet.length > 60) {
+        snippet = '${snippet.substring(0, 57)}...';
+      }
+      textContent = '💬 Replying to @$senderLabel: "$snippet"\n$textContent';
+      clearReplyingMessage();
+    }
+
     sendMessageNoAttachments(
       Message(
         id: const Uuid().v4(),
-        content: state.messageController.text.trim(),
+        content: textContent,
         status: MessageStatus.pending,
         senderId: sender.id,
         receiverId: receiver.id,

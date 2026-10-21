@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:livocal/features/calls/views/widgets/different_language_call_sheet.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -947,13 +948,43 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
   }
 
   void _showReportConfirmation(BuildContext context) {
+    bool alsoBlock = true;
+
     showAppDialog(
       context: context,
       title: 'Report ${widget.contactName}?',
-      contentText:
-          'The last 5 messages from this contact will be forwarded to Livocal. The contact will not be notified.',
       icon: Icons.report_problem_outlined,
       iconColor: Colors.redAccent,
+      content: StatefulBuilder(
+        builder: (context, setDialogState) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'The last 5 messages from this contact will be forwarded to Livocal for security review. The contact will not be notified.',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 12),
+              CheckboxListTile(
+                value: alsoBlock,
+                contentPadding: EdgeInsets.zero,
+                activeColor: AppColors.primary,
+                title: const Text(
+                  'Block contact and clear messages',
+                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500),
+                ),
+                controlAffinity: ListTileControlAffinity.leading,
+                onChanged: (val) {
+                  setDialogState(() {
+                    alsoBlock = val ?? false;
+                  });
+                },
+              ),
+            ],
+          );
+        },
+      ),
       actions: [
         AppDialogAction(
           label: 'CANCEL',
@@ -962,13 +993,71 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
         AppDialogAction(
           label: 'REPORT',
           isDestructive: true,
-          onPressed: () {
+          onPressed: () async {
             Navigator.pop(context);
-            showSnackBar(
-              context: context,
-              content: 'Report submitted. Thank you for your feedback.',
-              type: SnacBarType.info,
-            );
+
+            try {
+              final chatId = getChatId(widget.self.id, widget.other.id);
+              final recent = await IsarDb.isar.storedMessages
+                  .filter()
+                  .chatIdEqualTo(chatId)
+                  .sortByTimestampDesc()
+                  .limit(5)
+                  .findAll();
+
+              final messageList = recent
+                  .map((m) => {
+                        'messageId': m.messageId,
+                        'senderId': m.senderId,
+                        'content': m.content,
+                        'timestamp': m.timestamp.toIso8601String(),
+                      })
+                  .toList();
+
+              await FirebaseFirestore.instance.collection('reports').add({
+                'reportedUserId': widget.other.id,
+                'reportedUserName': widget.contactName,
+                'reportedUserPhone': widget.other.phone.getFormattedNumber(),
+                'reporterId': widget.self.id,
+                'reporterPhone': widget.self.phone.getFormattedNumber(),
+                'recentMessages': messageList,
+                'timestamp': FieldValue.serverTimestamp(),
+                'alsoBlocked': alsoBlock,
+                'status': 'pending_review',
+              });
+
+              if (alsoBlock) {
+                await BlockService.blockContact(
+                  contactId: widget.other.id,
+                  contactName: widget.contactName,
+                  phone: widget.other.phone.getFormattedNumber(),
+                  avatarUrl: widget.other.avatarUrl,
+                );
+                await IsarDb.deleteChat(chatId);
+                if (mounted) {
+                  setState(() => _isBlocked = true);
+                }
+              }
+
+              if (mounted) {
+                showSnackBar(
+                  context: this.context,
+                  content: alsoBlock
+                      ? 'Report submitted and ${widget.contactName} blocked.'
+                      : 'Report submitted. Thank you for your feedback.',
+                  type: SnacBarType.info,
+                );
+              }
+            } catch (e) {
+              debugPrint('[ContactProfileScreen] Report error: $e');
+              if (mounted) {
+                showSnackBar(
+                  context: this.context,
+                  content: 'Report submitted. Thank you for your feedback.',
+                  type: SnacBarType.info,
+                );
+              }
+            }
           },
         ),
       ],

@@ -629,6 +629,19 @@ class IsarDb {
     }
   }
 
+  static Future<void> clearAllMessages() async {
+    try {
+      final isarInstance = _instance ?? Isar.getInstance();
+      if (isarInstance != null) {
+        await isarInstance.writeTxn(() async {
+          await isarInstance.storedMessages.clear();
+        });
+      }
+    } catch (e) {
+      debugPrint('IsarDb clearAllMessages error: $e');
+    }
+  }
+
   static Future<List<StoredMessage>> getStarredMessagesByIds(List<String> messageIds) async {
     try {
       final isarInstance = _instance ?? Isar.getInstance();
