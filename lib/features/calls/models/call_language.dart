@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 class CallLanguage {
   final String code;
   final String bcp47;
@@ -768,10 +769,43 @@ class CallLanguageRegistry {
     return cleanA == cleanB;
   }
 
-  /// Infers default spoken language from a phone number's country code.
-  /// Eliminates the 'bn' default trap for international users who haven't explicitly set their language.
-  static String inferLanguageFromPhone(dynamic phone) {
-    if (phone == null) return 'en';
+  /// Returns true if the language code or its base language family is registered.
+  static bool isSupportedLanguage(String? code) {
+    if (code == null || code.trim().isEmpty) return false;
+    final normalized = code.trim().toLowerCase();
+    final base = normalized.split('-').first.split('_').first;
+    return allLanguages.any((l) =>
+        l.code.toLowerCase() == normalized ||
+        l.bcp47.toLowerCase() == normalized ||
+        l.code.toLowerCase().split('-').first == base);
+  }
+
+  /// Safely resolves the host device's primary system language code.
+  static String getDeviceLocaleCode() {
+    try {
+      final loc = ui.PlatformDispatcher.instance.locale;
+      final lang = loc.languageCode.toLowerCase().trim();
+      if (lang == 'en') {
+        if (loc.countryCode?.toUpperCase() == 'GB') return 'en-GB';
+        return 'en';
+      }
+      if (lang.isNotEmpty && isSupportedLanguage(lang)) {
+        return lang;
+      }
+      return lang.isNotEmpty ? lang : 'en';
+    } catch (_) {
+      return 'en';
+    }
+  }
+
+  /// Infers default spoken language from a phone number's country code and device system locale.
+  /// Eliminates the 'bn' default trap for international users and English speakers in BD.
+  static String inferLanguageFromPhone(dynamic phone, {String? deviceLocale}) {
+    if (deviceLocale != null && deviceLocale.isNotEmpty && isSupportedLanguage(deviceLocale)) {
+      return deviceLocale;
+    }
+
+    if (phone == null) return getDeviceLocaleCode();
     String raw = '';
     String code = '';
     if (phone is String) {
@@ -785,9 +819,16 @@ class CallLanguageRegistry {
 
     final digits = raw.replaceAll(RegExp(r'[\s\-\(\)\+]'), '');
     if (code == '880' || digits.startsWith('880') || (digits.startsWith('01') && digits.length == 11)) {
+      // For BD numbers: if local device locale is English, respect English!
+      final sys = getDeviceLocaleCode();
+      if (sys.startsWith('en')) {
+        return 'en';
+      }
       return 'bn';
     }
     if (code == '91' || digits.startsWith('91')) {
+      final sys = getDeviceLocaleCode();
+      if (sys.startsWith('en')) return 'en';
       return 'hi';
     }
     if (code == '1' || (digits.startsWith('1') && digits.length == 11)) {
@@ -808,6 +849,6 @@ class CallLanguageRegistry {
     if (code == '49' || digits.startsWith('49')) {
       return 'de';
     }
-    return 'en';
+    return getDeviceLocaleCode();
   }
 }

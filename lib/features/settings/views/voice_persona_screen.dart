@@ -295,7 +295,15 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
       _currentlyPlayingId = null;
       _isLoadingAudio = false;
     });
-    await CallRepository.setMyLanguageCode(langCode);
+    final synced = await CallRepository.setMyLanguageCode(langCode, isExplicit: true);
+    if (!synced && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Language preference saved locally; cloud sync offline.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   Future<void> _previewVoice(VoicePersonaItem persona) async {

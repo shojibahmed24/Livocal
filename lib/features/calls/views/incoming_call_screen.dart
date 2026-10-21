@@ -227,9 +227,17 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
                             selectedCode: myLang.code,
                           );
                           if (picked != null && mounted) {
-                            await ref
+                            final synced = await ref
                                 .read(callControllerProvider.notifier)
                                 .setMyLanguage(picked.code);
+                            if (!synced && context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Language applied locally (cloud sync offline).'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            }
                           }
                         },
                         child: Column(

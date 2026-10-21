@@ -50,10 +50,12 @@ class User {
   factory User.fromMap(Map<String, dynamic> userData) {
     final explicitLang = (userData['spokenLanguage'] as String?)?.trim();
     final phone = Phone.fromMap(userData['phone']);
-    final hasExplicit = explicitLang != null && explicitLang.isNotEmpty;
-    final resolvedLang = hasExplicit
+    final hasExplicit = userData['hasExplicitSpokenLanguage'] == true;
+    final resolvedLang = (hasExplicit && explicitLang != null && explicitLang.isNotEmpty)
         ? explicitLang
-        : CallLanguageRegistry.inferLanguageFromPhone(phone);
+        : (explicitLang != null && explicitLang.isNotEmpty && userData['hasExplicitSpokenLanguage'] != false
+            ? explicitLang
+            : CallLanguageRegistry.inferLanguageFromPhone(phone));
 
     return User(
       id: userData['id'],
@@ -74,6 +76,7 @@ class User {
       'phone': phone.toMap(),
       'activityStatus': activityStatus.value,
       'spokenLanguage': spokenLanguage,
+      'hasExplicitSpokenLanguage': hasExplicitSpokenLanguage,
     };
   }
 

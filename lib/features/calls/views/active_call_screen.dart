@@ -615,7 +615,15 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                                 selectedCode: myLang.code,
                               );
                               if (picked != null) {
-                                await controller.setMyLanguage(picked.code);
+                                final synced = await controller.setMyLanguage(picked.code);
+                                if (!synced && context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Language applied locally (cloud sync offline).'),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
                               }
                             },
                             child: Container(

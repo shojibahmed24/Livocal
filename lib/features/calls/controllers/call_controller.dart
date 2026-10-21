@@ -265,9 +265,12 @@ class CallController extends StateNotifier<CallControllerState> {
     );
   }
 
-  Future<void> setMyLanguage(String langCode) async {
-    await CallRepository.setMyLanguageCode(langCode);
+  Future<bool> setMyLanguage(String langCode, {bool isExplicit = true}) async {
+    final synced = await CallRepository.setMyLanguageCode(langCode, isExplicit: isExplicit);
     state = state.copyWith(myLangCode: langCode);
+    if (!synced) {
+      debugPrint('[CallController] Language synced locally; cloud sync offline.');
+    }
     if (state.activeSession != null &&
         state.activeSession!.status == CallStateStatus.connected) {
       await _applyLanguagePairUpdate(
@@ -275,6 +278,7 @@ class CallController extends StateNotifier<CallControllerState> {
         newPeerLang: state.peerLangCode,
       );
     }
+    return synced;
   }
 
   Future<void> setPeerLanguage(String langCode) async {

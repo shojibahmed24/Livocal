@@ -31,6 +31,7 @@ class PeerTranslationSettings {
 
 class CallRepository {
   static const String prefMyLang = 'call_my_preferred_lang_code';
+  static const String prefHasExplicitLang = 'call_has_explicit_lang_code';
   static const String prefPeerLang = 'call_peer_preferred_lang_code';
   static const String prefCallHistory = 'call_history_records_v1';
 
@@ -38,16 +39,27 @@ class CallRepository {
 
   CallRepository({this.firestore});
 
-  static String getMyLanguageCode() =>
-      SharedPref.instance.getString(prefMyLang) ?? 'bn';
+  static bool hasExplicitLanguage() =>
+      SharedPref.instance.getBool(prefHasExplicitLang) ?? false;
 
-  static Future<bool> setMyLanguageCode(String code) async {
+  static String getMyLanguageCode() {
+    final saved = SharedPref.instance.getString(prefMyLang);
+    if (saved != null && saved.isNotEmpty) {
+      return saved;
+    }
+    // Dynamic system locale resolution instead of hardcoded 'bn' trap
+    return CallLanguageRegistry.getDeviceLocaleCode();
+  }
+
+  static Future<bool> setMyLanguageCode(String code, {bool isExplicit = true}) async {
     await SharedPref.instance.setString(prefMyLang, code);
+    await SharedPref.instance.setBool(prefHasExplicitLang, isExplicit);
     try {
       final currentUid = fb.FirebaseAuth.instance.currentUser?.uid;
       if (currentUid != null && currentUid.isNotEmpty) {
         await FirebaseFirestore.instance.collection('users').doc(currentUid).set({
           'spokenLanguage': code,
+          'hasExplicitSpokenLanguage': isExplicit,
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true)).timeout(const Duration(seconds: 4));
         return true;

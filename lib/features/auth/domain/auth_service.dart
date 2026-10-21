@@ -74,6 +74,7 @@ class AuthController {
       }
     }
 
+    final isExplicit = CallRepository.hasExplicitLanguage();
     final user = User(
       id: uid,
       name: username,
@@ -81,6 +82,7 @@ class AuthController {
       phone: phone,
       activityStatus: UserActivityStatus.online,
       spokenLanguage: CallRepository.getMyLanguageCode(),
+      hasExplicitSpokenLanguage: isExplicit,
     );
 
     try {

@@ -363,8 +363,16 @@ class _UserProfileCreationPageState
                         selectedCode: currentCode,
                       );
                       if (picked != null) {
-                        await CallRepository.setMyLanguageCode(picked.code);
-                        setState(() {});
+                        final synced = await CallRepository.setMyLanguageCode(picked.code, isExplicit: true);
+                        if (!synced && context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Language preference saved locally (cloud sync offline).'),
+                              duration: Duration(seconds: 3),
+                            ),
+                          );
+                        }
+                        if (mounted) setState(() {});
                       }
                     },
                     child: Container(
