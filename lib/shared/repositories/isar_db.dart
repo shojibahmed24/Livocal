@@ -120,8 +120,10 @@ class IsarDb {
   }
 
   static Future<void> addMessages(List<Message> messages) async {
+    final allowedMessages = messages.where((m) => !BlockService.isBlocked(m.senderId)).toList();
+    if (allowedMessages.isEmpty) return;
     await isar.writeTxn(() async {
-      for (final message in messages) {
+      for (final message in allowedMessages) {
         final existing = await isar.storedMessages
             .filter()
             .messageIdEqualTo(message.id)

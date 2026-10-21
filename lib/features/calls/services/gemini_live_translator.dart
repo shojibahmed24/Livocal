@@ -412,7 +412,7 @@ CRITICAL OPERATING RULES:
             'speechConfig': {
               'voiceConfig': {
                 'prebuiltVoiceConfig': {
-                  'voiceName': voiceName,
+                  'voiceName': (voiceName == 'Sularis' ? 'Autonoe' : (voiceName == 'Perseus' ? 'Umbriel' : voiceName)),
                 },
               },
             },
