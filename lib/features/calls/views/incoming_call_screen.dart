@@ -34,7 +34,8 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
     )..repeat(reverse: true);
     // IMPORTANT: Do NOT call endAllCalls() here — it can kill the active call session.
     // Only stop any existing native CallKit UI sound and start our in-app ringtone.
-    RingtoneManager().startIncomingRingtone();
+    final callerId = ref.read(callControllerProvider).activeSession?.callerId;
+    RingtoneManager().startIncomingRingtone(contactId: callerId);
   }
 
   @override

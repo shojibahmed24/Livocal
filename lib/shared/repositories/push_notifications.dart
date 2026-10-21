@@ -49,7 +49,9 @@ class PushNotificationsRepo {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       debugPrint('[PushNotificationsRepo] Foreground notification received: ${message.data}');
       if (message.data['type'] != 'INCOMING_CALL') {
-        RingtoneManager().playMessageNotificationTone();
+        final contactId = message.data['authorId'] as String? ??
+            message.data['senderId'] as String?;
+        RingtoneManager().playMessageNotificationTone(contactId: contactId);
       }
     });
     instance.onTokenRefresh.listen((token) => handleTokenRefresh(token, ref));
@@ -121,10 +123,12 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     final callId = data['callId'] ?? '';
     final callerName = data['callerName'] ?? 'Incoming Call';
     final callerPhone = data['callerNumber'] ?? data['callerPhone'] ?? '';
+    final callerAvatar = data['callerAvatar'] as String?;
     await CallKitService().showIncomingCall(
       callId: callId,
       callerName: callerName,
       callerPhone: callerPhone,
+      callerAvatar: callerAvatar,
     );
     return;
   }

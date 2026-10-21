@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -104,9 +104,11 @@ class _HomePageState extends ConsumerState<HomePage>
     messageListener = firestore.getChatStream(widget.user.id).listen(
       (messages) async {
         bool hasIncoming = false;
+        String? lastIncomingSenderId;
         for (final message in messages) {
           if (message.senderId != widget.user.id) {
             hasIncoming = true;
+            lastIncomingSenderId = message.senderId;
           }
           message.status = MessageStatus.delivered;
           firestore.sendSystemMessage(
@@ -140,7 +142,7 @@ class _HomePageState extends ConsumerState<HomePage>
 
         // Only play message notification tone for new messages arriving after app launch
         if (hasIncoming && !isInitialEmission) {
-          RingtoneManager().playMessageNotificationTone();
+          RingtoneManager().playMessageNotificationTone(contactId: lastIncomingSenderId);
         }
 
         IsarDb.addMessages(messages);

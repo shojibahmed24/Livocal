@@ -5,11 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'package:livocal/features/calls/views/outgoing_call_screen.dart';
+import 'package:livocal/features/chat/views/chat.dart';
 import 'package:livocal/features/chat/views/chat_media_viewer_screen.dart';
+import 'package:livocal/features/chat/views/custom_notifications_screen.dart';
 import 'package:livocal/shared/models/messages.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:flutter_contacts/flutter_contacts.dart' as fc;
@@ -40,6 +43,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
   @override
   void initState() {
     super.initState();
+    _isMuted = SharedPref.instance.getBool('contact_muted_${widget.other.id}') ?? false;
     _loadMediaStats();
   }
 
@@ -337,7 +341,17 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                         children: [
                           IconButton(
                             icon: const Icon(Icons.message, color: AppColors.primary),
-                            onPressed: () => Navigator.pop(context),
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => ChatPage(
+                                    self: widget.self,
+                                    other: widget.other,
+                                    otherUserContactName: widget.contactName,
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                           IconButton(
                             icon: const Icon(Icons.call, color: AppColors.primary),
@@ -414,11 +428,12 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                       setState(() {
                         _isMuted = val;
                       });
+                      SharedPref.instance.setBool('contact_muted_${widget.other.id}', val);
                       showSnackBar(
                         context: context,
                         content: val
                             ? 'Notifications muted for ${widget.contactName}'
-                            : 'Notifications unmuted',
+                            : 'Notifications unmuted for ${widget.contactName}',
                         type: SnacBarType.info,
                       );
                     },
@@ -427,13 +442,24 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                   ListTile(
                     leading: const Icon(Icons.music_note_outlined, color: Color(0xFF8696A0)),
                     title: const Text('Custom notifications'),
+                    subtitle: Text(
+                      (SharedPref.instance.getBool('custom_notif_enabled_${widget.other.id}') ?? false)
+                          ? 'Enabled'
+                          : 'Default system tone and vibration',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
                     trailing: const Icon(Icons.chevron_right, color: Colors.grey),
                     onTap: () {
-                      showSnackBar(
-                        context: context,
-                        content: 'Using default system ringtone and vibration',
-                        type: SnacBarType.info,
-                      );
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => CustomNotificationsScreen(
+                            contact: widget.other,
+                            contactName: widget.contactName,
+                          ),
+                        ),
+                      ).then((_) {
+                        if (mounted) setState(() {});
+                      });
                     },
                   ),
                   const Divider(height: 1, indent: 56),

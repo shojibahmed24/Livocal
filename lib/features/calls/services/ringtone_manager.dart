@@ -42,16 +42,35 @@ class RingtoneManager {
   ];
 
   /// Starts continuous ringing for incoming calls based on user preferences.
-  Future<void> startIncomingRingtone() async {
+  Future<void> startIncomingRingtone({String? contactId}) async {
     if (_isRinging) return;
+
+    if (contactId != null && contactId.isNotEmpty) {
+      final isMuted =
+          SharedPref.instance.getBool('contact_muted_$contactId') ?? false;
+      if (isMuted) {
+        debugPrint(
+            '[RingtoneManager] Contact $contactId is muted. Suppressing incoming ringtone.');
+        return;
+      }
+    }
+
     _isRinging = true;
 
     try {
-      final ringtoneName =
-          SharedPref.instance.getString('notif_call_ringtone') ??
-              'Livocal Harmony (Default)';
-      final customPath =
-          SharedPref.instance.getString('notif_custom_ringtone_path');
+      final customEnabled = contactId != null &&
+          (SharedPref.instance.getBool('custom_notif_enabled_$contactId') ??
+              false);
+      final ringtoneName = customEnabled
+          ? (SharedPref.instance.getString('contact_call_ringtone_$contactId') ??
+              SharedPref.instance.getString('notif_call_ringtone') ??
+              'Livocal Harmony (Default)')
+          : (SharedPref.instance.getString('notif_call_ringtone') ??
+              'Livocal Harmony (Default)');
+      final customPath = customEnabled
+          ? SharedPref.instance
+              .getString('contact_custom_ringtone_path_$contactId')
+          : SharedPref.instance.getString('notif_custom_ringtone_path');
 
       final player = _effectiveRingtonePlayer;
       await player.setReleaseMode(ReleaseMode.loop);
@@ -81,17 +100,35 @@ class RingtoneManager {
   }
 
   /// Plays a single notification tone for incoming messages.
-  Future<void> playMessageNotificationTone() async {
+  Future<void> playMessageNotificationTone({String? contactId}) async {
+    if (contactId != null && contactId.isNotEmpty) {
+      final isMuted =
+          SharedPref.instance.getBool('contact_muted_$contactId') ?? false;
+      if (isMuted) {
+        debugPrint(
+            '[RingtoneManager] Contact $contactId is muted. Suppressing message tone.');
+        return;
+      }
+    }
+
     final allowTones =
         SharedPref.instance.getBool('notif_conv_tones') ?? true;
     if (!allowTones) return;
 
     try {
-      final toneName =
-          SharedPref.instance.getString('notif_msg_tone') ??
-              'Livocal Chime (Default)';
-      final customPath =
-          SharedPref.instance.getString('notif_custom_msg_tone_path');
+      final customEnabled = contactId != null &&
+          (SharedPref.instance.getBool('custom_notif_enabled_$contactId') ??
+              false);
+      final toneName = customEnabled
+          ? (SharedPref.instance.getString('contact_tone_$contactId') ??
+              SharedPref.instance.getString('notif_msg_tone') ??
+              'Livocal Chime (Default)')
+          : (SharedPref.instance.getString('notif_msg_tone') ??
+              'Livocal Chime (Default)');
+      final customPath = customEnabled
+          ? SharedPref.instance
+              .getString('contact_custom_msg_tone_path_$contactId')
+          : SharedPref.instance.getString('notif_custom_msg_tone_path');
 
       final player = _effectivePreviewPlayer;
       await player.stop();

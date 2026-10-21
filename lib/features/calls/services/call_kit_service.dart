@@ -69,7 +69,9 @@ class CallKitService {
       id: callId,
       nameCaller: callerName,
       appName: 'Livocal',
-      avatar: callerAvatar ?? 'https://i.pravatar.cc/150?u=$callId',
+      avatar: (callerAvatar != null && callerAvatar.isNotEmpty)
+          ? callerAvatar
+          : '',
       handle: callerPhone,
       type: 0, // 0: Audio Call, 1: Video Call
       duration: 30000,
