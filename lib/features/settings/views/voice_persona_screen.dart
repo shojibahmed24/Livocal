@@ -469,7 +469,8 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
     required Color subtitleColor,
   }) {
     final isSelected =
-        _selectedVoice.toLowerCase() == persona.id.toLowerCase();
+        GeminiLiveTranslator.normalizeVoiceName(_selectedVoice).toLowerCase() ==
+        GeminiLiveTranslator.normalizeVoiceName(persona.id).toLowerCase();
     final isPlaying = _currentlyPlayingId == persona.id;
 
     return AnimatedContainer(

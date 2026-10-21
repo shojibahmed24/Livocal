@@ -122,11 +122,32 @@ class GeminiLiveTranslator {
     await SharedPref.instance.setString(prefModelId, normalized);
   }
 
-  static String getSavedVoiceName() =>
-      SharedPref.instance.getString(prefVoiceName)?.trim() ?? 'Aoede';
+  /// Normalizes legacy voice names (e.g. Sularis, Perseus) or casing to authoritative Gemini voices.
+  static String normalizeVoiceName(String? raw) {
+    if (raw == null) return 'Aoede';
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return 'Aoede';
+    if (trimmed.toLowerCase() == 'sularis') return 'Autonoe';
+    if (trimmed.toLowerCase() == 'perseus') return 'Umbriel';
+    for (final v in availableVoices) {
+      if (v.toLowerCase() == trimmed.toLowerCase()) return v;
+    }
+    return trimmed;
+  }
 
-  static Future<void> saveVoiceName(String voice) async =>
-      await SharedPref.instance.setString(prefVoiceName, voice.trim());
+  static String getSavedVoiceName() {
+    final raw = SharedPref.instance.getString(prefVoiceName);
+    final normalized = normalizeVoiceName(raw);
+    if (raw != null && raw != normalized) {
+      SharedPref.instance.setString(prefVoiceName, normalized);
+    }
+    return normalized;
+  }
+
+  static Future<void> saveVoiceName(String voice) async {
+    final canonical = normalizeVoiceName(voice);
+    await SharedPref.instance.setString(prefVoiceName, canonical);
+  }
 
   WebSocket? _ws;
   StreamSubscription? _wsSubscription;

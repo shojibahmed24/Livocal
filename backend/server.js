@@ -67,6 +67,16 @@ const ALLOWED_VOICES = new Set([
   'Perseus',
 ]);
 
+// Whitelist of allowed Gemini multimodal models for voice preview synthesis
+const ALLOWED_PREVIEW_MODELS = new Set([
+  'gemini-2.0-flash',
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-native-audio-preview',
+  'gemini-2.0-flash-exp',
+  'gemini-3.5-live-translate-preview',
+  DEFAULT_MODEL.replace(/^models\//, ''),
+]);
+
 function sanitizeBoundedNote(val, maxLen = 500) {
   if (val === undefined || val === null) return '';
   return String(val).trim().slice(0, maxLen);
@@ -3070,11 +3080,14 @@ app.post(
     }
 
     try {
-      // Prioritize client's active call model or server's configured DEFAULT_MODEL for true live fidelity
+      // Whitelist verification: strictly restrict requestedModel to authorized Gemini audio models
       const rawModel = (typeof requestedModel === 'string' && requestedModel.trim().length > 0)
-        ? requestedModel.trim()
-        : DEFAULT_MODEL;
-      const targetModel = rawModel.replace(/^models\//, '');
+        ? requestedModel.trim().replace(/^models\//, '')
+        : DEFAULT_MODEL.replace(/^models\//, '');
+      
+      const targetModel = ALLOWED_PREVIEW_MODELS.has(rawModel)
+        ? rawModel
+        : DEFAULT_MODEL.replace(/^models\//, '');
 
       // Try target live model first; fallback to standard multimodal audio model if live preview is WebSocket-only
       const candidateModels = [targetModel];
@@ -3084,6 +3097,7 @@ app.post(
 
       let response = null;
       let lastStatus = 500;
+      let successfulModel = null;
 
       for (const m of candidateModels) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${GEMINI_API_KEY}`;
@@ -3112,6 +3126,7 @@ app.post(
 
           if (res.ok) {
             response = res;
+            successfulModel = m;
             break;
           } else {
             lastStatus = res.status;
@@ -3130,7 +3145,19 @@ app.post(
       const parts = json.candidates?.[0]?.content?.parts || [];
       const inlineData = parts.find(p => p.inlineData)?.inlineData;
       if (inlineData?.data) {
-        return res.json({ audioBase64: inlineData.data });
+        const fallbackUsed = Boolean(successfulModel && successfulModel !== targetModel);
+        if (fallbackUsed) {
+          console.warn(`[VoicePreview] Live fidelity notice: requested '${targetModel}' was unavailable for REST synthesis; transparently fulfilled by candidate '${successfulModel}'.`);
+        }
+        res.setHeader('X-Voice-Model-Used', successfulModel);
+        res.setHeader('X-Voice-Fallback-Used', String(fallbackUsed));
+        return res.json({
+          audioBase64: inlineData.data,
+          voice: validVoice,
+          modelUsed: successfulModel,
+          requestedModel: targetModel,
+          fallbackUsed: fallbackUsed,
+        });
       }
       return res.status(500).json({ error: 'No audio returned' });
     } catch (err) {
