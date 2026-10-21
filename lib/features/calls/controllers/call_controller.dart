@@ -1180,6 +1180,11 @@ class CallController extends StateNotifier<CallControllerState> {
         state = state.copyWith(transcripts: [...state.transcripts, warningBubble]);
       }
       if (bEvent.isExhausted) {
+        if (state.isTranslationExhausted) {
+          debugPrint('[CallController] Suppressing duplicate minutes exhausted notification bubble.');
+          return;
+        }
+
         final isCallee = state.activeSession?.isIncoming ?? false;
         final originalNotice = isCallee
             ? "Caller's translation minutes exhausted. Switched to direct voice call."

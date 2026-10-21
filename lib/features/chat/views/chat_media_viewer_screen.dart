@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:isar/isar.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:video_player/video_player.dart';
 import 'package:livocal/features/chat/models/attachement.dart';
 import 'package:livocal/shared/models/messages.dart';
 import 'package:livocal/shared/repositories/download_service.dart';
@@ -464,8 +465,8 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
   }
 }
 
-/// Full-screen high-performance media viewer with Hero transition and InteractiveViewer
-class _FullScreenMediaViewer extends StatelessWidget {
+/// Full-screen high-performance media viewer supporting both images and playable videos
+class _FullScreenMediaViewer extends StatefulWidget {
   final StoredMessage msg;
   final String contactName;
   final String heroTag;
@@ -477,11 +478,93 @@ class _FullScreenMediaViewer extends StatelessWidget {
   });
 
   @override
+  State<_FullScreenMediaViewer> createState() => _FullScreenMediaViewerState();
+}
+
+class _FullScreenMediaViewerState extends State<_FullScreenMediaViewer> {
+  VideoPlayerController? _videoController;
+  bool _isVideo = false;
+  bool _isPlaying = false;
+  bool _showControls = true;
+  bool _isInit = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final isVideoType = widget.msg.attachment?.type == AttachmentType.video ||
+        (widget.msg.attachment?.fileName != null &&
+            (widget.msg.attachment!.fileName!.endsWith('.mp4') ||
+                widget.msg.attachment!.fileName!.endsWith('.mov') ||
+                widget.msg.attachment!.fileName!.endsWith('.mkv')));
+
+    if (isVideoType) {
+      _isVideo = true;
+      _initVideoPlayer();
+    }
+  }
+
+  Future<void> _initVideoPlayer() async {
+    final fileUrl = widget.msg.attachment?.url ?? '';
+    final fileName = widget.msg.attachment?.fileName ?? '';
+    final localPath = fileName.isNotEmpty ? DeviceStorage.getMediaFilePath(fileName) : fileUrl;
+    final file = File(localPath);
+
+    if (file.existsSync()) {
+      _videoController = VideoPlayerController.file(file);
+    } else if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
+      _videoController = VideoPlayerController.networkUrl(Uri.parse(fileUrl));
+    }
+
+    if (_videoController != null) {
+      try {
+        await _videoController!.initialize();
+        _videoController!.addListener(() {
+          if (mounted) {
+            final playing = _videoController!.value.isPlaying;
+            if (playing != _isPlaying) {
+              setState(() => _isPlaying = playing);
+            }
+          }
+        });
+        if (mounted) {
+          setState(() {
+            _isInit = true;
+            _videoController!.play();
+            _isPlaying = true;
+          });
+        }
+      } catch (e) {
+        debugPrint('[FullScreenMediaViewer] Video init error: $e');
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _videoController?.dispose();
+    super.dispose();
+  }
+
+  void _togglePlayPause() {
+    if (_videoController == null || !_isInit) return;
+    if (_videoController!.value.isPlaying) {
+      _videoController!.pause();
+    } else {
+      _videoController!.play();
+    }
+    setState(() {
+      _showControls = true;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final fileUrl = msg.attachment?.url ?? '';
-    final isLocal = fileUrl.startsWith('/') || !fileUrl.startsWith('http');
-    final file = File(fileUrl);
-    final dateStr = DateFormat('MMM d, yyyy • h:mm a').format(msg.timestamp);
+    final fileUrl = widget.msg.attachment?.url ?? '';
+    final fileName = widget.msg.attachment?.fileName ?? '';
+    final localPath = fileName.isNotEmpty ? DeviceStorage.getMediaFilePath(fileName) : fileUrl;
+    final file = File(localPath);
+    final isLocal = file.existsSync();
+    final dateStr = DateFormat('MMM d, yyyy • h:mm a').format(widget.msg.timestamp);
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -493,7 +576,7 @@ class _FullScreenMediaViewer extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              contactName,
+              widget.contactName,
               style: const TextStyle(color: Colors.white, fontSize: 16),
             ),
             Text(
@@ -504,24 +587,58 @@ class _FullScreenMediaViewer extends StatelessWidget {
         ),
       ),
       body: Center(
-        child: Hero(
-          tag: heroTag,
-          child: InteractiveViewer(
-            minScale: 0.8,
-            maxScale: 4.0,
-            child: isLocal && file.existsSync()
-                ? Image.file(file)
-                : CachedNetworkImage(
-                    imageUrl: fileUrl,
-                    placeholder: (_, __) => const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
+        child: _isVideo
+            ? (_videoController != null && _isInit
+                ? GestureDetector(
+                    onTap: () => setState(() => _showControls = !_showControls),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        AspectRatio(
+                          aspectRatio: _videoController!.value.aspectRatio,
+                          child: VideoPlayer(_videoController!),
+                        ),
+                        if (_showControls)
+                          AnimatedOpacity(
+                            opacity: _showControls ? 1.0 : 0.0,
+                            duration: const Duration(milliseconds: 200),
+                            child: CircleAvatar(
+                              radius: 32,
+                              backgroundColor: Colors.black54,
+                              child: IconButton(
+                                iconSize: 36,
+                                icon: Icon(
+                                  _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                                  color: Colors.white,
+                                ),
+                                onPressed: _togglePlayPause,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                    errorWidget: (_, __, ___) => const Center(
-                      child: Icon(Icons.broken_image, size: 64, color: Colors.white54),
-                    ),
-                  ),
-          ),
-        ),
+                  )
+                : const Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  ))
+            : Hero(
+                tag: widget.heroTag,
+                child: InteractiveViewer(
+                  minScale: 0.8,
+                  maxScale: 4.0,
+                  child: isLocal
+                      ? Image.file(file)
+                      : CachedNetworkImage(
+                          imageUrl: fileUrl,
+                          placeholder: (_, __) => const Center(
+                            child: CircularProgressIndicator(color: Colors.white),
+                          ),
+                          errorWidget: (_, __, ___) => const Center(
+                            child: Icon(Icons.broken_image, size: 64, color: Colors.white54),
+                          ),
+                        ),
+                ),
+              ),
       ),
     );
   }
