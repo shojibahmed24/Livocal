@@ -884,7 +884,7 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
                   self: widget.self,
                   other: widget.other,
                   contactName: widget.otherUserContactName,
-                  onPaymentConfirmed: (amount, note, [method, txId, paymentRecordId]) {
+                  onPaymentConfirmed: (amount, note, [method, txId, paymentRecordId, clientMessageId]) {
                     final methodStr =
                         (method != null && method.isNotEmpty) ? ' via $method' : '';
                     final refStr =
@@ -893,10 +893,10 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
                         (paymentRecordId != null && paymentRecordId.isNotEmpty) ? ' [id:$paymentRecordId]' : '';
                     final noteStr = note.isNotEmpty ? '\nNote: $note' : '';
                     final paymentMsg =
-                        '💰 Payment sent: \$$amount$methodStr$refStr$idStr$noteStr';
+                        '💰 Payment sent: \$amount$methodStr$refStr$idStr$noteStr';
                     ref.read(chatControllerProvider.notifier).sendMessageNoAttachments(
                       Message(
-                        id: const Uuid().v4(),
+                        id: clientMessageId ?? const Uuid().v4(),
                         content: paymentMsg,
                         status: MessageStatus.pending,
                         senderId: widget.self.id,

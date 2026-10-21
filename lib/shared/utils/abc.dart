@@ -21,10 +21,11 @@ User? getCurrentUser() {
 }
 
 String getChatId(String senderId, String receiverId) {
-  final charList = (senderId + receiverId).split('');
-  charList.sort((a, b) => a.compareTo(b));
-
-  return charList.join();
+  if (senderId.compareTo(receiverId) <= 0) {
+    return '${senderId}_$receiverId';
+  } else {
+    return '${receiverId}_$senderId';
+  }
 }
 
 String strFormattedSize(num size) {

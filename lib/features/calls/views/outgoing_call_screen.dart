@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +11,7 @@ import 'package:livocal/features/calls/views/widgets/call_ended_summary_sheet.da
 import 'package:livocal/shared/utils/navigator_key.dart';
 import 'package:livocal/features/calls/views/widgets/call_scaffold.dart';
 import 'package:livocal/features/calls/views/widgets/insufficient_minutes_sheet.dart';
+import 'package:livocal/features/calls/views/widgets/minute_recharge_sheet.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/theme/app_colors.dart';
 
@@ -80,12 +81,7 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
           InsufficientMinutesSheet.show(
             context,
             onRechargePressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Recharge packs coming soon. Select Call Without Translation to call for free.'),
-                  backgroundColor: AppColors.primary,
-                ),
-              );
+              showMinuteRechargeSheet(context, user: widget.caller);
             },
             onCallWithoutTranslation: () {
               Navigator.of(context).push(

@@ -567,6 +567,12 @@ app.post(
         },
         android: {
           priority: 'high',
+          notification: {
+            channelId: 'livocal_messages',
+            priority: 'high',
+            defaultSound: true,
+            defaultVibrateTimings: true,
+          },
         },
       };
 
@@ -1451,7 +1457,7 @@ app.post('/api/wallet/p2p-transfer', authenticateRequest, async (req, res) => {
   if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
 
   const fromUserId = req.user?.uid;
-  const { toUserId, minutes, note, idempotencyKey } = req.body || {};
+  const { toUserId, minutes, note, idempotencyKey, messageId } = req.body || {};
 
   if (!fromUserId) {
     return res.status(401).json({ error: 'Unauthorized: missing sender UID' });
@@ -1566,6 +1572,8 @@ app.post('/api/wallet/p2p-transfer', authenticateRequest, async (req, res) => {
       tx.set(transferRef, {
         id: transferId,
         idempotencyKey: cleanIdempotencyKey || null,
+        messageId: (typeof messageId === 'string' && messageId.trim().length > 0) ? messageId.trim() : null,
+        boundMessageId: (typeof messageId === 'string' && messageId.trim().length > 0) ? messageId.trim() : null,
         type: 'minute_transfer',
         fromUserId,
         toUserId,

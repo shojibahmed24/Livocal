@@ -56,35 +56,6 @@ class _CallsTabState extends ConsumerState<CallsTab>
     return '${mins}m ${secs}s';
   }
 
-  void _startCallToPeer(
-    BuildContext context,
-    WidgetRef ref, {
-    required String peerId,
-    required String peerName,
-    required String peerAvatar,
-    required String peerPhone,
-  }) {
-    final callee = User(
-      id: peerId,
-      name: peerName,
-      avatarUrl: peerAvatar,
-      phone: Phone(
-        code: '+880',
-        number: peerPhone,
-        formattedNumber: peerPhone,
-      ),
-      activityStatus: UserActivityStatus.online,
-    );
-
-    initiateSmartCall(
-      context,
-      ref,
-      caller: widget.user,
-      callee: callee,
-      calleeDisplayName: peerName,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -92,8 +63,6 @@ class _CallsTabState extends ConsumerState<CallsTab>
     final customTheme = Theme.of(context).custom;
     final colorTheme = customTheme.colorTheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final myLang = callState.myLanguage;
-    final peerLang = callState.peerLanguage;
     final history = callState.callHistory;
 
     return ListView(

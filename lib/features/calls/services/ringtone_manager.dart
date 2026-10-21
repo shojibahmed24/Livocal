@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
 /// Centralized Ringtone and Notification Tone Manager for Livocal.
@@ -20,6 +22,25 @@ class RingtoneManager {
 
   bool _isRinging = false;
   bool get isRinging => _isRinging;
+  Timer? _callVibrateTimer;
+
+  void _triggerVibration(String mode) {
+    try {
+      if (mode == 'Off') return;
+      if (mode == 'Short') {
+        HapticFeedback.selectionClick();
+      } else if (mode == 'Long') {
+        HapticFeedback.heavyImpact();
+        Future.delayed(const Duration(milliseconds: 200), () {
+          HapticFeedback.vibrate();
+        });
+      } else {
+        HapticFeedback.vibrate();
+      }
+    } catch (e) {
+      debugPrint('[RingtoneManager] Vibration trigger error: $e');
+    }
+  }
 
   // Cached preset WAV bytes to avoid regenerating repeatedly
   final Map<String, Uint8List> _synthCache = {};
@@ -84,6 +105,25 @@ class RingtoneManager {
         final wavBytes = _getSynthBytes(ringtoneName, isCall: true);
         await player.play(BytesSource(wavBytes));
       }
+
+      // Respect Contact-Specific & Global Call Vibration settings
+      final vibrateMode = customEnabled
+          ? (SharedPref.instance.getString('contact_call_vibrate_$contactId') ??
+              SharedPref.instance.getString('notif_call_vibrate') ??
+              'Default')
+          : (SharedPref.instance.getString('notif_call_vibrate') ?? 'Default');
+
+      _callVibrateTimer?.cancel();
+      if (vibrateMode != 'Off') {
+        _triggerVibration(vibrateMode);
+        _callVibrateTimer = Timer.periodic(const Duration(milliseconds: 1500), (_) {
+          if (!_isRinging) {
+            _callVibrateTimer?.cancel();
+            return;
+          }
+          _triggerVibration(vibrateMode);
+        });
+      }
     } catch (e) {
       debugPrint('[RingtoneManager] Error starting ringtone: $e');
     }
@@ -92,6 +132,8 @@ class RingtoneManager {
   /// Stops incoming call ringing immediately.
   Future<void> stopRingtone() async {
     _isRinging = false;
+    _callVibrateTimer?.cancel();
+    _callVibrateTimer = null;
     try {
       await _ringtonePlayer?.stop();
     } catch (e) {
@@ -142,6 +184,17 @@ class RingtoneManager {
       } else {
         final wavBytes = _getSynthBytes(toneName, isCall: false);
         await player.play(BytesSource(wavBytes));
+      }
+
+      // Respect Contact-Specific & Global Message Vibration settings
+      final vibrateMode = customEnabled
+          ? (SharedPref.instance.getString('contact_vibrate_$contactId') ??
+              SharedPref.instance.getString('notif_msg_vibrate') ??
+              'Default')
+          : (SharedPref.instance.getString('notif_msg_vibrate') ?? 'Default');
+
+      if (vibrateMode != 'Off') {
+        _triggerVibration(vibrateMode);
       }
     } catch (e) {
       debugPrint('[RingtoneManager] Error playing message tone: $e');

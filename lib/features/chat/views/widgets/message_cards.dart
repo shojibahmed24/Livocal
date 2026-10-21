@@ -50,6 +50,30 @@ class _MessageCardState extends ConsumerState<MessageCard>
   String? _translatedContent;
   bool _isTranslating = false;
   static final Map<String, Stream<DocumentSnapshot<Map<String, dynamic>>>> _p2pDocStreams = {};
+  static final List<String> _streamKeysOrder = [];
+  static const int _maxCachedStreams = 25;
+
+  static Stream<DocumentSnapshot<Map<String, dynamic>>> _getP2pStream(
+    String collectionName,
+    String recordId,
+  ) {
+    final streamKey = '$collectionName/$recordId';
+    if (_p2pDocStreams.containsKey(streamKey)) {
+      return _p2pDocStreams[streamKey]!;
+    }
+    if (_streamKeysOrder.length >= _maxCachedStreams) {
+      final evictKey = _streamKeysOrder.removeAt(0);
+      _p2pDocStreams.remove(evictKey);
+    }
+    final stream = FirebaseFirestore.instance
+        .collection(collectionName)
+        .doc(recordId)
+        .snapshots()
+        .asBroadcastStream();
+    _p2pDocStreams[streamKey] = stream;
+    _streamKeysOrder.add(streamKey);
+    return stream;
+  }
 
   @override
   void initState() {
@@ -770,14 +794,7 @@ class _MessageCardState extends ConsumerState<MessageCard>
     }
 
     final collectionName = isWallet ? 'p2p_transfers' : 'p2p_payments';
-    final streamKey = '$collectionName/$recordId';
-    final stream = _p2pDocStreams.putIfAbsent(
-      streamKey,
-      () => FirebaseFirestore.instance
-          .collection(collectionName)
-          .doc(recordId)
-          .snapshots(),
-    );
+    final stream = _getP2pStream(collectionName, recordId);
 
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: stream,
@@ -820,6 +837,19 @@ class _MessageCardState extends ConsumerState<MessageCard>
 
         if (!isParticipantsBound) {
           // Spoofed/copied [id:...] token from another user's transaction!
+          return _buildBadgeChip(
+            label: 'UNVERIFIED',
+            icon: Icons.gpp_bad_rounded,
+            color: Colors.redAccent,
+          );
+        }
+
+        // Single-Use Binding Guard: Prevent token reuse across different messages
+        final boundMsgId = (data['boundMessageId'] ?? data['messageId'])?.toString();
+        if (boundMsgId != null &&
+            boundMsgId.isNotEmpty &&
+            boundMsgId != widget.message.id) {
+          // Token was bound to another message ID -> Spoofed reuse attempt!
           return _buildBadgeChip(
             label: 'UNVERIFIED',
             icon: Icons.gpp_bad_rounded,

@@ -366,6 +366,7 @@ class WalletRepository {
     required int minutes,
     String? note,
     String? idempotencyKey,
+    String? messageId,
   }) async {
     if (minutes <= 0) {
       return const MinuteTransferResult(
@@ -395,6 +396,7 @@ class WalletRepository {
             'minutes': minutes,
             'note': note ?? '',
             'idempotencyKey': idemKey,
+            if (messageId != null && messageId.isNotEmpty) 'messageId': messageId,
           }),
         ).timeout(const Duration(seconds: 10));
 

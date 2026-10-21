@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:uuid/uuid.dart';
 import 'package:livocal/features/calls/services/gemini_live_translator.dart';
 import 'package:livocal/features/calls/views/widgets/minute_recharge_sheet.dart';
 import 'package:livocal/shared/constants/app_config.dart';
@@ -19,7 +20,7 @@ void showSendPaymentSheet({
   required User self,
   required User other,
   required String contactName,
-  required Function(String amount, String note, [String? method, String? txId, String? paymentRecordId])
+  required Function(String amount, String note, [String? method, String? txId, String? paymentRecordId, String? messageId])
       onPaymentConfirmed,
 }) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -51,7 +52,7 @@ class _SendPaymentSheetContent extends ConsumerStatefulWidget {
   final User self;
   final User other;
   final String contactName;
-  final Function(String amount, String note, [String? method, String? txId, String? paymentRecordId])
+  final Function(String amount, String note, [String? method, String? txId, String? paymentRecordId, String? messageId])
       onPaymentConfirmed;
 
   @override
@@ -263,6 +264,7 @@ class _SendPaymentSheetContentState
     setState(() => _isProcessing = true);
 
     try {
+      final clientMessageId = const Uuid().v4();
       String methodDisplay = 'Livocal In-App Wallet';
       String txId = '';
       String? paymentRecordId;
@@ -294,6 +296,7 @@ class _SendPaymentSheetContentState
                   minutes: minutesToSend,
                   note: _noteController.text.trim(),
                   idempotencyKey: idempotencyKey,
+                  messageId: clientMessageId,
                 );
 
         if (!transferResult.success) {
@@ -351,8 +354,7 @@ class _SendPaymentSheetContentState
 
       // Log central audit record in p2p_payments for manual MFS and Crypto transfers
       if (_selectedMethod != 'wallet') {
-        final payRecordId =
-            'p2p_pay_${DateTime.now().millisecondsSinceEpoch}_${widget.self.id.length > 4 ? widget.self.id.substring(0, 4) : widget.self.id}';
+        final payRecordId = 'p2p_${const Uuid().v4()}';
         paymentRecordId = payRecordId;
         try {
           await FirebaseFirestore.instance
@@ -360,6 +362,8 @@ class _SendPaymentSheetContentState
               .doc(payRecordId)
               .set({
             'id': payRecordId,
+            'messageId': clientMessageId,
+            'boundMessageId': clientMessageId,
             'type': _selectedMethod,
             'currency': _selectedMethod == 'mfs' ? 'BDT' : 'USDT',
             'bdtAmount': _selectedMethod == 'mfs' ? _calculatedBdtAmount.toStringAsFixed(0) : null,
@@ -401,6 +405,7 @@ class _SendPaymentSheetContentState
         methodDisplay,
         txId,
         paymentRecordId,
+        clientMessageId,
       );
 
       showSnackBar(

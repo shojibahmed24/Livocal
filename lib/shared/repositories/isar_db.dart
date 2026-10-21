@@ -23,6 +23,8 @@ final isarProvider = Provider((ref) => IsarDb());
 
 class IsarDb {
   static Isar? _instance;
+  static final Map<String, User> _userCache = {};
+  static final Map<String, Contact?> _contactCache = {};
   static Isar get isar {
     if (_instance != null) return _instance!;
     final openInstance = Isar.getInstance();
@@ -418,45 +420,85 @@ class IsarDb {
         .sortByTimestampDesc()
         .watch(fireImmediately: true)
         .asyncMap((event) async {
-      final Map<String, int> visitedChats = {};
-      final recentChats = <RecentChat>[];
+      // Pass 1: Deduplicate by chatId, calculate unread counts, and identify unique peer IDs
+      final Map<String, int> unreadCounts = {};
+      final List<StoredMessage> firstMessages = [];
+      final Set<String> peerIdsToResolve = {};
 
       for (final msg in event) {
         final clientIsSender = msg.senderId == currentUser.id;
-        if (visitedChats.containsKey(msg.chatId)) {
-          if (clientIsSender) continue;
-          if (msg.status == MessageStatus.seen) continue;
-
-          visitedChats[msg.chatId] = visitedChats[msg.chatId]! + 1;
+        if (unreadCounts.containsKey(msg.chatId)) {
+          if (!clientIsSender && msg.status != MessageStatus.seen) {
+            unreadCounts[msg.chatId] = unreadCounts[msg.chatId]! + 1;
+          }
           continue;
         }
 
+        unreadCounts[msg.chatId] =
+            (!clientIsSender && msg.status != MessageStatus.seen) ? 1 : 0;
+        firstMessages.add(msg);
+        final peerId = clientIsSender ? msg.receiverId : msg.senderId;
+        peerIdsToResolve.add(peerId);
+      }
+
+      // Batch Resolution 1: Users (In-Memory -> Isar -> Parallel Firestore)
+      final missingFromMemory =
+          peerIdsToResolve.where((id) => !_userCache.containsKey(id)).toList();
+      if (missingFromMemory.isNotEmpty) {
+        for (final id in missingFromMemory) {
+          final local = await isarInstance.users.filter().idEqualTo(id).findFirst();
+          if (local != null) {
+            _userCache[id] = local;
+          }
+        }
+        final stillMissing =
+            missingFromMemory.where((id) => !_userCache.containsKey(id)).toList();
+        if (stillMissing.isNotEmpty) {
+          await Future.wait(stillMissing.map((id) async {
+            try {
+              final user = await ref
+                  .read(firebaseFirestoreRepositoryProvider)
+                  .getUserById(id);
+              if (user != null) {
+                _userCache[id] = user;
+                try {
+                  await isarInstance.writeTxn(() async => await isarInstance.users.put(user));
+                } catch (_) {}
+              }
+            } catch (_) {}
+          }));
+        }
+      }
+
+      // Batch Resolution 2: Contacts
+      final phonesToResolve = <String>[];
+      for (final peerId in peerIdsToResolve) {
+        final user = _userCache[peerId];
+        final phone = user?.phone.number;
+        if (phone != null && phone.isNotEmpty && !_contactCache.containsKey(phone)) {
+          phonesToResolve.add(phone);
+        }
+      }
+      if (phonesToResolve.isNotEmpty) {
+        await Future.wait(phonesToResolve.map((phone) async {
+          try {
+            final c = await ref
+                .read(contactsRepositoryProvider)
+                .getContactByPhone(phone);
+            _contactCache[phone] = c;
+          } catch (_) {
+            _contactCache[phone] = null;
+          }
+        }));
+      }
+
+      // Pass 2: Instant O(1) in-memory construction
+      final recentChats = <RecentChat>[];
+      for (final msg in firstMessages) {
+        final clientIsSender = msg.senderId == currentUser.id;
         final peerId = clientIsSender ? msg.receiverId : msg.senderId;
 
-        var sender = await IsarDb.getUserById(peerId);
-
-        Contact? contact;
-        if (sender != null && sender.phone.number != null && sender.phone.number!.isNotEmpty) {
-          try {
-            contact = await ref
-                .read(contactsRepositoryProvider)
-                .getContactByPhone(sender.phone.number!);
-          } catch (e, st) {
-            debugPrint('[IsarDb] getContactByPhone error: $e\n$st');
-          }
-        }
-
-        if (sender == null) {
-          try {
-            sender = await ref
-                .read(firebaseFirestoreRepositoryProvider)
-                .getUserById(peerId);
-          } catch (e, st) {
-            debugPrint('[IsarDb] getUserById from Firestore error: $e\n$st');
-          }
-        }
-
-        // Safe fallback user if not yet registered in Firestore
+        var sender = _userCache[peerId];
         if (sender == null) {
           String displayPhone = peerId;
           if (displayPhone.startsWith('phone_')) {
@@ -475,54 +517,51 @@ class IsarDb {
           );
         }
 
+        final phoneNum = sender.phone.number;
+        final contact = (phoneNum != null && phoneNum.isNotEmpty)
+            ? _contactCache[phoneNum]
+            : null;
+
         final senderName = contact?.displayName ??
             (sender.name.isNotEmpty
                 ? sender.name
                 : (sender.phone.formattedNumber ?? sender.phone.number ?? peerId));
 
-        recentChats.add(
-          RecentChat(
-            message: Message(
-              id: msg.messageId,
-              content: msg.content,
-              senderId: msg.senderId,
-              receiverId: msg.receiverId,
-              timestamp: Timestamp.fromDate(msg.timestamp),
-              status: msg.status,
-              attachment: msg.attachment != null
-                  ? Attachment(
-                      fileName: msg.attachment!.fileName ?? 'file',
-                      fileExtension: msg.attachment!.fileExtension ?? '',
-                      fileSize: msg.attachment!.fileSize ?? 0,
-                      width: msg.attachment!.width,
-                      height: msg.attachment!.height,
-                      uploadStatus: msg.attachment!.uploadStatus ?? UploadStatus.uploaded,
-                      autoDownload: msg.attachment!.autoDownload ?? false,
-                      url: msg.attachment!.url ?? '',
-                      type: msg.attachment!.type ?? AttachmentType.document,
-                      samples: msg.attachment!.samples,
-                    )
-                  : null,
-              isDeleted: msg.content == '🚫 This message was deleted' ||
-                  msg.content.contains('message was deleted'),
-            ),
-            user: User(
-              id: sender.id,
-              name: senderName,
-              avatarUrl: sender.avatarUrl,
-              phone: sender.phone,
-              activityStatus: sender.activityStatus,
-            ),
+        final chat = RecentChat(
+          message: Message(
+            id: msg.messageId,
+            content: msg.content,
+            senderId: msg.senderId,
+            receiverId: msg.receiverId,
+            timestamp: Timestamp.fromDate(msg.timestamp),
+            status: msg.status,
+            attachment: msg.attachment != null
+                ? Attachment(
+                    fileName: msg.attachment!.fileName ?? 'file',
+                    fileExtension: msg.attachment!.fileExtension ?? '',
+                    fileSize: msg.attachment!.fileSize ?? 0,
+                    width: msg.attachment!.width,
+                    height: msg.attachment!.height,
+                    uploadStatus: msg.attachment!.uploadStatus ?? UploadStatus.uploaded,
+                    autoDownload: msg.attachment!.autoDownload ?? false,
+                    url: msg.attachment!.url ?? '',
+                    type: msg.attachment!.type ?? AttachmentType.document,
+                    samples: msg.attachment!.samples,
+                  )
+                : null,
+            isDeleted: msg.content == '🚫 This message was deleted' ||
+                msg.content.contains('message was deleted'),
+          ),
+          user: User(
+            id: sender.id,
+            name: senderName,
+            avatarUrl: sender.avatarUrl,
+            phone: sender.phone,
+            activityStatus: sender.activityStatus,
           ),
         );
-
-        visitedChats[msg.chatId] =
-            clientIsSender || msg.status == MessageStatus.seen ? 0 : 1;
-      }
-
-      for (final chat in recentChats) {
-        chat.unreadCount = visitedChats[
-            getChatId(chat.message.senderId, chat.message.receiverId)]!;
+        chat.unreadCount = unreadCounts[msg.chatId] ?? 0;
+        recentChats.add(chat);
       }
 
       return recentChats;
