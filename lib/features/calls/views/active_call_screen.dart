@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/calls/controllers/call_controller.dart';
-import 'package:livocal/features/calls/services/call_kit_service.dart';
 import 'package:livocal/features/calls/views/widgets/call_ended_summary_sheet.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/utils/navigator_key.dart';
@@ -30,7 +29,6 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
   @override
   void initState() {
     super.initState();
-    CallKitService().endAllCalls();
     _transcriptScrollController.addListener(_onTranscriptScroll);
   }
 

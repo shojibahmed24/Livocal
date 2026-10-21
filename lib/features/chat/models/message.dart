@@ -32,6 +32,8 @@ class Message {
   final Attachment? attachment;
   MessageStatus status;
   final bool isDeleted;
+  final Timestamp? expiresAt;
+  final String? disappearingDuration;
 
   Message({
     required this.id,
@@ -42,6 +44,8 @@ class Message {
     required this.status,
     this.attachment,
     this.isDeleted = false,
+    this.expiresAt,
+    this.disappearingDuration,
   });
 
   factory Message.fromMap(Map<String, dynamic> msgData) {
@@ -61,6 +65,15 @@ class Message {
           ? Attachment.fromMap(msgData["attachment"])
           : null,
       isDeleted: isDeletedMsg,
+      expiresAt: msgData['expiresAt'] is Timestamp
+          ? msgData['expiresAt'] as Timestamp
+          : (msgData['expiresAt'] is Map && (msgData['expiresAt']['_seconds'] != null || msgData['expiresAt']['seconds'] != null)
+              ? Timestamp(
+                  (msgData['expiresAt']['_seconds'] ?? msgData['expiresAt']['seconds']) as int,
+                  (msgData['expiresAt']['_nanoseconds'] ?? msgData['expiresAt']['nanoseconds'] ?? 0) as int,
+                )
+              : null),
+      disappearingDuration: msgData['disappearingDuration'] as String?,
     );
   }
 
@@ -73,6 +86,8 @@ class Message {
     MessageStatus? status,
     Attachment? attachment,
     bool? isDeleted,
+    Timestamp? expiresAt,
+    String? disappearingDuration,
   }) {
     return Message(
       id: id ?? this.id,
@@ -83,6 +98,8 @@ class Message {
       status: status ?? this.status,
       attachment: attachment ?? this.attachment,
       isDeleted: isDeleted ?? this.isDeleted,
+      expiresAt: expiresAt ?? this.expiresAt,
+      disappearingDuration: disappearingDuration ?? this.disappearingDuration,
     );
   }
 
@@ -99,6 +116,8 @@ class Message {
       'senderId': senderId,
       'receiverId': receiverId,
       'timestamp': timestamp,
+      if (expiresAt != null) 'expiresAt': expiresAt,
+      if (disappearingDuration != null) 'disappearingDuration': disappearingDuration,
       "attachment": attachment?.toMap(),
       'isDeleted': isDeleted,
       'deletedForEveryone': isDeleted,

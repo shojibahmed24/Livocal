@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/calls/controllers/call_controller.dart';
 import 'package:livocal/features/calls/models/call_model.dart';
-import 'package:livocal/features/calls/views/active_call_screen.dart';
 import 'package:livocal/features/calls/views/widgets/call_scaffold.dart';
 import 'package:livocal/features/calls/views/widgets/language_picker_sheet.dart';
 import 'package:livocal/features/calls/views/widgets/swipe_to_answer.dart';
@@ -49,7 +48,6 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
     if (_navigated) return;
     _navigated = true;
     await RingtoneManager().stopRingtone();
-    await CallKitService().endAllCalls();
     final controller = ref.read(callControllerProvider.notifier);
     if (!_answerWithTranslation) {
       await controller.setAudioMode(CallAudioMode.originalOnly);
@@ -60,18 +58,17 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
       withTranslation: _answerWithTranslation,
     );
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => const ActiveCallScreen(),
-      ),
-    );
+    controller.navigateToActiveCall();
   }
 
   Future<void> _declineCall() async {
     if (_navigated) return;
     _navigated = true;
     await RingtoneManager().stopRingtone();
-    await CallKitService().endAllCalls();
+    final callId = ref.read(callControllerProvider).activeSession?.callId;
+    if (callId != null) {
+      await CallKitService().endCall(callId);
+    }
     await ref.read(callControllerProvider.notifier).endCall(
           recordAsMissed: true,
         );
@@ -88,17 +85,17 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
       if (session != null && session.status == CallStateStatus.connected) {
         _navigated = true;
         RingtoneManager().stopRingtone();
-        CallKitService().endAllCalls();
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const ActiveCallScreen()),
-        );
+        ref.read(callControllerProvider.notifier).navigateToActiveCall();
       } else if (session == null ||
           session.status == CallStateStatus.ended ||
           session.status == CallStateStatus.rejected ||
           session.status == CallStateStatus.missed) {
         _navigated = true;
         RingtoneManager().stopRingtone();
-        CallKitService().endAllCalls();
+        final callId = previous?.activeSession?.callId;
+        if (callId != null) {
+          CallKitService().endCall(callId);
+        }
         if (Navigator.of(context).canPop()) {
           Navigator.of(context).pop();
         }

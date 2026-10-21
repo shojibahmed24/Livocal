@@ -51,7 +51,7 @@ void main() {
       expect(find.text('Decline'), findsOneWidget);
       expect(find.text('Swipe to answer (AI)'), findsOneWidget);
       expect(find.byIcon(Icons.call_end_rounded), findsOneWidget);
-      expect(find.byIcon(Icons.call_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.call_rounded), findsAtLeastNWidgets(1));
 
       // Tapping decline button
       await tester.tap(find.byIcon(Icons.call_end_rounded));

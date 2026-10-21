@@ -29,6 +29,7 @@ import 'package:livocal/shared/widgets/camera.dart';
 import '../../../shared/repositories/download_service.dart';
 import '../../../shared/repositories/push_notifications.dart';
 import '../../../shared/utils/abc.dart';
+import '../../../shared/utils/shared_pref.dart';
 import '../../../shared/widgets/gallery.dart';
 import '../models/attachement.dart';
 import '../views/attachment_sender.dart';
@@ -398,6 +399,21 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
       clearReplyingMessage();
     }
 
+    final chatId = getChatId(sender.id, receiver.id);
+    final disappearingTimer = SharedPref.instance.getString('chat_disappearing_$chatId') ??
+        SharedPref.instance.getString('contact_disappearing_${receiver.id}') ??
+        SharedPref.instance.getString('privacy_disappearing') ??
+        'Off';
+
+    Timestamp? expiresAt;
+    if (disappearingTimer == '24 hours') {
+      expiresAt = Timestamp.fromDate(DateTime.now().add(const Duration(hours: 24)));
+    } else if (disappearingTimer == '7 days') {
+      expiresAt = Timestamp.fromDate(DateTime.now().add(const Duration(days: 7)));
+    } else if (disappearingTimer == '90 days') {
+      expiresAt = Timestamp.fromDate(DateTime.now().add(const Duration(days: 90)));
+    }
+
     sendMessageNoAttachments(
       Message(
         id: const Uuid().v4(),
@@ -406,6 +422,8 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
         senderId: sender.id,
         receiverId: receiver.id,
         timestamp: Timestamp.now(),
+        expiresAt: expiresAt,
+        disappearingDuration: disappearingTimer != 'Off' ? disappearingTimer : null,
       ),
     );
 

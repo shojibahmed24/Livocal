@@ -163,7 +163,20 @@ class CallController extends StateNotifier<CallControllerState> {
   StreamSubscription<Uint8List>? _webrtcRemoteTranslatedAudioSub;
   StreamSubscription<WebRtcCallState>? _webrtcStateSub;
   StreamSubscription<CallNetworkQuality>? _webrtcQualitySub;
+  bool _isAudioEngineRunning = false;
+  String? _currentRunningCallId;
   bool _hasNavigatedToActiveCall = false;
+
+  void navigateToActiveCall() {
+    if (_hasNavigatedToActiveCall) return;
+    _hasNavigatedToActiveCall = true;
+    final nav = appNavigatorKey.currentState;
+    if (nav != null) {
+      nav.pushReplacement(
+        MaterialPageRoute(builder: (_) => const ActiveCallScreen()),
+      );
+    }
+  }
 
   String get _currentAppLang {
     try {
@@ -186,11 +199,9 @@ class CallController extends StateNotifier<CallControllerState> {
     try {
       CallKitService().init(
         onAccept: (callId) async {
-          await CallKitService().endCall(callId);
+          debugPrint('[CallController] CallKit onAccept for $callId');
           await acceptAndConnectCall(callId: callId);
-          appNavigatorKey.currentState?.push(
-            MaterialPageRoute(builder: (_) => const ActiveCallScreen()),
-          );
+          navigateToActiveCall();
         },
         onDecline: (callId) {
           CallKitService().endCall(callId);
@@ -210,7 +221,7 @@ class CallController extends StateNotifier<CallControllerState> {
         },
         onEnded: (callId) {
           debugPrint('[CallController] CallKit onEnded for $callId (programmatic cleanup)');
-          // CallKit on Android emits actionCallEnded when endCall() or endAllCalls() is invoked
+          // CallKit on Android emits actionCallEnded when endCall() is invoked
           // programmatically or when an incoming call notification is dismissed after answer.
           // Do NOT terminate active or dialing call sessions here to avoid false hangups.
         },
@@ -219,12 +230,15 @@ class CallController extends StateNotifier<CallControllerState> {
         if (calls is List && calls.isNotEmpty) {
           final activeCall = calls.first;
           final callId = activeCall['id'] as String?;
-          if (callId != null && callId.isNotEmpty) {
+          final isAccepted = activeCall['isAccepted'] == true;
+          // Guard: Only connect if user explicitly tapped the native green Accept button on CallKit notification
+          if (isAccepted && callId != null && callId.isNotEmpty) {
+            debugPrint('[CallController] Resuming accepted CallKit call $callId on app launch');
             acceptAndConnectCall(callId: callId).then((_) {
-              appNavigatorKey.currentState?.push(
-                MaterialPageRoute(builder: (_) => const ActiveCallScreen()),
-              );
+              navigateToActiveCall();
             });
+          } else {
+            debugPrint('[CallController] Stale or ringing CallKit call $callId (isAccepted: $isAccepted), suppressing ghost auto-answer');
           }
         }
       }).catchError((err, st) {
@@ -810,6 +824,13 @@ class CallController extends StateNotifier<CallControllerState> {
 
   /// Shared engine initialization for BOTH Caller and Callee when call transitions to connected
   Future<void> _startInCallAudioEngines(CallSession connectedSession) async {
+    if (_isAudioEngineRunning && _currentRunningCallId == connectedSession.callId) {
+      debugPrint('[CallController] _startInCallAudioEngines already running for ${connectedSession.callId}, skipping redundant duplicate start');
+      return;
+    }
+    _isAudioEngineRunning = true;
+    _currentRunningCallId = connectedSession.callId;
+
     // Subscribe to WebRTC connection state to detect network drops & reconnect
     _webrtcStateSub?.cancel();
     _webrtcStateSub = _webrtcClient.stateStream.listen((wState) {
@@ -835,9 +856,7 @@ class CallController extends StateNotifier<CallControllerState> {
             _webrtcClient.setMicrophoneMute(false);
             _webrtcClient.setRemoteAudioVolume(1.0);
             // Navigate caller to active call screen
-            appNavigatorKey.currentState?.pushReplacement(
-              MaterialPageRoute(builder: (_) => const ActiveCallScreen()),
-            );
+            navigateToActiveCall();
           }
         }
         if (wasReconnecting) {
@@ -1224,15 +1243,7 @@ class CallController extends StateNotifier<CallControllerState> {
     );
 
     // Ensure single push of ActiveCallScreen
-    if (!_hasNavigatedToActiveCall) {
-      _hasNavigatedToActiveCall = true;
-      final ctx = appNavigatorKey.currentContext;
-      if (ctx != null) {
-        appNavigatorKey.currentState?.pushReplacement(
-          MaterialPageRoute(builder: (_) => const ActiveCallScreen()),
-        );
-      }
-    }
+    navigateToActiveCall();
   }
 
 
@@ -1521,5 +1532,8 @@ class CallController extends StateNotifier<CallControllerState> {
     await _webrtcClient.endCall();
     await _geminiTranslator.disconnect();
     await _audioPipeline.dispose();
+    _isAudioEngineRunning = false;
+    _currentRunningCallId = null;
+    _hasNavigatedToActiveCall = false;
   }
 }

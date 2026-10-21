@@ -47,9 +47,26 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
     super.initState();
     _isMuted = SharedPref.instance.getBool('contact_muted_${widget.other.id}') ?? false;
     _isBlocked = BlockService.isBlocked(widget.other.id);
+    final chatId = getChatId(widget.self.id, widget.other.id);
     _disappearingTimer =
+        SharedPref.instance.getString('chat_disappearing_$chatId') ??
         SharedPref.instance.getString('contact_disappearing_${widget.other.id}') ?? 'Off';
     _loadMediaStats();
+    _loadSharedDisappearingSettings(chatId);
+  }
+
+  Future<void> _loadSharedDisappearingSettings(String chatId) async {
+    try {
+      final doc = await FirebaseFirestore.instance.collection('chat_settings').doc(chatId).get();
+      if (doc.exists && doc.data() != null) {
+        final val = doc.data()!['disappearingDuration'] as String?;
+        if (val != null && val.isNotEmpty && mounted) {
+          setState(() => _disappearingTimer = val);
+          await SharedPref.instance.setString('chat_disappearing_$chatId', val);
+          await SharedPref.instance.setString('contact_disappearing_${widget.other.id}', val);
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadMediaStats() async {
@@ -830,8 +847,15 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
         onChanged: (val) {
           if (val != null) {
             setState(() => _disappearingTimer = val);
-            SharedPref.instance
-                .setString('contact_disappearing_${widget.other.id}', val);
+            final chatId = getChatId(widget.self.id, widget.other.id);
+            SharedPref.instance.setString('contact_disappearing_${widget.other.id}', val);
+            SharedPref.instance.setString('chat_disappearing_$chatId', val);
+            FirebaseFirestore.instance.collection('chat_settings').doc(chatId).set({
+              'chatId': chatId,
+              'disappearingDuration': val,
+              'updatedBy': widget.self.id,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
             Navigator.pop(context);
             showSnackBar(
               context: context,

@@ -220,6 +220,33 @@ async function authenticateRequest(req, res, next) {
 }
 
 // Health & Status endpoint (Sanitized)
+/**
+ * POST /api/maintenance/purge-expired-messages
+ * Periodic cron or on-demand cleanup of expired messages with TTL across all chat inboxes.
+ */
+app.post('/api/maintenance/purge-expired-messages', async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
+  try {
+    const nowTs = new Date().toISOString();
+    let deletedCount = 0;
+    const chatsSnap = await firestoreDb.collection('chats').limit(100).get();
+    for (const chatDoc of chatsSnap.docs) {
+      const msgsSnap = await chatDoc.ref.collection('messages')
+        .where('expiresAt', '<=', nowTs)
+        .limit(100)
+        .get();
+      for (const mDoc of msgsSnap.docs) {
+        await mDoc.ref.delete();
+        deletedCount++;
+      }
+    }
+    return res.json({ success: true, purgedCount: deletedCount, timestamp: nowTs });
+  } catch (err) {
+    console.error('[PurgeMessages] Error purging expired messages:', err.message);
+    return res.status(500).json({ error: 'Failed to purge expired messages' });
+  }
+});
+
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',

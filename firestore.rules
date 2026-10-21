@@ -73,6 +73,11 @@ service cloud.firestore {
       }
     }
 
+    // Shared Per-Chat Settings (Disappearing messages duration, shared timers)
+    match /chat_settings/{chatId} {
+      allow read, write: if isAuthenticated();
+    }
+
     // 3. Audio / Video Calling & Gemini Live Translations
     match /calls/{callId} {
       // Authenticated caller initiates the call session

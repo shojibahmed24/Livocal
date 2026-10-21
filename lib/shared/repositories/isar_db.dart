@@ -307,7 +307,31 @@ class IsarDb {
           await isar.storedMessages.deleteAll(toDelete);
         });
         debugPrint(
-            '[IsarDb] Purged ${toDelete.length} disappearing messages (setting: $setting, chat: $forChatId)');
+            '[IsarDb] Purged ${toDelete.length} disappearing messages from Isar (setting: $setting, chat: $forChatId)');
+      }
+
+      // 2. Also permanently purge expired messages from Firestore inboxes
+      try {
+        final currentUid = FirebaseAuth.instance.currentUser?.uid;
+        if (currentUid != null) {
+          final snap = await FirebaseFirestore.instance
+              .collection('chats')
+              .doc(currentUid)
+              .collection('messages')
+              .where('timestamp', isLessThan: Timestamp.fromDate(cutoff))
+              .limit(100)
+              .get();
+
+          for (final doc in snap.docs) {
+            final data = doc.data();
+            final msgId = data['id'] as String? ?? doc.id;
+            if (!starredIds.contains(msgId)) {
+              await doc.reference.delete();
+            }
+          }
+        }
+      } catch (fsErr) {
+        debugPrint('[IsarDb] Firestore disappearing messages purge note: $fsErr');
       }
     } catch (e) {
       debugPrint('[IsarDb] Error purging disappearing messages: $e');
