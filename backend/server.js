@@ -2944,14 +2944,19 @@ wss.on('connection', (clientWs, req) => {
       finalizeBillingSession(sessionKey);
     } else if (sessionKey && callBillingSessions.has(sessionKey)) {
       const session = callBillingSessions.get(sessionKey);
-      if (session && session.clientWs === clientWs) {
-        session.clientWs = null;
-        if (!session.disconnectTimer) {
-          console.log(`[${clientId}] Client disconnected mid-call for ${sessionKey}. Starting 45s reconnect grace timer.`);
-          session.disconnectTimer = setTimeout(() => {
-            console.log(`[Billing] Call ${sessionKey} disconnect grace period expired. Cleaning up billing session.`);
-            finalizeBillingSession(sessionKey);
-          }, 45000);
+      if (session) {
+        if (session.clientWs === clientWs) {
+          session.clientWs = null;
+          if (!session.disconnectTimer) {
+            console.log(`[${clientId}] Caller disconnected mid-call for ${sessionKey}. Starting 45s reconnect grace timer.`);
+            session.disconnectTimer = setTimeout(() => {
+              console.log(`[Billing] Call ${sessionKey} disconnect grace period expired. Cleaning up billing session.`);
+              finalizeBillingSession(sessionKey);
+            }, 45000);
+          }
+        } else if (session.calleeWs === clientWs) {
+          session.calleeWs = null;
+          console.log(`[${clientId}] Callee disconnected for ${sessionKey}. Caller billing session unaffected.`);
         }
       }
     }
@@ -3168,21 +3173,6 @@ wss.on('connection', (clientWs, req) => {
         isCallee = false;
         isCaller = true;
 
-        // Reconnect session linking:
-        if (callBillingSessions.has(sessionKey)) {
-          const existingSession = callBillingSessions.get(sessionKey);
-          if (existingSession) {
-            if (existingSession.disconnectTimer) {
-              clearTimeout(existingSession.disconnectTimer);
-              existingSession.disconnectTimer = null;
-              console.log(`[${clientId}] Cancelled disconnect grace timer for reconnected call ${sessionKey}`);
-            }
-            existingSession.clientWs = clientWs;
-            billedMinutes = existingSession.billedMinutes;
-            console.log(`[${clientId}] Linked to active billing session for ${sessionKey}. Billed so far: ${billedMinutes}m`);
-          }
-        }
-
         if (activeCallId && firestoreDb) {
           try {
             const callDoc = await firestoreDb.collection('calls').doc(activeCallId).get();
@@ -3197,10 +3187,47 @@ wss.on('connection', (clientWs, req) => {
                 isCaller = true;
                 isCallee = false;
                 console.log(`[${clientId}] User ${authenticatedUid} identified as CALLER for call ${activeCallId}. Relay minute metering active.`);
+              } else {
+                // Security: User is neither caller nor callee for this callId!
+                console.warn(`[${clientId}] Security rejection: User ${authenticatedUid} attempted to access call ${activeCallId} without being caller (${callData.callerId}) or callee (${callData.calleeId}).`);
+                if (clientWs.readyState === WebSocket.OPEN) {
+                  clientWs.send(
+                    JSON.stringify({
+                      type: 'error',
+                      code: 'UNAUTHORIZED_CALL_SESSION',
+                      message: 'You are not an authorized participant in this call session.',
+                    })
+                  );
+                  clientWs.close(4403, 'UNAUTHORIZED_CALL_SESSION');
+                }
+                return;
               }
             }
           } catch (callLookupErr) {
             console.warn(`[${clientId}] Could not inspect call document for callId ${activeCallId}:`, callLookupErr.message);
+          }
+        }
+
+        // Reconnect session linking (Role-Guarded):
+        // Only the paying caller whose UID matches existingSession.callerUid may claim the billing socket!
+        if (callBillingSessions.has(sessionKey)) {
+          const existingSession = callBillingSessions.get(sessionKey);
+          if (existingSession) {
+            if (isCaller && !isCallee && existingSession.callerUid === authenticatedUid) {
+              if (existingSession.disconnectTimer) {
+                clearTimeout(existingSession.disconnectTimer);
+                existingSession.disconnectTimer = null;
+                console.log(`[${clientId}] Cancelled disconnect grace timer for reconnected caller on ${sessionKey}`);
+              }
+              existingSession.clientWs = clientWs;
+              billedMinutes = existingSession.billedMinutes;
+              console.log(`[${clientId}] Linked caller ${authenticatedUid} to active billing session for ${sessionKey}. Billed so far: ${billedMinutes}m`);
+            } else if (isCallee) {
+              console.log(`[${clientId}] Callee ${authenticatedUid} joined call session ${sessionKey}. Caller billing socket preserved.`);
+              existingSession.calleeWs = clientWs;
+            } else {
+              console.warn(`[${clientId}] Blocked unauthorized socket overwrite attempt on session ${sessionKey} by user ${authenticatedUid} (expected caller ${existingSession.callerUid}).`);
+            }
           }
         }
 
@@ -3445,25 +3472,29 @@ wss.on('connection', (clientWs, req) => {
                 // MID-CALL RECONNECT PATH:
                 // User was ALREADY billed upfront minute 1 (or more) and metering cadence is active.
                 // DO NOT deduct upfront minute 1 again!
-                existingBillingSession.clientWs = clientWs;
-                if (existingBillingSession.disconnectTimer) {
-                  clearTimeout(existingBillingSession.disconnectTimer);
-                  existingBillingSession.disconnectTimer = null;
-                }
-                billedMinutes = existingBillingSession.billedMinutes;
-                console.log(`[${clientId}] [SaaS Relay Metering] Mid-call reconnect confirmed for ${sessionKey}. Preserving existing billed count (${existingBillingSession.billedMinutes}m) with 0 extra upfront charge.`);
+                if (existingBillingSession.callerUid === authenticatedUid) {
+                  existingBillingSession.clientWs = clientWs;
+                  if (existingBillingSession.disconnectTimer) {
+                    clearTimeout(existingBillingSession.disconnectTimer);
+                    existingBillingSession.disconnectTimer = null;
+                  }
+                  billedMinutes = existingBillingSession.billedMinutes;
+                  console.log(`[${clientId}] [SaaS Relay Metering] Mid-call reconnect confirmed for caller ${authenticatedUid} on ${sessionKey}. Preserving existing billed count (${existingBillingSession.billedMinutes}m) with 0 extra upfront charge.`);
 
-                if (clientWs.readyState === WebSocket.OPEN) {
-                  clientWs.send(
-                    JSON.stringify({
-                      type: 'billing_update',
-                      billedMinutes: existingBillingSession.billedMinutes,
-                      remainingMinutes: existingBillingSession.remainingMinutes,
-                      lowBalanceWarning: existingBillingSession.remainingMinutes <= 2,
-                      role: 'caller',
-                      reconnected: true,
-                    })
-                  );
+                  if (clientWs.readyState === WebSocket.OPEN) {
+                    clientWs.send(
+                      JSON.stringify({
+                        type: 'billing_update',
+                        billedMinutes: existingBillingSession.billedMinutes,
+                        remainingMinutes: existingBillingSession.remainingMinutes,
+                        lowBalanceWarning: existingBillingSession.remainingMinutes <= 2,
+                        role: 'caller',
+                        reconnected: true,
+                      })
+                    );
+                  }
+                } else {
+                  console.warn(`[${clientId}] [SaaS Relay Metering] Blocked unauthorized mid-call reconnect for ${sessionKey} by ${authenticatedUid} (expected caller ${existingBillingSession.callerUid}).`);
                 }
               } else {
                 // INITIAL CALL CONNECTION PATH:
@@ -3544,6 +3575,7 @@ wss.on('connection', (clientWs, req) => {
                       sessionKey,
                       callerUid: authenticatedUid,
                       clientWs,
+                      calleeWs: existingBillingSession?.calleeWs || null,
                       billedMinutes: 1,
                       remainingMinutes: deductionResult.remainingMinutes,
                       isCallee: false,
@@ -3647,6 +3679,16 @@ wss.on('connection', (clientWs, req) => {
                             );
                             persistentSession.clientWs.close(4402, 'MINUTES_EXHAUSTED');
                           }
+                          if (persistentSession.calleeWs && persistentSession.calleeWs.readyState === WebSocket.OPEN) {
+                            persistentSession.calleeWs.send(
+                              JSON.stringify({
+                                type: 'error',
+                                code: 'MINUTES_EXHAUSTED',
+                                message: 'Caller translation minutes exhausted. Session ended.',
+                              })
+                            );
+                            persistentSession.calleeWs.close(4402, 'MINUTES_EXHAUSTED');
+                          }
                           finalizeBillingSession(persistentSession.sessionKey);
                         }
                       } catch (periodicErr) {
@@ -3680,6 +3722,16 @@ wss.on('connection', (clientWs, req) => {
                         );
                         clientWs.close(4402, 'MINUTES_EXHAUSTED');
                       }
+                      if (persistentSession.calleeWs && persistentSession.calleeWs.readyState === WebSocket.OPEN) {
+                        persistentSession.calleeWs.send(
+                          JSON.stringify({
+                            type: 'error',
+                            code: 'MINUTES_EXHAUSTED',
+                            message: 'Caller translation minutes exhausted. Session ended.',
+                          })
+                        );
+                        persistentSession.calleeWs.close(4402, 'MINUTES_EXHAUSTED');
+                      }
                       finalizeBillingSession(sessionKey);
                       cleanup();
                     }
@@ -3688,6 +3740,9 @@ wss.on('connection', (clientWs, req) => {
                   }
                 })();
               }
+            } else if (isCallee && existingBillingSession) {
+              existingBillingSession.calleeWs = clientWs;
+              console.log(`[${clientId}] [SaaS Relay Metering] Callee ${authenticatedUid} linked to active call session ${sessionKey}.`);
             }
 
             clientWs.send(
