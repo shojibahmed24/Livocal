@@ -113,6 +113,8 @@ class PushNotificationsRepo {
         'messageContent': messageContent,
         'authorId': user.id,
         'highPriority': isHighPriority,
+        if (message.expiresAt != null)
+          'expiresAt': message.expiresAt!.millisecondsSinceEpoch.toString(),
       },
     );
 
@@ -192,7 +194,22 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     return;
   }
 
-  // 2. Chat message delivered status update & local Isar persistence
+  // 2. Remote Delete for Everyone / Purge synchronization in background
+  if (data['type'] == 'DELETE_MESSAGE' || data['type'] == 'PURGE_EXPIRED') {
+    final msgId = data['messageId'] as String?;
+    try {
+      await IsarDb.init();
+      if (msgId != null && msgId.isNotEmpty) {
+        await IsarDb.deleteMessage(msgId);
+      }
+      await IsarDb.purgeDisappearingMessages();
+    } catch (e) {
+      debugPrint('[PushNotificationsRepo] Background delete message sync error: $e');
+    }
+    return;
+  }
+
+  // 3. Chat message delivered status update & local Isar persistence
   if (data['messageId'] != null) {
     try {
       final authorId = data['authorId'] as String? ?? '';
@@ -208,6 +225,9 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         }
       }
       await IsarDb.init();
+      // Opportunistically purge any expired disappearing messages from local Isar in the background isolate
+      await IsarDb.purgeDisappearingMessages();
+
       final msgId = data['messageId'] as String;
       final content = data['messageContent'] as String? ?? data['body'] as String? ?? '';
       String currentUid = '';
@@ -220,6 +240,17 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
           } catch (_) {}
         }
       }
+
+      Timestamp? expiresAt;
+      if (data['expiresAt'] != null) {
+        try {
+          final expMs = int.tryParse(data['expiresAt'].toString());
+          if (expMs != null) {
+            expiresAt = Timestamp.fromMillisecondsSinceEpoch(expMs);
+          }
+        } catch (_) {}
+      }
+
       if (msgId.isNotEmpty && authorId.isNotEmpty) {
         await IsarDb.addMessage(Message(
           id: msgId,
@@ -228,6 +259,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
           senderId: authorId,
           receiverId: currentUid,
           timestamp: Timestamp.now(),
+          expiresAt: expiresAt,
         ));
       }
     } catch (e) {

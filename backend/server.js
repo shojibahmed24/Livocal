@@ -150,6 +150,7 @@ const ChatMessageNotifySchema = z.object({
   messageContent: z.string().max(5000).optional(),
   authorId: z.string().max(128).optional(),
   highPriority: z.boolean().optional(),
+  expiresAt: z.string().max(64).optional(),
 });
 
 const MatchContactsSchema = z.object({
@@ -737,6 +738,7 @@ app.post(
           authorId: String(callerUid),
           authorAvatar: String(verifiedAuthorAvatar),
           isMuted: isMutedByRecipient ? 'true' : 'false',
+          ...(req.body.expiresAt ? { expiresAt: String(req.body.expiresAt) } : {}),
         },
         android: {
           priority: isHighPriority ? 'high' : 'normal',
@@ -2916,6 +2918,40 @@ app.post('/api/admin/migrate-user-payment-pii', authenticateAdmin, async (req, r
 });
 
 /**
+ * Authoritative background sweeper to purge expired disappearing messages across all chats.
+ * Compares Firestore Timestamps accurately without cross-type serialization flaws.
+ */
+async function purgeExpiredMessagesCore() {
+  if (!firestoreDb) return 0;
+  const nowTimestamp = Timestamp.now();
+  let deletedCount = 0;
+  const chatsSnap = await firestoreDb.collection('chats').limit(200).get();
+  for (const chatDoc of chatsSnap.docs) {
+    const msgsSnap = await chatDoc.ref.collection('messages')
+      .where('expiresAt', '<=', nowTimestamp)
+      .limit(100)
+      .get();
+    for (const mDoc of msgsSnap.docs) {
+      await mDoc.ref.delete();
+      deletedCount++;
+    }
+  }
+  return deletedCount;
+}
+
+// Scheduled server-side cleanup task: runs every 10 minutes to guarantee cloud disappearing message deletion
+setInterval(async () => {
+  try {
+    const count = await purgeExpiredMessagesCore();
+    if (count > 0) {
+      console.log(`[DisappearingMessages] Scheduled server purge deleted ${count} expired message(s)`);
+    }
+  } catch (err) {
+    console.warn('[DisappearingMessages] Scheduled server purge note:', err.message);
+  }
+}, 10 * 60 * 1000);
+
+/**
  * POST /api/admin/purge-expired-messages
  * Authenticated admin endpoint to safely purge expired disappearing messages using Firestore Timestamps.
  * Strictly protected by authenticateAdmin middleware and uses Timestamp comparison to avoid cross-type bugs.
@@ -2923,23 +2959,11 @@ app.post('/api/admin/migrate-user-payment-pii', authenticateAdmin, async (req, r
 app.post('/api/admin/purge-expired-messages', authenticateAdmin, async (req, res) => {
   if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
   try {
-    const nowTimestamp = Timestamp.now();
-    let deletedCount = 0;
-    const chatsSnap = await firestoreDb.collection('chats').limit(100).get();
-    for (const chatDoc of chatsSnap.docs) {
-      const msgsSnap = await chatDoc.ref.collection('messages')
-        .where('expiresAt', '<=', nowTimestamp)
-        .limit(100)
-        .get();
-      for (const mDoc of msgsSnap.docs) {
-        await mDoc.ref.delete();
-        deletedCount++;
-      }
-    }
+    const deletedCount = await purgeExpiredMessagesCore();
     return res.json({
       success: true,
       purgedCount: deletedCount,
-      timestamp: nowTimestamp.toDate().toISOString(),
+      timestamp: new Date().toISOString(),
     });
   } catch (err) {
     console.error('[AdminPurgeMessages] Error purging expired messages:', err.message);

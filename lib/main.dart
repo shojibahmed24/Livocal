@@ -85,11 +85,36 @@ void main() async {
   );
 }
 
-class Livocal extends ConsumerWidget {
+class Livocal extends ConsumerStatefulWidget {
   const Livocal({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<Livocal> createState() => _LivocalState();
+}
+
+class _LivocalState extends ConsumerState<Livocal> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Whenever the user unlocks or resumes the app, immediately purge expired disappearing messages
+      IsarDb.purgeDisappearingMessages();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(appLocaleProvider);
     return MaterialApp(
