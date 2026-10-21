@@ -119,8 +119,8 @@ class CallKitService {
       textAccept: 'Accept',
       textDecline: 'Decline',
       missedCallNotification: const NotificationParams(
-        showNotification: true,
-        isShowCallback: true,
+        showNotification: false,
+        isShowCallback: false,
         subtitle: 'Missed Call',
         callbackText: 'Call back',
       ),

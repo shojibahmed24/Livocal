@@ -227,6 +227,7 @@ class CallController extends StateNotifier<CallControllerState> {
         },
         onCallback: (callId, body) {
           debugPrint('[CallController] CallKit onCallback (Call back) for $callId');
+          CallKitService().endCall(callId);
         },
       );
       FlutterCallkitIncoming.activeCalls().then((calls) {
@@ -719,6 +720,17 @@ class CallController extends StateNotifier<CallControllerState> {
         .watchCallSession(session.callId, self.id)
         .listen((remote) {
       if (remote == null) return;
+      if (remote.status == CallStateStatus.connected) {
+        debugPrint('[CallController] Call answered on another device. Dismissing ringing UI without missed call.');
+        _callTimeoutTimer?.cancel();
+        _callTimeoutTimer = null;
+        CallKitService().endAllCalls();
+        endCall(
+          endStatus: CallStateStatus.ended,
+          recordAsMissed: false,
+        );
+        return;
+      }
       if (remote.status == CallStateStatus.ended ||
           remote.status == CallStateStatus.rejected ||
           remote.status == CallStateStatus.missed) {
