@@ -50,20 +50,33 @@ class BlockService {
   /// Check if a given user/contact ID is currently blocked
   static bool isBlocked(String contactId) {
     if (contactId.isEmpty) return false;
-    final list = SharedPref.instance.getStringList(_prefKeyBlockedIds) ?? [];
-    return list.contains(contactId);
+    try {
+      if (!SharedPref.isInitialized) return false;
+      final list = SharedPref.instance.getStringList(_prefKeyBlockedIds) ?? [];
+      return list.contains(contactId);
+    } catch (e) {
+      debugPrint('[BlockService] isBlocked safe fallback: $e');
+      return false;
+    }
   }
 
   /// Get list of all currently blocked IDs
   static List<String> getBlockedIds() {
-    return SharedPref.instance.getStringList(_prefKeyBlockedIds) ?? [];
+    try {
+      if (!SharedPref.isInitialized) return [];
+      return SharedPref.instance.getStringList(_prefKeyBlockedIds) ?? [];
+    } catch (e) {
+      debugPrint('[BlockService] getBlockedIds safe fallback: $e');
+      return [];
+    }
   }
 
   /// Get full detailed list of blocked contacts
   static List<BlockedContactInfo> getBlockedContacts() {
-    final raw = SharedPref.instance.getString(_prefKeyBlockedMeta);
-    if (raw == null || raw.isEmpty) return [];
     try {
+      if (!SharedPref.isInitialized) return [];
+      final raw = SharedPref.instance.getString(_prefKeyBlockedMeta);
+      if (raw == null || raw.isEmpty) return [];
       final decoded = jsonDecode(raw) as List;
       return decoded
           .map((item) =>

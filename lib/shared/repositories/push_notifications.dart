@@ -17,6 +17,7 @@ import '../../features/calls/services/ringtone_manager.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/constants/app_config.dart';
+import '../../firebase_options.dart';
 
 final pushNotificationsRepoProvider = Provider(
   (ref) => PushNotificationsRepo(FirebaseMessaging.instance, ref),
@@ -118,29 +119,56 @@ class PushNotificationsRepo {
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   } catch (e) {
     debugPrint('[PushNotificationsRepo] Background Firebase.initializeApp error: $e');
   }
+
+  try {
+    await SharedPref.init();
+  } catch (e) {
+    debugPrint('[PushNotificationsRepo] Background SharedPref.init error: $e');
+  }
+
   final data = message.data;
 
   // 1. Wake up phone for Incoming Voice Call
   if (data['type'] == 'INCOMING_CALL') {
-    final callerId = data['callerId'] as String? ?? '';
-    if (callerId.isNotEmpty && BlockService.isBlocked(callerId)) {
-      debugPrint('[PushNotificationsRepo] Suppressing background call from blocked caller: $callerId');
-      return;
+    try {
+      final callerId = data['callerId'] as String? ?? '';
+      if (callerId.isNotEmpty) {
+        bool blocked = false;
+        try {
+          blocked = BlockService.isBlocked(callerId);
+        } catch (blockErr) {
+          debugPrint('[PushNotificationsRepo] isBlocked check error: $blockErr');
+          blocked = false;
+        }
+        if (blocked) {
+          debugPrint('[PushNotificationsRepo] Suppressing background call from blocked caller: $callerId');
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('[PushNotificationsRepo] Error checking block status: $e');
     }
-    final callId = data['callId'] ?? '';
-    final callerName = data['callerName'] ?? 'Incoming Call';
-    final callerPhone = data['callerNumber'] ?? data['callerPhone'] ?? '';
-    final callerAvatar = data['callerAvatar'] as String?;
-    await CallKitService().showIncomingCall(
-      callId: callId,
-      callerName: callerName,
-      callerPhone: callerPhone,
-      callerAvatar: callerAvatar,
-    );
+
+    try {
+      final callId = data['callId'] ?? '';
+      final callerName = data['callerName'] ?? 'Incoming Call';
+      final callerPhone = data['callerNumber'] ?? data['callerPhone'] ?? '';
+      final callerAvatar = data['callerAvatar'] as String?;
+      await CallKitService().showIncomingCall(
+        callId: callId,
+        callerName: callerName,
+        callerPhone: callerPhone,
+        callerAvatar: callerAvatar,
+      );
+    } catch (e, st) {
+      debugPrint('[PushNotificationsRepo] CallKitService showIncomingCall error: $e\n$st');
+    }
     return;
   }
 
@@ -148,21 +176,29 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   if (data['messageId'] != null) {
     try {
       final authorId = data['authorId'] as String? ?? '';
-      if (authorId.isNotEmpty && BlockService.isBlocked(authorId)) {
-        debugPrint(
-            '[PushNotificationsRepo] Dropping background message from blocked author: $authorId');
-        return;
+      if (authorId.isNotEmpty) {
+        bool blocked = false;
+        try {
+          blocked = BlockService.isBlocked(authorId);
+        } catch (_) {}
+        if (blocked) {
+          debugPrint(
+              '[PushNotificationsRepo] Dropping background message from blocked author: $authorId');
+          return;
+        }
       }
       await IsarDb.init();
       final msgId = data['messageId'] as String;
       final content = data['messageContent'] as String? ?? data['body'] as String? ?? '';
-      final rawUser = SharedPref.instance.getString('user');
       String currentUid = '';
-      if (rawUser != null) {
-        try {
-          final u = jsonDecode(rawUser);
-          currentUid = u['id'] ?? '';
-        } catch (_) {}
+      if (SharedPref.isInitialized) {
+        final rawUser = SharedPref.instance.getString('user');
+        if (rawUser != null) {
+          try {
+            final u = jsonDecode(rawUser);
+            currentUid = u['id'] ?? '';
+          } catch (_) {}
+        }
       }
       if (msgId.isNotEmpty && authorId.isNotEmpty) {
         await IsarDb.addMessage(Message(
