@@ -51,7 +51,18 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
 }
 
 // Whitelist of valid Gemini 3.5 Live Translation voices
-const ALLOWED_VOICES = new Set(['Puck', 'Charon', 'Kore', 'Fenrir', 'Aoede']);
+const ALLOWED_VOICES = new Set([
+  'Puck',
+  'Charon',
+  'Kore',
+  'Fenrir',
+  'Aoede',
+  'Leda',
+  'Sularis',
+  'Orus',
+  'Perseus',
+  'Zephyr',
+]);
 
 function sanitizeBoundedNote(val, maxLen = 500) {
   if (val === undefined || val === null) return '';
@@ -2708,6 +2719,64 @@ app.post(
     } catch (err) {
       console.error('[Translate] API error:', err);
       res.status(500).json({ error: 'Translation request failed' });
+    }
+  }
+);
+
+/**
+ * POST /api/voice-preview
+ * Returns real synthesized audio bytes (base64) using Gemini multimodal audio model.
+ */
+app.post(
+  '/api/voice-preview',
+  apiLimiter,
+  async (req, res) => {
+    const { voice, text, langName } = req.body || {};
+    const validVoice = (voice && ALLOWED_VOICES.has(voice)) ? voice : 'Aoede';
+    const sampleText = text || 'Hello, I will translate your calls.';
+
+    if (!GEMINI_API_KEY) {
+      return res.status(503).json({ error: 'GEMINI_API_KEY_NOT_CONFIGURED' });
+    }
+
+    try {
+      const model = 'gemini-2.0-flash';
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: `Say with natural tone: "${sampleText}"` }]
+            }
+          ],
+          generationConfig: {
+            responseModalities: ['AUDIO'],
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: {
+                  voiceName: validVoice,
+                }
+              }
+            }
+          }
+        })
+      });
+
+      if (!response.ok) {
+        return res.status(502).json({ error: `Upstream error: ${response.status}` });
+      }
+
+      const json = await response.json();
+      const parts = json.candidates?.[0]?.content?.parts || [];
+      const inlineData = parts.find(p => p.inlineData)?.inlineData;
+      if (inlineData?.data) {
+        return res.json({ audioBase64: inlineData.data });
+      }
+      return res.status(500).json({ error: 'No audio returned' });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
     }
   }
 );
