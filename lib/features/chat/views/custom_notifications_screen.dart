@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
@@ -520,6 +522,19 @@ class _CustomNotificationsScreenState
                             'contact_high_priority_$_contactId',
                             val,
                           );
+                          final uid = FirebaseAuth.instance.currentUser?.uid;
+                          if (uid != null) {
+                            FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(uid)
+                                .collection('notification_settings')
+                                .doc(_contactId)
+                                .set({
+                              'highPriority': val,
+                              'contactId': _contactId,
+                              'updatedAt': FieldValue.serverTimestamp(),
+                            }, SetOptions(merge: true)).catchError((_) {});
+                          }
                         }
                       : null,
                 ),

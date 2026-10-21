@@ -44,7 +44,6 @@ import 'package:livocal/shared/widgets/camera.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
-import 'package:livocal/features/home/views/linked_devices_screen.dart';
 import 'package:livocal/features/home/views/starred_messages_screen.dart';
 import 'package:livocal/features/chat/controllers/chat_controller.dart';
 import 'package:livocal/features/status/views/text_status_composer_screen.dart';
@@ -539,14 +538,6 @@ class _HomePageState extends ConsumerState<HomePage>
               icon: const Icon(Icons.more_vert),
               onSelected: (value) async {
                 switch (value) {
-                  case 'linked_devices':
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            LinkedDevicesScreen(user: widget.user),
-                      ),
-                    );
-                    break;
                   case 'starred_messages':
                     Navigator.of(context).push(
                       MaterialPageRoute(
@@ -698,10 +689,6 @@ class _HomePageState extends ConsumerState<HomePage>
 
                 // CHATS tab (default)
                 return [
-                  PopupMenuItem(
-                    value: 'linked_devices',
-                    child: Text(AppStrings.tr(ref, 'linkedDevices')),
-                  ),
                   PopupMenuItem(
                     value: 'starred_messages',
                     child: Text(AppStrings.tr(ref, 'starredMessages')),

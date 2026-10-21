@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -442,6 +444,18 @@ class _NotificationsSettingsScreenState
               onChanged: (val) {
                 setState(() => _highPriority = val);
                 SharedPref.instance.setBool('notif_high_priority', val);
+                final uid = FirebaseAuth.instance.currentUser?.uid;
+                if (uid != null) {
+                  FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(uid)
+                      .collection('notification_settings')
+                      .doc('preferences')
+                      .set({
+                    'highPriority': val,
+                    'updatedAt': FieldValue.serverTimestamp(),
+                  }, SetOptions(merge: true)).catchError((_) {});
+                }
               },
             ),
           ),

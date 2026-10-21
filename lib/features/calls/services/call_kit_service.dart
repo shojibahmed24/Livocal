@@ -90,6 +90,16 @@ class CallKitService {
         : (SharedPref.isInitialized ? SharedPref.instance.getString('notif_custom_ringtone_path') : null);
 
     String ringtone = 'livocal_harmony';
+    final vibrateMode = customEnabled
+        ? (SharedPref.isInitialized
+            ? (SharedPref.instance.getString('contact_call_vibrate_$callerId') ??
+                SharedPref.instance.getString('notif_call_vibrate') ??
+                'Default')
+            : 'Default')
+        : (SharedPref.isInitialized
+            ? (SharedPref.instance.getString('notif_call_vibrate') ?? 'Default')
+            : 'Default');
+
     if (isMuted) {
       ringtone = 'silent';
     } else if (customPath != null &&
@@ -139,6 +149,7 @@ class CallKitService {
         'callerName': callerName,
         'callerPhone': callerPhone,
         'callerAvatar': callerAvatar ?? '',
+        'vibrateMode': vibrateMode,
       },
       headers: <String, dynamic>{'apiKey': 'LivocalCall'},
       android: AndroidParams(
@@ -150,7 +161,9 @@ class CallKitService {
         textColor: '#FFFFFF',
         incomingCallNotificationChannelName: isMuted
             ? 'Livocal Muted Calls'
-            : 'Livocal Incoming Calls',
+            : (vibrateMode == 'Off'
+                ? 'Livocal Incoming Calls (Silent Vibration)'
+                : 'Livocal Incoming Calls'),
         missedCallNotificationChannelName: 'Livocal Missed Calls',
         isShowFullLockedScreen: !isMuted,
       ),

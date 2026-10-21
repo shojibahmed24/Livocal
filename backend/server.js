@@ -139,6 +139,7 @@ const ChatMessageNotifySchema = z.object({
   messageId: z.string().min(1, 'messageId is required').max(128),
   messageContent: z.string().max(5000).optional(),
   authorId: z.string().max(128).optional(),
+  highPriority: z.boolean().optional(),
 });
 
 const MatchContactsSchema = z.object({
@@ -592,7 +593,7 @@ app.post(
       return res.status(503).json({ error: 'Firebase Admin not initialized on server' });
     }
 
-    const { receiverId, messageContent, messageId, authorId } = req.body;
+    const { receiverId, messageContent, messageId, authorId, highPriority } = req.body;
 
     const callerUid = req.user.uid;
     if (authorId && authorId !== callerUid) {
@@ -679,6 +680,34 @@ app.post(
         console.warn(`[ChatNotify] Could not check mute status for ${receiverId}:`, muteErr.message);
       }
 
+      // Check recipient preference for high priority if not explicitly specified by client
+      let isHighPriority = highPriority !== undefined ? highPriority === true : true;
+      try {
+        if (highPriority === undefined && firestoreDb) {
+          const customDoc = await firestoreDb
+            .collection('users')
+            .doc(receiverId)
+            .collection('notification_settings')
+            .doc(callerUid)
+            .get();
+          if (customDoc.exists && typeof customDoc.data().highPriority === 'boolean') {
+            isHighPriority = customDoc.data().highPriority;
+          } else {
+            const prefDoc = await firestoreDb
+              .collection('users')
+              .doc(receiverId)
+              .collection('notification_settings')
+              .doc('preferences')
+              .get();
+            if (prefDoc.exists && prefDoc.data().highPriority === false) {
+              isHighPriority = false;
+            }
+          }
+        }
+      } catch (prefErr) {
+        console.warn(`[ChatNotify] Could not check highPriority pref for ${receiverId}:`, prefErr.message);
+      }
+
       // If contact is muted by recipient, send a silent data-only push without system tray notification
       const payload = {
         token: targetToken,
@@ -700,7 +729,11 @@ app.post(
           isMuted: isMutedByRecipient ? 'true' : 'false',
         },
         android: {
-          priority: 'high',
+          priority: isHighPriority ? 'high' : 'normal',
+          notification: {
+            channelId: isHighPriority ? 'livocal_high_importance' : 'livocal_default',
+            priority: isHighPriority ? 'high' : 'default',
+          },
         },
       };
 

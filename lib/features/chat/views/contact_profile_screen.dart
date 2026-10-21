@@ -18,7 +18,6 @@ import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:flutter_contacts/flutter_contacts.dart' as fc;
 import 'package:share_plus/share_plus.dart';
-import 'package:livocal/features/chat/views/verify_security_code_screen.dart';
 import 'package:livocal/theme/color_theme.dart';
 
 class ContactProfileScreen extends ConsumerStatefulWidget {
@@ -145,8 +144,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     case 'view_in_address_book':
                       _viewInAddressBook();
                       break;
-                    case 'verify_security':
-                      _verifySecurityCode();
+                    case 'encryption_info':
+                      _showEncryptionDialog(context);
                       break;
                     case 'block':
                       _toggleBlockStatus();
@@ -188,12 +187,12 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     ),
                   ),
                   const PopupMenuItem(
-                    value: 'verify_security',
+                    value: 'encryption_info',
                     child: Row(
                       children: [
-                        Icon(Icons.verified_user_outlined, size: 20, color: Color(0xFF8696A0)),
+                        Icon(Icons.shield_outlined, size: 20, color: Color(0xFF8696A0)),
                         SizedBox(width: 12),
-                        Text('Verify security code'),
+                        Text('Encryption info'),
                       ],
                     ),
                   ),
@@ -570,18 +569,14 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                   ),
                   const Divider(height: 1, indent: 56),
                   ListTile(
-                    leading: const Icon(Icons.lock_outline, color: Color(0xFF8696A0)),
+                    leading: const Icon(Icons.shield_outlined, color: Color(0xFF8696A0)),
                     title: const Text('Encryption & Security'),
                     subtitle: const Text(
-                      'Messages and calls are private and secured. Tap to verify.',
+                      'Messages and calls use secure TLS/SRTP transport and ephemeral translation',
                       style: TextStyle(fontSize: 12),
                     ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.info_outline, color: Color(0xFF8696A0), size: 20),
-                      tooltip: 'Encryption details',
-                      onPressed: () => _showEncryptionDialog(context),
-                    ),
-                    onTap: _verifySecurityCode,
+                    trailing: const Icon(Icons.info_outline, color: Color(0xFF8696A0), size: 20),
+                    onTap: () => _showEncryptionDialog(context),
                   ),
                   const Divider(height: 1, indent: 56),
                   ListTile(
@@ -857,27 +852,14 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
     }
   }
 
-  void _verifySecurityCode() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => VerifySecurityCodeScreen(
-          contactName: widget.contactName,
-          contactPhone: widget.other.phone.getFormattedNumber(),
-          selfId: widget.self.id,
-          otherId: widget.other.id,
-        ),
-      ),
-    );
-  }
-
   void _showEncryptionDialog(BuildContext context) {
     showAppDialog(
       context: context,
-      icon: Icons.lock,
+      icon: Icons.shield_rounded,
       iconColor: AppColors.primary,
-      title: 'Private & Secure Messaging',
+      title: 'Transport Encryption & Privacy',
       contentText:
-          'Messages and calls with ${widget.contactName} are protected with authenticated TLS and DTLS-SRTP encryption. Real-time voice translations are processed in ephemeral memory by Gemini Live API.',
+          'Messages and calls with ${widget.contactName} are protected in transit using authenticated TLS 1.3 and WebRTC DTLS-SRTP encryption.\n\nVoice translations are securely processed in ephemeral server memory via Gemini Multimodal Live API without persistent disk logging.',
       actions: [
         AppDialogAction(
           label: 'OK',
