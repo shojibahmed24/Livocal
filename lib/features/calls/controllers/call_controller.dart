@@ -265,6 +265,30 @@ class CallController extends StateNotifier<CallControllerState> {
     );
   }
 
+  /// Silently logs a call from a muted contact to call history without ringing or showing incoming call UI
+  void recordSuppressedMutedCall({
+    required User self,
+    required CallSession incomingSession,
+  }) async {
+    debugPrint('[CallController] Recording suppressed call from muted contact ${incomingSession.callerId} in call history');
+    final record = CallHistoryRecord(
+      callId: incomingSession.callId,
+      peerId: incomingSession.callerId,
+      peerName: incomingSession.callerName,
+      peerAvatar: incomingSession.callerAvatar,
+      peerPhone: incomingSession.callerPhone,
+      timestamp: DateTime.now(),
+      durationSeconds: 0,
+      isIncoming: true,
+      isMissed: true,
+      translationEnabled: incomingSession.translationEnabled,
+      myLangCode: incomingSession.calleeLangCode,
+      peerLangCode: incomingSession.callerLangCode,
+    );
+    await repo.addCallHistoryRecord(record);
+    state = state.copyWith(callHistory: repo.getCallHistory());
+  }
+
   Future<bool> setMyLanguage(String langCode, {bool isExplicit = true}) async {
     final synced = await CallRepository.setMyLanguageCode(langCode, isExplicit: isExplicit);
     state = state.copyWith(myLangCode: langCode);

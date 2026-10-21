@@ -281,6 +281,19 @@ class _HomePageState extends ConsumerState<HomePage>
         debugPrint('[base.dart] Suppressing incoming call from blocked caller: ${incomingSession.callerId}');
         return;
       }
+
+      // Complete Mute Suppression: If caller is muted by user, suppress IncomingCallScreen entirely
+      final callerId = incomingSession.callerId;
+      final isMuted = SharedPref.isInitialized &&
+          (SharedPref.instance.getBool('contact_muted_$callerId') ?? false);
+      if (isMuted) {
+        debugPrint('[base.dart] Completely suppressing incoming call UI from muted caller: $callerId');
+        ref.read(callControllerProvider.notifier).recordSuppressedMutedCall(
+          self: widget.user,
+          incomingSession: incomingSession,
+        );
+        return;
+      }
       final currentSession = ref.read(callControllerProvider).activeSession;
       if (currentSession != null) return;
       ref.read(callControllerProvider.notifier).receiveIncomingCall(

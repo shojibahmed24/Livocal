@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_callkit_incoming/entities/entities.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
@@ -80,14 +79,16 @@ class CallKitService {
         SharedPref.isInitialized &&
         (SharedPref.instance.getBool('contact_muted_$callerId') ?? false);
 
+    // Complete Mute Suppression: do not pop CallKit UI or notification banner for muted callers
+    if (isMuted) {
+      debugPrint('[CallKitService] showIncomingCall suppressed for muted caller: $callerId');
+      return;
+    }
+
     final customEnabled = callerId != null &&
         callerId.isNotEmpty &&
         SharedPref.isInitialized &&
         (SharedPref.instance.getBool('custom_notif_enabled_$callerId') ?? false);
-
-    final customPath = customEnabled
-        ? (SharedPref.isInitialized ? SharedPref.instance.getString('contact_custom_ringtone_path_$callerId') : null)
-        : (SharedPref.isInitialized ? SharedPref.instance.getString('notif_custom_ringtone_path') : null);
 
     String ringtone = 'livocal_harmony';
     final vibrateMode = customEnabled
@@ -100,13 +101,7 @@ class CallKitService {
             ? (SharedPref.instance.getString('notif_call_vibrate') ?? 'Default')
             : 'Default');
 
-    if (isMuted) {
-      ringtone = 'silent';
-    } else if (customPath != null &&
-        customPath.isNotEmpty &&
-        File(customPath).existsSync()) {
-      ringtone = customPath;
-    } else if (SharedPref.isInitialized) {
+    if (SharedPref.isInitialized) {
       final selectedTone = customEnabled
           ? (SharedPref.instance.getString('contact_call_ringtone_$callerId') ??
               SharedPref.instance.getString('notif_call_ringtone') ??
@@ -114,13 +109,14 @@ class CallKitService {
           : (SharedPref.instance.getString('notif_call_ringtone') ??
               'Livocal Harmony (Default)');
 
-      if (selectedTone.contains('Digital Pulse')) {
-        ringtone = 'digital_pulse';
-      } else if (selectedTone.contains('Marimba')) {
-        ringtone = 'marimba_bloom';
-      } else if (selectedTone.contains('Classic Bell')) {
+      final lower = selectedTone.toLowerCase();
+      if (lower.contains('classic') || lower.contains('bell')) {
         ringtone = 'classic_bell';
-      } else if (selectedTone.contains('Livocal Harmony')) {
+      } else if (lower.contains('digital') || lower.contains('pulse')) {
+        ringtone = 'digital_pulse';
+      } else if (lower.contains('marimba') || lower.contains('bloom')) {
+        ringtone = 'marimba_bloom';
+      } else {
         ringtone = 'livocal_harmony';
       }
     }
