@@ -49,6 +49,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
     if (_navigated) return;
     _navigated = true;
     await RingtoneManager().stopRingtone();
+    await CallKitService().endAllCalls();
     final controller = ref.read(callControllerProvider.notifier);
     if (!_answerWithTranslation) {
       await controller.setAudioMode(CallAudioMode.originalOnly);
@@ -70,6 +71,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
     if (_navigated) return;
     _navigated = true;
     await RingtoneManager().stopRingtone();
+    await CallKitService().endAllCalls();
     await ref.read(callControllerProvider.notifier).endCall(
           recordAsMissed: true,
         );

@@ -78,10 +78,8 @@ class CallKitService {
       textAccept: 'Accept',
       textDecline: 'Decline',
       missedCallNotification: const NotificationParams(
-        showNotification: true,
-        isShowCallback: true,
-        subtitle: 'Missed AI Voice Call',
-        callbackText: 'Call back',
+        showNotification: false,
+        isShowCallback: false,
       ),
       extra: <String, dynamic>{
         'callId': callId,
@@ -93,9 +91,12 @@ class CallKitService {
         isCustomNotification: true,
         isShowLogo: false,
         ringtonePath: 'system_ringtone_default',
-        backgroundColor: '#00B386',
-        actionColor: '#4CAF50',
+        backgroundColor: '#091014',
+        actionColor: '#00A884',
         textColor: '#FFFFFF',
+        incomingCallNotificationChannelName: 'Livocal Incoming Calls',
+        missedCallNotificationChannelName: 'Livocal Missed Calls',
+        isShowFullLockedScreen: true,
       ),
       ios: const IOSParams(
         iconName: 'AppIcon',

@@ -186,12 +186,14 @@ class CallController extends StateNotifier<CallControllerState> {
     try {
       CallKitService().init(
         onAccept: (callId) async {
+          await CallKitService().endCall(callId);
           await acceptAndConnectCall(callId: callId);
           appNavigatorKey.currentState?.push(
             MaterialPageRoute(builder: (_) => const ActiveCallScreen()),
           );
         },
         onDecline: (callId) {
+          CallKitService().endCall(callId);
           debugPrint('[CallController] CallKit onDecline for $callId');
           if (state.activeSession?.callId == callId &&
               state.activeSession?.status == CallStateStatus.ringing) {
@@ -199,6 +201,7 @@ class CallController extends StateNotifier<CallControllerState> {
           }
         },
         onTimeout: (callId) {
+          CallKitService().endCall(callId);
           debugPrint('[CallController] CallKit onTimeout for $callId');
           if (state.activeSession?.callId == callId &&
               state.activeSession?.status == CallStateStatus.ringing) {
