@@ -285,7 +285,7 @@ class CallHistoryRecord {
   /// Whether this history record represents an AI translated call.
   bool get isTranslatedCall =>
       translationEnabled &&
-      (myLangCode.toLowerCase().trim() != peerLangCode.toLowerCase().trim());
+      !CallLanguageRegistry.isSameLanguageFamily(myLangCode, peerLangCode);
 
   Map<String, dynamic> toMap() => {
         'callId': callId,

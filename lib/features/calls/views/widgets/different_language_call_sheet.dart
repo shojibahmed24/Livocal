@@ -29,20 +29,23 @@ Future<void> initiateSmartCall(
     callerLangCode = 'bn';
   }
 
-  // 2. Resolve Callee's Spoken Language
+  // 2. Resolve Callee's Spoken Language (Respects explicit settings, infers from phone if unset)
   String calleeLangCode = callee.spokenLanguage.trim();
-  if (calleeLangCode.isEmpty || calleeLangCode == 'bn') {
-    // Check if callee has a registered Firestore profile with explicit language
+  if (!callee.hasExplicitSpokenLanguage) {
     try {
       final fsRepo = ref.read(firebaseFirestoreRepositoryProvider);
       final fetchedCallee = await fsRepo.getUserById(callee.id);
-      if (fetchedCallee != null && fetchedCallee.spokenLanguage.isNotEmpty) {
+      if (fetchedCallee != null && fetchedCallee.hasExplicitSpokenLanguage) {
         calleeLangCode = fetchedCallee.spokenLanguage;
+      } else {
+        calleeLangCode = CallLanguageRegistry.inferLanguageFromPhone(callee.phone);
       }
-    } catch (_) {}
+    } catch (_) {
+      calleeLangCode = CallLanguageRegistry.inferLanguageFromPhone(callee.phone);
+    }
   }
   if (calleeLangCode.isEmpty) {
-    calleeLangCode = 'bn';
+    calleeLangCode = CallLanguageRegistry.inferLanguageFromPhone(callee.phone);
   }
 
   // If forceTranslation is explicitly set, bypass detection modal and use specified setting

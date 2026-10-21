@@ -767,4 +767,47 @@ class CallLanguageRegistry {
     if (cleanA.isEmpty || cleanB.isEmpty) return false;
     return cleanA == cleanB;
   }
+
+  /// Infers default spoken language from a phone number's country code.
+  /// Eliminates the 'bn' default trap for international users who haven't explicitly set their language.
+  static String inferLanguageFromPhone(dynamic phone) {
+    if (phone == null) return 'en';
+    String raw = '';
+    String code = '';
+    if (phone is String) {
+      raw = phone.trim();
+    } else {
+      try {
+        raw = (phone.formattedNumber ?? phone.rawNumber ?? phone.number ?? '').toString().trim();
+        code = (phone.code ?? '').toString().trim().replaceAll('+', '');
+      } catch (_) {}
+    }
+
+    final digits = raw.replaceAll(RegExp(r'[\s\-\(\)\+]'), '');
+    if (code == '880' || digits.startsWith('880') || (digits.startsWith('01') && digits.length == 11)) {
+      return 'bn';
+    }
+    if (code == '91' || digits.startsWith('91')) {
+      return 'hi';
+    }
+    if (code == '1' || (digits.startsWith('1') && digits.length == 11)) {
+      return 'en';
+    }
+    if (code == '44' || digits.startsWith('44')) {
+      return 'en-GB';
+    }
+    if (code == '966' || digits.startsWith('966') || code == '971' || digits.startsWith('971')) {
+      return 'ar';
+    }
+    if (code == '34' || digits.startsWith('34')) {
+      return 'es';
+    }
+    if (code == '33' || digits.startsWith('33')) {
+      return 'fr';
+    }
+    if (code == '49' || digits.startsWith('49')) {
+      return 'de';
+    }
+    return 'en';
+  }
 }

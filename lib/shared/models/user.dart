@@ -1,3 +1,4 @@
+import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:isar/isar.dart';
 part 'user.g.dart';
 
@@ -33,6 +34,8 @@ class User {
   UserActivityStatus activityStatus;
   @ignore
   String spokenLanguage;
+  @ignore
+  bool hasExplicitSpokenLanguage;
 
   User({
     required this.id,
@@ -41,16 +44,25 @@ class User {
     required this.phone,
     required this.activityStatus,
     this.spokenLanguage = 'bn',
+    this.hasExplicitSpokenLanguage = false,
   });
 
   factory User.fromMap(Map<String, dynamic> userData) {
+    final explicitLang = (userData['spokenLanguage'] as String?)?.trim();
+    final phone = Phone.fromMap(userData['phone']);
+    final hasExplicit = explicitLang != null && explicitLang.isNotEmpty;
+    final resolvedLang = hasExplicit
+        ? explicitLang
+        : CallLanguageRegistry.inferLanguageFromPhone(phone);
+
     return User(
       id: userData['id'],
       name: userData['name'],
       avatarUrl: userData['avatarUrl'],
-      phone: Phone.fromMap(userData['phone']),
+      phone: phone,
       activityStatus: UserActivityStatus.fromValue(userData['activityStatus']),
-      spokenLanguage: userData['spokenLanguage'] as String? ?? 'bn',
+      spokenLanguage: resolvedLang,
+      hasExplicitSpokenLanguage: hasExplicit,
     );
   }
 
@@ -72,6 +84,7 @@ class User {
     Phone? phone,
     UserActivityStatus? activityStatus,
     String? spokenLanguage,
+    bool? hasExplicitSpokenLanguage,
   }) {
     return User(
       id: id ?? this.id,
@@ -80,6 +93,8 @@ class User {
       phone: phone ?? this.phone,
       activityStatus: activityStatus ?? this.activityStatus,
       spokenLanguage: spokenLanguage ?? this.spokenLanguage,
+      hasExplicitSpokenLanguage:
+          hasExplicitSpokenLanguage ?? this.hasExplicitSpokenLanguage,
     );
   }
 

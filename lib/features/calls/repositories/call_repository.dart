@@ -41,7 +41,7 @@ class CallRepository {
   static String getMyLanguageCode() =>
       SharedPref.instance.getString(prefMyLang) ?? 'bn';
 
-  static Future<void> setMyLanguageCode(String code) async {
+  static Future<bool> setMyLanguageCode(String code) async {
     await SharedPref.instance.setString(prefMyLang, code);
     try {
       final currentUid = fb.FirebaseAuth.instance.currentUser?.uid;
@@ -49,11 +49,14 @@ class CallRepository {
         await FirebaseFirestore.instance.collection('users').doc(currentUid).set({
           'spokenLanguage': code,
           'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        }, SetOptions(merge: true)).timeout(const Duration(seconds: 4));
+        return true;
       }
     } catch (e) {
       debugPrint('[CallRepository] Error syncing spokenLanguage to Firestore: $e');
+      return false;
     }
+    return true;
   }
 
   static String getPeerLanguageCode() =>
