@@ -95,24 +95,14 @@ class PushNotificationsRepo {
     final user = getCurrentUser();
     if (user == null) return;
 
-    final customEnabled = SharedPref.isInitialized &&
-        (SharedPref.instance.getBool('custom_notif_enabled_${message.receiverId}') ?? false);
-    final isHighPriority = SharedPref.isInitialized &&
-        (customEnabled
-            ? (SharedPref.instance.getBool('contact_high_priority_${message.receiverId}') ??
-                SharedPref.instance.getBool('notif_high_priority') ??
-                true)
-            : (SharedPref.instance.getBool('notif_high_priority') ?? true));
-
-    // Security: Only pass recipient ID and message details.
-    // The backend uses Admin SDK to lookup recipient's private FCM token and verifies author identity.
+    // Security & Privacy: Only pass recipient ID, message details, and author ID.
+    // The backend uses Admin SDK to lookup recipient's private FCM token and strictly enforces recipient-configured notification priority & mute preferences.
     final String messageJson = jsonEncode(
       {
         'receiverId': message.receiverId,
         'messageId': message.id,
         'messageContent': messageContent,
         'authorId': user.id,
-        'highPriority': isHighPriority,
         if (message.expiresAt != null)
           'expiresAt': message.expiresAt!.millisecondsSinceEpoch.toString(),
       },

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_callkit_incoming/entities/entities.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
+import 'package:livocal/shared/services/native_channel.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
 class CallKitService {
@@ -185,7 +186,22 @@ class CallKitService {
       ),
     );
 
+    // Enforce genuine CallKit vibration gating at Android OS level:
+    if (vibrateMode == 'Off') {
+      NativeChannel.setCallkitChannelVibration(false);
+    } else {
+      NativeChannel.setCallkitChannelVibration(true);
+    }
+
     await FlutterCallkitIncoming.showCallkitIncoming(callKitParams);
+
+    // If vibration is Off, immediately kill Android Vibrator looping waveform
+    if (vibrateMode == 'Off') {
+      NativeChannel.stopCallkitVibration();
+      Future.delayed(const Duration(milliseconds: 100), NativeChannel.stopCallkitVibration);
+      Future.delayed(const Duration(milliseconds: 300), NativeChannel.stopCallkitVibration);
+      Future.delayed(const Duration(milliseconds: 600), NativeChannel.stopCallkitVibration);
+    }
   }
 
   /// Displays native missed call notification with "Call back" action

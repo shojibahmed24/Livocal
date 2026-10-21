@@ -691,10 +691,10 @@ app.post(
         console.warn(`[ChatNotify] Could not check mute status for ${receiverId}:`, muteErr.message);
       }
 
-      // Check recipient preference for high priority if not explicitly specified by client
-      let isHighPriority = highPriority !== undefined ? highPriority === true : true;
+      // High Priority Semantics: The RECIPIENT's preference is the sole authority
+      let isHighPriority = true;
       try {
-        if (highPriority === undefined && firestoreDb) {
+        if (firestoreDb) {
           const customDoc = await firestoreDb
             .collection('users')
             .doc(receiverId)
@@ -710,13 +710,13 @@ app.post(
               .collection('notification_settings')
               .doc('preferences')
               .get();
-            if (prefDoc.exists && prefDoc.data().highPriority === false) {
-              isHighPriority = false;
+            if (prefDoc.exists && typeof prefDoc.data().highPriority === 'boolean') {
+              isHighPriority = prefDoc.data().highPriority;
             }
           }
         }
       } catch (prefErr) {
-        console.warn(`[ChatNotify] Could not check highPriority pref for ${receiverId}:`, prefErr.message);
+        console.warn(`[ChatNotify] Could not check recipient highPriority pref for ${receiverId}:`, prefErr.message);
       }
 
       // If contact is muted by recipient, send a silent data-only push without system tray notification

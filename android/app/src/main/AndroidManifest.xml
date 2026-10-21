@@ -47,6 +47,10 @@
         </intent>
     </queries>
     <application android:label="Livocal" android:name="${applicationName}" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round">
+        <!-- Default notification channel for FCM incoming messages -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="livocal_default" />
         <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop" android:theme="@style/LaunchTheme" android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode" android:hardwareAccelerated="true" android:windowSoftInputMode="adjustResize" android:showWhenLocked="true" android:turnScreenOn="true" android:showOnLockScreen="true" android:inheritShowWhenLocked="true">
             <!-- Specifies an Android theme to apply to this Activity as soon as
                  the Android process has started. This theme is visible to the user
