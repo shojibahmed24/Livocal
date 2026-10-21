@@ -3040,7 +3040,10 @@ wss.on('connection', (clientWs, req) => {
   let activeCallId = null;
   let sessionKey = null;
   let isCallee = false;
-  let isCaller = true;
+  let isCaller = false;
+  let isSetupInProgress = false;
+  let isSetupComplete = false;
+  let isVerifiedParticipant = false;
 
   // Pre-auth Handshake Timeout: Stalled unauthenticated connections killed after 15 seconds
   const preAuthTimeout = setTimeout(() => {
@@ -3088,24 +3091,27 @@ wss.on('connection', (clientWs, req) => {
     }
 
     // Mid-call disconnect handling for call billing sessions:
-    if (code === 1000) {
-      // Normal closure (call hang up) -> immediately finalize and cleanup billing
-      finalizeBillingSession(sessionKey);
-    } else if (sessionKey && callBillingSessions.has(sessionKey)) {
-      const session = callBillingSessions.get(sessionKey);
-      if (session) {
-        if (session.clientWs === clientWs) {
-          session.clientWs = null;
-          if (!session.disconnectTimer) {
-            console.log(`[${clientId}] Caller disconnected mid-call for ${sessionKey}. Starting 45s reconnect grace timer.`);
-            session.disconnectTimer = setTimeout(() => {
-              console.log(`[Billing] Call ${sessionKey} disconnect grace period expired. Cleaning up billing session.`);
-              finalizeBillingSession(sessionKey);
-            }, 45000);
+    // Strictly restrict billing teardown to verified participants whose setup has fully completed
+    if (isSetupComplete && isVerifiedParticipant && sessionKey && callBillingSessions.has(sessionKey)) {
+      if (code === 1000) {
+        // Normal closure (call hang up) by verified participant -> finalize billing
+        finalizeBillingSession(sessionKey);
+      } else {
+        const session = callBillingSessions.get(sessionKey);
+        if (session) {
+          if (session.clientWs === clientWs) {
+            session.clientWs = null;
+            if (!session.disconnectTimer) {
+              console.log(`[${clientId}] Caller disconnected mid-call for ${sessionKey}. Starting 45s reconnect grace timer.`);
+              session.disconnectTimer = setTimeout(() => {
+                console.log(`[Billing] Call ${sessionKey} disconnect grace period expired. Cleaning up billing session.`);
+                finalizeBillingSession(sessionKey);
+              }, 45000);
+            }
+          } else if (session.calleeWs === clientWs) {
+            session.calleeWs = null;
+            console.log(`[${clientId}] Callee disconnected for ${sessionKey}. Caller billing session unaffected.`);
           }
-        } else if (session.calleeWs === clientWs) {
-          session.calleeWs = null;
-          console.log(`[${clientId}] Callee disconnected for ${sessionKey}. Caller billing session unaffected.`);
         }
       }
     }
@@ -3153,12 +3159,13 @@ wss.on('connection', (clientWs, req) => {
 
   clientWs.on('message', async (data, isBinary) => {
     try {
-      // 1. STRICT AUTHENTICATION GUARD:
-      // The socket MUST authenticate via 'setup' handshake with a valid Firebase ID token first.
-      // Unauthenticated audio packets or control messages are immediately rejected and connection terminated.
-      if (!authenticatedUid) {
+      // 1. STRICT AUTHENTICATION & SETUP VERIFICATION GUARD:
+      // The socket MUST complete the 'setup' handshake and pass all Firestore participant authorization checks
+      // before ANY other messages (audio, language swap, call_ended, hangup) can be processed.
+      // Drops pipelined messages sent during in-progress setup to eliminate race conditions.
+      if (!isSetupComplete) {
         if (isBinary) {
-          console.warn(`[${clientId}] Unauthenticated binary packet rejected. Closing connection.`);
+          console.warn(`[${clientId}] Unauthenticated binary packet rejected before setup completion. Closing connection.`);
           if (clientWs.readyState === WebSocket.OPEN) {
             clientWs.send(
               JSON.stringify({
@@ -3190,20 +3197,22 @@ wss.on('connection', (clientWs, req) => {
           return;
         }
 
-        if (msg.type !== 'setup') {
-          console.warn(`[${clientId}] Unauthorized message type '${msg.type}' before authentication. Closing.`);
+        if (msg.type !== 'setup' || isSetupInProgress) {
+          console.warn(`[${clientId}] Unauthorized message type '${msg.type}' (or pipelined during in-progress setup) before verification. Closing.`);
           if (clientWs.readyState === WebSocket.OPEN) {
             clientWs.send(
               JSON.stringify({
                 type: 'error',
                 code: 'UNAUTHORIZED',
-                message: 'Authentication required. Setup handshake required.',
+                message: 'Authentication required. Setup handshake and verification must complete first.',
               })
             );
             clientWs.close(4401, 'Unauthorized');
           }
           return;
         }
+
+        isSetupInProgress = true;
 
         // REDACT TOKEN IN LOGS (Prevents credential leakage in server console)
         const sanitizedMsg = { ...msg, token: msg.token ? '[REDACTED]' : undefined };
@@ -3319,14 +3328,14 @@ wss.on('connection', (clientWs, req) => {
         };
 
         // Determine Call Role (Caller vs Callee) via Firestore call record:
-        activeCallId = typeof msg.callId === 'string' && msg.callId.trim().length > 0 ? msg.callId.trim() : null;
-        sessionKey = activeCallId || `standalone_${authenticatedUid}`;
-        isCallee = false;
-        isCaller = true;
+        // CRITICAL RACE FIX (B-3): sessionKey is NEVER assigned before Firestore participant verification succeeds!
+        const candidateCallId = typeof msg.callId === 'string' && msg.callId.trim().length > 0 ? msg.callId.trim() : null;
+        let localIsCallee = false;
+        let localIsCaller = true;
 
-        if (activeCallId) {
+        if (candidateCallId) {
           if (!firestoreDb) {
-            console.error(`[${clientId}] Cannot verify callId ${activeCallId} because Firestore is unavailable.`);
+            console.error(`[${clientId}] Cannot verify callId ${candidateCallId} because Firestore is unavailable.`);
             if (clientWs.readyState === WebSocket.OPEN) {
               clientWs.send(
                 JSON.stringify({
@@ -3337,13 +3346,14 @@ wss.on('connection', (clientWs, req) => {
               );
               clientWs.close(4503, 'DATABASE_UNAVAILABLE');
             }
+            isSetupInProgress = false;
             return;
           }
 
           try {
-            const callDoc = await firestoreDb.collection('calls').doc(activeCallId).get();
+            const callDoc = await firestoreDb.collection('calls').doc(candidateCallId).get();
             if (!callDoc.exists) {
-              console.warn(`[${clientId}] Security rejection: No active call record found for callId ${activeCallId} (user: ${authenticatedUid}).`);
+              console.warn(`[${clientId}] Security rejection: No active call record found for callId ${candidateCallId} (user: ${authenticatedUid}).`);
               if (clientWs.readyState === WebSocket.OPEN) {
                 clientWs.send(
                   JSON.stringify({
@@ -3354,23 +3364,24 @@ wss.on('connection', (clientWs, req) => {
                 );
                 clientWs.close(4404, 'INVALID_CALL_ID');
               }
+              isSetupInProgress = false;
               return;
             }
 
             const callData = callDoc.data() || {};
             if (callData.callerId && callData.callerId !== authenticatedUid && callData.calleeId === authenticatedUid) {
               // Authenticated user is the CALLEE!
-              isCallee = true;
-              isCaller = false;
-              console.log(`[${clientId}] User ${authenticatedUid} verified as CALLEE for call ${activeCallId}. Translation granted free under telecom caller-pays policy.`);
+              localIsCallee = true;
+              localIsCaller = false;
+              console.log(`[${clientId}] User ${authenticatedUid} verified as CALLEE for call ${candidateCallId}. Translation granted free under telecom caller-pays policy.`);
             } else if (callData.callerId === authenticatedUid) {
               // Authenticated user is the CALLER!
-              isCaller = true;
-              isCallee = false;
-              console.log(`[${clientId}] User ${authenticatedUid} verified as CALLER for call ${activeCallId}. Relay minute metering active.`);
+              localIsCaller = true;
+              localIsCallee = false;
+              console.log(`[${clientId}] User ${authenticatedUid} verified as CALLER for call ${candidateCallId}. Relay minute metering active.`);
             } else {
               // Security: User is neither caller nor callee for this callId!
-              console.warn(`[${clientId}] Security rejection: User ${authenticatedUid} attempted to access call ${activeCallId} without being caller (${callData.callerId}) or callee (${callData.calleeId}).`);
+              console.warn(`[${clientId}] Security rejection: User ${authenticatedUid} attempted to access call ${candidateCallId} without being caller (${callData.callerId}) or callee (${callData.calleeId}).`);
               if (clientWs.readyState === WebSocket.OPEN) {
                 clientWs.send(
                   JSON.stringify({
@@ -3381,10 +3392,11 @@ wss.on('connection', (clientWs, req) => {
                 );
                 clientWs.close(4403, 'UNAUTHORIZED_CALL_SESSION');
               }
+              isSetupInProgress = false;
               return;
             }
           } catch (callLookupErr) {
-            console.error(`[${clientId}] Failed to verify call session for ${activeCallId}:`, callLookupErr.message);
+            console.error(`[${clientId}] Failed to verify call session for ${candidateCallId}:`, callLookupErr.message);
             if (clientWs.readyState === WebSocket.OPEN) {
               clientWs.send(
                 JSON.stringify({
@@ -3395,9 +3407,19 @@ wss.on('connection', (clientWs, req) => {
               );
               clientWs.close(4500, 'CALL_VERIFICATION_FAILED');
             }
+            isSetupInProgress = false;
             return;
           }
         }
+
+        // Authoritative state assignment: ONLY executed AFTER Firestore verification passes!
+        activeCallId = candidateCallId;
+        sessionKey = candidateCallId || `standalone_${authenticatedUid}`;
+        isCallee = localIsCallee;
+        isCaller = localIsCaller;
+        isVerifiedParticipant = true;
+        isSetupComplete = true;
+        isSetupInProgress = false;
 
         // Reconnect session linking (Role-Guarded):
         // Only the paying caller whose UID matches existingSession.callerUid may claim the billing socket!
@@ -3566,7 +3588,11 @@ wss.on('connection', (clientWs, req) => {
         // Re-initialize upstream session with updated roles
         await initGeminiSession();
       } else if (msg.type === 'call_ended' || msg.type === 'hangup') {
-        console.log(`[${clientId}] Call ended signal received from client for ${sessionKey}`);
+        if (!isSetupComplete || !isVerifiedParticipant || !sessionKey || (!isCaller && !isCallee)) {
+          console.warn(`[${clientId}] Blocked unverified call_ended signal for ${sessionKey || 'unassigned'}`);
+          return;
+        }
+        console.log(`[${clientId}] Call ended signal received from verified participant (${isCaller ? 'caller' : 'callee'}) for ${sessionKey}`);
         finalizeBillingSession(sessionKey);
         cleanup(1000);
         return;
