@@ -16,6 +16,8 @@ import 'package:livocal/theme/theme.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 
 import '../../../shared/models/user.dart';
+import '../../../shared/utils/abc.dart';
+import '../../../shared/utils/shared_pref.dart';
 import '../../../shared/utils/storage_paths.dart';
 import '../controllers/chat_controller.dart';
 import '../models/attachement.dart';
@@ -145,6 +147,20 @@ class _AttachmentMessageSenderState
         ),
       );
 
+      final chatId = getChatId(self.id, other.id);
+      final disappearingTimer = SharedPref.instance.getString('chat_disappearing_$chatId') ??
+          SharedPref.instance.getString('contact_disappearing_${other.id}') ??
+          SharedPref.instance.getString('privacy_disappearing') ??
+          'Off';
+      Timestamp? expiresAt;
+      if (disappearingTimer == '24 hours') {
+        expiresAt = Timestamp.fromDate(DateTime.now().add(const Duration(hours: 24)));
+      } else if (disappearingTimer == '7 days') {
+        expiresAt = Timestamp.fromDate(DateTime.now().add(const Duration(days: 7)));
+      } else if (disappearingTimer == '90 days') {
+        expiresAt = Timestamp.fromDate(DateTime.now().add(const Duration(days: 90)));
+      }
+
       ref.read(chatControllerProvider.notifier).sendMessageWithAttachments(
             Message(
               id: messageId,
@@ -153,6 +169,8 @@ class _AttachmentMessageSenderState
               senderId: self.id,
               receiverId: other.id,
               timestamp: Timestamp.now(),
+              expiresAt: expiresAt,
+              disappearingDuration: disappearingTimer != 'Off' ? disappearingTimer : null,
               attachment: attachment..uploadStatus = UploadStatus.uploading,
             ),
           );

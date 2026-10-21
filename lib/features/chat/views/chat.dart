@@ -1000,6 +1000,7 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
   late final String chatId;
   late final ScrollController scrollController;
   late Stream<List<Message>> messageStream;
+  StreamSubscription<DocumentSnapshot>? _chatSettingsSub;
 
   bool isInitialRender = true;
   int unreadCount = 0;
@@ -1036,11 +1037,30 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
     scrollController = ScrollController();
     scrollController.addListener(_onScroll);
 
+    _chatSettingsSub = FirebaseFirestore.instance
+        .collection('chat_settings')
+        .doc(chatId)
+        .snapshots()
+        .listen((snapshot) {
+      if (snapshot.exists && snapshot.data() != null) {
+        final val = snapshot.data()!['disappearingDuration'] as String?;
+        if (val != null && val.isNotEmpty) {
+          SharedPref.instance.setString('chat_disappearing_$chatId', val);
+          SharedPref.instance.setString('contact_disappearing_${other.id}', val);
+          IsarDb.purgeDisappearingMessages(forChatId: chatId, forContactId: other.id);
+          if (mounted) setState(() {});
+        }
+      }
+    }, onError: (e) {
+      debugPrint('[ChatStream] chat_settings listener error: $e');
+    });
+
     super.initState();
   }
 
   @override
   void dispose() {
+    _chatSettingsSub?.cancel();
     scrollController.removeListener(_onScroll);
     scrollController.dispose();
     super.dispose();
@@ -1130,7 +1150,8 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
         }
 
         final rawMessages = snapshot.data!;
-        final disappearingTimer = SharedPref.instance.getString('contact_disappearing_${other.id}') ??
+        final disappearingTimer = SharedPref.instance.getString('chat_disappearing_$chatId') ??
+            SharedPref.instance.getString('contact_disappearing_${other.id}') ??
             SharedPref.instance.getString('privacy_disappearing') ??
             'Off';
         Duration? expiryDuration;
@@ -1142,15 +1163,17 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
           expiryDuration = const Duration(days: 90);
         }
 
-        final List<Message> messages;
-        if (expiryDuration != null) {
-          final cutoff = DateTime.now().subtract(expiryDuration);
-          messages = rawMessages
-              .where((m) => m.timestamp.toDate().isAfter(cutoff))
-              .toList();
-        } else {
-          messages = rawMessages;
-        }
+        final now = DateTime.now();
+        final cutoff = expiryDuration != null ? now.subtract(expiryDuration) : null;
+        final List<Message> messages = rawMessages.where((m) {
+          if (m.expiresAt != null && m.expiresAt!.toDate().isBefore(now)) {
+            return false;
+          }
+          if (cutoff != null && m.timestamp.toDate().isBefore(cutoff)) {
+            return false;
+          }
+          return true;
+        }).toList();
         final unreadMsgCount = updateUnreadCount(messages);
 
         if (isInitialRender) {

@@ -160,6 +160,22 @@ class FirebaseFirestoreRepo {
             await IsarDb.deleteMessageForEveryone(msgId);
           }
 
+          // Drop already-expired disappearing messages
+          final expiresAtRaw = docData['expiresAt'];
+          if (expiresAtRaw != null) {
+            DateTime? expDate;
+            if (expiresAtRaw is Timestamp) {
+              expDate = expiresAtRaw.toDate();
+            } else if (expiresAtRaw is Map) {
+              final sec = expiresAtRaw['_seconds'] ?? expiresAtRaw['seconds'];
+              if (sec is int) expDate = DateTime.fromMillisecondsSinceEpoch(sec * 1000);
+            }
+            if (expDate != null && expDate.isBefore(DateTime.now())) {
+              docChange.doc.reference.delete().catchError((_) {});
+              continue;
+            }
+          }
+
           final senderId = docData['senderId'] as String? ?? '';
           if (senderId.isNotEmpty && senderId != ownId && BlockService.isBlocked(senderId)) {
             debugPrint('[FirebaseFirestoreRepo] Dropping message stream item from blocked sender: $senderId');

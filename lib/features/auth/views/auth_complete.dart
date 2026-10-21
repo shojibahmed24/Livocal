@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,6 +27,24 @@ class _AuthCompletePageState extends ConsumerState<AuthCompletePage> {
     Future.delayed(const Duration(seconds: 2), () async {
       final userString = jsonEncode(widget.user.toMap());
       SharedPref.instance.setString("user", userString);
+
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(widget.user.id)
+            .get();
+        if (doc.exists) {
+          final data = doc.data();
+          final defaultDisappearing =
+              data?['defaultDisappearingTimer'] as String?;
+          if (defaultDisappearing != null && defaultDisappearing.isNotEmpty) {
+            await SharedPref.instance
+                .setString('privacy_disappearing', defaultDisappearing);
+          }
+        }
+      } catch (e) {
+        debugPrint('[AuthComplete] restore disappearing timer error: $e');
+      }
 
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(

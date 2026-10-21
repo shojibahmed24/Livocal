@@ -434,7 +434,34 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
     );
   }
 
+  Message _applyDisappearingSettingsIfNeeded(Message message) {
+    if (message.expiresAt != null) return message;
+    final chatId = getChatId(message.senderId, message.receiverId);
+    final disappearingTimer = SharedPref.instance.getString('chat_disappearing_$chatId') ??
+        SharedPref.instance.getString('contact_disappearing_${message.receiverId}') ??
+        SharedPref.instance.getString('privacy_disappearing') ??
+        'Off';
+
+    Timestamp? expiresAt;
+    if (disappearingTimer == '24 hours') {
+      expiresAt = Timestamp.fromDate(DateTime.now().add(const Duration(hours: 24)));
+    } else if (disappearingTimer == '7 days') {
+      expiresAt = Timestamp.fromDate(DateTime.now().add(const Duration(days: 7)));
+    } else if (disappearingTimer == '90 days') {
+      expiresAt = Timestamp.fromDate(DateTime.now().add(const Duration(days: 90)));
+    }
+
+    if (expiresAt != null) {
+      return message.copyWith(
+        expiresAt: expiresAt,
+        disappearingDuration: disappearingTimer,
+      );
+    }
+    return message;
+  }
+
   Future<void> sendMessageNoAttachments(Message message) async {
+    message = _applyDisappearingSettingsIfNeeded(message);
     if (BlockService.isBlocked(message.receiverId)) {
       debugPrint('[ChatController] Cannot send message: contact ${message.receiverId} is blocked');
       return;
@@ -496,6 +523,7 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
   }
 
   void sendMessageWithAttachments(Message message) async {
+    message = _applyDisappearingSettingsIfNeeded(message);
     if (BlockService.isBlocked(message.receiverId)) {
       debugPrint('[ChatController] Cannot send media: contact ${message.receiverId} is blocked');
       return;

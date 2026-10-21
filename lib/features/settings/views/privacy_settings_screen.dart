@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
@@ -40,8 +42,27 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
         SharedPref.instance.getString('status_privacy') ?? 'contacts';
     _readReceipts =
         SharedPref.instance.getBool('privacy_read_receipts') ?? true;
-    _disappearingTimer =
-        SharedPref.instance.getString('privacy_disappearing') ?? 'Off';
+    final cachedDisappearing =
+        SharedPref.instance.getString('privacy_disappearing');
+    if (cachedDisappearing != null) {
+      _disappearingTimer = cachedDisappearing;
+    } else {
+      _disappearingTimer = 'Off';
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null && uid.isNotEmpty) {
+        FirebaseFirestore.instance.collection('users').doc(uid).get().then((doc) {
+          if (doc.exists && mounted) {
+            final cloudTimer = doc.data()?['defaultDisappearingTimer'] as String?;
+            if (cloudTimer != null && cloudTimer.isNotEmpty) {
+              setState(() => _disappearingTimer = cloudTimer);
+              SharedPref.instance.setString('privacy_disappearing', cloudTimer);
+            }
+          }
+        }).catchError((e) {
+          debugPrint('[PrivacySettings] Fetch cloud disappearing timer error: $e');
+        });
+      }
+    }
     _fingerprintLock =
         SharedPref.instance.getBool('privacy_fingerprint') ?? false;
   }
@@ -231,9 +252,20 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
               title: AppStrings.tr(ref, 'defaultMessageTimer'),
               options: ['Off', '24 hours', '7 days', '90 days'],
               currentValue: _disappearingTimer,
-              onSelected: (val) {
+              onSelected: (val) async {
                 setState(() => _disappearingTimer = val);
-                SharedPref.instance.setString('privacy_disappearing', val);
+                await SharedPref.instance.setString('privacy_disappearing', val);
+                final uid = FirebaseAuth.instance.currentUser?.uid;
+                if (uid != null && uid.isNotEmpty) {
+                  try {
+                    await FirebaseFirestore.instance.collection('users').doc(uid).set({
+                      'defaultDisappearingTimer': val,
+                      'privacyUpdatedAt': FieldValue.serverTimestamp(),
+                    }, SetOptions(merge: true)).timeout(const Duration(seconds: 4));
+                  } catch (e) {
+                    debugPrint('[PrivacySettings] Error syncing disappearing timer: $e');
+                  }
+                }
               },
             ),
           ),

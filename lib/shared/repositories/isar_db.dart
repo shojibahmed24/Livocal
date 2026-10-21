@@ -276,7 +276,10 @@ class IsarDb {
     String? forContactId,
   }) async {
     String setting = 'Off';
-    if (forContactId != null && forContactId.isNotEmpty) {
+    if (forChatId != null && forChatId.isNotEmpty) {
+      setting = SharedPref.instance.getString('chat_disappearing_$forChatId') ?? 'Off';
+    }
+    if (setting == 'Off' && forContactId != null && forContactId.isNotEmpty) {
       setting =
           SharedPref.instance.getString('contact_disappearing_$forContactId') ??
               'Off';
@@ -285,6 +288,45 @@ class IsarDb {
       setting =
           SharedPref.instance.getString('privacy_disappearing') ?? 'Off';
     }
+
+    final starredIds =
+        SharedPref.instance.getStringList('starred_message_ids') ?? [];
+
+    // 1. Purge messages with explicit expiresAt <= now from both Firestore and Isar
+    try {
+      final currentUid = FirebaseAuth.instance.currentUser?.uid;
+      if (currentUid != null) {
+        final nowTs = Timestamp.now();
+        final expiredSnap = await FirebaseFirestore.instance
+            .collection('chats')
+            .doc(currentUid)
+            .collection('messages')
+            .where('expiresAt', isLessThanOrEqualTo: nowTs)
+            .limit(100)
+            .get();
+
+        for (final doc in expiredSnap.docs) {
+          final data = doc.data();
+          final msgId = data['id'] as String? ?? doc.id;
+          if (!starredIds.contains(msgId)) {
+            await doc.reference.delete().catchError((_) {});
+            final localMsg = await isar.storedMessages
+                .filter()
+                .messageIdEqualTo(msgId)
+                .findFirst();
+            if (localMsg != null) {
+              await isar.writeTxn(() async {
+                await isar.storedMessages.delete(localMsg.id);
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[IsarDb] Error purging explicit expiresAt messages: $e');
+    }
+
+    // 2. If disappearing duration is set for this chat/contact/globally, enforce the cutoff
     if (setting == 'Off') return;
 
     Duration? duration;
@@ -298,8 +340,6 @@ class IsarDb {
 
     if (duration == null) return;
     final cutoff = DateTime.now().subtract(duration);
-    final starredIds =
-        SharedPref.instance.getStringList('starred_message_ids') ?? [];
 
     try {
       final query = isar.storedMessages.filter().timestampLessThan(cutoff);
@@ -320,7 +360,7 @@ class IsarDb {
             '[IsarDb] Purged ${toDelete.length} disappearing messages from Isar (setting: $setting, chat: $forChatId)');
       }
 
-      // 2. Also permanently purge expired messages from Firestore inboxes
+      // Also permanently purge expired messages from Firestore inboxes
       try {
         final currentUid = FirebaseAuth.instance.currentUser?.uid;
         if (currentUid != null) {

@@ -116,6 +116,14 @@ class _HomePageState extends ConsumerState<HomePage>
             continue;
           }
 
+          // Drop already-expired disappearing messages
+          if (message.expiresAt != null &&
+              message.expiresAt!.toDate().isBefore(DateTime.now())) {
+            debugPrint(
+                '[base.dart] Dropping expired disappearing message ${message.id}');
+            continue;
+          }
+
           nonBlockedMessages.add(message);
 
           if (message.senderId != widget.user.id) {
