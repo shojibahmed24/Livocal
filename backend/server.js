@@ -1193,11 +1193,41 @@ app.post('/api/wallet/recharge', authenticateAdmin, async (req, res) => {
     ? rawIdempotencyKey.trim().replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 64)
     : null;
 
+  // Keyless deduplication guard: Suppress accidental duplicate recharges within 120s for unkeyed requests
+  if (!cleanIdempotencyKey) {
+    const twoMinutesAgoIso = new Date(Date.now() - 120 * 1000).toISOString();
+    try {
+      const recentDuplicates = await firestoreDb.collection('recharge_transactions')
+        .where('userId', '==', targetUid)
+        .where('status', '==', 'completed')
+        .where('createdAt', '>=', twoMinutesAgoIso)
+        .limit(5)
+        .get();
+
+      for (const d of recentDuplicates.docs) {
+        const txData = d.data() || {};
+        if (txData.minutesAdded === minutesToAdd) {
+          return res.status(200).json({
+            success: true,
+            alreadyProcessed: true,
+            transactionId: d.id,
+            minutesAdded: txData.minutesAdded,
+            message: `Recharge of ${minutesToAdd}m was already processed for this user within the last 2 minutes (TxID: ${d.id}). Provide an idempotencyKey for distinct transactions.`,
+          });
+        }
+      }
+    } catch (dupErr) {
+      console.warn('[Wallet Recharge] Keyless duplicate check warning:', dupErr.message);
+    }
+  }
+
   try {
     const walletRef = firestoreDb.collection('users').doc(targetUid).collection('wallet').doc('current');
+    // Deterministic fallback ID tied to user, minutes, and 1-minute time bucket to prevent retry double-credit
+    const timeBucket = Math.floor(Date.now() / 60000);
     const txId = cleanIdempotencyKey
       ? (cleanIdempotencyKey.startsWith('tx_') ? cleanIdempotencyKey : `tx_${cleanIdempotencyKey}`)
-      : `adm_tx_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      : `rcg_tx_${targetUid.substring(0, 8)}_${minutesToAdd}_${timeBucket}`;
     const txRef = firestoreDb.collection('recharge_transactions').doc(txId);
 
     const result = await firestoreDb.runTransaction(async (transaction) => {
@@ -2543,31 +2573,34 @@ app.post('/api/admin/wallet/topup', authenticateAdmin, async (req, res) => {
       return res.status(404).json({ error: 'User not found with the provided phone or ID' });
     }
 
-    // Safety duplicate prevention: Check if identical topup for this user occurred within the last 120 seconds
-    const twoMinutesAgoIso = new Date(Date.now() - 120 * 1000).toISOString();
-    try {
-      const recentDuplicates = await firestoreDb.collection('recharge_transactions')
-        .where('userId', '==', targetUid)
-        .where('packId', '==', 'admin_topup')
-        .where('status', '==', 'completed')
-        .where('createdAt', '>=', twoMinutesAgoIso)
-        .limit(5)
-        .get();
+    // Safety duplicate prevention: ONLY check 120s window for KEYLESS requests.
+    // Distinct requests with distinct idempotency keys (e.g. separate manual topups from modal) must proceed unhindered!
+    if (!cleanIdempotencyKey) {
+      const twoMinutesAgoIso = new Date(Date.now() - 120 * 1000).toISOString();
+      try {
+        const recentDuplicates = await firestoreDb.collection('recharge_transactions')
+          .where('userId', '==', targetUid)
+          .where('packId', '==', 'admin_topup')
+          .where('status', '==', 'completed')
+          .where('createdAt', '>=', twoMinutesAgoIso)
+          .limit(5)
+          .get();
 
-      for (const d of recentDuplicates.docs) {
-        const txData = d.data() || {};
-        if (txData.minutesAdded === minutesToAdd) {
-          return res.status(200).json({
-            success: true,
-            alreadyProcessed: true,
-            transactionId: d.id,
-            minutesAdded: txData.minutesAdded,
-            message: `Top-up of ${minutesToAdd}m was already credited to this user within the last 2 minutes (TxID: ${d.id}).`,
-          });
+        for (const d of recentDuplicates.docs) {
+          const txData = d.data() || {};
+          if (txData.minutesAdded === minutesToAdd) {
+            return res.status(200).json({
+              success: true,
+              alreadyProcessed: true,
+              transactionId: d.id,
+              minutesAdded: txData.minutesAdded,
+              message: `Keyless top-up of ${minutesToAdd}m was already credited to this user within the last 2 minutes (TxID: ${d.id}). Provide an explicit idempotencyKey for distinct transactions.`,
+            });
+          }
         }
+      } catch (dupErr) {
+        console.warn('[Admin Topup] Duplicate check warning:', dupErr.message);
       }
-    } catch (dupErr) {
-      console.warn('[Admin Topup] Duplicate check warning:', dupErr.message);
     }
 
     const walletRef = firestoreDb.collection('users').doc(targetUid).collection('wallet').doc('current');
