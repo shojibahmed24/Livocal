@@ -12,7 +12,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 
@@ -220,32 +220,6 @@ async function authenticateRequest(req, res, next) {
 }
 
 // Health & Status endpoint (Sanitized)
-/**
- * POST /api/maintenance/purge-expired-messages
- * Periodic cron or on-demand cleanup of expired messages with TTL across all chat inboxes.
- */
-app.post('/api/maintenance/purge-expired-messages', async (req, res) => {
-  if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
-  try {
-    const nowTs = new Date().toISOString();
-    let deletedCount = 0;
-    const chatsSnap = await firestoreDb.collection('chats').limit(100).get();
-    for (const chatDoc of chatsSnap.docs) {
-      const msgsSnap = await chatDoc.ref.collection('messages')
-        .where('expiresAt', '<=', nowTs)
-        .limit(100)
-        .get();
-      for (const mDoc of msgsSnap.docs) {
-        await mDoc.ref.delete();
-        deletedCount++;
-      }
-    }
-    return res.json({ success: true, purgedCount: deletedCount, timestamp: nowTs });
-  } catch (err) {
-    console.error('[PurgeMessages] Error purging expired messages:', err.message);
-    return res.status(500).json({ error: 'Failed to purge expired messages' });
-  }
-});
 
 app.get('/health', (req, res) => {
   res.json({
@@ -2759,6 +2733,38 @@ app.post('/api/admin/cleanup-legacy-storage', authenticateAdmin, async (req, res
   } catch (err) {
     console.error('Storage cleanup error:', err.message);
     res.status(500).json({ error: 'Failed to process legacy storage cleanup', details: err.message });
+  }
+});
+
+/**
+ * POST /api/admin/purge-expired-messages
+ * Authenticated admin endpoint to safely purge expired disappearing messages using Firestore Timestamps.
+ * Strictly protected by authenticateAdmin middleware and uses Timestamp comparison to avoid cross-type bugs.
+ */
+app.post('/api/admin/purge-expired-messages', authenticateAdmin, async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
+  try {
+    const nowTimestamp = Timestamp.now();
+    let deletedCount = 0;
+    const chatsSnap = await firestoreDb.collection('chats').limit(100).get();
+    for (const chatDoc of chatsSnap.docs) {
+      const msgsSnap = await chatDoc.ref.collection('messages')
+        .where('expiresAt', '<=', nowTimestamp)
+        .limit(100)
+        .get();
+      for (const mDoc of msgsSnap.docs) {
+        await mDoc.ref.delete();
+        deletedCount++;
+      }
+    }
+    return res.json({
+      success: true,
+      purgedCount: deletedCount,
+      timestamp: nowTimestamp.toDate().toISOString(),
+    });
+  } catch (err) {
+    console.error('[AdminPurgeMessages] Error purging expired messages:', err.message);
+    return res.status(500).json({ error: 'Failed to purge expired messages' });
   }
 });
 
