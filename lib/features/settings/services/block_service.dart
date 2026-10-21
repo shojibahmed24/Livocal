@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'package:livocal/shared/constants/app_config.dart';
+import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
 class BlockedContactInfo {
@@ -57,19 +60,39 @@ class BlockService {
     try {
       if (!SharedPref.isInitialized) return false;
       final list = SharedPref.instance.getStringList(_prefKeyBlockedIds) ?? [];
+
+      // 1. Direct exact match (handles exact UID, exact phone, or exact stored ID)
       if (list.contains(identifier)) return true;
 
+      final contacts = getBlockedContacts();
+      for (final c in contacts) {
+        if (c.id == identifier) return true;
+      }
+
+      // 2. Strict guard against false positives:
+      // UIDs are account tokens (alphanumeric strings with letters, or non-phone identifiers).
+      // NEVER treat a UID as a phone number or extract digits from a UID to match suffixes!
+      final isPurePhone = RegExp(r'^\+?[0-9\s\-\(\)]+$').hasMatch(identifier);
+      if (!isPurePhone) {
+        // Identifier contains letters or symbols (it is a UID/UUID, not a phone number).
+        // Since exact ID didn't match, this non-phone entity is NOT blocked.
+        return false;
+      }
+
+      // 3. For pure phone numbers, do normalized phone matching
       final cleanIdent = cleanPhone(identifier);
-      if (cleanIdent.isNotEmpty) {
-        if (list.contains(cleanIdent)) return true;
-        // Check phone numbers of all blocked contacts
-        final contacts = getBlockedContacts();
-        for (final c in contacts) {
-          if (c.id == identifier) return true;
-          final cleanContactPhone = cleanPhone(c.phone);
-          if (cleanContactPhone.isNotEmpty) {
-            if (cleanContactPhone == cleanIdent ||
-                cleanContactPhone.endsWith(cleanIdent) ||
+      if (cleanIdent.length < 6) return false;
+
+      if (list.contains(cleanIdent)) return true;
+
+      for (final c in contacts) {
+        final cleanContactPhone = cleanPhone(c.phone);
+        if (cleanContactPhone.length >= 6) {
+          if (cleanContactPhone == cleanIdent) return true;
+          // National vs International suffix matching (e.g. +88017... vs 017...)
+          // Suffix must be at least 7 digits to prevent accidental collisions
+          if (cleanContactPhone.length >= 7 && cleanIdent.length >= 7) {
+            if (cleanContactPhone.endsWith(cleanIdent) ||
                 cleanIdent.endsWith(cleanContactPhone)) {
               return true;
             }
@@ -81,6 +104,83 @@ class BlockService {
       debugPrint('[BlockService] isBlocked safe fallback: $e');
       return false;
     }
+  }
+
+  /// Securely resolves a contact's phone number or identifier to their Firebase UID
+  /// using local IsarDb cache first, then authoritative backend /api/contacts/match.
+  /// Bypasses client-side users enumeration (B-4 rule compatibility).
+  static Future<String?> resolveUid(String identifier, {String? phone}) async {
+    final isUidLike = !identifier.startsWith('+') &&
+        !identifier.startsWith('0') &&
+        identifier.length >= 20 &&
+        RegExp(r'[a-zA-Z]').hasMatch(identifier);
+    if (isUidLike) return identifier;
+
+    final targetPhone = (phone != null && phone.isNotEmpty) ? phone : identifier;
+    final clean = cleanPhone(targetPhone);
+    if (clean.isEmpty) return null;
+
+    // 1. Check local Isar database cache
+    try {
+      final localUser = await IsarDb.getUserByPhone(targetPhone);
+      if (localUser != null && localUser.id.isNotEmpty) {
+        debugPrint('[BlockService] Resolved UID ${localUser.id} from local cache for $targetPhone');
+        return localUser.id;
+      }
+    } catch (e) {
+      debugPrint('[BlockService] Local Isar user lookup error: $e');
+    }
+
+    // 2. Query authoritative backend /api/contacts/match via Admin SDK
+    try {
+      final candidates = <String>{clean};
+      if (targetPhone.startsWith('+')) {
+        candidates.add(targetPhone.substring(1));
+      } else {
+        candidates.add('+$clean');
+        if (clean.startsWith('0')) {
+          candidates.add('+880${clean.substring(1)}');
+          candidates.add('880${clean.substring(1)}');
+        } else if (clean.startsWith('880')) {
+          candidates.add('0${clean.substring(3)}');
+          candidates.add('+$clean');
+        } else {
+          candidates.add('+880$clean');
+        }
+      }
+
+      final idToken = await _auth.currentUser?.getIdToken();
+      if (idToken != null) {
+        final matchUrl = AppConfig.matchContactsUrl;
+        final response = await http.post(
+          Uri.parse(matchUrl),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $idToken',
+          },
+          body: jsonEncode({
+            'phoneNumbers': candidates.toList(),
+          }),
+        ).timeout(const Duration(seconds: 5));
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final matches = data['matches'] as List<dynamic>? ?? [];
+          if (matches.isNotEmpty) {
+            final first = matches.first as Map<String, dynamic>;
+            final matchedId = first['id'] as String?;
+            if (matchedId != null && matchedId.isNotEmpty) {
+              debugPrint('[BlockService] Resolved UID $matchedId via backend match for $targetPhone');
+              return matchedId;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[BlockService] Backend UID resolution error: $e');
+    }
+
+    return null;
   }
 
   /// Get list of all currently blocked IDs and numbers
@@ -125,27 +225,8 @@ class BlockService {
     final prevMeta = SharedPref.instance.getString(_prefKeyBlockedMeta);
 
     // Resolve UID if contactId is phone-keyed or phone is available
-    String? resolvedUid;
+    final resolvedUid = await resolveUid(contactId, phone: phone);
     final clean = cleanPhone(phone ?? (contactId.startsWith('+') || contactId.startsWith('0') ? contactId : ''));
-    if (!contactId.startsWith('+') && !contactId.startsWith('0') && contactId.length >= 20) {
-      resolvedUid = contactId;
-    }
-
-    if (resolvedUid == null && clean.isNotEmpty) {
-      try {
-        final querySnap = await _firestore
-            .collection('users')
-            .where('phone.number', isEqualTo: clean)
-            .limit(1)
-            .get()
-            .timeout(const Duration(seconds: 4));
-        if (querySnap.docs.isNotEmpty) {
-          resolvedUid = querySnap.docs.first.id;
-        }
-      } catch (e) {
-        debugPrint('[BlockService] Could not resolve UID by phone: $e');
-      }
-    }
 
     // 1. Update local IDs (store raw ID, resolved UID, and clean phone)
     final ids = List<String>.from(prevIds);
@@ -223,17 +304,29 @@ class BlockService {
     final prevMeta = SharedPref.instance.getString(_prefKeyBlockedMeta);
 
     final contacts = List<BlockedContactInfo>.from(getBlockedContacts());
-    final match = contacts.where((c) => c.id == contactId).firstOrNull;
-    final clean = match != null ? cleanPhone(match.phone) : cleanPhone(contactId);
+    final clean = cleanPhone(contactId);
+    final match = contacts.where((c) =>
+        c.id == contactId ||
+        (c.phone.isNotEmpty && (c.phone == contactId || cleanPhone(c.phone) == clean))).firstOrNull;
+
+    final matchedPhoneClean = match != null ? cleanPhone(match.phone) : '';
 
     // 1. Update local IDs
     final ids = List<String>.from(prevIds);
     ids.remove(contactId);
     if (clean.isNotEmpty) ids.remove(clean);
+    if (match != null) {
+      ids.remove(match.id);
+      if (match.phone.isNotEmpty) ids.remove(match.phone);
+      if (matchedPhoneClean.isNotEmpty) ids.remove(matchedPhoneClean);
+    }
     await SharedPref.instance.setStringList(_prefKeyBlockedIds, ids);
 
     // 2. Update local detailed meta
-    contacts.removeWhere((c) => c.id == contactId);
+    contacts.removeWhere((c) =>
+        c.id == contactId ||
+        (match != null && c.id == match.id) ||
+        (c.phone.isNotEmpty && (c.phone == contactId || cleanPhone(c.phone) == clean)));
     final encoded = jsonEncode(contacts.map((c) => c.toMap()).toList());
     await SharedPref.instance.setString(_prefKeyBlockedMeta, encoded);
 
@@ -254,6 +347,21 @@ class BlockService {
               .doc(uid)
               .collection('blocked_users')
               .doc(clean));
+        }
+
+        if (match != null && match.id != contactId) {
+          batch.delete(_firestore
+              .collection('users')
+              .doc(uid)
+              .collection('blocked_users')
+              .doc(match.id));
+        }
+        if (match != null && match.phone.isNotEmpty && match.phone != contactId && match.phone != clean) {
+          batch.delete(_firestore
+              .collection('users')
+              .doc(uid)
+              .collection('blocked_users')
+              .doc(match.phone));
         }
         await batch.commit().timeout(const Duration(seconds: 6));
       }
@@ -306,6 +414,36 @@ class BlockService {
           avatarUrl: data['avatarUrl'] as String? ?? '',
           blockedAt: blockedAt,
         ));
+
+        // Self-heal legacy phone-keyed blocks: resolve UID and backfill UID doc
+        if (clean.isNotEmpty &&
+            (cId.startsWith('+') ||
+                cId.startsWith('0') ||
+                RegExp(r'^[0-9]+$').hasMatch(cId))) {
+          resolveUid(cId, phone: rawPhone).then((resolved) {
+            if (resolved != null && resolved != cId) {
+              final currentList =
+                  SharedPref.instance.getStringList(_prefKeyBlockedIds) ?? [];
+              if (!currentList.contains(resolved)) {
+                currentList.add(resolved);
+                SharedPref.instance
+                    .setStringList(_prefKeyBlockedIds, currentList);
+              }
+              _firestore
+                  .collection('users')
+                  .doc(uid)
+                  .collection('blocked_users')
+                  .doc(resolved)
+                  .set({
+                'contactId': resolved,
+                'contactName': data['contactName'] as String? ?? 'Contact',
+                'phone': rawPhone,
+                'avatarUrl': data['avatarUrl'] as String? ?? '',
+                'blockedAt': data['blockedAt'] ?? FieldValue.serverTimestamp(),
+              }).catchError((_) {});
+            }
+          }).catchError((_) {});
+        }
       }
 
       // Merge: preserve local blocks not yet synced to Firestore

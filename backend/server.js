@@ -3001,12 +3001,13 @@ app.post(
       // Prevents full collection memory dump and limits database read costs
       for (let i = 0; i < sanitizedNumbers.length; i += 30) {
         const chunk = sanitizedNumbers.slice(i, i + 30);
-        const [snap1, snap2] = await Promise.all([
+        const [snap1, snap2, snap3] = await Promise.all([
           firestoreDb.collection('users').where('phone.rawNumber', 'in', chunk).get(),
           firestoreDb.collection('users').where('phone.number', 'in', chunk).get(),
+          firestoreDb.collection('users').where('phone.formattedNumber', 'in', chunk).get(),
         ]);
 
-        [...snap1.docs, ...snap2.docs].forEach((doc) => {
+        [...snap1.docs, ...snap2.docs, ...snap3.docs].forEach((doc) => {
           if (seenIds.has(doc.id)) return;
           seenIds.add(doc.id);
           const data = doc.data();
