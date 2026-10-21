@@ -7,20 +7,30 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isCallParty(callData) {
+      return isAuthenticated() && callData != null && (
+        callData.callerId == request.auth.uid ||
+        callData.calleeId == request.auth.uid ||
+        (
+          request.auth.token.phone_number != null && (
+            callData.calleeId == ('phone_' + request.auth.token.phone_number) ||
+            callData.calleeId == request.auth.token.phone_number
+          )
+        )
+      );
+    }
+
     function isCallParticipant(callId) {
       let callDoc = get(/databases/$(database)/documents/calls/$(callId)).data;
-      return isAuthenticated() && callDoc != null && (
-        callDoc.callerId == request.auth.uid ||
-        callDoc.calleeId == request.auth.uid ||
-        (callDoc.calleeId != null && callDoc.calleeId.matches('^phone_.*'))
-      );
+      return isCallParty(callDoc);
     }
 
     // 1. User Profiles & Realtime Presence
     match /users/{userId} {
-      // Security: Allow get & list for authenticated users to search contacts / query by phone
+      // Security: Allow get for individual profile inspection by known ID
       allow get: if isAuthenticated();
-      allow list: if isAuthenticated();
+      // Bulk scraping defense: Disallow unbounded collection listing; only allow small targeted queries (phone lookup limit <= 3)
+      allow list: if isAuthenticated() && request.query.limit <= 3;
 
       // Doc squatting defense: Users can ONLY create, update, or delete their own profile document,
       // and internal data.id MUST strictly match request.auth.uid and document ID.
@@ -33,14 +43,11 @@ service cloud.firestore {
         allow read, write: if isAuthenticated() && request.auth.uid == userId;
       }
 
-      // SaaS Freelancer Minute Wallet
-      // Owner can read their private wallet data; payment_settings can be fetched directly by authenticated users for P2P transfers
-      // Disallow list across wallet collections to prevent user enumeration and phone scraping
+      // SaaS Freelancer Minute Wallet & Payment Settings
+      // Owner can ONLY read and manage their own private wallet subcollection.
+      // Third-party access is strictly prohibited (preventing bulk scraping of bKash/Nagad/Crypto addresses).
       match /wallet/{walletId} {
-        allow get: if isAuthenticated() && (request.auth.uid == userId || walletId == 'payment_settings');
-        allow list: if isAuthenticated() && request.auth.uid == userId;
-        // Owner can write their own payment_settings (e.g. bKash/Nagad account details).
-        // All other wallet writes (balance, minutes) remain server-only via Admin SDK.
+        allow read: if isAuthenticated() && request.auth.uid == userId;
         allow write: if isAuthenticated() && request.auth.uid == userId && walletId == 'payment_settings';
       }
     }
@@ -70,24 +77,13 @@ service cloud.firestore {
     match /calls/{callId} {
       // Authenticated caller initiates the call session
       allow create: if isAuthenticated() && request.resource.data.callerId == request.auth.uid;
-      // Both participants (caller & callee) can observe and update call state
+      // Both participants (caller & verified callee) can observe and update call state
       // Security: Caller & Callee IDs cannot be spoofed or mutated to hijack existing calls
-      allow read: if isAuthenticated() && (
-        resource.data.callerId == request.auth.uid ||
-        resource.data.calleeId == request.auth.uid ||
-        (resource.data.calleeId != null && resource.data.calleeId.matches('^phone_.*'))
-      );
-      allow update: if isAuthenticated() && (
-        resource.data.callerId == request.auth.uid ||
-        resource.data.calleeId == request.auth.uid ||
-        (resource.data.calleeId != null && resource.data.calleeId.matches('^phone_.*'))
-      ) && request.resource.data.callerId == resource.data.callerId
+      allow read: if isCallParty(resource.data);
+      allow update: if isCallParty(resource.data)
+        && request.resource.data.callerId == resource.data.callerId
         && request.resource.data.calleeId == resource.data.calleeId;
-      allow delete: if isAuthenticated() && (
-        resource.data.callerId == request.auth.uid ||
-        resource.data.calleeId == request.auth.uid ||
-        (resource.data.calleeId != null && resource.data.calleeId.matches('^phone_.*'))
-      );
+      allow delete: if isCallParty(resource.data);
 
       // WebRTC ICE Candidates (Caller) - Restricted strictly to call participants
       match /callerCandidates/{candidateId} {

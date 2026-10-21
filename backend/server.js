@@ -3173,38 +3173,78 @@ wss.on('connection', (clientWs, req) => {
         isCallee = false;
         isCaller = true;
 
-        if (activeCallId && firestoreDb) {
+        if (activeCallId) {
+          if (!firestoreDb) {
+            console.error(`[${clientId}] Cannot verify callId ${activeCallId} because Firestore is unavailable.`);
+            if (clientWs.readyState === WebSocket.OPEN) {
+              clientWs.send(
+                JSON.stringify({
+                  type: 'error',
+                  code: 'DATABASE_UNAVAILABLE',
+                  message: 'Call verification service unavailable. Please try again.',
+                })
+              );
+              clientWs.close(4503, 'DATABASE_UNAVAILABLE');
+            }
+            return;
+          }
+
           try {
             const callDoc = await firestoreDb.collection('calls').doc(activeCallId).get();
-            if (callDoc.exists) {
-              const callData = callDoc.data() || {};
-              if (callData.callerId && callData.callerId !== authenticatedUid && callData.calleeId === authenticatedUid) {
-                // Authenticated user is the CALLEE!
-                isCallee = true;
-                isCaller = false;
-                console.log(`[${clientId}] User ${authenticatedUid} identified as CALLEE for call ${activeCallId}. Translation granted free under telecom caller-pays policy.`);
-              } else if (callData.callerId === authenticatedUid) {
-                isCaller = true;
-                isCallee = false;
-                console.log(`[${clientId}] User ${authenticatedUid} identified as CALLER for call ${activeCallId}. Relay minute metering active.`);
-              } else {
-                // Security: User is neither caller nor callee for this callId!
-                console.warn(`[${clientId}] Security rejection: User ${authenticatedUid} attempted to access call ${activeCallId} without being caller (${callData.callerId}) or callee (${callData.calleeId}).`);
-                if (clientWs.readyState === WebSocket.OPEN) {
-                  clientWs.send(
-                    JSON.stringify({
-                      type: 'error',
-                      code: 'UNAUTHORIZED_CALL_SESSION',
-                      message: 'You are not an authorized participant in this call session.',
-                    })
-                  );
-                  clientWs.close(4403, 'UNAUTHORIZED_CALL_SESSION');
-                }
-                return;
+            if (!callDoc.exists) {
+              console.warn(`[${clientId}] Security rejection: No active call record found for callId ${activeCallId} (user: ${authenticatedUid}).`);
+              if (clientWs.readyState === WebSocket.OPEN) {
+                clientWs.send(
+                  JSON.stringify({
+                    type: 'error',
+                    code: 'INVALID_CALL_ID',
+                    message: 'No active call session found for the provided callId.',
+                  })
+                );
+                clientWs.close(4404, 'INVALID_CALL_ID');
               }
+              return;
+            }
+
+            const callData = callDoc.data() || {};
+            if (callData.callerId && callData.callerId !== authenticatedUid && callData.calleeId === authenticatedUid) {
+              // Authenticated user is the CALLEE!
+              isCallee = true;
+              isCaller = false;
+              console.log(`[${clientId}] User ${authenticatedUid} verified as CALLEE for call ${activeCallId}. Translation granted free under telecom caller-pays policy.`);
+            } else if (callData.callerId === authenticatedUid) {
+              // Authenticated user is the CALLER!
+              isCaller = true;
+              isCallee = false;
+              console.log(`[${clientId}] User ${authenticatedUid} verified as CALLER for call ${activeCallId}. Relay minute metering active.`);
+            } else {
+              // Security: User is neither caller nor callee for this callId!
+              console.warn(`[${clientId}] Security rejection: User ${authenticatedUid} attempted to access call ${activeCallId} without being caller (${callData.callerId}) or callee (${callData.calleeId}).`);
+              if (clientWs.readyState === WebSocket.OPEN) {
+                clientWs.send(
+                  JSON.stringify({
+                    type: 'error',
+                    code: 'UNAUTHORIZED_CALL_SESSION',
+                    message: 'You are not an authorized participant in this call session.',
+                  })
+                );
+                clientWs.close(4403, 'UNAUTHORIZED_CALL_SESSION');
+              }
+              return;
             }
           } catch (callLookupErr) {
-            console.warn(`[${clientId}] Could not inspect call document for callId ${activeCallId}:`, callLookupErr.message);
+            console.error(`[${clientId}] Failed to verify call session for ${activeCallId}:`, callLookupErr.message);
+            if (clientWs.readyState === WebSocket.OPEN) {
+              clientWs.send(
+                JSON.stringify({
+                  type: 'error',
+                  code: 'CALL_VERIFICATION_FAILED',
+                  message: 'Could not verify call session authorization.',
+                })
+              );
+              clientWs.close(4500, 'CALL_VERIFICATION_FAILED');
+            }
+            return;
           }
         }
 
