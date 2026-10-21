@@ -2919,7 +2919,7 @@ app.post(
   apiLimiter,
   authenticateRequest,
   async (req, res) => {
-    const { voice, text } = req.body || {};
+    const { voice, text, model: requestedModel } = req.body || {};
     const rawVoice = (voice && ALLOWED_VOICES.has(voice)) ? voice : 'Aoede';
     const voiceAliases = { Sularis: 'Autonoe', Perseus: 'Umbriel' };
     const validVoice = voiceAliases[rawVoice] || rawVoice;
@@ -2934,32 +2934,60 @@ app.post(
     }
 
     try {
-      const model = 'gemini-2.0-flash';
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: `Say in a warm natural speaking tone: ${sampleText}` }]
-            }
-          ],
-          generationConfig: {
-            responseModalities: ['AUDIO'],
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: {
-                  voiceName: validVoice,
+      // Prioritize client's active call model or server's configured DEFAULT_MODEL for true live fidelity
+      const rawModel = (typeof requestedModel === 'string' && requestedModel.trim().length > 0)
+        ? requestedModel.trim()
+        : DEFAULT_MODEL;
+      const targetModel = rawModel.replace(/^models\//, '');
+
+      // Try target live model first; fallback to standard multimodal audio model if live preview is WebSocket-only
+      const candidateModels = [targetModel];
+      if (!candidateModels.includes('gemini-2.0-flash')) {
+        candidateModels.push('gemini-2.0-flash');
+      }
+
+      let response = null;
+      let lastStatus = 500;
+
+      for (const m of candidateModels) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${GEMINI_API_KEY}`;
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [{ text: `Say in a warm natural speaking tone: ${sampleText}` }]
+                }
+              ],
+              generationConfig: {
+                responseModalities: ['AUDIO'],
+                speechConfig: {
+                  voiceConfig: {
+                    prebuiltVoiceConfig: {
+                      voiceName: validVoice,
+                    }
+                  }
                 }
               }
-            }
-          }
-        })
-      });
+            })
+          });
 
-      if (!response.ok) {
-        return res.status(502).json({ error: `Upstream error: ${response.status}` });
+          if (res.ok) {
+            response = res;
+            break;
+          } else {
+            lastStatus = res.status;
+            console.warn(`[VoicePreview] Model '${m}' returned HTTP ${res.status}. Attempting candidate fallback.`);
+          }
+        } catch (fetchErr) {
+          console.warn(`[VoicePreview] Model '${m}' network error: ${fetchErr.message}`);
+        }
+      }
+
+      if (!response || !response.ok) {
+        return res.status(502).json({ error: `Upstream synthesis failed (HTTP ${lastStatus})` });
       }
 
       const json = await response.json();

@@ -83,13 +83,13 @@ class GeminiLiveTranslator {
     'Aoede',
     'Kore',
     'Leda',
-    'Sularis',
+    'Autonoe',
     // Male voices
     'Charon',
     'Fenrir',
     'Puck',
     'Orus',
-    'Perseus',
+    'Umbriel',
     'Zephyr',
   ];
 

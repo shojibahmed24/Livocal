@@ -401,6 +401,7 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
                   'voice': persona.id,
                   'text': sampleText,
                   'langCode': _selectedLangCode,
+                  'model': GeminiLiveTranslator.getSavedModelId(),
                 }),
               )
               .timeout(const Duration(seconds: 5));
