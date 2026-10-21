@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "migrate:payment-pii": "node scripts/migrate_user_payment_fields.js",
+    "migrate:payment-pii:dry": "node scripts/migrate_user_payment_fields.js --dry-run"
   },
   "keywords": [
     "livocal",

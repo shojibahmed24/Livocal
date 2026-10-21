@@ -136,6 +136,21 @@ async function runMigration() {
     }
   }
 
+  if (!isDryRun) {
+    try {
+      await firestoreDb.collection('_system_migrations').doc('payment_pii_isolation').set({
+        completed: true,
+        completedAt: new Date().toISOString(),
+        scannedUsers: scannedCount,
+        migratedUsers: migratedCount,
+        scrubbedUsers: scrubbedCount,
+      }, { merge: true });
+      console.log('Saved migration state in _system_migrations/payment_pii_isolation.');
+    } catch (saveErr) {
+      console.warn('Could not record migration state in _system_migrations:', saveErr.message);
+    }
+  }
+
   console.log('\n=== Migration Completed ===');
   console.log(`Scanned Users:  ${scannedCount}`);
   console.log(`Migrated to Wallet: ${migratedCount}`);

@@ -37,6 +37,14 @@ service cloud.firestore {
       // Users can ONLY create, update, or delete their own profile document,
       // and internal data.id MUST strictly match request.auth.uid and document ID.
       // Financial payment addresses (bKash, Nagad, Crypto, Binance Pay) MUST NOT be stored in the public user doc.
+      // Helper: Checks that a sensitive payment field is not introduced or altered.
+      // Prevents blocking legacy users from normal profile/presence updates while migration proceeds,
+      // while strictly rejecting any addition/modification of payment fields and allowing deletion.
+      function paymentFieldClean(fieldName) {
+        return !(fieldName in request.resource.data) ||
+               !(request.resource.data.diff(resource.data).affectedKeys().hasAny([fieldName]));
+      }
+
       allow create: if isAuthenticated() && request.auth.uid == userId && request.resource.data.id == request.auth.uid
         && !('binancePayId' in request.resource.data)
         && !('cryptoUsdtTrc20' in request.resource.data)
@@ -44,11 +52,11 @@ service cloud.firestore {
         && !('bkashNumber' in request.resource.data)
         && !('nagadNumber' in request.resource.data);
       allow update: if isAuthenticated() && request.auth.uid == userId && request.resource.data.id == resource.data.id
-        && !('binancePayId' in request.resource.data)
-        && !('cryptoUsdtTrc20' in request.resource.data)
-        && !('cryptoUsdtBep20' in request.resource.data)
-        && !('bkashNumber' in request.resource.data)
-        && !('nagadNumber' in request.resource.data);
+        && paymentFieldClean('binancePayId')
+        && paymentFieldClean('cryptoUsdtTrc20')
+        && paymentFieldClean('cryptoUsdtBep20')
+        && paymentFieldClean('bkashNumber')
+        && paymentFieldClean('nagadNumber');
       allow delete: if isAuthenticated() && request.auth.uid == userId;
 
       // Companion Linked Devices (Web, Desktop, Companion apps)

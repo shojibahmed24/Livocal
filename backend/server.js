@@ -2879,6 +2879,19 @@ app.post('/api/admin/migrate-user-payment-pii', authenticateAdmin, async (req, r
       }
     }
 
+    try {
+      await firestoreDb.collection('_system_migrations').doc('payment_pii_isolation').set({
+        completed: true,
+        completedAt: new Date().toISOString(),
+        scannedUsers,
+        migratedUsers,
+        scrubbedUsers,
+        triggeredBy: 'admin_api',
+      }, { merge: true });
+    } catch (saveErr) {
+      console.warn('[AdminMigratePaymentPII] Could not save migration status doc:', saveErr.message);
+    }
+
     return res.json({
       success: true,
       scannedUsers,
@@ -4264,6 +4277,85 @@ wss.on('connection', (clientWs, req) => {
   }
 });
 
+/**
+ * Automatically checks and runs one-time User Payment PII Isolation Migration on server boot.
+ * Scans all /users documents, moves any legacy financial addresses to
+ * users/{userId}/wallet/payment_settings, and scrubs them from the parent user doc.
+ * Tracks completion state in _system_migrations/payment_pii_isolation.
+ */
+async function autoRunPaymentPiiMigrationOnBoot() {
+  if (!firestoreDb) return;
+
+  const PAYMENT_FIELDS = [
+    'binancePayId',
+    'cryptoUsdtTrc20',
+    'cryptoUsdtBep20',
+    'bkashNumber',
+    'nagadNumber',
+  ];
+
+  try {
+    const migrationRef = firestoreDb.collection('_system_migrations').doc('payment_pii_isolation');
+    const doc = await migrationRef.get();
+    if (doc.exists && doc.data() && doc.data().completed) {
+      console.log(`[Migration] User Payment PII isolation already completed on ${doc.data().completedAt}`);
+      return;
+    }
+
+    console.log('[Migration] Checking and running one-time User Payment PII Isolation Migration on boot...');
+    const usersSnapshot = await firestoreDb.collection('users').get();
+    let scannedUsers = 0;
+    let migratedUsers = 0;
+    let scrubbedUsers = 0;
+
+    for (const userDoc of usersSnapshot.docs) {
+      scannedUsers++;
+      const userData = userDoc.data();
+      const paymentUpdates = {};
+      const deleteUpdates = {};
+      let hasLegacyPayment = false;
+
+      for (const field of PAYMENT_FIELDS) {
+        if (field in userData) {
+          hasLegacyPayment = true;
+          const val = userData[field];
+          if (typeof val === 'string' && val.trim().length > 0) {
+            paymentUpdates[field] = val.trim();
+          }
+          deleteUpdates[field] = FieldValue.delete();
+        }
+      }
+
+      if (hasLegacyPayment) {
+        const batch = firestoreDb.batch();
+        if (Object.keys(paymentUpdates).length > 0) {
+          const settingsRef = userDoc.ref.collection('wallet').doc('payment_settings');
+          paymentUpdates.updatedAt = new Date().toISOString();
+          paymentUpdates.migratedFromUserDoc = true;
+          batch.set(settingsRef, paymentUpdates, { merge: true });
+          migratedUsers++;
+        }
+        batch.update(userDoc.ref, deleteUpdates);
+        await batch.commit();
+        scrubbedUsers++;
+      }
+    }
+
+    await migrationRef.set({
+      completed: true,
+      completedAt: new Date().toISOString(),
+      scannedUsers,
+      migratedUsers,
+      scrubbedUsers,
+      triggeredBy: 'server_boot',
+    }, { merge: true });
+
+    console.log(`[Migration] Boot migration complete. Scanned: ${scannedUsers}, Migrated: ${migratedUsers}, Scrubbed: ${scrubbedUsers}`);
+  } catch (err) {
+    console.warn('[Migration] Note: Payment PII migration boot check skipped or error:', err.message);
+  }
+}
+
 server.listen(PORT, '0.0.0.0', () => {
   console.log('===============================================================');
   console.log(`🚀 WhatsUp Gemini Live Relay Gateway running on port ${PORT}`);
@@ -4273,4 +4365,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`🎙️ Default Voice Profile: ${DEFAULT_VOICE}`);
   console.log(`🧠 Default Model: ${DEFAULT_MODEL}`);
   console.log('===============================================================');
+
+  // Trigger one-time legacy user payment PII scrub and isolation
+  autoRunPaymentPiiMigrationOnBoot();
 });
