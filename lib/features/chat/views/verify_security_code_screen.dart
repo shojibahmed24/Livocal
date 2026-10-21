@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/app_tokens.dart';
 
@@ -82,15 +83,95 @@ class _VerifySecurityCodeScreenState extends State<VerifySecurityCodeScreen> {
     return rows.join('\n');
   }
 
-  void _simulateScan() {
-    HapticFeedback.mediumImpact();
-    setState(() {
-      _isVerified = true;
-    });
-    showSnackBar(
+  void _openVerifyCodeDialog() {
+    HapticFeedback.lightImpact();
+    final textController = TextEditingController();
+
+    showAppDialog(
       context: context,
-      content: '✓ Security code verified with ${widget.contactName}!',
-      type: SnacBarType.info,
+      title: 'Compare Security Code',
+      icon: Icons.verified_user_rounded,
+      iconColor: AppColors.primary,
+      content: StatefulBuilder(
+        builder: (context, setDialogState) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Enter or paste the 60-digit security code or QR digits from ${widget.contactName}\'s phone to verify that your messages are end-to-end encrypted:',
+                style: const TextStyle(fontSize: 13, height: 1.4),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: textController,
+                keyboardType: TextInputType.number,
+                maxLines: 3,
+                style: const TextStyle(fontSize: 13, fontFamily: 'monospace', letterSpacing: 1.1),
+                decoration: InputDecoration(
+                  hintText: 'Paste 60 digits or code here...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+      actions: [
+        AppDialogAction(
+          label: 'Cancel',
+          onPressed: () => Navigator.pop(context),
+        ),
+        AppDialogAction(
+          label: 'VERIFY',
+          isPrimary: true,
+          onPressed: () {
+            final raw = textController.text.trim();
+            final cleanInput = raw.replaceAll(RegExp(r'\D'), '');
+
+            if (cleanInput.isEmpty) {
+              Navigator.pop(context);
+              return;
+            }
+
+            Navigator.pop(context);
+
+            if (cleanInput == _securityCodeDigits) {
+              HapticFeedback.mediumImpact();
+              setState(() {
+                _isVerified = true;
+              });
+              showSnackBar(
+                context: context,
+                content: '✓ Security code verified with ${widget.contactName}! Encryption is authentic.',
+                type: SnacBarType.info,
+              );
+            } else {
+              HapticFeedback.heavyImpact();
+              setState(() {
+                _isVerified = false;
+              });
+              showAppDialog(
+                context: context,
+                title: 'Security Code Mismatch',
+                icon: Icons.warning_amber_rounded,
+                iconColor: Colors.redAccent,
+                contentText:
+                    'The security code you entered does not match ${widget.contactName}\'s 60-digit encryption key.\n\nPlease check the numbers carefully on both screens.',
+                actions: [
+                  AppDialogAction(
+                    label: 'OK',
+                    isPrimary: true,
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              );
+            }
+          },
+        ),
+      ],
     );
   }
 
@@ -274,9 +355,9 @@ class _VerifySecurityCodeScreenState extends State<VerifySecurityCodeScreen> {
                         borderRadius: BorderRadius.circular(AppRadius.radiusLg),
                       ),
                     ),
-                    onPressed: _simulateScan,
-                    icon: const Icon(Icons.qr_code_scanner_rounded, size: 20),
-                    label: const Text('Scan Code'),
+                    onPressed: _openVerifyCodeDialog,
+                    icon: const Icon(Icons.verified_user_outlined, size: 20),
+                    label: const Text('Verify Code'),
                   ),
                 ),
               ],

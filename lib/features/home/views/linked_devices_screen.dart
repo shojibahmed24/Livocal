@@ -333,7 +333,6 @@ class DeviceQrScanScreen extends StatefulWidget {
 class _DeviceQrScanScreenState extends State<DeviceQrScanScreen> {
   CameraController? _controller;
   bool _isInit = false;
-  bool _isLinking = false;
 
   @override
   void initState() {
@@ -363,46 +362,6 @@ class _DeviceQrScanScreenState extends State<DeviceQrScanScreen> {
       }
     } catch (e) {
       debugPrint('[DeviceQrScanScreen] Camera init error: $e');
-    }
-  }
-
-  Future<void> _simulateLinkDevice() async {
-    if (_isLinking) return;
-    setState(() => _isLinking = true);
-
-    try {
-      final docRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.userId)
-          .collection('linked_devices')
-          .doc();
-
-      await docRef.set({
-        'id': docRef.id,
-        'deviceName': 'Livocal Web (Chrome)',
-        'browser': 'Chrome on Desktop',
-        'linkedAt': FieldValue.serverTimestamp(),
-        'lastActive': FieldValue.serverTimestamp(),
-      });
-
-      if (mounted) {
-        Navigator.pop(context);
-        showSnackBar(
-          context: context,
-          content: 'Livocal Web device linked successfully!',
-          type: SnacBarType.info,
-        );
-      }
-    } catch (e) {
-      debugPrint('DeviceQrScanScreen link companion device error: $e');
-      if (mounted) {
-        setState(() => _isLinking = false);
-        showSnackBar(
-          context: context,
-          content: 'Failed to link companion device: $e',
-          type: SnacBarType.error,
-        );
-      }
     }
   }
 
@@ -439,33 +398,39 @@ class _DeviceQrScanScreenState extends State<DeviceQrScanScreen> {
                           border: Border.all(color: AppColors.primary, width: 3),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: _isLinking
-                            ? const Center(
-                                child: CircularProgressIndicator(color: AppColors.primary),
-                              )
-                            : null,
+                        child: null,
                       ),
                       const SizedBox(height: 28),
-                      GestureDetector(
-                        onTap: _simulateLinkDevice,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.75),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: AppColors.primary, width: 1.5),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.qr_code_2_rounded, color: AppColors.primary, size: 20),
-                              SizedBox(width: 8),
-                              Text(
-                                'Tap to Pair Demo Web Session',
-                                style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                        margin: const EdgeInsets.symmetric(horizontal: 24),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.8),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white24, width: 1),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'Scan Livocal Web QR Code',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
                               ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Visit web.livocal.app on your computer. Point your phone to scan the QR code and link your browser session securely.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.75),
+                                fontSize: 12.5,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],

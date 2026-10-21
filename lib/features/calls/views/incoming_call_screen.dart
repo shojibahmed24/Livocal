@@ -70,7 +70,8 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
       await CallKitService().endCall(callId);
     }
     await ref.read(callControllerProvider.notifier).endCall(
-          recordAsMissed: true,
+          endStatus: CallStateStatus.rejected,
+          isDeclined: true,
         );
     if (mounted && Navigator.of(context).canPop()) {
       Navigator.of(context).pop();

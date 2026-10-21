@@ -208,7 +208,7 @@ class CallController extends StateNotifier<CallControllerState> {
           debugPrint('[CallController] CallKit onDecline for $callId');
           if (state.activeSession?.callId == callId &&
               state.activeSession?.status == CallStateStatus.ringing) {
-            endCall(recordAsMissed: true);
+            endCall(endStatus: CallStateStatus.rejected, isDeclined: true);
           }
         },
         onTimeout: (callId) {
@@ -216,7 +216,7 @@ class CallController extends StateNotifier<CallControllerState> {
           debugPrint('[CallController] CallKit onTimeout for $callId');
           if (state.activeSession?.callId == callId &&
               state.activeSession?.status == CallStateStatus.ringing) {
-            endCall(recordAsMissed: true);
+            endCall(endStatus: CallStateStatus.missed, recordAsMissed: true);
           }
         },
         onEnded: (callId) {
@@ -518,7 +518,10 @@ class CallController extends StateNotifier<CallControllerState> {
       if (state.activeSession?.callId == session.callId &&
           state.activeSession?.status != CallStateStatus.connected) {
         debugPrint('Outgoing call timed out after 30s with no answer');
-        endCall(recordAsMissed: true);
+        endCall(
+          endStatus: CallStateStatus.missed,
+          recordAsMissed: true,
+        );
       }
     });
 
@@ -573,7 +576,11 @@ class CallController extends StateNotifier<CallControllerState> {
         remote.status == CallStateStatus.ended ||
         remote.status == CallStateStatus.busy ||
         remote.status == CallStateStatus.missed) {
-      endCall(recordAsMissed: remote.status == CallStateStatus.missed);
+      endCall(
+        endStatus: remote.status,
+        recordAsMissed: remote.status == CallStateStatus.missed,
+        isDeclined: remote.status == CallStateStatus.rejected,
+      );
       return;
     }
 
@@ -699,7 +706,10 @@ class CallController extends StateNotifier<CallControllerState> {
           state.activeSession?.status == CallStateStatus.ringing) {
         debugPrint('[CallController] Incoming call timed out after 30s unanswered. Auto-dismissing and marking as missed call.');
         CallKitService().endAllCalls();
-        endCall(recordAsMissed: true);
+        endCall(
+          endStatus: CallStateStatus.missed,
+          recordAsMissed: true,
+        );
       }
     });
 
@@ -716,7 +726,11 @@ class CallController extends StateNotifier<CallControllerState> {
         _callTimeoutTimer?.cancel();
         _callTimeoutTimer = null;
         CallKitService().endAllCalls();
-        endCall(recordAsMissed: true);
+        endCall(
+          endStatus: remote.status,
+          recordAsMissed: remote.status == CallStateStatus.missed,
+          isDeclined: remote.status == CallStateStatus.rejected,
+        );
       }
     });
 
@@ -783,10 +797,16 @@ class CallController extends StateNotifier<CallControllerState> {
         if (offerData != null) {
           await _webrtcClient.answerIncomingCall(current.callId, offerData);
         } else {
-          debugPrint('[CallController] WebRTC offer was never available after retries. Falling back to direct audio.');
+          debugPrint('[CallController] WebRTC offer was never available after retries. Aborting call.');
+          state = state.copyWith(error: 'CALL_CONNECTION_FAILED');
+          await endCall(endStatus: CallStateStatus.ended);
+          return;
         }
       } catch (e) {
-        debugPrint('WebRTC answerIncomingCall error: $e');
+        debugPrint('[CallController] WebRTC answerIncomingCall error: $e');
+        state = state.copyWith(error: 'CALL_CONNECTION_FAILED');
+        await endCall(endStatus: CallStateStatus.ended);
+        return;
       }
     }
 
@@ -1400,7 +1420,11 @@ class CallController extends StateNotifier<CallControllerState> {
   bool _lowBalanceAlerted = false;
 
 
-  Future<void> endCall({bool recordAsMissed = false}) async {
+  Future<void> endCall({
+    CallStateStatus? endStatus,
+    bool recordAsMissed = false,
+    bool isDeclined = false,
+  }) async {
     if (_isEndingCall) return;
     _isEndingCall = true;
     CallHistoryRecord? lastEndedRecord;
@@ -1410,10 +1434,29 @@ class CallController extends StateNotifier<CallControllerState> {
 
       if (current != null) {
         await CallKitService().endCall(current.callId);
-        await repo.updateCallStatus(
-          current.callId,
-          recordAsMissed ? CallStateStatus.missed : CallStateStatus.ended,
-        );
+
+        // Determine definitive status across Firestore, History and In-Chat Log
+        final CallStateStatus definitiveStatus;
+        final String statusStr;
+        final bool isMissed;
+
+        if (isDeclined || endStatus == CallStateStatus.rejected) {
+          definitiveStatus = CallStateStatus.rejected;
+          statusStr = 'declined';
+          isMissed = false;
+        } else if (recordAsMissed ||
+            endStatus == CallStateStatus.missed ||
+            (duration == 0 && current.status == CallStateStatus.ringing)) {
+          definitiveStatus = CallStateStatus.missed;
+          statusStr = 'missed';
+          isMissed = true;
+        } else {
+          definitiveStatus = CallStateStatus.ended;
+          statusStr = 'answered';
+          isMissed = false;
+        }
+
+        await repo.updateCallStatus(current.callId, definitiveStatus);
 
         // Finalize call billing record if caller in translated call
         if (!current.isIncoming && current.isTranslatedCall) {
@@ -1427,10 +1470,7 @@ class CallController extends StateNotifier<CallControllerState> {
           );
         }
 
-        final isMissedCall = recordAsMissed || (duration == 0 && current.status != CallStateStatus.connected);
-        final statusStr = isMissedCall ? 'missed' : 'answered';
-
-        if (isMissedCall && current.isIncoming) {
+        if (isMissed && current.isIncoming) {
           CallKitService().showMissedCallNotification(
             callId: current.callId,
             callerName: current.peerName,
@@ -1448,7 +1488,7 @@ class CallController extends StateNotifier<CallControllerState> {
           timestamp: DateTime.now(),
           durationSeconds: duration,
           isIncoming: current.isIncoming,
-          isMissed: isMissedCall,
+          isMissed: isMissed,
           translationEnabled: state.translationEnabled,
           myLangCode: state.myLangCode,
           peerLangCode: state.peerLangCode,
@@ -1465,26 +1505,20 @@ class CallController extends StateNotifier<CallControllerState> {
             isTranslated: current.isTranslatedCall,
           );
 
+          // Deterministic unique message ID scoped per participant to prevent double-write and conflict when syncing
+          final myId = current.isIncoming ? current.calleeId : current.callerId;
+          final peerId = current.isIncoming ? current.callerId : current.calleeId;
           final callLogMessage = Message(
-            id: 'call_${current.callId}',
+            id: 'call_${current.callId}_$myId',
             content: logContent,
-            senderId: current.callerId,
-            receiverId: current.calleeId,
+            senderId: myId,
+            receiverId: peerId,
             timestamp: Timestamp.now(),
-            status: MessageStatus.sent,
+            status: MessageStatus.delivered,
           );
 
-          // 1. Save locally in Isar DB for immediate visibility
+          // Save locally in Isar DB for this user's conversation (no peer remote inbox overwrite)
           await IsarDb.addMessage(callLogMessage);
-
-          // 2. Broadcast to peer via Firestore messages subcollection
-          final fsRepo = ref?.read(firebaseFirestoreRepositoryProvider);
-          if (fsRepo != null) {
-            final remoteInbox = current.isIncoming ? current.callerId : current.calleeId;
-            fsRepo.sendMessage(callLogMessage.copyWith(receiverId: remoteInbox)).catchError((e) {
-              debugPrint('[CallController] Error pushing call log to remote Firestore: $e');
-            });
-          }
         } catch (e) {
           debugPrint('[CallController] Error creating call log message: $e');
         }

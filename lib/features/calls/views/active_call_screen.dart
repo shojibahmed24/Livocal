@@ -119,6 +119,14 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                 duration: const Duration(seconds: 4),
               ),
             );
+          } else if (error == 'CALL_CONNECTION_FAILED') {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Audio stream could not be established. Please check your network and try again.'),
+                backgroundColor: Colors.redAccent,
+                duration: Duration(seconds: 4),
+              ),
+            );
           }
         }
       },
