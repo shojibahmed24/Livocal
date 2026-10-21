@@ -4,8 +4,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
-import 'package:livocal/features/calls/repositories/call_repository.dart';
-import 'package:livocal/features/calls/views/outgoing_call_screen.dart';
 import 'package:livocal/features/chat/views/chat.dart';
 import 'package:livocal/features/chat/views/chat_media_viewer_screen.dart';
 import 'package:livocal/features/chat/views/custom_notifications_screen.dart';
@@ -397,15 +395,13 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                           ),
                           IconButton(
                             icon: const Icon(Icons.call, color: AppColors.primary),
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => OutgoingCallScreen(
-                                    caller: widget.self,
-                                    callee: widget.other,
-                                    calleeDisplayName: widget.contactName,
-                                  ),
-                                ),
+                            onPressed: () async {
+                              await initiateSmartCall(
+                                context,
+                                ref,
+                                caller: widget.self,
+                                callee: widget.other,
+                                calleeDisplayName: widget.contactName,
                               );
                             },
                           ),
@@ -659,24 +655,15 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                 ),
                 icon: const Icon(Icons.phone_in_talk),
                 label: const Text('Start Translated Voice Call'),
-                onPressed: () {
+                onPressed: () async {
                   Navigator.pop(ctx);
-                  final settings = CallRepository.getPeerTranslationSettings(
-                    peerId: widget.other.id,
-                    peerName: widget.contactName,
-                    peerPhone: widget.other.phone.number,
-                  );
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => OutgoingCallScreen(
-                        caller: widget.self,
-                        callee: widget.other,
-                        calleeDisplayName: widget.contactName,
-                        overrideMyLangCode: settings.myLangCode,
-                        overridePeerLangCode: settings.peerLangCode,
-                        initialTranslationEnabled: settings.isTranslationEnabled,
-                      ),
-                    ),
+                  await initiateSmartCall(
+                    context,
+                    ref,
+                    caller: widget.self,
+                    callee: widget.other,
+                    calleeDisplayName: widget.contactName,
+                    forceTranslation: true,
                   );
                 },
               ),

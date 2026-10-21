@@ -18,6 +18,7 @@ Future<void> initiateSmartCall(
   required User caller,
   required User callee,
   required String calleeDisplayName,
+  bool? forceTranslation,
 }) async {
   // 1. Resolve Caller's Spoken Language
   String callerLangCode = caller.spokenLanguage.trim();
@@ -44,8 +45,26 @@ Future<void> initiateSmartCall(
     calleeLangCode = 'bn';
   }
 
+  // If forceTranslation is explicitly set, bypass detection modal and use specified setting
+  if (forceTranslation != null) {
+    if (!context.mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => OutgoingCallScreen(
+          caller: caller,
+          callee: callee,
+          calleeDisplayName: calleeDisplayName,
+          overrideMyLangCode: callerLangCode,
+          overridePeerLangCode: calleeLangCode,
+          initialTranslationEnabled: forceTranslation,
+        ),
+      ),
+    );
+    return;
+  }
+
   // 3. Normalization (e.g. 'bn-BD' vs 'bn' are both Bengali)
-  final isSameLang = _isSameLanguageFamily(callerLangCode, calleeLangCode);
+  final isSameLang = CallLanguageRegistry.isSameLanguageFamily(callerLangCode, calleeLangCode);
 
   if (isSameLang) {
     // Both users speak the same language: 100% Automatic Free Direct Voice Call!
@@ -82,12 +101,6 @@ Future<void> initiateSmartCall(
       calleeLang: calleeLang,
     ),
   );
-}
-
-bool _isSameLanguageFamily(String codeA, String codeB) {
-  final cleanA = codeA.toLowerCase().split('-').first.split('_').first.trim();
-  final cleanB = codeB.toLowerCase().split('-').first.split('_').first.trim();
-  return cleanA == cleanB;
 }
 
 class DifferentLanguageCallSheet extends StatelessWidget {

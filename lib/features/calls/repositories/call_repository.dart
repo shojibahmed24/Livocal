@@ -2,7 +2,9 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/features/calls/models/call_model.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
@@ -22,7 +24,7 @@ class PeerTranslationSettings {
   });
 
   bool get isSameLanguage =>
-      myLangCode.toLowerCase().trim() == peerLangCode.toLowerCase().trim();
+      CallLanguageRegistry.isSameLanguageFamily(myLangCode, peerLangCode);
 
   bool get isEffectivelyTranslated => isTranslationEnabled && !isSameLanguage;
 }
@@ -39,8 +41,20 @@ class CallRepository {
   static String getMyLanguageCode() =>
       SharedPref.instance.getString(prefMyLang) ?? 'bn';
 
-  static Future<void> setMyLanguageCode(String code) async =>
-      await SharedPref.instance.setString(prefMyLang, code);
+  static Future<void> setMyLanguageCode(String code) async {
+    await SharedPref.instance.setString(prefMyLang, code);
+    try {
+      final currentUid = fb.FirebaseAuth.instance.currentUser?.uid;
+      if (currentUid != null && currentUid.isNotEmpty) {
+        await FirebaseFirestore.instance.collection('users').doc(currentUid).set({
+          'spokenLanguage': code,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+    } catch (e) {
+      debugPrint('[CallRepository] Error syncing spokenLanguage to Firestore: $e');
+    }
+  }
 
   static String getPeerLanguageCode() =>
       SharedPref.instance.getString(prefPeerLang) ?? 'en';

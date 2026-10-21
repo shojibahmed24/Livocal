@@ -757,4 +757,14 @@ class CallLanguageRegistry {
     final b = fromCode(langBCode);
     return '${a.flagEmoji} ${a.codeUpper} ⇄ ${b.flagEmoji} ${b.codeUpper}';
   }
+
+  /// Evaluates whether two language codes belong to the exact same language family
+  /// (e.g. 'bn' and 'bn-BD' are the same Bengali family; 'en-US' and 'en-GB' are English).
+  static bool isSameLanguageFamily(String? codeA, String? codeB) {
+    if (codeA == null || codeB == null) return false;
+    final cleanA = codeA.toLowerCase().split('-').first.split('_').first.trim();
+    final cleanB = codeB.toLowerCase().split('-').first.split('_').first.trim();
+    if (cleanA.isEmpty || cleanB.isEmpty) return false;
+    return cleanA == cleanB;
+  }
 }

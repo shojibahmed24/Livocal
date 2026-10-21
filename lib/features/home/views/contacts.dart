@@ -1,8 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:livocal/features/calls/repositories/call_repository.dart';
-import 'package:livocal/features/calls/views/outgoing_call_screen.dart';
+import 'package:livocal/features/calls/views/widgets/different_language_call_sheet.dart';
 import 'package:livocal/features/calls/views/widgets/direct_dial_sheet.dart';
 import 'package:livocal/features/home/controllers/contacts_controller.dart';
 import 'package:livocal/shared/models/contact.dart';
@@ -580,22 +579,12 @@ class LivocalContactsList extends StatelessWidget {
                       final receiver =
                           await IsarDb.getUserById(contact.userId!);
                       if (receiver != null && context.mounted) {
-                        final settings = CallRepository.getPeerTranslationSettings(
-                          peerId: receiver.id,
-                          peerName: contact.displayName,
-                          peerPhone: receiver.phone.number,
-                        );
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => OutgoingCallScreen(
-                              caller: user,
-                              callee: receiver,
-                              calleeDisplayName: contact.displayName,
-                              overrideMyLangCode: settings.myLangCode,
-                              overridePeerLangCode: settings.peerLangCode,
-                              initialTranslationEnabled: settings.isTranslationEnabled,
-                            ),
-                          ),
+                        await initiateSmartCall(
+                          context,
+                          ref,
+                          caller: user,
+                          callee: receiver,
+                          calleeDisplayName: contact.displayName,
                         );
                       }
                     },

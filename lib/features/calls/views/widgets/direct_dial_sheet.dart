@@ -4,8 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/calls/controllers/call_controller.dart';
-import 'package:livocal/features/calls/repositories/call_repository.dart';
-import 'package:livocal/features/calls/views/outgoing_call_screen.dart';
+import 'package:livocal/features/calls/views/widgets/different_language_call_sheet.dart';
 import 'package:livocal/features/calls/views/widgets/minute_recharge_sheet.dart';
 import 'package:livocal/features/chat/views/chat.dart';
 import 'package:livocal/shared/models/user.dart';
@@ -141,24 +140,13 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
     Navigator.of(context).pop();
 
     final calleeName = resolvedUser != null ? resolvedUser.name : phone;
-    final settings = CallRepository.getPeerTranslationSettings(
-      peerId: targetUser.id,
-      peerName: calleeName,
-      peerPhone: phone,
-      explicitTranslationEnabled: withAiTranslation,
-    );
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => OutgoingCallScreen(
-          caller: widget.currentUser,
-          callee: targetUser,
-          calleeDisplayName: calleeName,
-          overrideMyLangCode: settings.myLangCode,
-          overridePeerLangCode: settings.peerLangCode,
-          initialTranslationEnabled: settings.isTranslationEnabled,
-        ),
-      ),
+    await initiateSmartCall(
+      context,
+      ref,
+      caller: widget.currentUser,
+      callee: targetUser,
+      calleeDisplayName: calleeName,
+      forceTranslation: withAiTranslation ? true : null,
     );
   }
 

@@ -129,11 +129,11 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
       accentColor: Color(0xFF7C83E5),
     ),
     VoicePersonaItem(
-      id: 'Sularis',
-      name: 'Sularis',
+      id: 'Autonoe',
+      name: 'Autonoe',
       gender: 'Female',
-      toneEn: 'Warm & Reliable',
-      toneBn: 'আন্তরিক এবং নির্ভরযোগ্য',
+      toneEn: 'Bright & Expressive',
+      toneBn: 'উজ্জ্বল এবং প্রকাশমুখর',
       descriptionEn:
           'Warm, trustworthy female voice with a natural flow. Great for friendly conversations and support interactions.',
       descriptionBn:
@@ -197,11 +197,11 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
       accentColor: Color(0xFFE05C5C),
     ),
     VoicePersonaItem(
-      id: 'Perseus',
-      name: 'Perseus',
+      id: 'Umbriel',
+      name: 'Umbriel',
       gender: 'Male',
-      toneEn: 'Confident & Natural',
-      toneBn: 'আত্মবিশ্বাসী এবং স্বাভাবিক',
+      toneEn: 'Relaxed & Approachable',
+      toneBn: 'শান্ত ও আন্তরিক',
       descriptionEn:
           'Confident, natural, and clear male voice that feels approachable. Suitable for both formal and casual settings.',
       descriptionBn:
@@ -424,22 +424,16 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
         }
       }
 
-      // 3. Fallback: Language-accurate native voice synthesis
+      // Fail cleanly if authentic Gemini voice synthesis was unavailable
+      // Never deceive user with generic 3rd-party TTS (e.g. StreamElements Brian or Google TTS)
       if (!playedAudio) {
-        final isMale = persona.gender.toLowerCase() == 'male';
-
-        if (isMale && _selectedLangCode == 'en') {
-          // Play clear English male voice from high-reliability TTS
-          final streamElementsUrl =
-              'https://api.streamelements.com/kappa/v2/speech?voice=Brian&text=${Uri.encodeComponent(sampleText)}';
-          await _audioPlayer.setPlaybackRate(1.0);
-          await _audioPlayer.play(UrlSource(streamElementsUrl));
-        } else {
-          // Play native language TTS (fluent native Bangla, Hindi, Arabic, etc.)
-          final sampleUrl =
-              'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=$_selectedLangCode&q=${Uri.encodeComponent(sampleText)}';
-          await _audioPlayer.setPlaybackRate(1.0);
-          await _audioPlayer.play(UrlSource(sampleUrl));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Voice preview temporarily unavailable. Please check internet connection.'),
+              duration: Duration(seconds: 3),
+            ),
+          );
         }
       }
 

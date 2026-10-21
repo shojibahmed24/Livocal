@@ -174,11 +174,11 @@ class CallSession {
   CallLanguage get peerLanguage => CallLanguageRegistry.fromCode(peerLangCode);
 
   /// Whether this call requires live AI translation between different languages.
-  /// If both users speak the same language or translation is turned off,
+  /// If both users speak the same language family or translation is turned off,
   /// this is a Free Local Call (no minute deductions).
   bool get isTranslatedCall =>
       translationEnabled &&
-      (callerLangCode.toLowerCase().trim() != calleeLangCode.toLowerCase().trim());
+      !CallLanguageRegistry.isSameLanguageFamily(callerLangCode, calleeLangCode);
 
   CallSession copyWith({
     String? callerLangCode,

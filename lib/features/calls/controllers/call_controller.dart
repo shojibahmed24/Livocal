@@ -917,8 +917,10 @@ class CallController extends StateNotifier<CallControllerState> {
     });
 
     final hasGeminiKey = GeminiLiveTranslator.getSavedApiKey().isNotEmpty;
-    final isSameLanguage = state.myLangCode == state.peerLangCode;
-    final shouldTranslate = state.translationEnabled && !isSameLanguage && hasGeminiKey;
+    final hasRelay = GeminiLiveTranslator.getSavedRelayUrl().isNotEmpty;
+    final hasTranslationEngine = hasGeminiKey || hasRelay;
+    final isSameLanguage = CallLanguageRegistry.isSameLanguageFamily(state.myLangCode, state.peerLangCode);
+    final shouldTranslate = state.translationEnabled && !isSameLanguage && hasTranslationEngine;
 
     if (!shouldTranslate) {
       // 100% Direct P2P Audio Call - WebRTC handles native mic & speaker with hardware AEC
@@ -930,7 +932,7 @@ class CallController extends StateNotifier<CallControllerState> {
         speakerId: 'system',
         speakerName: isSameLanguage
             ? 'Direct Voice Call'
-            : (!hasGeminiKey ? 'Direct Call (API Key Not Set)' : 'Direct Call (Translation Off)'),
+            : (!hasTranslationEngine ? 'Direct Call (Relay/API Key Not Set)' : 'Direct Call (Translation Off)'),
         isSelf: false,
         sourceLangCode: myLang.code,
         targetLangCode: peerLang.code,

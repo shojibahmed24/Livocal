@@ -50,7 +50,7 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
   }
 }
 
-// Whitelist of valid Gemini 3.5 Live Translation voices
+// Whitelist of valid Gemini 2.0 / Multimodal Live Translation voices
 const ALLOWED_VOICES = new Set([
   'Puck',
   'Charon',
@@ -58,10 +58,13 @@ const ALLOWED_VOICES = new Set([
   'Fenrir',
   'Aoede',
   'Leda',
-  'Sularis',
+  'Autonoe',
   'Orus',
-  'Perseus',
+  'Umbriel',
   'Zephyr',
+  // Backwards compatibility mappings for older clients
+  'Sularis',
+  'Perseus',
 ]);
 
 function sanitizeBoundedNote(val, maxLen = 500) {
@@ -2792,7 +2795,9 @@ app.post(
   authenticateRequest,
   async (req, res) => {
     const { voice, text } = req.body || {};
-    const validVoice = (voice && ALLOWED_VOICES.has(voice)) ? voice : 'Aoede';
+    const rawVoice = (voice && ALLOWED_VOICES.has(voice)) ? voice : 'Aoede';
+    const voiceAliases = { Sularis: 'Autonoe', Perseus: 'Umbriel' };
+    const validVoice = voiceAliases[rawVoice] || rawVoice;
     
     // Strict sanitization: limit sample length to 160 characters and strip line breaks/quotes to prevent prompt injection
     const rawText = typeof text === 'string' ? text : '';
@@ -3219,10 +3224,12 @@ wss.on('connection', (clientWs, req) => {
         }
 
         // Security: Lock model to DEFAULT_MODEL on server. Client CANNOT override model.
-        // Validate voice against Gemini Live whitelist.
-        const validVoice = (msg.voice && ALLOWED_VOICES.has(msg.voice))
+        // Validate voice against Gemini Live whitelist with upstream compatibility aliases.
+        const voiceAliases = { Sularis: 'Autonoe', Perseus: 'Umbriel' };
+        const rawVoice = (msg.voice && ALLOWED_VOICES.has(msg.voice))
           ? msg.voice
           : (sessionConfig.voice || DEFAULT_VOICE);
+        const validVoice = voiceAliases[rawVoice] || rawVoice;
 
         sessionConfig = {
           langA: msg.langA || sessionConfig.langA,
