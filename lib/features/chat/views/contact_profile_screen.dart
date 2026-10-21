@@ -321,8 +321,25 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                           ],
                         );
                         if (unblock == true && mounted) {
-                          await BlockService.unblockContact(widget.other.id);
-                          setState(() => _isBlocked = false);
+                          try {
+                            await BlockService.unblockContact(widget.other.id);
+                            setState(() => _isBlocked = false);
+                            if (mounted) {
+                              showSnackBar(
+                                context: context,
+                                content: '${widget.contactName} has been unblocked',
+                                type: SnacBarType.info,
+                              );
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              showSnackBar(
+                                context: context,
+                                content: 'Failed to unblock. Please check connection.',
+                                type: SnacBarType.error,
+                              );
+                            }
+                          }
                         }
                         return;
                       }
@@ -943,14 +960,24 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
       );
 
       if (confirmed == true && mounted) {
-        await BlockService.unblockContact(widget.other.id);
-        setState(() => _isBlocked = false);
-        if (mounted) {
-          showSnackBar(
-            context: context,
-            content: '${widget.contactName} has been unblocked',
-            type: SnacBarType.info,
-          );
+        try {
+          await BlockService.unblockContact(widget.other.id);
+          setState(() => _isBlocked = false);
+          if (mounted) {
+            showSnackBar(
+              context: context,
+              content: '${widget.contactName} has been unblocked',
+              type: SnacBarType.info,
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            showSnackBar(
+              context: context,
+              content: 'Failed to unblock ${widget.contactName}. Please check connection.',
+              type: SnacBarType.error,
+            );
+          }
         }
       }
     } else {
@@ -975,19 +1002,29 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
       );
 
       if (confirmed == true && mounted) {
-        await BlockService.blockContact(
-          contactId: widget.other.id,
-          contactName: widget.contactName,
-          phone: widget.other.phone.getFormattedNumber(),
-          avatarUrl: widget.other.avatarUrl,
-        );
-        setState(() => _isBlocked = true);
-        if (mounted) {
-          showSnackBar(
-            context: context,
-            content: '${widget.contactName} has been blocked',
-            type: SnacBarType.info,
+        try {
+          await BlockService.blockContact(
+            contactId: widget.other.id,
+            contactName: widget.contactName,
+            phone: widget.other.phone.getFormattedNumber(),
+            avatarUrl: widget.other.avatarUrl,
           );
+          setState(() => _isBlocked = true);
+          if (mounted) {
+            showSnackBar(
+              context: context,
+              content: '${widget.contactName} has been blocked',
+              type: SnacBarType.info,
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            showSnackBar(
+              context: context,
+              content: 'Failed to block ${widget.contactName}. Please check connection.',
+              type: SnacBarType.error,
+            );
+          }
         }
       }
     }

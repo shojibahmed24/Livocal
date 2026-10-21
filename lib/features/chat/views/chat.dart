@@ -271,8 +271,18 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                         ],
                       );
                       if (unblock == true && context.mounted) {
-                        await BlockService.unblockContact(other.id);
-                        setState(() {});
+                        try {
+                          await BlockService.unblockContact(other.id);
+                          setState(() {});
+                        } catch (e) {
+                          if (context.mounted) {
+                            showSnackBar(
+                              context: context,
+                              content: 'Failed to unblock. Please check connection.',
+                              type: SnacBarType.error,
+                            );
+                          }
+                        }
                       }
                       return;
                     }
@@ -550,8 +560,18 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                           ],
                         );
                         if (unblock == true && context.mounted) {
-                          await BlockService.unblockContact(other.id);
-                          setState(() {});
+                          try {
+                            await BlockService.unblockContact(other.id);
+                            setState(() {});
+                          } catch (e) {
+                            if (context.mounted) {
+                              showSnackBar(
+                                context: context,
+                                content: 'Failed to unblock. Please check connection.',
+                                type: SnacBarType.error,
+                              );
+                            }
+                          }
                         }
                       },
                       child: Row(
@@ -1166,6 +1186,9 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
         final now = DateTime.now();
         final cutoff = expiryDuration != null ? now.subtract(expiryDuration) : null;
         final List<Message> messages = rawMessages.where((m) {
+          if (m.senderId != self.id && BlockService.isBlocked(m.senderId)) {
+            return false;
+          }
           if (m.expiresAt != null && m.expiresAt!.toDate().isBefore(now)) {
             return false;
           }

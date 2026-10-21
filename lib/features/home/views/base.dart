@@ -864,7 +864,13 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
           return const ChatListShimmerSkeleton();
         }
 
-        var chats = snapshot.data!;
+        var chats = snapshot.data!
+            .where((c) =>
+                !BlockService.isBlocked(c.user.id) &&
+                !BlockService.isBlocked(c.message.senderId == widget.user.id
+                    ? c.message.receiverId
+                    : c.message.senderId))
+            .toList();
         if (searchQuery.isNotEmpty) {
           chats = chats
               .where((c) =>

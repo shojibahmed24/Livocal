@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/home/controllers/contacts_controller.dart';
 import 'package:livocal/features/settings/services/block_service.dart';
 import 'package:livocal/shared/models/contact.dart';
+import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
@@ -53,14 +54,24 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
     );
 
     if (confirmed == true && mounted) {
-      await BlockService.unblockContact(contact.id);
-      _loadBlockedContacts();
-      if (mounted) {
-        showSnackBar(
-          context: context,
-          content: 'Unblocked ${contact.name}',
-          type: SnacBarType.info,
-        );
+      try {
+        await BlockService.unblockContact(contact.id);
+        _loadBlockedContacts();
+        if (mounted) {
+          showSnackBar(
+            context: context,
+            content: 'Unblocked ${contact.name}',
+            type: SnacBarType.info,
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          showSnackBar(
+            context: context,
+            content: 'Failed to unblock ${contact.name}. Please check connection.',
+            type: SnacBarType.error,
+          );
+        }
       }
     }
   }
@@ -188,19 +199,45 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
       );
 
       if (confirmed == true && mounted) {
-        final contactId = selectedContact.userId ?? selectedContact.phoneNumber;
-        await BlockService.blockContact(
-          contactId: contactId,
-          contactName: selectedContact.displayName,
-          phone: selectedContact.phoneNumber,
-        );
-        _loadBlockedContacts();
-        if (mounted) {
-          showSnackBar(
-            context: context,
-            content: '${selectedContact.displayName} has been blocked',
-            type: SnacBarType.info,
+        try {
+          String contactId = selectedContact.userId ?? '';
+          if (contactId.isEmpty && selectedContact.phoneNumber.isNotEmpty) {
+            try {
+              final user = await ref
+                  .read(firebaseFirestoreRepositoryProvider)
+                  .getUserByPhone(selectedContact.phoneNumber);
+              if (user != null && user.id.isNotEmpty) {
+                contactId = user.id;
+              }
+            } catch (e) {
+              debugPrint('[BlockedContacts] Error resolving user by phone: $e');
+            }
+          }
+          if (contactId.isEmpty) {
+            contactId = selectedContact.phoneNumber;
+          }
+
+          await BlockService.blockContact(
+            contactId: contactId,
+            contactName: selectedContact.displayName,
+            phone: selectedContact.phoneNumber,
           );
+          _loadBlockedContacts();
+          if (mounted) {
+            showSnackBar(
+              context: context,
+              content: '${selectedContact.displayName} has been blocked',
+              type: SnacBarType.info,
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            showSnackBar(
+              context: context,
+              content: 'Failed to block ${selectedContact.displayName}. Please check connection.',
+              type: SnacBarType.error,
+            );
+          }
         }
       }
     }

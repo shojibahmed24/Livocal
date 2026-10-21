@@ -47,20 +47,43 @@ class BlockService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  /// Check if a given user/contact ID is currently blocked
-  static bool isBlocked(String contactId) {
-    if (contactId.isEmpty) return false;
+  static String cleanPhone(String phone) {
+    return phone.replaceAll(RegExp(r'[^0-9]'), '');
+  }
+
+  /// Check if a given user ID, phone number or identifier is currently blocked
+  static bool isBlocked(String identifier) {
+    if (identifier.isEmpty) return false;
     try {
       if (!SharedPref.isInitialized) return false;
       final list = SharedPref.instance.getStringList(_prefKeyBlockedIds) ?? [];
-      return list.contains(contactId);
+      if (list.contains(identifier)) return true;
+
+      final cleanIdent = cleanPhone(identifier);
+      if (cleanIdent.isNotEmpty) {
+        if (list.contains(cleanIdent)) return true;
+        // Check phone numbers of all blocked contacts
+        final contacts = getBlockedContacts();
+        for (final c in contacts) {
+          if (c.id == identifier) return true;
+          final cleanContactPhone = cleanPhone(c.phone);
+          if (cleanContactPhone.isNotEmpty) {
+            if (cleanContactPhone == cleanIdent ||
+                cleanContactPhone.endsWith(cleanIdent) ||
+                cleanIdent.endsWith(cleanContactPhone)) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
     } catch (e) {
       debugPrint('[BlockService] isBlocked safe fallback: $e');
       return false;
     }
   }
 
-  /// Get list of all currently blocked IDs
+  /// Get list of all currently blocked IDs and numbers
   static List<String> getBlockedIds() {
     try {
       if (!SharedPref.isInitialized) return [];
@@ -88,7 +111,7 @@ class BlockService {
     }
   }
 
-  /// Block a contact locally and in Firestore
+  /// Block a contact locally and in Firestore with automatic rollback and phone-to-UID resolution
   static Future<void> blockContact({
     required String contactId,
     required String contactName,
@@ -97,20 +120,47 @@ class BlockService {
   }) async {
     if (contactId.isEmpty) return;
 
-    // 1. Update local IDs
-    final ids = List<String>.from(getBlockedIds());
-    if (!ids.contains(contactId)) {
-      ids.add(contactId);
-      await SharedPref.instance.setStringList(_prefKeyBlockedIds, ids);
+    // Snapshot previous state for rollback
+    final prevIds = List<String>.from(getBlockedIds());
+    final prevMeta = SharedPref.instance.getString(_prefKeyBlockedMeta);
+
+    // Resolve UID if contactId is phone-keyed or phone is available
+    String? resolvedUid;
+    final clean = cleanPhone(phone ?? (contactId.startsWith('+') || contactId.startsWith('0') ? contactId : ''));
+    if (!contactId.startsWith('+') && !contactId.startsWith('0') && contactId.length >= 20) {
+      resolvedUid = contactId;
     }
+
+    if (resolvedUid == null && clean.isNotEmpty) {
+      try {
+        final querySnap = await _firestore
+            .collection('users')
+            .where('phone.number', isEqualTo: clean)
+            .limit(1)
+            .get()
+            .timeout(const Duration(seconds: 4));
+        if (querySnap.docs.isNotEmpty) {
+          resolvedUid = querySnap.docs.first.id;
+        }
+      } catch (e) {
+        debugPrint('[BlockService] Could not resolve UID by phone: $e');
+      }
+    }
+
+    // 1. Update local IDs (store raw ID, resolved UID, and clean phone)
+    final ids = List<String>.from(prevIds);
+    if (!ids.contains(contactId)) ids.add(contactId);
+    if (resolvedUid != null && !ids.contains(resolvedUid)) ids.add(resolvedUid);
+    if (clean.isNotEmpty && !ids.contains(clean)) ids.add(clean);
+    await SharedPref.instance.setStringList(_prefKeyBlockedIds, ids);
 
     // 2. Update local detailed meta
     final contacts = List<BlockedContactInfo>.from(getBlockedContacts());
-    contacts.removeWhere((c) => c.id == contactId);
+    contacts.removeWhere((c) => c.id == contactId || (resolvedUid != null && c.id == resolvedUid));
     contacts.add(BlockedContactInfo(
-      id: contactId,
+      id: resolvedUid ?? contactId,
       name: contactName,
-      phone: phone ?? '',
+      phone: phone ?? (clean.isNotEmpty ? clean : ''),
       avatarUrl: avatarUrl ?? '',
       blockedAt: DateTime.now(),
     ));
@@ -118,57 +168,102 @@ class BlockService {
     final encoded = jsonEncode(contacts.map((c) => c.toMap()).toList());
     await SharedPref.instance.setString(_prefKeyBlockedMeta, encoded);
 
-    // 3. Sync with Firestore
+    // 3. Sync with Firestore with automatic rollback on error
     try {
       final uid = _auth.currentUser?.uid;
       if (uid != null && uid.isNotEmpty) {
-        await _firestore
+        final batch = _firestore.batch();
+        final primaryId = resolvedUid ?? contactId;
+        final docRefPrimary = _firestore
             .collection('users')
             .doc(uid)
             .collection('blocked_users')
-            .doc(contactId)
-            .set({
-          'contactId': contactId,
+            .doc(primaryId);
+
+        batch.set(docRefPrimary, {
+          'contactId': primaryId,
           'contactName': contactName,
-          'phone': phone ?? '',
+          'phone': phone ?? clean,
           'avatarUrl': avatarUrl ?? '',
           'blockedAt': FieldValue.serverTimestamp(),
         });
+
+        if (resolvedUid != null && contactId != resolvedUid) {
+          final docRefSecondary = _firestore
+              .collection('users')
+              .doc(uid)
+              .collection('blocked_users')
+              .doc(contactId);
+          batch.set(docRefSecondary, {
+            'contactId': contactId,
+            'contactName': contactName,
+            'phone': phone ?? clean,
+            'avatarUrl': avatarUrl ?? '',
+            'blockedAt': FieldValue.serverTimestamp(),
+          });
+        }
+        await batch.commit().timeout(const Duration(seconds: 6));
       }
     } catch (e) {
-      debugPrint('[BlockService] Error saving block to Firestore: $e');
+      // Rollback local state on server failure
+      await SharedPref.instance.setStringList(_prefKeyBlockedIds, prevIds);
+      if (prevMeta != null) {
+        await SharedPref.instance.setString(_prefKeyBlockedMeta, prevMeta);
+      }
+      debugPrint('[BlockService] Error saving block to Firestore (rolled back locally): $e');
       rethrow;
     }
   }
 
-  /// Unblock a contact locally and in Firestore
+  /// Unblock a contact locally and in Firestore with automatic rollback
   static Future<void> unblockContact(String contactId) async {
     if (contactId.isEmpty) return;
 
+    final prevIds = List<String>.from(getBlockedIds());
+    final prevMeta = SharedPref.instance.getString(_prefKeyBlockedMeta);
+
+    final contacts = List<BlockedContactInfo>.from(getBlockedContacts());
+    final match = contacts.where((c) => c.id == contactId).firstOrNull;
+    final clean = match != null ? cleanPhone(match.phone) : cleanPhone(contactId);
+
     // 1. Update local IDs
-    final ids = List<String>.from(getBlockedIds());
+    final ids = List<String>.from(prevIds);
     ids.remove(contactId);
+    if (clean.isNotEmpty) ids.remove(clean);
     await SharedPref.instance.setStringList(_prefKeyBlockedIds, ids);
 
     // 2. Update local detailed meta
-    final contacts = List<BlockedContactInfo>.from(getBlockedContacts());
     contacts.removeWhere((c) => c.id == contactId);
     final encoded = jsonEncode(contacts.map((c) => c.toMap()).toList());
     await SharedPref.instance.setString(_prefKeyBlockedMeta, encoded);
 
-    // 3. Sync with Firestore
+    // 3. Sync with Firestore with automatic rollback
     try {
       final uid = _auth.currentUser?.uid;
       if (uid != null && uid.isNotEmpty) {
-        await _firestore
+        final batch = _firestore.batch();
+        batch.delete(_firestore
             .collection('users')
             .doc(uid)
             .collection('blocked_users')
-            .doc(contactId)
-            .delete();
+            .doc(contactId));
+
+        if (clean.isNotEmpty && clean != contactId) {
+          batch.delete(_firestore
+              .collection('users')
+              .doc(uid)
+              .collection('blocked_users')
+              .doc(clean));
+        }
+        await batch.commit().timeout(const Duration(seconds: 6));
       }
     } catch (e) {
-      debugPrint('[BlockService] Error removing block from Firestore: $e');
+      // Rollback local state on server failure
+      await SharedPref.instance.setStringList(_prefKeyBlockedIds, prevIds);
+      if (prevMeta != null) {
+        await SharedPref.instance.setString(_prefKeyBlockedMeta, prevMeta);
+      }
+      debugPrint('[BlockService] Error removing block from Firestore (rolled back locally): $e');
       rethrow;
     }
   }
@@ -193,6 +288,12 @@ class BlockService {
         final cId = data['contactId'] as String? ?? doc.id;
         remoteIds.add(cId);
 
+        final rawPhone = data['phone'] as String? ?? '';
+        final clean = cleanPhone(rawPhone);
+        if (clean.isNotEmpty && !remoteIds.contains(clean)) {
+          remoteIds.add(clean);
+        }
+
         DateTime blockedAt = DateTime.now();
         if (data['blockedAt'] is Timestamp) {
           blockedAt = (data['blockedAt'] as Timestamp).toDate();
@@ -201,7 +302,7 @@ class BlockService {
         remoteContacts.add(BlockedContactInfo(
           id: cId,
           name: data['contactName'] as String? ?? 'Contact',
-          phone: data['phone'] as String? ?? '',
+          phone: rawPhone,
           avatarUrl: data['avatarUrl'] as String? ?? '',
           blockedAt: blockedAt,
         ));
@@ -220,7 +321,13 @@ class BlockService {
       }
 
       final mergedList = mergedMap.values.toList();
-      final mergedIds = mergedMap.keys.toList();
+      final Set<String> mergedIdsSet = Set.from(localIds)..addAll(remoteIds);
+      for (final c in mergedList) {
+        mergedIdsSet.add(c.id);
+        final clean = cleanPhone(c.phone);
+        if (clean.isNotEmpty) mergedIdsSet.add(clean);
+      }
+      final mergedIds = mergedIdsSet.toList();
 
       await SharedPref.instance.setStringList(_prefKeyBlockedIds, mergedIds);
       final encoded = jsonEncode(mergedList.map((c) => c.toMap()).toList());

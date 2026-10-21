@@ -442,7 +442,10 @@ class IsarDb {
         .limit(limit)
         .build()
         .watch(fireImmediately: true)
-        .map((event) => event.map((msg) => toMessage(msg)).toList());
+        .map((event) => event
+            .where((msg) => !BlockService.isBlocked(msg.senderId))
+            .map((msg) => toMessage(msg))
+            .toList());
   }
 
   static Stream<List<RecentChat>> getRecentChatStream(WidgetRef ref) {
@@ -539,6 +542,11 @@ class IsarDb {
       for (final msg in firstMessages) {
         final clientIsSender = msg.senderId == currentUser.id;
         final peerId = clientIsSender ? msg.receiverId : msg.senderId;
+
+        // Skip chat threads with blocked contacts
+        if (BlockService.isBlocked(peerId)) {
+          continue;
+        }
 
         var sender = _userCache[peerId];
         if (sender == null) {
