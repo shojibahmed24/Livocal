@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:livocal/features/settings/services/block_service.dart';
+import 'package:livocal/features/settings/views/blocked_contacts_screen.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
@@ -240,21 +242,15 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
           SettingsRow(
             icon: Icons.block_flipped,
             title: AppStrings.tr(ref, 'blockedContacts'),
-            subtitle: AppStrings.tr(ref, 'blockedContactsCount'),
-            onTap: () {
-              showAppDialog(
-                context: context,
-                title: AppStrings.tr(ref, 'blockedContacts'),
-                icon: Icons.block_flipped,
-                contentText: AppStrings.tr(ref, 'noBlockedContacts'),
-                actions: [
-                  AppDialogAction(
-                    label: AppStrings.tr(ref, 'ok'),
-                    isPrimary: true,
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
+            subtitle: '${BlockService.getBlockedIds().length} contacts',
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const BlockedContactsScreen(),
+                ),
               );
+              if (mounted) setState(() {});
             },
           ),
           const Divider(height: 1),

@@ -37,6 +37,7 @@ import '../../../shared/utils/storage_paths.dart';
 import '../../../theme/color_theme.dart';
 import 'package:livocal/features/auth/domain/auth_service.dart';
 import 'package:livocal/features/home/views/settings_screen.dart';
+import 'package:livocal/features/settings/services/block_service.dart';
 import 'package:camera/camera.dart';
 import 'package:livocal/features/home/views/status_tab.dart';
 import 'package:livocal/shared/widgets/camera.dart';
@@ -256,6 +257,10 @@ class _HomePageState extends ConsumerState<HomePage>
         return;
       }
       if (!mounted) return;
+      if (BlockService.isBlocked(incomingSession.callerId)) {
+        debugPrint('[base.dart] Suppressing incoming call from blocked caller: ${incomingSession.callerId}');
+        return;
+      }
       final currentSession = ref.read(callControllerProvider).activeSession;
       if (currentSession != null) return;
       ref.read(callControllerProvider.notifier).receiveIncomingCall(

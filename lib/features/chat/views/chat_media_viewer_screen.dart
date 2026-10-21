@@ -7,9 +7,12 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:livocal/features/chat/models/attachement.dart';
 import 'package:livocal/shared/models/messages.dart';
+import 'package:livocal/shared/repositories/download_service.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/shared/utils/storage_paths.dart';
 import 'package:livocal/theme/app_colors.dart';
+import 'package:open_file_plus/open_file_plus.dart';
 
 class ChatMediaViewerScreen extends ConsumerStatefulWidget {
   final String chatId;
@@ -255,16 +258,11 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
                                       fontSize: 12, color: Colors.grey),
                                 ),
                                 trailing: IconButton(
-                                  icon: const Icon(Icons.download_rounded),
-                                  onPressed: () {
-                                    showSnackBar(
-                                      context: context,
-                                      content:
-                                          'Opening ${msg.attachment?.fileName ?? 'file'}...',
-                                      type: SnacBarType.info,
-                                    );
-                                  },
+                                  icon: const Icon(Icons.open_in_new_rounded),
+                                  tooltip: 'Open document',
+                                  onPressed: () => _openDocument(msg),
                                 ),
+                                onTap: () => _openDocument(msg),
                               );
                             },
                           ),
@@ -339,6 +337,92 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
               ),
       ),
     );
+  }
+
+  Future<void> _openDocument(StoredMessage msg) async {
+    final fileName = msg.attachment?.fileName;
+    if (fileName == null || fileName.isEmpty) {
+      showSnackBar(
+        context: context,
+        content: 'File information not available',
+        type: SnacBarType.error,
+      );
+      return;
+    }
+
+    try {
+      final localPath = DeviceStorage.getMediaFilePath(fileName);
+      final file = File(localPath);
+
+      if (await file.exists()) {
+        final result = await OpenFile.open(localPath);
+        if (result.type != ResultType.done && mounted) {
+          showSnackBar(
+            context: context,
+            content: result.message.isNotEmpty
+                ? result.message
+                : 'No app found to open this file',
+            type: SnacBarType.info,
+          );
+        }
+      } else {
+        final remoteUrl = msg.attachment?.url;
+        if (remoteUrl != null && remoteUrl.isNotEmpty) {
+          if (mounted) {
+            showSnackBar(
+              context: context,
+              content: 'Downloading $fileName...',
+              type: SnacBarType.info,
+            );
+          }
+          await DownloadService.download(
+            taskId: msg.messageId,
+            url: remoteUrl,
+            path: localPath,
+            onDownloadComplete: (snapshot) async {
+              if (mounted) {
+                final result = await OpenFile.open(localPath);
+                if (result.type != ResultType.done && mounted) {
+                  showSnackBar(
+                    context: context,
+                    content: result.message.isNotEmpty
+                        ? result.message
+                        : 'No app found to open this file',
+                    type: SnacBarType.info,
+                  );
+                }
+              }
+            },
+            onDownloadError: () {
+              if (mounted) {
+                showSnackBar(
+                  context: context,
+                  content: 'Failed to download file',
+                  type: SnacBarType.error,
+                );
+              }
+            },
+          );
+        } else {
+          if (mounted) {
+            showSnackBar(
+              context: context,
+              content: 'File not found on device',
+              type: SnacBarType.error,
+            );
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[ChatMediaViewerScreen] _openDocument error: $e');
+      if (mounted) {
+        showSnackBar(
+          context: context,
+          content: 'Could not open file: $e',
+          type: SnacBarType.error,
+        );
+      }
+    }
   }
 
   Widget _buildEmptyState({

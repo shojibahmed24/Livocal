@@ -9,6 +9,7 @@ import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
+import 'package:livocal/features/settings/services/block_service.dart';
 import '../../features/chat/models/message.dart';
 import '../../features/calls/services/call_kit_service.dart';
 import '../../features/calls/services/gemini_live_translator.dart';
@@ -48,9 +49,14 @@ class PushNotificationsRepo {
     FirebaseMessaging.onMessageOpenedApp.listen(onMessageOpenedApp);
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       debugPrint('[PushNotificationsRepo] Foreground notification received: ${message.data}');
+      final contactId = message.data['authorId'] as String? ??
+          message.data['senderId'] as String? ??
+          message.data['callerId'] as String?;
+      if (contactId != null && BlockService.isBlocked(contactId)) {
+        debugPrint('[PushNotificationsRepo] Suppressing foreground notification from blocked contact: $contactId');
+        return;
+      }
       if (message.data['type'] != 'INCOMING_CALL') {
-        final contactId = message.data['authorId'] as String? ??
-            message.data['senderId'] as String?;
         RingtoneManager().playMessageNotificationTone(contactId: contactId);
       }
     });
@@ -120,6 +126,11 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
   // 1. Wake up phone for Incoming Voice Call
   if (data['type'] == 'INCOMING_CALL') {
+    final callerId = data['callerId'] as String? ?? '';
+    if (callerId.isNotEmpty && BlockService.isBlocked(callerId)) {
+      debugPrint('[PushNotificationsRepo] Suppressing background call from blocked caller: $callerId');
+      return;
+    }
     final callId = data['callId'] ?? '';
     final callerName = data['callerName'] ?? 'Incoming Call';
     final callerPhone = data['callerNumber'] ?? data['callerPhone'] ?? '';

@@ -8,6 +8,7 @@ import 'package:livocal/features/calls/views/outgoing_call_screen.dart';
 import 'package:livocal/features/chat/views/chat.dart';
 import 'package:livocal/features/chat/views/chat_media_viewer_screen.dart';
 import 'package:livocal/features/chat/views/custom_notifications_screen.dart';
+import 'package:livocal/features/settings/services/block_service.dart';
 import 'package:livocal/shared/models/messages.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
@@ -38,12 +39,17 @@ class ContactProfileScreen extends ConsumerStatefulWidget {
 
 class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
   bool _isMuted = false;
+  bool _isBlocked = false;
+  String _disappearingTimer = 'Off';
   int _mediaCount = 0;
 
   @override
   void initState() {
     super.initState();
     _isMuted = SharedPref.instance.getBool('contact_muted_${widget.other.id}') ?? false;
+    _isBlocked = BlockService.isBlocked(widget.other.id);
+    _disappearingTimer =
+        SharedPref.instance.getString('contact_disappearing_${widget.other.id}') ?? 'Off';
     _loadMediaStats();
   }
 
@@ -108,7 +114,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                       _verifySecurityCode();
                       break;
                     case 'block':
-                      _showBlockConfirmation(context);
+                      _toggleBlockStatus();
                       break;
                     case 'report':
                       _showReportConfirmation(context);
@@ -157,13 +163,22 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     ),
                   ),
                   const PopupMenuDivider(),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'block',
                     child: Row(
                       children: [
-                        Icon(Icons.block_flipped, size: 20, color: Colors.redAccent),
-                        SizedBox(width: 12),
-                        Text('Block contact', style: TextStyle(color: Colors.redAccent)),
+                        Icon(
+                          _isBlocked ? Icons.check_circle_outline : Icons.block_flipped,
+                          size: 20,
+                          color: _isBlocked ? AppColors.primary : Colors.redAccent,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          _isBlocked ? 'Unblock contact' : 'Block contact',
+                          style: TextStyle(
+                            color: _isBlocked ? AppColors.primary : Colors.redAccent,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -481,15 +496,9 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                   ListTile(
                     leading: const Icon(Icons.timer_outlined, color: Color(0xFF8696A0)),
                     title: const Text('Disappearing messages'),
-                    subtitle: const Text('Off', style: TextStyle(fontSize: 12)),
+                    subtitle: Text(_disappearingTimer, style: const TextStyle(fontSize: 12)),
                     trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-                    onTap: () {
-                      showSnackBar(
-                        context: context,
-                        content: 'Disappearing messages set to Off',
-                        type: SnacBarType.info,
-                      );
-                    },
+                    onTap: _showDisappearingMessagesDialog,
                   ),
                 ],
               ),
@@ -505,12 +514,19 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
               child: Column(
                 children: [
                   ListTile(
-                    leading: const Icon(Icons.block, color: Colors.redAccent),
-                    title: Text(
-                      'Block ${widget.contactName}',
-                      style: const TextStyle(color: Colors.redAccent),
+                    leading: Icon(
+                      _isBlocked ? Icons.check_circle_outline : Icons.block,
+                      color: _isBlocked ? AppColors.primary : Colors.redAccent,
                     ),
-                    onTap: () => _showBlockConfirmation(context),
+                    title: Text(
+                      _isBlocked
+                          ? 'Unblock ${widget.contactName}'
+                          : 'Block ${widget.contactName}',
+                      style: TextStyle(
+                        color: _isBlocked ? AppColors.primary : Colors.redAccent,
+                      ),
+                    ),
+                    onTap: _toggleBlockStatus,
                   ),
                   const Divider(height: 1, indent: 56),
                   ListTile(
@@ -790,33 +806,118 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
     );
   }
 
-  void _showBlockConfirmation(BuildContext context) {
+  void _showDisappearingMessagesDialog() {
+    final options = ['Off', '24 hours', '7 days', '90 days'];
     showAppDialog(
       context: context,
-      title: 'Block ${widget.contactName}?',
-      contentText:
-          'Blocked contacts will no longer be able to call you or send you messages.',
-      icon: Icons.block_flipped,
-      iconColor: Colors.redAccent,
+      title: 'Disappearing messages',
+      content: RadioGroup<String>(
+        groupValue: _disappearingTimer,
+        onChanged: (val) {
+          if (val != null) {
+            setState(() => _disappearingTimer = val);
+            SharedPref.instance
+                .setString('contact_disappearing_${widget.other.id}', val);
+            Navigator.pop(context);
+            showSnackBar(
+              context: context,
+              content: 'Disappearing messages set to $val',
+              type: SnacBarType.info,
+            );
+          }
+        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: options
+              .map(
+                (opt) => RadioListTile<String>(
+                  title: Text(opt),
+                  value: opt,
+                ),
+              )
+              .toList(),
+        ),
+      ),
       actions: [
         AppDialogAction(
           label: 'CANCEL',
           onPressed: () => Navigator.pop(context),
         ),
-        AppDialogAction(
-          label: 'BLOCK',
-          isDestructive: true,
-          onPressed: () {
-            Navigator.pop(context);
-            showSnackBar(
-              context: context,
-              content: '${widget.contactName} has been blocked',
-              type: SnacBarType.info,
-            );
-          },
-        ),
       ],
     );
+  }
+
+  Future<void> _toggleBlockStatus() async {
+    if (_isBlocked) {
+      final confirmed = await showAppDialog<bool>(
+        context: context,
+        title: 'Unblock ${widget.contactName}?',
+        contentText:
+            'Unblocked contacts will be able to call you and send you messages.',
+        icon: Icons.lock_open_rounded,
+        iconColor: AppColors.primary,
+        actions: [
+          AppDialogAction(
+            label: 'CANCEL',
+            onPressed: () => Navigator.pop(context, false),
+          ),
+          AppDialogAction(
+            label: 'UNBLOCK',
+            isPrimary: true,
+            onPressed: () => Navigator.pop(context, true),
+          ),
+        ],
+      );
+
+      if (confirmed == true && mounted) {
+        await BlockService.unblockContact(widget.other.id);
+        setState(() => _isBlocked = false);
+        if (mounted) {
+          showSnackBar(
+            context: context,
+            content: '${widget.contactName} has been unblocked',
+            type: SnacBarType.info,
+          );
+        }
+      }
+    } else {
+      final confirmed = await showAppDialog<bool>(
+        context: context,
+        title: 'Block ${widget.contactName}?',
+        contentText:
+            'Blocked contacts will no longer be able to call you or send you messages.',
+        icon: Icons.block_flipped,
+        iconColor: Colors.redAccent,
+        actions: [
+          AppDialogAction(
+            label: 'CANCEL',
+            onPressed: () => Navigator.pop(context, false),
+          ),
+          AppDialogAction(
+            label: 'BLOCK',
+            isDestructive: true,
+            onPressed: () => Navigator.pop(context, true),
+          ),
+        ],
+      );
+
+      if (confirmed == true && mounted) {
+        await BlockService.blockContact(
+          contactId: widget.other.id,
+          contactName: widget.contactName,
+          phone: widget.other.phone.getFormattedNumber(),
+          avatarUrl: widget.other.avatarUrl,
+        );
+        setState(() => _isBlocked = true);
+        if (mounted) {
+          showSnackBar(
+            context: context,
+            content: '${widget.contactName} has been blocked',
+            type: SnacBarType.info,
+          );
+        }
+      }
+    }
   }
 
   void _showReportConfirmation(BuildContext context) {

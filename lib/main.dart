@@ -21,6 +21,7 @@ import 'package:livocal/shared/utils/app_localizations.dart';
 import 'firebase_options.dart';
 
 import 'package:livocal/features/calls/services/gemini_live_translator.dart';
+import 'package:livocal/features/settings/services/block_service.dart';
 import 'package:livocal/shared/utils/navigator_key.dart';
 import 'package:livocal/theme/theme.dart';
 
@@ -58,6 +59,7 @@ void main() async {
   try {
     await SharedPref.init();
     await GeminiLiveTranslator.initSecureStorage();
+    BlockService.syncFromFirestore();
   } catch (e, st) {
     debugPrint("SharedPref / SecureStorage init error: $e\n$st");
   }

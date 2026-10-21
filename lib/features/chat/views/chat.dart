@@ -299,32 +299,46 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                   }
                   break;
                 case 'mute':
-                  showSnackBar(
-                    context: context,
-                    content: 'Notifications muted for this chat',
-                    type: SnacBarType.info,
-                  );
+                  final currentlyMuted =
+                      SharedPref.instance.getBool('contact_muted_${other.id}') ?? false;
+                  final newMuted = !currentlyMuted;
+                  await SharedPref.instance
+                      .setBool('contact_muted_${other.id}', newMuted);
+                  if (context.mounted) {
+                    setState(() {});
+                    showSnackBar(
+                      context: context,
+                      content: newMuted
+                          ? 'Notifications muted for ${widget.otherUserContactName}'
+                          : 'Notifications unmuted for ${widget.otherUserContactName}',
+                      type: SnacBarType.info,
+                    );
+                  }
                   break;
               }
             },
-            itemBuilder: (context) => const [
-              PopupMenuItem(
-                value: 'view_contact',
-                child: Text('View contact'),
-              ),
-              PopupMenuItem(
-                value: 'mute',
-                child: Text('Mute notifications'),
-              ),
-              PopupMenuDivider(),
-              PopupMenuItem(
-                value: 'clear_chat',
-                child: Text(
-                  'Clear chat',
-                  style: TextStyle(color: Colors.redAccent),
+            itemBuilder: (context) {
+              final isMuted =
+                  SharedPref.instance.getBool('contact_muted_${other.id}') ?? false;
+              return [
+                const PopupMenuItem(
+                  value: 'view_contact',
+                  child: Text('View contact'),
                 ),
-              ),
-            ],
+                PopupMenuItem(
+                  value: 'mute',
+                  child: Text(isMuted ? 'Unmute notifications' : 'Mute notifications'),
+                ),
+                const PopupMenuDivider(),
+                const PopupMenuItem(
+                  value: 'clear_chat',
+                  child: Text(
+                    'Clear chat',
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
+                ),
+              ];
+            },
           ),
         ],
       ),
@@ -816,7 +830,28 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
           return const ChatBubbleShimmerSkeleton();
         }
 
-        final messages = snapshot.data!;
+        final rawMessages = snapshot.data!;
+        final disappearingTimer = SharedPref.instance.getString('contact_disappearing_${other.id}') ??
+            SharedPref.instance.getString('privacy_disappearing') ??
+            'Off';
+        Duration? expiryDuration;
+        if (disappearingTimer == '24 hours') {
+          expiryDuration = const Duration(hours: 24);
+        } else if (disappearingTimer == '7 days') {
+          expiryDuration = const Duration(days: 7);
+        } else if (disappearingTimer == '90 days') {
+          expiryDuration = const Duration(days: 90);
+        }
+
+        final List<Message> messages;
+        if (expiryDuration != null) {
+          final cutoff = DateTime.now().subtract(expiryDuration);
+          messages = rawMessages
+              .where((m) => m.timestamp.toDate().isAfter(cutoff))
+              .toList();
+        } else {
+          messages = rawMessages;
+        }
         final unreadMsgCount = updateUnreadCount(messages);
 
         if (isInitialRender) {
