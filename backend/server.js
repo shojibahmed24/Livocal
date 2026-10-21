@@ -2824,6 +2824,75 @@ app.post('/api/admin/cleanup-legacy-storage', authenticateAdmin, async (req, res
 });
 
 /**
+ * POST /api/admin/migrate-user-payment-pii
+ * Authenticated admin endpoint to scrub legacy payment addresses from all /users documents
+ * and migrate them into users/{userId}/wallet/payment_settings.
+ * Eliminates PII leaks and prevents rules update violations for legacy users.
+ */
+app.post('/api/admin/migrate-user-payment-pii', authenticateAdmin, async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
+
+  const PAYMENT_FIELDS = [
+    'binancePayId',
+    'cryptoUsdtTrc20',
+    'cryptoUsdtBep20',
+    'bkashNumber',
+    'nagadNumber',
+  ];
+
+  try {
+    const usersSnapshot = await firestoreDb.collection('users').get();
+    let scannedUsers = 0;
+    let migratedUsers = 0;
+    let scrubbedUsers = 0;
+
+    for (const userDoc of usersSnapshot.docs) {
+      scannedUsers++;
+      const userData = userDoc.data();
+      const paymentUpdates = {};
+      const deleteUpdates = {};
+      let hasLegacyPayment = false;
+
+      for (const field of PAYMENT_FIELDS) {
+        if (field in userData) {
+          hasLegacyPayment = true;
+          const val = userData[field];
+          if (typeof val === 'string' && val.trim().length > 0) {
+            paymentUpdates[field] = val.trim();
+          }
+          deleteUpdates[field] = FieldValue.delete();
+        }
+      }
+
+      if (hasLegacyPayment) {
+        const batch = firestoreDb.batch();
+        if (Object.keys(paymentUpdates).length > 0) {
+          const settingsRef = userDoc.ref.collection('wallet').doc('payment_settings');
+          paymentUpdates.updatedAt = new Date().toISOString();
+          paymentUpdates.migratedFromUserDoc = true;
+          batch.set(settingsRef, paymentUpdates, { merge: true });
+          migratedUsers++;
+        }
+        batch.update(userDoc.ref, deleteUpdates);
+        await batch.commit();
+        scrubbedUsers++;
+      }
+    }
+
+    return res.json({
+      success: true,
+      scannedUsers,
+      migratedUsers,
+      scrubbedUsers,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error('[AdminMigratePaymentPII] Error:', err.message);
+    return res.status(500).json({ error: 'Failed to migrate user payment fields', details: err.message });
+  }
+});
+
+/**
  * POST /api/admin/purge-expired-messages
  * Authenticated admin endpoint to safely purge expired disappearing messages using Firestore Timestamps.
  * Strictly protected by authenticateAdmin middleware and uses Timestamp comparison to avoid cross-type bugs.

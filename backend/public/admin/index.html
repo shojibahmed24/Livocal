@@ -2279,6 +2279,37 @@
           </div>
         </div>
       </div>
+
+      <!-- Maintenance & Security Operations Card -->
+      <div class="content-card" style="margin-top: 24px;">
+        <div class="card-header-bar">
+          <div class="card-title-group">
+            <h2>🛡️ Maintenance & Security Operations</h2>
+            <p>Execute authoritative data cleanup, legacy storage migration, and user PII isolation tasks.</p>
+          </div>
+        </div>
+        <div style="display:flex; gap:16px; flex-wrap:wrap; margin-top:16px;">
+          <div style="flex:1; min-width:280px; background:var(--bg-glass); border:1px solid var(--border-color); border-radius:12px; padding:16px;">
+            <div style="font-weight:600; font-size:14px; margin-bottom:6px;">🔒 User Payment PII Isolation Migration</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px; line-height:1.4;">
+              Scans all <code>/users</code> documents, scrubs legacy payment addresses (bKash, Nagad, Crypto), and migrates them safely to private <code>users/{id}/wallet/payment_settings</code> subcollections.
+            </div>
+            <button class="btn btn-secondary" id="btnMigratePaymentPii" onclick="runPaymentPiiMigration()" style="width:100%; display:inline-flex; align-items:center; justify-content:center; gap:8px;">
+              <span>🧹 Run PII Migration</span>
+            </button>
+          </div>
+
+          <div style="flex:1; min-width:280px; background:var(--bg-glass); border:1px solid var(--border-color); border-radius:12px; padding:16px;">
+            <div style="font-weight:600; font-size:14px; margin-bottom:6px;">🗑️ Disappearing Messages Purge</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px; line-height:1.4;">
+              Scans <code>/chats/{id}/messages</code> for expired messages matching server Firestore Timestamps and purges them safely without cross-type issues.
+            </div>
+            <button class="btn btn-secondary" id="btnPurgeExpired" onclick="runPurgeExpiredMessages()" style="width:100%; display:inline-flex; align-items:center; justify-content:center; gap:8px;">
+              <span>⚡ Purge Expired Messages</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
   </div><!-- /.app-shell -->
@@ -3381,6 +3412,71 @@
         alert('Error saving gateways: ' + err.message);
       } finally {
         btn.innerText = oldText;
+        btn.disabled = false;
+      }
+    }
+    async function runPaymentPiiMigration() {
+      const btn = document.getElementById('btnMigratePaymentPii');
+      if (!confirm('Are you sure you want to run the User Payment PII Isolation Migration? This will scan all users, migrate legacy payment details to users/{id}/wallet/payment_settings, and scrub them from public user docs.')) {
+        return;
+      }
+      const oldText = btn.innerHTML;
+      btn.innerHTML = '<span>⏳ Running PII Migration...</span>';
+      btn.disabled = true;
+
+      try {
+        const secret = getAdminSecret();
+        const res = await fetch('/api/admin/migrate-user-payment-pii', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-secret': secret,
+          },
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Migration failed');
+
+        showToast(`✅ PII Migration: Scanned ${data.scannedUsers}, Migrated ${data.migratedUsers}, Scrubbed ${data.scrubbedUsers}`);
+        alert(`Migration Successful!\n\nScanned Users: ${data.scannedUsers}\nMigrated to Subcollection: ${data.migratedUsers}\nScrubbed Public Documents: ${data.scrubbedUsers}\nErrors: ${data.errors ? data.errors.length : 0}`);
+      } catch (err) {
+        showToast('❌ PII Migration Error: ' + err.message, true);
+        alert('PII Migration Error: ' + err.message);
+      } finally {
+        btn.innerHTML = oldText;
+        btn.disabled = false;
+      }
+    }
+
+    async function runPurgeExpiredMessages() {
+      const btn = document.getElementById('btnPurgeExpired');
+      if (!confirm('Are you sure you want to purge all expired disappearing messages across all chats?')) {
+        return;
+      }
+      const oldText = btn.innerHTML;
+      btn.innerHTML = '<span>⚡ Purging Expired Messages...</span>';
+      btn.disabled = true;
+
+      try {
+        const secret = getAdminSecret();
+        const res = await fetch('/api/admin/purge-expired-messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-secret': secret,
+          },
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Purge failed');
+
+        showToast(`✅ Expired Messages Purged! Deleted: ${data.purgedCount || 0} message(s)`);
+        alert(`Purge Complete!\n\nDeleted Expired Messages: ${data.purgedCount || 0}\nTimestamp: ${data.purgedAt || new Date().toISOString()}`);
+      } catch (err) {
+        showToast('❌ Purge Error: ' + err.message, true);
+        alert('Purge Error: ' + err.message);
+      } finally {
+        btn.innerHTML = oldText;
         btn.disabled = false;
       }
     }
