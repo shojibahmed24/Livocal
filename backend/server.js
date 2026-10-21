@@ -222,6 +222,8 @@ app.get('/health', (req, res) => {
     status: 'ok',
     service: 'Livocal Live Relay Gateway',
     uptime: Math.round(process.uptime()),
+    hasApiKey: Boolean(GEMINI_API_KEY),
+    privacyRoute: true,
     timestamp: new Date().toISOString(),
   });
 });
@@ -2726,14 +2728,20 @@ app.post(
 /**
  * POST /api/voice-preview
  * Returns real synthesized audio bytes (base64) using Gemini multimodal audio model.
+ * Protected by Firebase ID token authentication, rate-limiting, and strict input sanitization.
  */
 app.post(
   '/api/voice-preview',
   apiLimiter,
+  authenticateRequest,
   async (req, res) => {
-    const { voice, text, langName } = req.body || {};
+    const { voice, text } = req.body || {};
     const validVoice = (voice && ALLOWED_VOICES.has(voice)) ? voice : 'Aoede';
-    const sampleText = text || 'Hello, I will translate your calls.';
+    
+    // Strict sanitization: limit sample length to 160 characters and strip line breaks/quotes to prevent prompt injection
+    const rawText = typeof text === 'string' ? text : '';
+    const cleanText = rawText.replace(/[\r\n"'\\]/g, ' ').trim().slice(0, 160);
+    const sampleText = cleanText || 'Hello, I will translate your calls.';
 
     if (!GEMINI_API_KEY) {
       return res.status(503).json({ error: 'GEMINI_API_KEY_NOT_CONFIGURED' });
@@ -2748,7 +2756,7 @@ app.post(
         body: JSON.stringify({
           contents: [
             {
-              parts: [{ text: `Say with natural tone: "${sampleText}"` }]
+              parts: [{ text: `Say in a warm natural speaking tone: ${sampleText}` }]
             }
           ],
           generationConfig: {
@@ -2776,7 +2784,8 @@ app.post(
       }
       return res.status(500).json({ error: 'No audio returned' });
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      console.error('[VoicePreview] Synthesis error:', err?.message || err);
+      return res.status(500).json({ error: 'Voice preview synthesis failed' });
     }
   }
 );

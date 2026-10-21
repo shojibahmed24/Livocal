@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -388,10 +389,14 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
               .replaceFirst('wss://', 'https://')
               .replaceFirst('/ws/live-call', '/api/voice-preview');
 
+          final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
           final relayRes = await http
               .post(
                 Uri.parse(relayUrl),
-                headers: {'Content-Type': 'application/json'},
+                headers: {
+                  'Content-Type': 'application/json',
+                  if (idToken != null) 'Authorization': 'Bearer $idToken',
+                },
                 body: jsonEncode({
                   'voice': persona.id,
                   'text': sampleText,
