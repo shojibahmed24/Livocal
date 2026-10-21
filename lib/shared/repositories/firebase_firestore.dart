@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
+import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/features/chat/models/message.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
@@ -193,26 +195,54 @@ class FirebaseFirestoreRepo {
         }
       }
 
+      // 1. Check local cache first
       for (final cand in candidates) {
-        final snapRaw = await firestore
-            .collection('users')
-            .where('phone.rawNumber', isEqualTo: cand)
-            .limit(1)
-            .get()
-            .timeout(const Duration(seconds: 3));
-        if (snapRaw.docs.isNotEmpty) {
-          return User.fromMap(snapRaw.docs.first.data());
-        }
+        final localUser = await IsarDb.getUserByPhone(cand);
+        if (localUser != null) return localUser;
+      }
 
-        final snapNum = await firestore
-            .collection('users')
-            .where('phone.number', isEqualTo: cand)
-            .limit(1)
-            .get()
-            .timeout(const Duration(seconds: 3));
-        if (snapNum.docs.isNotEmpty) {
-          return User.fromMap(snapNum.docs.first.data());
+      // 2. Authoritative backend match via Admin SDK (prevents client listing/enumeration)
+      try {
+        final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+        if (idToken != null) {
+          final response = await http.post(
+            Uri.parse(AppConfig.matchContactsUrl),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $idToken',
+            },
+            body: jsonEncode({
+              'phoneNumbers': candidates.toList(),
+            }),
+          ).timeout(const Duration(seconds: 4));
+
+          if (response.statusCode == 200) {
+            final data = jsonDecode(response.body);
+            final matches = data['matches'] as List<dynamic>? ?? [];
+            if (matches.isNotEmpty) {
+              final m = matches.first as Map<String, dynamic>;
+              final phoneMap = m['phone'] as Map<String, dynamic>?;
+              final rawNumber = phoneMap?['rawNumber'] as String? ?? '';
+              final code = phoneMap?['code'] as String? ?? '';
+              final number = phoneMap?['number'] as String? ?? '';
+              final resolvedUser = User(
+                id: m['id'] ?? '',
+                name: m['name'] ?? '',
+                avatarUrl: m['avatarUrl'] ?? '',
+                phone: Phone(
+                  code: code,
+                  number: number,
+                  formattedNumber: rawNumber.isNotEmpty ? rawNumber : '$code$number',
+                ),
+                activityStatus: UserActivityStatus.fromValue(m['activityStatus'] ?? 'online'),
+              );
+              await IsarDb.saveUser(resolvedUser);
+              return resolvedUser;
+            }
+          }
         }
+      } catch (backendErr) {
+        debugPrint('[FirebaseFirestoreRepo] backend getUserByPhone error: $backendErr');
       }
 
       return null;

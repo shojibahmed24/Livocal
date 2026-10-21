@@ -12,7 +12,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 
@@ -1959,14 +1959,21 @@ app.post('/api/wallet/my-payment-settings', authenticateRequest, async (req, res
     const settingsRef = userRef.collection('wallet').doc('payment_settings');
     batch.set(settingsRef, payload, { merge: true });
 
-    // 2. Also mirror into user's top-level document for public read access
-    batch.set(userRef, {
-      binancePayId: cleanBinance,
-      cryptoUsdtTrc20: cleanTrc20,
-      cryptoUsdtBep20: cleanBep20,
-      bkashNumber: cleanBkash,
-      nagadNumber: cleanNagad,
-    }, { merge: true });
+    // 2. Scrub any legacy payment fields from the public parent user document to isolate PII
+    try {
+      const userDoc = await userRef.get();
+      if (userDoc.exists) {
+        batch.update(userRef, {
+          binancePayId: FieldValue.delete(),
+          cryptoUsdtTrc20: FieldValue.delete(),
+          cryptoUsdtBep20: FieldValue.delete(),
+          bkashNumber: FieldValue.delete(),
+          nagadNumber: FieldValue.delete(),
+        });
+      }
+    } catch (scrubErr) {
+      console.warn('[Wallet] Non-fatal error scrubbing legacy payment fields from user doc:', scrubErr.message);
+    }
 
     await batch.commit();
 

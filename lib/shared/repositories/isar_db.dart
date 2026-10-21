@@ -640,6 +640,25 @@ class IsarDb {
     }
   }
 
+  static Future<User?> getUserByPhone(String phone) async {
+    try {
+      final clean = phone.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+      final allUsers = await isar.users.where().findAll();
+      for (final u in allUsers) {
+        final raw = (u.phone.formattedNumber ?? '').replaceAll(RegExp(r'[\s\-\(\)]'), '');
+        final num = (u.phone.number ?? '').replaceAll(RegExp(r'[\s\-\(\)]'), '');
+        final code = u.phone.code ?? '';
+        final full = '$code$num'.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+        if (raw == clean || num == clean || full == clean ||
+            (clean.startsWith('+') && (raw == clean.substring(1) || full == clean.substring(1))) ||
+            (!clean.startsWith('+') && (raw == '+$clean' || full == '+$clean'))) {
+          return u;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
   static Future<User?> getUserById(String id) async {
     final local = await isar.users.filter().idEqualTo(id).findFirst();
     if (local != null) return local;

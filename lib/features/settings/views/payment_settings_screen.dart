@@ -175,15 +175,14 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
 
-        // Sync top-level doc
-        await firestore.collection('users').doc(uid).set({
-          'id': uid,
-          'binancePayId': binancePay,
-          'cryptoUsdtTrc20': trc20,
-          'cryptoUsdtBep20': bep20,
-          'bkashNumber': bkash,
-          'nagadNumber': nagad,
-        }, SetOptions(merge: true));
+        // Scrub any legacy payment fields from the public parent user document to isolate PII
+        await firestore.collection('users').doc(uid).update({
+          'binancePayId': FieldValue.delete(),
+          'cryptoUsdtTrc20': FieldValue.delete(),
+          'cryptoUsdtBep20': FieldValue.delete(),
+          'bkashNumber': FieldValue.delete(),
+          'nagadNumber': FieldValue.delete(),
+        }).catchError((_) {});
 
         remoteSaved = true;
       } catch (e) {

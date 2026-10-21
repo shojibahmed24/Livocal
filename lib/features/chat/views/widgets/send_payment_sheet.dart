@@ -146,18 +146,10 @@ class _SendPaymentSheetContentState
       debugPrint('[PaymentSheet] Backend recipient-payment-settings error: $backendErr');
     }
 
-    // 2. Fallback to Firestore with isolated queries for resilience
+    // 2. Fallback to private wallet settings doc if permitted (never reads from public user doc)
     try {
       final firestore = FirebaseFirestore.instance;
-      Map<String, dynamic>? userData;
       Map<String, dynamic>? walletData;
-
-      try {
-        final userDoc = await firestore.collection('users').doc(otherId).get();
-        userData = userDoc.data();
-      } catch (e) {
-        debugPrint('[PaymentSheet] Error reading user doc: $e');
-      }
 
       try {
         final walletDoc = await firestore
@@ -173,16 +165,11 @@ class _SendPaymentSheetContentState
 
       if (mounted) {
         setState(() {
-          _recipientBinancePay = walletData?['binancePayId'] as String? ??
-              userData?['binancePayId'] as String?;
-          _recipientTrc20 = walletData?['cryptoUsdtTrc20'] as String? ??
-              userData?['cryptoUsdtTrc20'] as String?;
-          _recipientBep20 = walletData?['cryptoUsdtBep20'] as String? ??
-              userData?['cryptoUsdtBep20'] as String?;
-          _recipientBkash = walletData?['bkashNumber'] as String? ??
-              userData?['bkashNumber'] as String?;
-          _recipientNagad = walletData?['nagadNumber'] as String? ??
-              userData?['nagadNumber'] as String?;
+          _recipientBinancePay = walletData?['binancePayId'] as String?;
+          _recipientTrc20 = walletData?['cryptoUsdtTrc20'] as String?;
+          _recipientBep20 = walletData?['cryptoUsdtBep20'] as String?;
+          _recipientBkash = walletData?['bkashNumber'] as String?;
+          _recipientNagad = walletData?['nagadNumber'] as String?;
           _isLoadingRecipientSettings = false;
         });
       }

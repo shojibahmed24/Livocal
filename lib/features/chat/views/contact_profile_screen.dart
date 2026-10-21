@@ -886,6 +886,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
             SharedPref.instance.setString('chat_disappearing_$chatId', val);
             FirebaseFirestore.instance.collection('chat_settings').doc(chatId).set({
               'chatId': chatId,
+              'participants': [widget.self.id, widget.other.id],
               'disappearingDuration': val,
               'updatedBy': widget.self.id,
               'updatedAt': FieldValue.serverTimestamp(),
