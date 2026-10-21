@@ -106,7 +106,18 @@ class _HomePageState extends ConsumerState<HomePage>
       (messages) async {
         bool hasIncoming = false;
         String? lastIncomingSenderId;
+        final List<Message> nonBlockedMessages = [];
         for (final message in messages) {
+          // Drop all incoming messages from blocked senders
+          if (message.senderId != widget.user.id &&
+              BlockService.isBlocked(message.senderId)) {
+            debugPrint(
+                '[base.dart] Message from blocked contact ${message.senderId} dropped.');
+            continue;
+          }
+
+          nonBlockedMessages.add(message);
+
           if (message.senderId != widget.user.id) {
             hasIncoming = true;
             lastIncomingSenderId = message.senderId;
@@ -146,7 +157,9 @@ class _HomePageState extends ConsumerState<HomePage>
           RingtoneManager().playMessageNotificationTone(contactId: lastIncomingSenderId);
         }
 
-        IsarDb.addMessages(messages);
+        if (nonBlockedMessages.isNotEmpty) {
+          IsarDb.addMessages(nonBlockedMessages);
+        }
       },
       onError: (err) {
         debugPrint('Firestore chat stream error: $err');
@@ -1405,40 +1418,60 @@ class RecentChatWidget extends StatelessWidget {
               hasUnread: hasUnread,
             ),
             const SizedBox(height: 5.0),
-            if (hasUnread)
-              Container(
-                constraints:
-                    const BoxConstraints(minWidth: 20, minHeight: 20),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6.5, vertical: 2.0),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF00A884), Color(0xFF25D366)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF25D366).withValues(alpha: 0.35),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    ),
+            Builder(
+              builder: (context) {
+                final isMuted = SharedPref.instance
+                        .getBool('contact_muted_${chat.user.id}') ??
+                    false;
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isMuted) ...[
+                      const Icon(
+                        Icons.volume_off_rounded,
+                        size: 15,
+                        color: Color(0xFF8696A0),
+                      ),
+                      const SizedBox(width: 4),
+                    ],
+                    if (hasUnread)
+                      Container(
+                        constraints:
+                            const BoxConstraints(minWidth: 20, minHeight: 20),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6.5, vertical: 2.0),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF00A884), Color(0xFF25D366)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF25D366).withValues(alpha: 0.35),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          chat.unreadCount > 99 ? '99+' : '${chat.unreadCount}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                      )
+                    else if (!isMuted)
+                      const SizedBox(height: 20.0),
                   ],
-                ),
-                child: Text(
-                  chat.unreadCount > 99 ? '99+' : '${chat.unreadCount}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-              )
-            else
-              const SizedBox(height: 20.0),
+                );
+              },
+            ),
           ],
         ),
       ),

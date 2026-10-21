@@ -261,8 +261,20 @@ class IsarDb {
     }
   }
 
-  static Future<void> purgeDisappearingMessages() async {
-    final setting = SharedPref.instance.getString('privacy_disappearing') ?? 'Off';
+  static Future<void> purgeDisappearingMessages({
+    String? forChatId,
+    String? forContactId,
+  }) async {
+    String setting = 'Off';
+    if (forContactId != null && forContactId.isNotEmpty) {
+      setting =
+          SharedPref.instance.getString('contact_disappearing_$forContactId') ??
+              'Off';
+    }
+    if (setting == 'Off') {
+      setting =
+          SharedPref.instance.getString('privacy_disappearing') ?? 'Off';
+    }
     if (setting == 'Off') return;
 
     Duration? duration;
@@ -276,13 +288,14 @@ class IsarDb {
 
     if (duration == null) return;
     final cutoff = DateTime.now().subtract(duration);
-    final starredIds = SharedPref.instance.getStringList('starred_message_ids') ?? [];
+    final starredIds =
+        SharedPref.instance.getStringList('starred_message_ids') ?? [];
 
     try {
-      final expired = await isar.storedMessages
-          .filter()
-          .timestampLessThan(cutoff)
-          .findAll();
+      final query = isar.storedMessages.filter().timestampLessThan(cutoff);
+      final expired = forChatId != null && forChatId.isNotEmpty
+          ? await query.chatIdEqualTo(forChatId).findAll()
+          : await query.findAll();
 
       final toDelete = expired
           .where((m) => !starredIds.contains(m.messageId))
@@ -293,7 +306,8 @@ class IsarDb {
         await isar.writeTxn(() async {
           await isar.storedMessages.deleteAll(toDelete);
         });
-        debugPrint('[IsarDb] Purged ${toDelete.length} disappearing messages older than $setting');
+        debugPrint(
+            '[IsarDb] Purged ${toDelete.length} disappearing messages (setting: $setting, chat: $forChatId)');
       }
     } catch (e) {
       debugPrint('[IsarDb] Error purging disappearing messages: $e');

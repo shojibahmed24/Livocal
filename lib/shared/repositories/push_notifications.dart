@@ -147,9 +147,14 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // 2. Chat message delivered status update & local Isar persistence
   if (data['messageId'] != null) {
     try {
+      final authorId = data['authorId'] as String? ?? '';
+      if (authorId.isNotEmpty && BlockService.isBlocked(authorId)) {
+        debugPrint(
+            '[PushNotificationsRepo] Dropping background message from blocked author: $authorId');
+        return;
+      }
       await IsarDb.init();
       final msgId = data['messageId'] as String;
-      final authorId = data['authorId'] as String? ?? '';
       final content = data['messageContent'] as String? ?? data['body'] as String? ?? '';
       final rawUser = SharedPref.instance.getString('user');
       String currentUid = '';

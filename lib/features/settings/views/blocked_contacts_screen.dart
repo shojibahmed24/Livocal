@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:livocal/features/home/controllers/contacts_controller.dart';
 import 'package:livocal/features/settings/services/block_service.dart';
+import 'package:livocal/shared/models/contact.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
@@ -63,6 +65,147 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
     }
   }
 
+  Future<void> _pickContactToBlock() async {
+    ref.read(contactPickerControllerProvider.notifier).init();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final selectedContact = await showModalBottomSheet<Contact>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return Consumer(
+          builder: (context, ref, _) {
+            final allContacts = ref.watch(contactPickerControllerProvider);
+            final blockedIds = BlockService.getBlockedIds();
+            final availableContacts = allContacts
+                .where((c) =>
+                    !blockedIds.contains(c.userId) &&
+                    !blockedIds.contains(c.phoneNumber))
+                .toList();
+
+            return DraggableScrollableSheet(
+              initialChildSize: 0.75,
+              maxChildSize: 0.95,
+              minChildSize: 0.5,
+              expand: false,
+              builder: (context, scrollController) {
+                return Column(
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.symmetric(vertical: 10),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      child: Text(
+                        'Select contact to block',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: availableContacts.isEmpty
+                          ? Center(
+                              child: Text(
+                                'No contacts available to block',
+                                style: TextStyle(
+                                  color: isDark ? Colors.white60 : Colors.black54,
+                                ),
+                              ),
+                            )
+                          : ListView.separated(
+                              controller: scrollController,
+                              itemCount: availableContacts.length,
+                              separatorBuilder: (_, __) =>
+                                  const Divider(height: 1, indent: 64),
+                              itemBuilder: (context, index) {
+                                final c = availableContacts[index];
+                                return ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor:
+                                        AppColors.primary.withValues(alpha: 0.15),
+                                    child: Text(
+                                      c.displayName.isNotEmpty
+                                          ? c.displayName[0].toUpperCase()
+                                          : '?',
+                                      style: const TextStyle(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  title: Text(c.displayName,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w600)),
+                                  subtitle: Text(c.phoneNumber,
+                                      style: const TextStyle(fontSize: 12)),
+                                  onTap: () => Navigator.pop(ctx, c),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+
+    if (selectedContact != null && mounted) {
+      final confirmed = await showAppDialog<bool>(
+        context: context,
+        title: 'Block ${selectedContact.displayName}?',
+        icon: Icons.block_flipped,
+        iconColor: Colors.redAccent,
+        contentText:
+            'Blocked contacts will no longer be able to call you or send you messages.',
+        actions: [
+          AppDialogAction(
+            label: AppStrings.tr(ref, 'cancel'),
+            onPressed: () => Navigator.pop(context, false),
+          ),
+          AppDialogAction(
+            label: 'BLOCK',
+            isDestructive: true,
+            onPressed: () => Navigator.pop(context, true),
+          ),
+        ],
+      );
+
+      if (confirmed == true && mounted) {
+        final contactId = selectedContact.userId ?? selectedContact.phoneNumber;
+        await BlockService.blockContact(
+          contactId: contactId,
+          contactName: selectedContact.displayName,
+          phone: selectedContact.phoneNumber,
+        );
+        _loadBlockedContacts();
+        if (mounted) {
+          showSnackBar(
+            context: context,
+            content: '${selectedContact.displayName} has been blocked',
+            type: SnacBarType.info,
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -70,6 +213,13 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(AppStrings.tr(ref, 'blockedContacts')),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person_add_alt_1_rounded),
+            tooltip: 'Add blocked contact',
+            onPressed: _pickContactToBlock,
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

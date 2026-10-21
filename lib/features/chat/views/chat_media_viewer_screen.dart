@@ -13,6 +13,7 @@ import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/utils/storage_paths.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:open_file_plus/open_file_plus.dart';
+import 'package:share_plus/share_plus.dart';
 
 class ChatMediaViewerScreen extends ConsumerStatefulWidget {
   final String chatId;
@@ -357,13 +358,17 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
       if (await file.exists()) {
         final result = await OpenFile.open(localPath);
         if (result.type != ResultType.done && mounted) {
-          showSnackBar(
-            context: context,
-            content: result.message.isNotEmpty
-                ? result.message
-                : 'No app found to open this file',
-            type: SnacBarType.info,
-          );
+          if (result.type == ResultType.noAppToOpen) {
+            await Share.shareXFiles([XFile(localPath)], text: fileName);
+          } else {
+            showSnackBar(
+              context: context,
+              content: result.message.isNotEmpty
+                  ? result.message
+                  : 'No app found to open this file',
+              type: SnacBarType.info,
+            );
+          }
         }
       } else {
         final remoteUrl = msg.attachment?.url;
@@ -383,13 +388,17 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
               if (mounted) {
                 final result = await OpenFile.open(localPath);
                 if (result.type != ResultType.done && mounted) {
-                  showSnackBar(
-                    context: context,
-                    content: result.message.isNotEmpty
-                        ? result.message
-                        : 'No app found to open this file',
-                    type: SnacBarType.info,
-                  );
+                  if (result.type == ResultType.noAppToOpen) {
+                    await Share.shareXFiles([XFile(localPath)], text: fileName);
+                  } else {
+                    showSnackBar(
+                      context: context,
+                      content: result.message.isNotEmpty
+                          ? result.message
+                          : 'No app found to open this file',
+                      type: SnacBarType.info,
+                    );
+                  }
                 }
               }
             },

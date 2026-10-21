@@ -264,7 +264,33 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     icon: Icons.call,
                     label: 'Audio Call',
                     color: AppColors.primary,
-                    onTap: () {
+                    onTap: () async {
+                      if (_isBlocked) {
+                        final unblock = await showAppDialog<bool>(
+                          context: context,
+                          title: 'Unblock to call',
+                          icon: Icons.block_flipped,
+                          iconColor: Colors.redAccent,
+                          contentText:
+                              'Unblock ${widget.contactName} to place an audio call.',
+                          actions: [
+                            AppDialogAction(
+                              label: 'CANCEL',
+                              onPressed: () => Navigator.pop(context, false),
+                            ),
+                            AppDialogAction(
+                              label: 'UNBLOCK',
+                              isPrimary: true,
+                              onPressed: () => Navigator.pop(context, true),
+                            ),
+                          ],
+                        );
+                        if (unblock == true && mounted) {
+                          await BlockService.unblockContact(widget.other.id);
+                          setState(() => _isBlocked = false);
+                        }
+                        return;
+                      }
                       initiateSmartCall(
                         context,
                         ref,

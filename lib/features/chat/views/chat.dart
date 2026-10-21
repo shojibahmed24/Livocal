@@ -20,6 +20,7 @@ import 'package:livocal/features/chat/views/widgets/chat_mic.dart';
 import 'package:livocal/features/chat/views/widgets/message_cards.dart';
 import 'package:livocal/features/chat/views/widgets/scroll_btn.dart';
 import 'package:livocal/features/chat/views/widgets/voice_recorder.dart';
+import 'package:livocal/features/settings/services/block_service.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
@@ -135,13 +136,28 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        widget.otherUserContactName,
-                        style: Theme.of(context).custom.textTheme.titleMedium.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              widget.otherUserContactName,
+                              style: Theme.of(context).custom.textTheme.titleMedium.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                        overflow: TextOverflow.ellipsis,
+                          ),
+                          if (SharedPref.instance.getBool('contact_muted_${other.id}') ?? false) ...[
+                            const SizedBox(width: 4),
+                            const Icon(
+                              Icons.volume_off_rounded,
+                              size: 14,
+                              color: Colors.white70,
+                            ),
+                          ],
+                        ],
                       ),
                       StreamBuilder<UserActivityStatus>(
                         stream: ref
@@ -232,7 +248,33 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           IconButton(
             tooltip: 'Voice Call',
             onPressed: recordingState == RecordingState.notRecording
-                ? () {
+                ? () async {
+                    if (BlockService.isBlocked(other.id)) {
+                      final unblock = await showAppDialog<bool>(
+                        context: context,
+                        title: 'Unblock to call',
+                        icon: Icons.block_flipped,
+                        iconColor: Colors.redAccent,
+                        contentText:
+                            'Unblock ${widget.otherUserContactName} to place a call.',
+                        actions: [
+                          AppDialogAction(
+                            label: 'CANCEL',
+                            onPressed: () => Navigator.pop(context, false),
+                          ),
+                          AppDialogAction(
+                            label: 'UNBLOCK',
+                            isPrimary: true,
+                            onPressed: () => Navigator.pop(context, true),
+                          ),
+                        ],
+                      );
+                      if (unblock == true && context.mounted) {
+                        await BlockService.unblockContact(other.id);
+                        setState(() {});
+                      }
+                      return;
+                    }
                     initiateSmartCall(
                       context,
                       ref,
@@ -301,18 +343,69 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                 case 'mute':
                   final currentlyMuted =
                       SharedPref.instance.getBool('contact_muted_${other.id}') ?? false;
-                  final newMuted = !currentlyMuted;
-                  await SharedPref.instance
-                      .setBool('contact_muted_${other.id}', newMuted);
-                  if (context.mounted) {
-                    setState(() {});
-                    showSnackBar(
+                  if (currentlyMuted) {
+                    await SharedPref.instance
+                        .setBool('contact_muted_${other.id}', false);
+                    if (context.mounted) {
+                      setState(() {});
+                      showSnackBar(
+                        context: context,
+                        content:
+                            'Notifications unmuted for ${widget.otherUserContactName}',
+                        type: SnacBarType.info,
+                      );
+                    }
+                  } else {
+                    final options = ['8 hours', '1 week', 'Always'];
+                    String selectedOpt = 'Always';
+                    final confirmed = await showAppDialog<bool>(
                       context: context,
-                      content: newMuted
-                          ? 'Notifications muted for ${widget.otherUserContactName}'
-                          : 'Notifications unmuted for ${widget.otherUserContactName}',
-                      type: SnacBarType.info,
+                      title: 'Mute notifications',
+                      icon: Icons.volume_off_rounded,
+                      iconColor: AppColors.primary,
+                      content: RadioGroup<String>(
+                        groupValue: selectedOpt,
+                        onChanged: (val) {
+                          if (val != null) selectedOpt = val;
+                        },
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: options
+                              .map(
+                                (opt) => RadioListTile<String>(
+                                  title: Text(opt),
+                                  value: opt,
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ),
+                      actions: [
+                        AppDialogAction(
+                          label: 'CANCEL',
+                          onPressed: () => Navigator.pop(context, false),
+                        ),
+                        AppDialogAction(
+                          label: 'OK',
+                          isPrimary: true,
+                          onPressed: () => Navigator.pop(context, true),
+                        ),
+                      ],
                     );
+                    if (confirmed == true && context.mounted) {
+                      await SharedPref.instance
+                          .setBool('contact_muted_${other.id}', true);
+                      await SharedPref.instance.setString(
+                          'contact_muted_duration_${other.id}', selectedOpt);
+                      if (context.mounted) {
+                        setState(() {});
+                        showSnackBar(
+                          context: context,
+                          content: 'Notifications muted ($selectedOpt)',
+                          type: SnacBarType.info,
+                        );
+                      }
+                    }
                   }
                   break;
               }
@@ -369,10 +462,77 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             const SizedBox(
               height: 4.0,
             ),
-            ChatInputContainer(
-              self: self,
-              other: other,
-              otherUserContactName: widget.otherUserContactName,
+            Builder(
+              builder: (context) {
+                final isBlocked = BlockService.isBlocked(other.id);
+                if (isBlocked) {
+                  final isDark = Theme.of(context).brightness == Brightness.dark;
+                  return Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1F2C34) : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: InkWell(
+                      onTap: () async {
+                        final unblock = await showAppDialog<bool>(
+                          context: context,
+                          title: 'Unblock ${widget.otherUserContactName}?',
+                          icon: Icons.lock_open_rounded,
+                          iconColor: AppColors.primary,
+                          contentText:
+                              'Unblocked contacts will be able to send you messages and call you.',
+                          actions: [
+                            AppDialogAction(
+                              label: 'CANCEL',
+                              onPressed: () => Navigator.pop(context, false),
+                            ),
+                            AppDialogAction(
+                              label: 'UNBLOCK',
+                              isPrimary: true,
+                              onPressed: () => Navigator.pop(context, true),
+                            ),
+                          ],
+                        );
+                        if (unblock == true && context.mounted) {
+                          await BlockService.unblockContact(other.id);
+                          setState(() {});
+                        }
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.block, size: 18, color: Colors.redAccent),
+                          const SizedBox(width: 8),
+                          Text(
+                            'You blocked this contact. Tap to unblock.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: isDark ? Colors.white70 : Colors.black87,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                return ChatInputContainer(
+                  self: self,
+                  other: other,
+                  otherUserContactName: widget.otherUserContactName,
+                );
+              },
             ),
           ],
         ),
@@ -719,7 +879,8 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
       _isLoadingMore = true;
       _messageLimit += 50;
       setState(() {
-        messageStream = IsarDb.getChatStream(chatId, limit: _messageLimit);
+        IsarDb.purgeDisappearingMessages(forChatId: chatId, forContactId: other.id);
+    messageStream = IsarDb.getChatStream(chatId, limit: _messageLimit);
       });
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted) _isLoadingMore = false;
@@ -733,6 +894,7 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
     other = ref.read(chatControllerProvider.notifier).other;
     chatId = getChatId(self.id, other.id);
 
+    IsarDb.purgeDisappearingMessages(forChatId: chatId, forContactId: other.id);
     messageStream = IsarDb.getChatStream(chatId, limit: _messageLimit);
     scrollController = ScrollController();
     scrollController.addListener(_onScroll);
@@ -992,6 +1154,37 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
                 SliverToBoxAdapter(
                   child: _buildSecurityBanner(context, isDarkTheme, colorTheme),
                 ),
+                if (disappearingTimer != 'Off')
+                  SliverToBoxAdapter(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 32, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isDarkTheme
+                            ? const Color(0xFF182229)
+                            : const Color(0xFFE9EDEF),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.timer_outlined, size: 14, color: Color(0xFF8696A0)),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              'Disappearing messages are on ($disappearingTimer)',
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                color: Color(0xFF8696A0),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 SliverToBoxAdapter(
                   child: Center(
                     child: ChatDate(
