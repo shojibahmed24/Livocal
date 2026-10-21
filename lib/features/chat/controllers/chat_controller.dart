@@ -30,6 +30,7 @@ import '../../../shared/repositories/download_service.dart';
 import '../../../shared/repositories/push_notifications.dart';
 import '../../../shared/utils/abc.dart';
 import '../../../shared/utils/shared_pref.dart';
+import '../../../features/settings/services/block_service.dart';
 import '../../../shared/widgets/gallery.dart';
 import '../models/attachement.dart';
 import '../views/attachment_sender.dart';
@@ -434,6 +435,10 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
   }
 
   Future<void> sendMessageNoAttachments(Message message) async {
+    if (BlockService.isBlocked(message.receiverId)) {
+      debugPrint('[ChatController] Cannot send message: contact ${message.receiverId} is blocked');
+      return;
+    }
     if (_other != null) await IsarDb.saveUser(_other!);
     await IsarDb.addMessage(message);
 
@@ -491,6 +496,10 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
   }
 
   void sendMessageWithAttachments(Message message) async {
+    if (BlockService.isBlocked(message.receiverId)) {
+      debugPrint('[ChatController] Cannot send media: contact ${message.receiverId} is blocked');
+      return;
+    }
     if (_other != null) await IsarDb.saveUser(_other!);
     if ({
       AttachmentType.document,

@@ -137,6 +137,7 @@ class BlockService {
       }
     } catch (e) {
       debugPrint('[BlockService] Error saving block to Firestore: $e');
+      rethrow;
     }
   }
 
@@ -168,10 +169,11 @@ class BlockService {
       }
     } catch (e) {
       debugPrint('[BlockService] Error removing block from Firestore: $e');
+      rethrow;
     }
   }
 
-  /// Sync block list from Firestore on app launch
+  /// Sync block list from Firestore on app launch (merges remote & local to protect offline blocks)
   static Future<void> syncFromFirestore() async {
     try {
       final uid = _auth.currentUser?.uid;
@@ -183,20 +185,20 @@ class BlockService {
           .collection('blocked_users')
           .get();
 
-      final List<String> ids = [];
-      final List<BlockedContactInfo> contacts = [];
+      final List<String> remoteIds = [];
+      final List<BlockedContactInfo> remoteContacts = [];
 
       for (var doc in snapshot.docs) {
         final data = doc.data();
         final cId = data['contactId'] as String? ?? doc.id;
-        ids.add(cId);
+        remoteIds.add(cId);
 
         DateTime blockedAt = DateTime.now();
         if (data['blockedAt'] is Timestamp) {
           blockedAt = (data['blockedAt'] as Timestamp).toDate();
         }
 
-        contacts.add(BlockedContactInfo(
+        remoteContacts.add(BlockedContactInfo(
           id: cId,
           name: data['contactName'] as String? ?? 'Contact',
           phone: data['phone'] as String? ?? '',
@@ -205,9 +207,45 @@ class BlockService {
         ));
       }
 
-      await SharedPref.instance.setStringList(_prefKeyBlockedIds, ids);
-      final encoded = jsonEncode(contacts.map((c) => c.toMap()).toList());
+      // Merge: preserve local blocks not yet synced to Firestore
+      final localIds = getBlockedIds();
+      final localContacts = getBlockedContacts();
+
+      final Map<String, BlockedContactInfo> mergedMap = {};
+      for (final c in localContacts) {
+        mergedMap[c.id] = c;
+      }
+      for (final c in remoteContacts) {
+        mergedMap[c.id] = c;
+      }
+
+      final mergedList = mergedMap.values.toList();
+      final mergedIds = mergedMap.keys.toList();
+
+      await SharedPref.instance.setStringList(_prefKeyBlockedIds, mergedIds);
+      final encoded = jsonEncode(mergedList.map((c) => c.toMap()).toList());
       await SharedPref.instance.setString(_prefKeyBlockedMeta, encoded);
+
+      // Backfill any local offline blocks to Firestore
+      for (final localId in localIds) {
+        if (!remoteIds.contains(localId)) {
+          final c = mergedMap[localId];
+          if (c != null) {
+            _firestore
+                .collection('users')
+                .doc(uid)
+                .collection('blocked_users')
+                .doc(localId)
+                .set({
+              'contactId': c.id,
+              'contactName': c.name,
+              'phone': c.phone,
+              'avatarUrl': c.avatarUrl,
+              'blockedAt': FieldValue.serverTimestamp(),
+            }).catchError((_) {});
+          }
+        }
+      }
     } catch (e) {
       debugPrint('[BlockService] syncFromFirestore error: $e');
     }

@@ -507,6 +507,17 @@ app.post(
         return res.status(403).json({ error: 'Forbidden: Caller/callee mismatch with call session' });
       }
 
+      // Check if target user has blocked the caller
+      const blockDoc = await firestoreDb
+        .collection('users')
+        .doc(targetUserId)
+        .collection('blocked_users')
+        .doc(callerUid)
+        .get();
+      if (blockDoc.exists) {
+        return res.status(403).json({ error: 'Caller is blocked by recipient' });
+      }
+
       // 1. Authoritative caller identification: Lock caller to req.user.uid
       let verifiedCallerName = 'Livocal User';
       let verifiedCallerNumber = req.user.phone_number || '';
@@ -640,19 +651,52 @@ app.post(
         return res.status(404).json({ error: 'Recipient has no registered FCM push token' });
       }
 
+      // 3. Check if recipient has blocked this author
+      const blockDoc = await firestoreDb
+        .collection('users')
+        .doc(receiverId)
+        .collection('blocked_users')
+        .doc(callerUid)
+        .get();
+      if (blockDoc.exists) {
+        return res.status(403).json({ error: 'Author is blocked by recipient' });
+      }
+
+      // 4. Check if recipient has muted this author
+      let isMutedByRecipient = false;
+      try {
+        const muteDoc = await firestoreDb
+          .collection('users')
+          .doc(receiverId)
+          .collection('muted_contacts')
+          .doc(callerUid)
+          .get();
+        if (muteDoc.exists && muteDoc.data().muted === true) {
+          isMutedByRecipient = true;
+        }
+      } catch (muteErr) {
+        console.warn(`[ChatNotify] Could not check mute status for ${receiverId}:`, muteErr.message);
+      }
+
+      // If contact is muted by recipient, send a silent data-only push without system tray notification
       const payload = {
         token: targetToken,
-        notification: {
-          title: verifiedAuthorName,
-          body: String(messageContent || 'Sent a message').substring(0, 500),
-          imageUrl: verifiedAuthorAvatar || undefined,
-        },
+        ...(isMutedByRecipient
+          ? {}
+          : {
+              notification: {
+                title: verifiedAuthorName,
+                body: String(messageContent || 'Sent a message').substring(0, 500),
+                imageUrl: verifiedAuthorAvatar || undefined,
+              },
+            }),
         data: {
           type: 'CHAT_MESSAGE',
           messageId: String(messageId),
           authorName: String(verifiedAuthorName),
           authorId: String(callerUid),
           authorAvatar: String(verifiedAuthorAvatar),
+          isMuted: isMutedByRecipient ? 'true' : 'false',
         },
         android: {
           priority: 'high',

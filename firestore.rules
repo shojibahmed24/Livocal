@@ -43,6 +43,16 @@ service cloud.firestore {
         allow read, write: if isAuthenticated() && request.auth.uid == userId;
       }
 
+      // Blocked Contacts Subcollection (Owner manages their own blocklist)
+      match /blocked_users/{contactId} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
+
+      // Muted Contacts Subcollection (Owner manages per-contact mute preferences)
+      match /muted_contacts/{contactId} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
+
       // SaaS Freelancer Minute Wallet & Payment Settings
       // Owner can ONLY read and manage their own private wallet subcollection.
       // Third-party access is strictly prohibited (preventing bulk scraping of bKash/Nagad/Crypto addresses).
@@ -60,7 +70,10 @@ service cloud.firestore {
       match /messages/{messageId} {
         // Authenticated sender can deliver a message or status update receipt to recipient's inbox
         // Security: Strictly enforce senderId == request.auth.uid to prevent impersonation/message injection
-        allow create: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
+        // Enforcement: Cannot send messages to a user who has blocked the sender
+        allow create: if isAuthenticated()
+          && request.resource.data.senderId == request.auth.uid
+          && !exists(/databases/$(database)/documents/users/$(receiverId)/blocked_users/$(request.auth.uid));
         // Only recipient or sender can read, update (delivery ticks), or delete
         allow read, delete: if isAuthenticated() && (
           request.auth.uid == receiverId ||
@@ -81,7 +94,10 @@ service cloud.firestore {
     // 3. Audio / Video Calling & Gemini Live Translations
     match /calls/{callId} {
       // Authenticated caller initiates the call session
-      allow create: if isAuthenticated() && request.resource.data.callerId == request.auth.uid;
+      // Enforcement: Caller cannot initiate call to a recipient who has blocked them
+      allow create: if isAuthenticated()
+        && request.resource.data.callerId == request.auth.uid
+        && !exists(/databases/$(database)/documents/users/$(request.resource.data.calleeId)/blocked_users/$(request.auth.uid));
       // Both participants (caller & verified callee) can observe and update call state
       // Security: Caller & Callee IDs cannot be spoofed or mutated to hijack existing calls
       allow read: if isCallParty(resource.data);

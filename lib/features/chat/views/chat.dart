@@ -5,6 +5,7 @@ import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
@@ -344,8 +345,20 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                   final currentlyMuted =
                       SharedPref.instance.getBool('contact_muted_${other.id}') ?? false;
                   if (currentlyMuted) {
-                    await SharedPref.instance
-                        .setBool('contact_muted_${other.id}', false);
+                    await SharedPref.instance.setBool('contact_muted_${other.id}', false);
+                    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+                    if (currentUid != null) {
+                      FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(currentUid)
+                          .collection('muted_contacts')
+                          .doc(other.id)
+                          .set({
+                        'muted': false,
+                        'contactId': other.id,
+                        'updatedAt': FieldValue.serverTimestamp(),
+                      }).catchError((_) {});
+                    }
                     if (context.mounted) {
                       setState(() {});
                       showSnackBar(
@@ -393,8 +406,21 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                       ],
                     );
                     if (confirmed == true && context.mounted) {
-                      await SharedPref.instance
-                          .setBool('contact_muted_${other.id}', true);
+                      await SharedPref.instance.setBool('contact_muted_${other.id}', true);
+                      final currentUid = FirebaseAuth.instance.currentUser?.uid;
+                      if (currentUid != null) {
+                        FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(currentUid)
+                            .collection('muted_contacts')
+                            .doc(other.id)
+                            .set({
+                          'muted': true,
+                          'duration': selectedOpt,
+                          'contactId': other.id,
+                          'updatedAt': FieldValue.serverTimestamp(),
+                        }).catchError((_) {});
+                      }
                       await SharedPref.instance.setString(
                           'contact_muted_duration_${other.id}', selectedOpt);
                       if (context.mounted) {

@@ -225,6 +225,9 @@ class CallController extends StateNotifier<CallControllerState> {
           // programmatically or when an incoming call notification is dismissed after answer.
           // Do NOT terminate active or dialing call sessions here to avoid false hangups.
         },
+        onCallback: (callId, body) {
+          debugPrint('[CallController] CallKit onCallback (Call back) for $callId');
+        },
       );
       FlutterCallkitIncoming.activeCalls().then((calls) {
         if (calls is List && calls.isNotEmpty) {
@@ -1426,6 +1429,15 @@ class CallController extends StateNotifier<CallControllerState> {
 
         final isMissedCall = recordAsMissed || (duration == 0 && current.status != CallStateStatus.connected);
         final statusStr = isMissedCall ? 'missed' : 'answered';
+
+        if (isMissedCall && current.isIncoming) {
+          CallKitService().showMissedCallNotification(
+            callId: current.callId,
+            callerName: current.peerName,
+            callerPhone: current.peerPhone,
+            callerAvatar: current.peerAvatar,
+          );
+        }
 
         final record = CallHistoryRecord(
           callId: current.callId,

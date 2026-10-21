@@ -8,6 +8,7 @@ import 'package:livocal/features/chat/models/message.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
+import 'package:livocal/features/settings/services/block_service.dart';
 
 final firebaseFirestoreRepositoryProvider = Provider(
   (ref) => FirebaseFirestoreRepo(
@@ -59,6 +60,10 @@ class FirebaseFirestoreRepo {
   }
 
   Future<void> sendMessage(Message message) async {
+    if (BlockService.isBlocked(message.receiverId)) {
+      debugPrint('[FirebaseFirestoreRepo] Cannot send message to blocked contact ${message.receiverId}');
+      throw StateError('Cannot send message to a blocked contact');
+    }
     try {
       await firestore
           .collection('chats')
@@ -151,6 +156,12 @@ class FirebaseFirestoreRepo {
               docData['content'] == '🚫 This message was deleted') {
             final msgId = docData['id']?.toString() ?? docChange.doc.id;
             await IsarDb.deleteMessageForEveryone(msgId);
+          }
+
+          final senderId = docData['senderId'] as String? ?? '';
+          if (senderId.isNotEmpty && senderId != ownId && BlockService.isBlocked(senderId)) {
+            debugPrint('[FirebaseFirestoreRepo] Dropping message stream item from blocked sender: $senderId');
+            continue;
           }
 
           // Real messages are preserved so multi-device sync and message history never get lost

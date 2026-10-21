@@ -15,6 +15,7 @@ import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
+import 'package:livocal/features/settings/services/block_service.dart';
 
 import '../../features/chat/models/message.dart';
 
@@ -65,6 +66,11 @@ class IsarDb {
   }
 
   static Future<void> addMessage(Message message) async {
+    // Drop message if incoming from a blocked contact
+    if (BlockService.isBlocked(message.senderId)) {
+      debugPrint('[IsarDb] Blocked message from sender ${message.senderId} dropped.');
+      return;
+    }
     final storedMsg = StoredMessage(
       messageId: message.id,
       chatId: getChatId(message.senderId, message.receiverId),

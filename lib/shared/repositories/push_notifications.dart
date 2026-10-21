@@ -57,6 +57,12 @@ class PushNotificationsRepo {
         debugPrint('[PushNotificationsRepo] Suppressing foreground notification from blocked contact: $contactId');
         return;
       }
+      if (contactId != null &&
+          SharedPref.isInitialized &&
+          (SharedPref.instance.getBool('contact_muted_$contactId') ?? false)) {
+        debugPrint('[PushNotificationsRepo] Suppressing foreground notification tone for muted contact: $contactId');
+        return;
+      }
       if (message.data['type'] != 'INCOMING_CALL') {
         RingtoneManager().playMessageNotificationTone(contactId: contactId);
       }
@@ -136,8 +142,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
   // 1. Wake up phone for Incoming Voice Call
   if (data['type'] == 'INCOMING_CALL') {
+    final callerId = data['callerId'] as String? ?? '';
     try {
-      final callerId = data['callerId'] as String? ?? '';
       if (callerId.isNotEmpty) {
         bool blocked = false;
         try {
@@ -162,6 +168,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       final callerAvatar = data['callerAvatar'] as String?;
       await CallKitService().showIncomingCall(
         callId: callId,
+        callerId: callerId,
         callerName: callerName,
         callerPhone: callerPhone,
         callerAvatar: callerAvatar,

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:livocal/features/calls/views/widgets/different_language_call_sheet.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -53,6 +54,24 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
         SharedPref.instance.getString('contact_disappearing_${widget.other.id}') ?? 'Off';
     _loadMediaStats();
     _loadSharedDisappearingSettings(chatId);
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUid != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUid)
+          .collection('muted_contacts')
+          .doc(widget.other.id)
+          .get()
+          .then((doc) {
+        if (doc.exists && mounted) {
+          final serverMuted = doc.data()?['muted'] == true;
+          if (serverMuted != _isMuted) {
+            setState(() => _isMuted = serverMuted);
+            SharedPref.instance.setBool('contact_muted_${widget.other.id}', serverMuted);
+          }
+        }
+      }).catchError((_) {});
+    }
   }
 
   Future<void> _loadSharedDisappearingSettings(String chatId) async {
@@ -484,6 +503,21 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                         _isMuted = val;
                       });
                       SharedPref.instance.setBool('contact_muted_${widget.other.id}', val);
+                      final uid = FirebaseAuth.instance.currentUser?.uid;
+                      if (uid != null) {
+                        FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(uid)
+                            .collection('muted_contacts')
+                            .doc(widget.other.id)
+                            .set({
+                          'muted': val,
+                          'contactId': widget.other.id,
+                          'updatedAt': FieldValue.serverTimestamp(),
+                        }).catchError((e) {
+                          debugPrint('[ContactProfile] Sync muted_contacts error: $e');
+                        });
+                      }
                       showSnackBar(
                         context: context,
                         content: val
