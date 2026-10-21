@@ -1208,10 +1208,16 @@ class CallController extends StateNotifier<CallControllerState> {
         state = state.copyWith(transcripts: [...state.transcripts, warningBubble]);
       }
       if (bEvent.isExhausted) {
-        if (state.isTranslationExhausted) {
+        if (_exhaustedBubbleAdded ||
+            state.isTranslationExhausted ||
+            state.transcripts.any((t) =>
+                t.id.startsWith('exhausted_') ||
+                t.originalText.contains('Translation minutes exhausted') ||
+                t.originalText.contains("Caller's translation minutes exhausted"))) {
           debugPrint('[CallController] Suppressing duplicate minutes exhausted notification bubble.');
           return;
         }
+        _exhaustedBubbleAdded = true;
 
         final isCallee = state.activeSession?.isIncoming ?? false;
         final originalNotice = isCallee
@@ -1222,7 +1228,7 @@ class CallController extends StateNotifier<CallControllerState> {
             : '${AppStrings.get('minutesExhaustedAlert', _currentAppLang)} ${AppStrings.get('callContinuingDirectVoiceDesc', _currentAppLang)}';
 
         final exhaustedBubble = LiveTranscriptEntry(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          id: 'exhausted_${connectedSession.callId}',
           speakerId: 'system',
           speakerName: 'Livocal Billing',
           isSelf: true,
@@ -1463,6 +1469,7 @@ class CallController extends StateNotifier<CallControllerState> {
   }
 
   bool _lowBalanceAlerted = false;
+  bool _exhaustedBubbleAdded = false;
 
 
   Future<void> endCall({
@@ -1590,6 +1597,7 @@ class CallController extends StateNotifier<CallControllerState> {
 
   Future<void> _cleanupActiveResources() async {
     _lowBalanceAlerted = false;
+    _exhaustedBubbleAdded = false;
     _callDurationTimer?.cancel();
     _callDurationTimer = null;
     _callTimeoutTimer?.cancel();

@@ -264,7 +264,7 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
                                   tooltip: 'Open document',
                                   onPressed: () => _openDocument(msg),
                                 ),
-                                onTap: () => _openDocument(msg),
+                                onTap: () => _handleDocTap(msg),
                               );
                             },
                           ),
@@ -339,6 +339,30 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
               ),
       ),
     );
+  }
+
+    void _handleDocTap(StoredMessage msg) {
+    final fileName = msg.attachment?.fileName?.toLowerCase() ?? '';
+    final isVideo = msg.attachment?.type == AttachmentType.video ||
+        fileName.endsWith('.mp4') ||
+        fileName.endsWith('.mov') ||
+        fileName.endsWith('.mkv') ||
+        fileName.endsWith('.webm');
+
+    if (isVideo) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => _FullScreenMediaViewer(
+            msg: msg,
+            contactName: widget.contactName,
+            heroTag: 'doc_video_${msg.messageId}',
+          ),
+        ),
+      );
+    } else {
+      _openDocument(msg);
+    }
   }
 
   Future<void> _openDocument(StoredMessage msg) async {
@@ -509,8 +533,11 @@ class _FullScreenMediaViewerState extends State<_FullScreenMediaViewer> {
     final localPath = fileName.isNotEmpty ? DeviceStorage.getMediaFilePath(fileName) : fileUrl;
     final file = File(localPath);
 
+    final directFile = File(fileUrl);
     if (file.existsSync()) {
       _videoController = VideoPlayerController.file(file);
+    } else if (directFile.existsSync()) {
+      _videoController = VideoPlayerController.file(directFile);
     } else if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
       _videoController = VideoPlayerController.networkUrl(Uri.parse(fileUrl));
     }

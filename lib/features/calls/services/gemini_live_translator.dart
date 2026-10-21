@@ -164,6 +164,7 @@ class GeminiLiveTranslator {
   CallLanguage _langA = CallLanguageRegistry.fromCode('bn');
   CallLanguage _langB = CallLanguageRegistry.fromCode('en');
   bool _bidirectionalMode = true;
+  bool _exhaustedEmitted = false;
 
   final StreamController<Uint8List> _translatedPcmController =
       StreamController<Uint8List>.broadcast();
@@ -252,6 +253,20 @@ CRITICAL OPERATING RULES:
     }
   }
 
+  void _emitExhausted() {
+    if (_exhaustedEmitted) {
+      debugPrint('[GeminiLiveTranslator] Deduplicated secondary isExhausted event.');
+      return;
+    }
+    _exhaustedEmitted = true;
+    _billingUpdateController.add(const BillingUpdateEvent(
+      billedMinutes: 0,
+      remainingMinutes: 0,
+      lowBalanceWarning: false,
+      isExhausted: true,
+    ));
+  }
+
   bool _isUsingRelay = false;
 
   Future<bool> connect({
@@ -272,6 +287,7 @@ CRITICAL OPERATING RULES:
     _setupCompleted = false;
 
     if (!isReconnect) {
+      _exhaustedEmitted = false;
       _isExplicitDisconnect = false;
       _isReconnecting = false;
       _reconnectTimer?.cancel();
@@ -320,12 +336,7 @@ CRITICAL OPERATING RULES:
             if (!_disposed && !_isExplicitDisconnect) {
               if (code == 4402) {
                 debugPrint('[GeminiLiveTranslator] Relay closed with code 4402 (MINUTES_EXHAUSTED / INSUFFICIENT_BALANCE)');
-                _billingUpdateController.add(const BillingUpdateEvent(
-                  billedMinutes: 0,
-                  remainingMinutes: 0,
-                  lowBalanceWarning: false,
-                  isExhausted: true,
-                ));
+                _emitExhausted();
                 _stateController.add(GeminiLiveState.disconnected);
               } else if (code == 4403) {
                 debugPrint('[GeminiLiveTranslator] Relay rejected with code 4403 (MISSING_API_KEY)');
@@ -672,12 +683,7 @@ CRITICAL OPERATING RULES:
           final errCode = data['code']?.toString();
           debugPrint('Backend Relay Error: ${data['message']} (code: $errCode)');
           if (errCode == 'MINUTES_EXHAUSTED' || errCode == 'INSUFFICIENT_BALANCE') {
-            _billingUpdateController.add(const BillingUpdateEvent(
-              billedMinutes: 0,
-              remainingMinutes: 0,
-              lowBalanceWarning: false,
-              isExhausted: true,
-            ));
+            _emitExhausted();
           }
           _stateController.add(GeminiLiveState.error);
           if (errCode == 'MISSING_API_KEY') {
