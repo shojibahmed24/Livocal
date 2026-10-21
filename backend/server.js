@@ -1401,11 +1401,39 @@ app.post('/api/wallet/p2p-transfer', authenticateRequest, async (req, res) => {
     : null;
 
   try {
+    // 0. Safety duplicate check: prevent rapid double-debit if client retried or had network timeout
+    const oneMinuteAgoIso = new Date(Date.now() - 60 * 1000).toISOString();
+    try {
+      const recentTransfers = await firestoreDb.collection('p2p_transfers')
+        .where('fromUserId', '==', fromUserId)
+        .where('toUserId', '==', toUserId)
+        .where('status', '==', 'completed')
+        .where('createdAt', '>=', oneMinuteAgoIso)
+        .limit(5)
+        .get();
+
+      for (const d of recentTransfers.docs) {
+        const tData = d.data() || {};
+        if (tData.minutes === mins) {
+          return res.json({
+            success: true,
+            alreadyProcessed: true,
+            transferId: d.id,
+            remainingMinutes: tData.senderBalanceAfter ?? null,
+            transferredMinutes: tData.minutes || mins,
+            message: 'Transfer already processed recently (idempotent duplicate prevention).',
+          });
+        }
+      }
+    } catch (dupErr) {
+      console.warn('[P2P Transfer] Duplicate check warning:', dupErr.message);
+    }
+
     const senderRef = firestoreDb.collection('users').doc(fromUserId).collection('wallet').doc('current');
     const receiverRef = firestoreDb.collection('users').doc(toUserId).collection('wallet').doc('current');
     const transferId = cleanIdempotencyKey
       ? `p2p_idem_${cleanIdempotencyKey}`
-      : `p2p_min_${Date.now()}_${fromUserId.length > 5 ? fromUserId.substring(0, 5) : fromUserId}`;
+      : `p2p_min_${fromUserId.substring(0, 8)}_${toUserId.substring(0, 8)}_${mins}_${Math.floor(Date.now() / 60000)}`;
     const transferRef = firestoreDb.collection('p2p_transfers').doc(transferId);
 
     const result = await firestoreDb.runTransaction(async (tx) => {
@@ -2452,10 +2480,38 @@ app.post('/api/admin/wallet/topup', authenticateAdmin, async (req, res) => {
       return res.status(404).json({ error: 'User not found with the provided phone or ID' });
     }
 
+    // Safety duplicate prevention: Check if identical topup for this user occurred within the last 120 seconds
+    const twoMinutesAgoIso = new Date(Date.now() - 120 * 1000).toISOString();
+    try {
+      const recentDuplicates = await firestoreDb.collection('recharge_transactions')
+        .where('userId', '==', targetUid)
+        .where('packId', '==', 'admin_topup')
+        .where('status', '==', 'completed')
+        .where('createdAt', '>=', twoMinutesAgoIso)
+        .limit(5)
+        .get();
+
+      for (const d of recentDuplicates.docs) {
+        const txData = d.data() || {};
+        if (txData.minutesAdded === minutesToAdd) {
+          return res.status(200).json({
+            success: true,
+            alreadyProcessed: true,
+            transactionId: d.id,
+            minutesAdded: txData.minutesAdded,
+            message: `Top-up of ${minutesToAdd}m was already credited to this user within the last 2 minutes (TxID: ${d.id}).`,
+          });
+        }
+      }
+    } catch (dupErr) {
+      console.warn('[Admin Topup] Duplicate check warning:', dupErr.message);
+    }
+
     const walletRef = firestoreDb.collection('users').doc(targetUid).collection('wallet').doc('current');
+    // Deterministic fallback key tied to user, minutes, and 1-minute time bucket if no idempotency key provided
     const txId = cleanIdempotencyKey
       ? (cleanIdempotencyKey.startsWith('topup_') ? cleanIdempotencyKey : `topup_${cleanIdempotencyKey}`)
-      : `adm_tx_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      : `adm_tx_${targetUid.substring(0, 8)}_${minutesToAdd}_${Math.floor(Date.now() / 60000)}`;
     const txRef = firestoreDb.collection('recharge_transactions').doc(txId);
 
     const nowIso = new Date().toISOString();

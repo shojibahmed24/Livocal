@@ -437,7 +437,7 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
               builder: (context, ref, _) {
                 final callState = ref.watch(callControllerProvider);
                 final walletAsync = ref.watch(walletStreamProvider(widget.currentUser.id));
-                final wallet = walletAsync.value ?? UserWallet.newTrial();
+                final wallet = walletAsync.value ?? UserWallet.noTrial();
                 final isSameLang = callState.myLanguage.code == callState.peerLanguage.code;
 
                 return Container(

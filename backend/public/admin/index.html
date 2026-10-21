@@ -3243,13 +3243,17 @@
     }
 
     function openTopUpForUser(identifier) {
+      const currentPhone = document.getElementById('topupPhone').value;
+      if (currentPhone !== identifier) {
+        document.getElementById('topupIdempotencyKey').value = '';
+      }
       document.getElementById('topupPhone').value = identifier;
       openTopUpModal();
     }
 
     function closeTopUpModal() {
       document.getElementById('topUpModal').classList.remove('active');
-      document.getElementById('topupIdempotencyKey').value = '';
+      // Sticky idempotency key preserved during modal close to prevent duplicate credits on reopen
     }
 
     function selectMinuteChip(mins) {
@@ -3307,6 +3311,7 @@
           } else {
             showToast(`Success! ${minutes} minutes credited. New balance: ${data.wallet ? data.wallet.balanceMinutes : 'Updated'}m`);
           }
+          document.getElementById('topupIdempotencyKey').value = '';
           closeTopUpModal();
           fetchDashboardData();
         } else {

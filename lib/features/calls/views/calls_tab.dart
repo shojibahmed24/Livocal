@@ -103,7 +103,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
         Consumer(
           builder: (context, ref, _) {
             final walletAsync = ref.watch(walletStreamProvider(widget.user.id));
-            final wallet = walletAsync.value ?? UserWallet.newTrial();
+            final wallet = walletAsync.value ?? UserWallet.noTrial();
             final isTrial = wallet.trialActive && !wallet.isTrialExpired;
             final isExhausted = !wallet.hasMinutes;
 

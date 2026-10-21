@@ -47,14 +47,19 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
     super.dispose();
   }
 
+  String _prefKey(String uid, String field) => 'payment_${uid}_$field';
+
   Future<void> _loadExistingSettings() async {
-    // 1. Immediately populate from local cache so UI is responsive and never loses saved data
+    final authUid = fba.FirebaseAuth.instance.currentUser?.uid;
+    final uid = (authUid != null && authUid.isNotEmpty) ? authUid : widget.user.id;
+
+    // 1. Immediately populate from user-scoped local cache so UI is responsive
     try {
-      final localBinance = SharedPref.instance.getString('payment_binancePayId') ?? '';
-      final localTrc20 = SharedPref.instance.getString('payment_cryptoUsdtTrc20') ?? '';
-      final localBep20 = SharedPref.instance.getString('payment_cryptoUsdtBep20') ?? '';
-      final localBkash = SharedPref.instance.getString('payment_bkashNumber') ?? '';
-      final localNagad = SharedPref.instance.getString('payment_nagadNumber') ?? '';
+      final localBinance = SharedPref.instance.getString(_prefKey(uid, 'binancePayId')) ?? '';
+      final localTrc20 = SharedPref.instance.getString(_prefKey(uid, 'cryptoUsdtTrc20')) ?? '';
+      final localBep20 = SharedPref.instance.getString(_prefKey(uid, 'cryptoUsdtBep20')) ?? '';
+      final localBkash = SharedPref.instance.getString(_prefKey(uid, 'bkashNumber')) ?? '';
+      final localNagad = SharedPref.instance.getString(_prefKey(uid, 'nagadNumber')) ?? '';
 
       if (localBinance.isNotEmpty) _binancePayController.text = localBinance;
       if (localTrc20.isNotEmpty) _trc20Controller.text = localTrc20;
@@ -62,9 +67,6 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
       if (localBkash.isNotEmpty) _bkashController.text = localBkash;
       if (localNagad.isNotEmpty) _nagadController.text = localNagad;
     } catch (_) {}
-
-    final authUid = fba.FirebaseAuth.instance.currentUser?.uid;
-    final uid = (authUid != null && authUid.isNotEmpty) ? authUid : widget.user.id;
 
     try {
       final firestore = FirebaseFirestore.instance;
@@ -80,20 +82,30 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
 
       if (mounted) {
         setState(() {
-          final bPay = (walletData['binancePayId'] ?? userData['binancePayId'] ?? _binancePayController.text).toString();
-          final trc = (walletData['cryptoUsdtTrc20'] ?? userData['cryptoUsdtTrc20'] ?? _trc20Controller.text).toString();
-          final bep = (walletData['cryptoUsdtBep20'] ?? userData['cryptoUsdtBep20'] ?? _bep20Controller.text).toString();
-          final bks = (walletData['bkashNumber'] ?? userData['bkashNumber'] ?? _bkashController.text).toString();
-          final ngd = (walletData['nagadNumber'] ?? userData['nagadNumber'] ?? _nagadController.text).toString();
+          // Authoritative remote data: allow clearing fields if deleted remotely
+          final bPay = (walletData['binancePayId'] ?? userData['binancePayId'] ?? '').toString();
+          final trc = (walletData['cryptoUsdtTrc20'] ?? userData['cryptoUsdtTrc20'] ?? '').toString();
+          final bep = (walletData['cryptoUsdtBep20'] ?? userData['cryptoUsdtBep20'] ?? '').toString();
+          final bks = (walletData['bkashNumber'] ?? userData['bkashNumber'] ?? '').toString();
+          final ngd = (walletData['nagadNumber'] ?? userData['nagadNumber'] ?? '').toString();
 
-          if (bPay.isNotEmpty) _binancePayController.text = bPay;
-          if (trc.isNotEmpty) _trc20Controller.text = trc;
-          if (bep.isNotEmpty) _bep20Controller.text = bep;
-          if (bks.isNotEmpty) _bkashController.text = bks;
-          if (ngd.isNotEmpty) _nagadController.text = ngd;
+          _binancePayController.text = bPay;
+          _trc20Controller.text = trc;
+          _bep20Controller.text = bep;
+          _bkashController.text = bks;
+          _nagadController.text = ngd;
 
           _isLoading = false;
         });
+
+        // Mirror remote data into user-scoped cache
+        try {
+          await SharedPref.instance.setString(_prefKey(uid, 'binancePayId'), _binancePayController.text);
+          await SharedPref.instance.setString(_prefKey(uid, 'cryptoUsdtTrc20'), _trc20Controller.text);
+          await SharedPref.instance.setString(_prefKey(uid, 'cryptoUsdtBep20'), _bep20Controller.text);
+          await SharedPref.instance.setString(_prefKey(uid, 'bkashNumber'), _bkashController.text);
+          await SharedPref.instance.setString(_prefKey(uid, 'nagadNumber'), _nagadController.text);
+        } catch (_) {}
       }
     } catch (e) {
       debugPrint('[PaymentSettings] Error loading remote settings: $e');
@@ -114,20 +126,9 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
     final bkash = _bkashController.text.trim();
     final nagad = _nagadController.text.trim();
 
-    // 1. Always save to local storage first (instant & 100% reliable)
-    try {
-      await SharedPref.instance.setString('payment_binancePayId', binancePay);
-      await SharedPref.instance.setString('payment_cryptoUsdtTrc20', trc20);
-      await SharedPref.instance.setString('payment_cryptoUsdtBep20', bep20);
-      await SharedPref.instance.setString('payment_bkashNumber', bkash);
-      await SharedPref.instance.setString('payment_nagadNumber', nagad);
-    } catch (e) {
-      debugPrint('[PaymentSettings] Local save warning: $e');
-    }
+    bool remoteSaved = false;
 
-    bool savedViaBackend = false;
-
-    // 2. Try Backend API if online
+    // 1. Try Backend API
     try {
       final idToken = await GeminiLiveTranslator.getAuthToken();
       final url = Uri.parse(AppConfig.walletMyPaymentSettingsUrl);
@@ -149,14 +150,14 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
           .timeout(const Duration(seconds: 4));
 
       if (res.statusCode == 200) {
-        savedViaBackend = true;
+        remoteSaved = true;
       }
     } catch (backendErr) {
       debugPrint('[PaymentSettings] Backend save note: $backendErr');
     }
 
-    // 3. Direct Firestore sync
-    if (!savedViaBackend) {
+    // 2. Direct Firestore fallback if backend failed
+    if (!remoteSaved) {
       try {
         final firestore = FirebaseFirestore.instance;
         final paymentSettingsRef = firestore
@@ -183,19 +184,44 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
           'bkashNumber': bkash,
           'nagadNumber': nagad,
         }, SetOptions(merge: true));
+
+        remoteSaved = true;
       } catch (e) {
-        debugPrint('[PaymentSettings] Firestore save note: $e');
+        debugPrint('[PaymentSettings] Firestore save error: $e');
       }
     }
 
-    if (mounted) {
-      setState(() => _isSaving = false);
-      showSnackBar(
-        context: context,
-        content: 'Payment receiving accounts saved successfully!',
-        type: SnacBarType.info,
-      );
-      Navigator.pop(context);
+    // 3. Handle outcome: update local cache and dismiss ONLY on verified remote success
+    if (remoteSaved) {
+      try {
+        await SharedPref.instance.setString(_prefKey(uid, 'binancePayId'), binancePay);
+        await SharedPref.instance.setString(_prefKey(uid, 'cryptoUsdtTrc20'), trc20);
+        await SharedPref.instance.setString(_prefKey(uid, 'cryptoUsdtBep20'), bep20);
+        await SharedPref.instance.setString(_prefKey(uid, 'bkashNumber'), bkash);
+        await SharedPref.instance.setString(_prefKey(uid, 'nagadNumber'), nagad);
+      } catch (e) {
+        debugPrint('[PaymentSettings] Local save warning: $e');
+      }
+
+      if (mounted) {
+        setState(() => _isSaving = false);
+        showSnackBar(
+          context: context,
+          content: 'Payment receiving accounts saved successfully!',
+          type: SnacBarType.info,
+        );
+        Navigator.pop(context);
+      }
+    } else {
+      // Both remote writes failed: fail loudly so user is never misled
+      if (mounted) {
+        setState(() => _isSaving = false);
+        showSnackBar(
+          context: context,
+          content: 'Failed to save payment accounts to server. Please check your internet connection.',
+          type: SnacBarType.error,
+        );
+      }
     }
   }
 

@@ -117,6 +117,13 @@ class AuthController {
       await SharedPref.instance.remove('fcm_token_registered');
       await SharedPref.instance.remove('fcmToken');
       await SharedPref.instance.remove('call_history_records_v1');
+      // Wipe any scoped and unscoped payment cache keys to prevent cross-account leaks
+      final prefKeys = SharedPref.instance.getKeys();
+      for (final k in prefKeys) {
+        if (k.startsWith('payment_')) {
+          await SharedPref.instance.remove(k);
+        }
+      }
     } catch (e) {
       debugPrint('Logout SharedPref clear error: $e');
     }

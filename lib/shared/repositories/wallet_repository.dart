@@ -7,7 +7,6 @@ import 'package:http/http.dart' as http;
 import 'package:livocal/shared/models/user_wallet.dart';
 import 'package:livocal/shared/services/device_fingerprint_service.dart';
 import 'package:livocal/shared/constants/app_config.dart';
-import 'package:uuid/uuid.dart';
 
 final walletRepositoryProvider = Provider<WalletRepository>((ref) {
   return WalletRepository(
@@ -40,7 +39,7 @@ class WalletRepository {
     if (docRef == null) return const Stream.empty();
     return docRef.snapshots().map((snapshot) {
       if (!snapshot.exists || snapshot.data() == null) {
-        return UserWallet.newTrial();
+        return UserWallet.noTrial();
       }
       return UserWallet.fromMap(snapshot.data()!);
     });
@@ -375,7 +374,9 @@ class WalletRepository {
       );
     }
 
-    final idemKey = idempotencyKey ?? const Uuid().v4();
+    final fromSub = fromUserId.length > 8 ? fromUserId.substring(0, 8) : fromUserId;
+    final toSub = toUserId.length > 8 ? toUserId.substring(0, 8) : toUserId;
+    final idemKey = idempotencyKey ?? 'p2p_${fromSub}_${toSub}_${minutes}_${DateTime.now().millisecondsSinceEpoch ~/ 60000}';
 
     // 1. Authoritative Backend Gateway
     try {

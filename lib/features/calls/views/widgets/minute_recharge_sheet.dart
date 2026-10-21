@@ -256,7 +256,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
     final textColor = isDark ? Colors.white : Colors.black87;
     const primaryColor = AppColors.primary;
     final walletAsync = ref.watch(walletStreamProvider(widget.user.id));
-    final wallet = walletAsync.value ?? UserWallet.newTrial();
+    final wallet = walletAsync.value ?? UserWallet.noTrial();
 
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 

@@ -13,7 +13,6 @@ import 'package:livocal/shared/repositories/wallet_repository.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/app_tokens.dart';
-import 'package:uuid/uuid.dart';
 
 void showSendPaymentSheet({
   required BuildContext context,
@@ -72,6 +71,7 @@ class _SendPaymentSheetContentState
   String _cryptoNetwork = 'Binance Pay'; // 'Binance Pay', 'USDT TRC-20', 'USDT BEP-20'
   bool _isProcessing = false;
   UserWallet? _wallet;
+  String? _p2pIdempotencyKey;
 
   String? _recipientBinancePay;
   String? _recipientTrc20;
@@ -85,8 +85,13 @@ class _SendPaymentSheetContentState
   @override
   void initState() {
     super.initState();
+    _amountController.addListener(_onAmountChanged);
     _fetchWallet();
     _fetchRecipientPaymentSettings();
+  }
+
+  void _onAmountChanged() {
+    _p2pIdempotencyKey = null;
   }
 
   Future<void> _fetchWallet() async {
@@ -188,6 +193,7 @@ class _SendPaymentSheetContentState
 
   @override
   void dispose() {
+    _amountController.removeListener(_onAmountChanged);
     _amountController.dispose();
     _noteController.dispose();
     _trxIdController.dispose();
@@ -277,7 +283,10 @@ class _SendPaymentSheetContentState
           return;
         }
 
-        final idempotencyKey = const Uuid().v4();
+        // Stable per-attempt idempotency key preserved across network retries and sheet interaction
+        _p2pIdempotencyKey ??=
+            'p2p_${widget.self.id.substring(0, widget.self.id.length > 8 ? 8 : widget.self.id.length)}_${widget.other.id.substring(0, widget.other.id.length > 8 ? 8 : widget.other.id.length)}_${minutesToSend}_${DateTime.now().millisecondsSinceEpoch}';
+        final idempotencyKey = _p2pIdempotencyKey!;
         final transferResult =
             await ref.read(walletRepositoryProvider).transferMinutes(
                   fromUserId: widget.self.id,
@@ -298,6 +307,7 @@ class _SendPaymentSheetContentState
           }
           return;
         }
+        _p2pIdempotencyKey = null; // Succeeded: clear sticky key
         txId = transferResult.transferId ?? 'p2p_idem_$idempotencyKey';
         paymentRecordId = txId;
       } else if (_selectedMethod == 'mfs') {
