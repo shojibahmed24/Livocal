@@ -1,0 +1,46 @@
+name: Deploy Firestore Rules & Trigger Live Sync
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'firestore.rules'
+      - 'firestore.indexes.json'
+      - 'backend/**'
+      - '.github/workflows/deploy_rules.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy-rules:
+    name: Verify & Deploy Firestore Security Rules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Backend Dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Deploy Rules via Service Account (if secret present)
+        working-directory: backend
+        if: env.FIREBASE_SERVICE_ACCOUNT != ''
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node scripts/deploy_firestore_config.cjs
+
+      - name: Trigger Render Auto-Deploy (if Deploy Hook configured)
+        if: env.RENDER_DEPLOY_HOOK_URL != ''
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          echo "Triggering Render Live Deployment..."
+          curl -s -X POST "$RENDER_DEPLOY_HOOK_URL"
+          echo "Render deployment triggered successfully."

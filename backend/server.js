@@ -4621,7 +4621,7 @@ async function autoRunPaymentPiiMigrationOnBoot() {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log('===============================================================');
-  console.log(`🚀 WhatsUp Gemini Live Relay Gateway running on port ${PORT}`);
+  console.log(`🚀 Livocal Gemini Live Relay Gateway running on port ${PORT}`);
   console.log(`🌐 HTTP Health Check: http://0.0.0.0:${PORT}/health`);
   console.log(`⚡ WebSocket URL: ws://0.0.0.0:${PORT}/ws/live-call`);
   console.log(`🔑 Gemini API Key configured: ${Boolean(GEMINI_API_KEY) ? 'YES ✅' : 'NO ⚠️ (Set in .env)'}`);
@@ -4631,4 +4631,17 @@ server.listen(PORT, '0.0.0.0', () => {
 
   // Trigger one-time legacy user payment PII scrub and isolation
   autoRunPaymentPiiMigrationOnBoot();
+
+  // Auto-enforce and verify live Firestore Rules & TTL deployment on boot
+  if (serviceAccount) {
+    import('./scripts/deploy_firestore_config.cjs')
+      .then(({ deployFirestoreConfig }) => {
+        deployFirestoreConfig().catch(err => {
+          console.warn('[Server Boot] Auto-deploy rules notice:', err.message);
+        });
+      })
+      .catch(err => {
+        console.warn('[Server Boot] Could not load deploy_firestore_config:', err.message);
+      });
+  }
 });

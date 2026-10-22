@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "deploy:rules": "node scripts/deploy_rules.cjs",
+    "deploy:rules": "node scripts/deploy_firestore_config.cjs",
+    "deploy:firestore": "node scripts/deploy_firestore_config.cjs",
+    "deploy:render": "node scripts/trigger_render_deploy.js",
     "migrate:payment-pii": "node scripts/migrate_user_payment_fields.js",
     "migrate:payment-pii:dry": "node scripts/migrate_user_payment_fields.js --dry-run"
   },
@@ -27,6 +29,7 @@
     "express": "^4.21.2",
     "express-rate-limit": "^8.7.1",
     "firebase-admin": "^14.5.0",
+    "google-auth-library": "^9.15.1",
     "helmet": "^8.3.0",
     "ws": "^8.18.0",
     "zod": "^4.6.7"
