@@ -858,12 +858,45 @@ class _MessageCardState extends ConsumerState<MessageCard>
         }
 
         // Amount Verification Guard:
-        if (expectedAmount.isNotEmpty && (data.containsKey('amount') || data.containsKey('bdtAmount') || data.containsKey('minutes'))) {
-          final rawDocAmount = (data['amount'] ?? data['bdtAmount'] ?? data['minutes'])?.toString();
-          if (rawDocAmount != null && rawDocAmount.isNotEmpty) {
-            final docNum = double.tryParse(rawDocAmount.replaceAll(RegExp(r'[^0-9.]'), ''));
-            final msgNum = double.tryParse(expectedAmount.replaceAll(RegExp(r'[^0-9.]'), ''));
-            if (docNum != null && msgNum != null && (docNum - msgNum).abs() > 0.05) {
+        if (expectedAmount.isNotEmpty) {
+          final msgNum = double.tryParse(expectedAmount.replaceAll(RegExp(r'[^0-9.]'), ''));
+          if (msgNum != null) {
+            bool amountMatches = false;
+            if (isWallet) {
+              // For Livocal Wallet transfers: record may store minutes (e.g. 70 mins = $10)
+              // or usdAmount/amount ($10.00).
+              final rawMinutes = (data['minutes'] ?? '').toString();
+              final docMinutes = double.tryParse(rawMinutes.replaceAll(RegExp(r'[^0-9.]'), ''));
+              final rawUsd = (data['usdAmount'] ?? data['amount'] ?? '').toString();
+              final docUsd = double.tryParse(rawUsd.replaceAll(RegExp(r'[^0-9.]'), ''));
+
+              if (docUsd != null && (docUsd - msgNum).abs() <= 0.15) {
+                amountMatches = true;
+              } else if (docMinutes != null) {
+                // Check if msgNum matches direct minutes (e.g. $70 vs 70 mins)
+                // OR 1 USD ~ 7 minutes conversion (e.g. $10 vs 70 mins => 70 / 7 = 10)
+                final convertedUsd = docMinutes / 7.0;
+                if ((docMinutes - msgNum).abs() <= 0.05 || (convertedUsd - msgNum).abs() <= 0.15) {
+                  amountMatches = true;
+                }
+              }
+            } else {
+              // For MFS / Crypto payments:
+              final rawDocAmount = (data['amount'] ?? data['bdtAmount'])?.toString();
+              if (rawDocAmount != null && rawDocAmount.isNotEmpty) {
+                final docNum = double.tryParse(rawDocAmount.replaceAll(RegExp(r'[^0-9.]'), ''));
+                if (docNum != null && (docNum - msgNum).abs() <= 0.05) {
+                  amountMatches = true;
+                }
+              }
+            }
+
+            final hasAuditAmountField = data.containsKey('amount') ||
+                data.containsKey('bdtAmount') ||
+                data.containsKey('minutes') ||
+                data.containsKey('usdAmount');
+
+            if (!amountMatches && hasAuditAmountField) {
               // Amount mismatch: Claimed amount does not match audit record!
               return _buildBadgeChip(
                 label: 'UNVERIFIED',

@@ -10,6 +10,10 @@ services:
     envVars:
       - key: PORT
         value: 10000
+      - key: NODE_ENV
+        value: production
+      - key: ALLOWED_ORIGINS
+        value: https://livocal.web.app,https://livocal.firebaseapp.com,https://livocal24.web.app,https://livocal24.firebaseapp.com,https://livocal-relay.onrender.com
       - key: GEMINI_API_KEY
         sync: false
       - key: GEMINI_LIVE_MODEL

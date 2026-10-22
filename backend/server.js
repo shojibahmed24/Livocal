@@ -119,20 +119,33 @@ app.use(helmet({
 app.use('/admin', express.static(path.join(__dirname, 'public/admin')));
 
 // Secure CORS configuration: Restrict origins, allow mobile apps without Origin header
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
-  : ['https://livocal.web.app', 'https://livocal.firebaseapp.com'];
+const defaultAllowedOrigins = [
+  'https://livocal.web.app',
+  'https://livocal.firebaseapp.com',
+  'https://livocal24.web.app',
+  'https://livocal24.firebaseapp.com',
+  'https://livocal-relay.onrender.com',
+];
+const configuredOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
+  : [];
+const allowedOrigins = Array.from(new Set([...defaultAllowedOrigins, ...configuredOrigins]));
 
 app.use(cors({
   origin: (origin, callback) => {
+    // Mobile apps and native HTTP clients do not supply an Origin header
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    // Only allow localhost if explicitly running in development mode
+    if (process.env.NODE_ENV === 'development' && (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) {
       return callback(null, true);
     }
     return callback(new Error('CORS policy: Access denied'));
   },
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'idempotency-key'],
   credentials: true,
 }));
 
@@ -903,6 +916,11 @@ app.post('/api/wallet/deduct-minute', authenticateRequest, async (req, res) => {
   const callerUid = req.user.uid;
   const { callId, callerId, calleeId, isTranslatedCall, durationSeconds, minuteIndex } = req.body || {};
 
+  // Validate callId format if provided
+  if (callId && (typeof callId !== 'string' || !/^[a-zA-Z0-9_\-]{6,128}$/.test(callId.trim()))) {
+    return res.status(400).json({ error: 'Invalid callId format' });
+  }
+
   // Security: only authenticated caller can deduct from their own wallet
   if (callerId && callerId !== callerUid) {
     return res.status(403).json({ error: 'Forbidden: Caller ID mismatch' });
@@ -1024,8 +1042,37 @@ app.post('/api/wallet/call-end', authenticateRequest, async (req, res) => {
     return res.status(503).json({ error: 'Firestore service unavailable' });
   }
 
+  // Validate callId format to prevent path traversal or injection
+  if (!callId || typeof callId !== 'string' || !/^[a-zA-Z0-9_\-]{6,128}$/.test(callId.trim())) {
+    return res.status(400).json({ error: 'Valid callId is required (6-128 alphanumeric characters)' });
+  }
+
+  const cleanCallId = callId.trim();
+
+  // Participant Authorization Guard: Verify user was an authentic participant (caller or callee)
   try {
-    const summaryRef = firestoreDb.collection('call_summaries').doc(callId || `call_${Date.now()}`);
+    const callSnap = await firestoreDb.collection('calls').doc(cleanCallId).get();
+    if (callSnap.exists) {
+      const callData = callSnap.data() || {};
+      if (callData.callerId !== callerUid && callData.calleeId !== callerUid) {
+        return res.status(403).json({ error: 'Forbidden: You are not a participant in this call session' });
+      }
+    } else {
+      // If calls collection document was already cleared, guard against overwriting someone else's summary
+      const existingSummarySnap = await firestoreDb.collection('call_summaries').doc(cleanCallId).get();
+      if (existingSummarySnap.exists) {
+        const sumData = existingSummarySnap.data() || {};
+        if (sumData.callerId && sumData.callerId !== callerUid && sumData.calleeId && sumData.calleeId !== callerUid) {
+          return res.status(403).json({ error: 'Forbidden: Cannot overwrite call summary of another user' });
+        }
+      }
+    }
+  } catch (authErr) {
+    console.warn('[Call-End Auth] Participant verification error:', authErr.message);
+  }
+
+  try {
+    const summaryRef = firestoreDb.collection('call_summaries').doc(cleanCallId);
     let finalBilledMinutes = totalMinutesBilled || 0;
 
     // Strict Reconciliation: Charge remaining unbilled seconds rounded up
@@ -1532,11 +1579,19 @@ app.post('/api/wallet/p2p-transfer', authenticateRequest, async (req, res) => {
   if (!fromUserId) {
     return res.status(401).json({ error: 'Unauthorized: missing sender UID' });
   }
-  if (!toUserId || typeof toUserId !== 'string' || toUserId.trim() === '') {
-    return res.status(400).json({ error: 'Valid recipient toUserId is required' });
+  if (!toUserId || typeof toUserId !== 'string' || !/^[a-zA-Z0-9_\-]{6,128}$/.test(toUserId.trim())) {
+    return res.status(400).json({ error: 'Valid recipient toUserId is required (6-128 alphanumeric characters)' });
   }
   if (fromUserId === toUserId) {
     return res.status(400).json({ error: 'Cannot transfer minutes to yourself' });
+  }
+
+  // Strict payment & idempotency format validation
+  if (idempotencyKey && (typeof idempotencyKey !== 'string' || !/^[a-zA-Z0-9_\-]{8,128}$/.test(idempotencyKey.trim()))) {
+    return res.status(400).json({ error: 'Invalid idempotencyKey format. Must be 8-128 alphanumeric characters, underscores, or hyphens.' });
+  }
+  if (messageId && (typeof messageId !== 'string' || !/^[a-zA-Z0-9_\-]{8,128}$/.test(messageId.trim()))) {
+    return res.status(400).json({ error: 'Invalid messageId format.' });
   }
 
   const mins = parseInt(minutes, 10);
@@ -1639,6 +1694,7 @@ app.post('/api/wallet/p2p-transfer', authenticateRequest, async (req, res) => {
       }, { merge: true });
 
       // 5. Immutable central audit record for Admin Panel
+      const equivalentUsd = Number((mins / 7).toFixed(2));
       tx.set(transferRef, {
         id: transferId,
         idempotencyKey: cleanIdempotencyKey || null,
@@ -1648,9 +1704,11 @@ app.post('/api/wallet/p2p-transfer', authenticateRequest, async (req, res) => {
         fromUserId,
         toUserId,
         minutes: mins,
+        amount: `$${equivalentUsd}`,
+        usdAmount: equivalentUsd,
         senderBalanceBefore: senderBalance,
         senderBalanceAfter: senderBalance - mins,
-        note: sanitizeBoundedNote(note, 500),
+        note: sanitizeBoundedNote(note, 100),
         status: 'completed',
         method: 'Livocal Wallet',
         createdAt: nowIso,
@@ -3281,16 +3339,57 @@ function finalizeBillingSession(key) {
   }
 }
 
+const SAFE_LANG_CODE_REGEX = /^[a-zA-Z]{2,4}(-[a-zA-Z0-9]{2,4})?$/;
+const SAFE_NAME_REGEX = /^[a-zA-Z0-9\s()/\-]{2,40}$/;
+const DEFAULT_LANG_A = { code: 'bn', englishName: 'Bengali', nativeName: 'বাংলা', speechStyleHint: 'spoken conversational Bengali' };
+const DEFAULT_LANG_B = { code: 'en', englishName: 'English', nativeName: 'English', speechStyleHint: 'clear conversational English' };
+
+/**
+ * Sanitizes language descriptors to prevent prompt injection and prototype pollution.
+ */
+function sanitizeLanguage(lang, fallback) {
+  if (!lang) return fallback;
+  if (typeof lang === 'string') {
+    const code = lang.trim();
+    if (SAFE_LANG_CODE_REGEX.test(code)) {
+      return { code, englishName: code, nativeName: code, speechStyleHint: '' };
+    }
+    return fallback;
+  }
+  if (typeof lang === 'object' && lang !== null) {
+    const code = (typeof lang.code === 'string' && SAFE_LANG_CODE_REGEX.test(lang.code.trim()))
+      ? lang.code.trim()
+      : fallback.code;
+    const rawEnglish = (typeof lang.englishName === 'string') ? lang.englishName.trim() : (typeof lang.name === 'string' ? lang.name.trim() : '');
+    const englishName = (rawEnglish.length > 0 && SAFE_NAME_REGEX.test(rawEnglish))
+      ? rawEnglish
+      : fallback.englishName;
+    const rawNative = typeof lang.nativeName === 'string' ? lang.nativeName.replace(/[\r\n\t]/g, ' ').trim() : '';
+    const nativeName = (rawNative.length > 0 && rawNative.length <= 40)
+      ? rawNative
+      : fallback.nativeName;
+    const rawHint = typeof lang.speechStyleHint === 'string' ? lang.speechStyleHint.replace(/[\r\n\t]/g, ' ').trim() : '';
+    const speechStyleHint = (rawHint.length > 0 && rawHint.length <= 80 && /^[a-zA-Z0-9\s()/\-]+$/.test(rawHint))
+      ? rawHint
+      : (fallback.speechStyleHint || '');
+
+    return { code, englishName, nativeName, speechStyleHint };
+  }
+  return fallback;
+}
+
 /**
  * Builds the strict, low-latency simultaneous voice interpreter system prompt.
  */
 function buildInterpreterPrompt(langA, langB, autoDetect = true) {
-  const langAName = langA?.englishName || langA?.name || 'Bengali';
-  const langBName = langB?.englishName || langB?.name || 'English';
-  const langANative = langA?.nativeName || 'বাংলা';
-  const langBNative = langB?.nativeName || 'English';
-  const langAHint = langA?.speechStyleHint || 'spoken conversational Bengali';
-  const langBHint = langB?.speechStyleHint || 'clear conversational English';
+  const safeA = sanitizeLanguage(langA, DEFAULT_LANG_A);
+  const safeB = sanitizeLanguage(langB, DEFAULT_LANG_B);
+  const langAName = safeA.englishName;
+  const langBName = safeB.englishName;
+  const langANative = safeA.nativeName;
+  const langBNative = safeB.nativeName;
+  const langAHint = safeA.speechStyleHint || 'spoken conversational Bengali';
+  const langBHint = safeB.speechStyleHint || 'clear conversational English';
 
   return `
 SYSTEM ROLE: STRICT REAL-TIME BIDIRECTIONAL VOICE INTERPRETER (${langAName} [${langANative}] <-> ${langBName} [${langBNative}]).
@@ -3341,8 +3440,8 @@ wss.on('connection', (clientWs, req) => {
   let isGeminiReady = false;
   let isClosing = false;
   let sessionConfig = {
-    langA: { code: 'bn', englishName: 'Bengali', nativeName: 'বাংলা' },
-    langB: { code: 'en', englishName: 'English', nativeName: 'English' },
+    langA: { ...DEFAULT_LANG_A },
+    langB: { ...DEFAULT_LANG_B },
     voice: DEFAULT_VOICE,
     model: DEFAULT_MODEL,
     autoDetect: true,
@@ -3645,8 +3744,8 @@ wss.on('connection', (clientWs, req) => {
         const validVoice = voiceAliases[rawVoice] || rawVoice;
 
         sessionConfig = {
-          langA: msg.langA || sessionConfig.langA,
-          langB: msg.langB || sessionConfig.langB,
+          langA: sanitizeLanguage(msg.langA, sessionConfig.langA),
+          langB: sanitizeLanguage(msg.langB, sessionConfig.langB),
           voice: validVoice,
           model: DEFAULT_MODEL, // Strictly locked to server DEFAULT_MODEL
           autoDetect: msg.autoDetect !== false,
@@ -3905,8 +4004,8 @@ wss.on('connection', (clientWs, req) => {
         }
       } else if (msg.type === 'swap_languages') {
         const temp = sessionConfig.langA;
-        sessionConfig.langA = sessionConfig.langB;
-        sessionConfig.langB = temp;
+        sessionConfig.langA = sanitizeLanguage(sessionConfig.langB, DEFAULT_LANG_A);
+        sessionConfig.langB = sanitizeLanguage(temp, DEFAULT_LANG_B);
         console.log(
           `[${clientId}] Swapped languages: ${sessionConfig.langA.englishName} <-> ${sessionConfig.langB.englishName}`
         );
@@ -4195,6 +4294,7 @@ wss.on('connection', (clientWs, req) => {
 
                         persistentSession.billedMinutes += 1;
                         persistentSession.remainingMinutes = result.remainingMinutes;
+                        persistentSession.consecutiveFailures = 0;
                         console.log(`[${persistentSession.sessionKey}] [SaaS Relay Metering] Deducted 1 min from caller ${authenticatedUid} (minute ${persistentSession.billedMinutes}). Remaining: ${result.remainingMinutes}`);
 
                         if (persistentSession.clientWs && persistentSession.clientWs.readyState === WebSocket.OPEN) {
@@ -4234,7 +4334,32 @@ wss.on('connection', (clientWs, req) => {
                           finalizeBillingSession(persistentSession.sessionKey);
                         }
                       } catch (periodicErr) {
-                        console.error(`[${persistentSession.sessionKey}] Periodic minute deduction error:`, periodicErr.message);
+                        persistentSession.consecutiveFailures = (persistentSession.consecutiveFailures || 0) + 1;
+                        console.error(`[${persistentSession.sessionKey}] Periodic minute deduction error (fail count ${persistentSession.consecutiveFailures}):`, periodicErr.message);
+                        if (persistentSession.consecutiveFailures >= 2) {
+                          console.warn(`[${persistentSession.sessionKey}] Max consecutive metering failures reached. Fail-closed terminating session.`);
+                          if (persistentSession.clientWs && persistentSession.clientWs.readyState === WebSocket.OPEN) {
+                            persistentSession.clientWs.send(
+                              JSON.stringify({
+                                type: 'error',
+                                code: 'METERING_ERROR',
+                                message: 'Billing verification failed. Session ended.',
+                              })
+                            );
+                            persistentSession.clientWs.close(4402, 'METERING_ERROR');
+                          }
+                          if (persistentSession.calleeWs && persistentSession.calleeWs.readyState === WebSocket.OPEN) {
+                            persistentSession.calleeWs.send(
+                              JSON.stringify({
+                                type: 'error',
+                                code: 'METERING_ERROR',
+                                message: 'Caller billing verification failed. Session ended.',
+                              })
+                            );
+                            persistentSession.calleeWs.close(4402, 'METERING_ERROR');
+                          }
+                          finalizeBillingSession(persistentSession.sessionKey);
+                        }
                       }
                     }, 60000);
 
@@ -4278,7 +4403,30 @@ wss.on('connection', (clientWs, req) => {
                       cleanup();
                     }
                   } catch (initialMeterErr) {
-                    console.error(`[${clientId}] Initial minute deduction error:`, initialMeterErr.message);
+                    console.error(`[${clientId}] Initial minute deduction error (fail-closed):`, initialMeterErr.message);
+                    if (clientWs.readyState === WebSocket.OPEN) {
+                      clientWs.send(
+                        JSON.stringify({
+                          type: 'error',
+                          code: 'METERING_ERROR',
+                          message: 'Unable to verify minute balance. Session ended.',
+                        })
+                      );
+                      clientWs.close(4402, 'METERING_ERROR');
+                    }
+                    if (persistentSession.calleeWs && persistentSession.calleeWs.readyState === WebSocket.OPEN) {
+                      persistentSession.calleeWs.send(
+                        JSON.stringify({
+                          type: 'error',
+                          code: 'METERING_ERROR',
+                          message: 'Caller billing verification failed. Session ended.',
+                        })
+                      );
+                      persistentSession.calleeWs.close(4402, 'METERING_ERROR');
+                    }
+                    finalizeBillingSession(sessionKey);
+                    cleanup();
+                    return;
                   }
                 })();
               }

@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
 
@@ -41,6 +42,9 @@ void main() async {
     } catch (fcmErr) {
       debugPrint("FCM background handler registration error: $fcmErr");
     }
+
+    // Explicitly enable Crashlytics collection in production
+    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
 
     // Pass all uncaught "fatal" errors from the framework to Crashlytics
     FlutterError.onError = (errorDetails) {

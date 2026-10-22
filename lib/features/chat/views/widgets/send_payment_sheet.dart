@@ -249,6 +249,8 @@ class _SendPaymentSheetContentState
     }
 
     setState(() => _isProcessing = true);
+    final rawNote = _noteController.text.trim();
+    final cleanNote = rawNote.length > 100 ? rawNote.substring(0, 100) : rawNote;
 
     try {
       final clientMessageId = const Uuid().v4();
@@ -281,7 +283,7 @@ class _SendPaymentSheetContentState
                   fromUserId: widget.self.id,
                   toUserId: widget.other.id,
                   minutes: minutesToSend,
-                  note: _noteController.text.trim(),
+                  note: cleanNote,
                   idempotencyKey: idempotencyKey,
                   messageId: clientMessageId,
                 );
@@ -364,7 +366,7 @@ class _SendPaymentSheetContentState
             'recipientPhone': widget.other.phone.getFormattedNumber(),
             'recipientName': widget.contactName,
             'txId': txId,
-            'note': _noteController.text.trim(),
+            'note': cleanNote,
             'status': 'pending', // Strictly pending to prevent audit forgery
             'createdAt': FieldValue.serverTimestamp(),
           });
@@ -388,7 +390,7 @@ class _SendPaymentSheetContentState
 
       widget.onPaymentConfirmed(
         amountStr,
-        _noteController.text.trim(),
+        cleanNote,
         methodDisplay,
         txId,
         paymentRecordId,
@@ -565,6 +567,8 @@ class _SendPaymentSheetContentState
             // Note field
             TextField(
               controller: _noteController,
+              maxLength: 100,
+              inputFormatters: [LengthLimitingTextInputFormatter(100)],
               decoration: InputDecoration(
                 hintText: 'Add a note (e.g. Freelance, Dinner, Translation)',
                 hintStyle: const TextStyle(fontSize: 13.5),
