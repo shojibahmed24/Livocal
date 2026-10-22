@@ -1188,6 +1188,8 @@ class RecentChatWidget extends StatelessWidget {
       avatarContent = CachedNetworkImage(
         imageUrl: avatarUrl,
         fit: BoxFit.cover,
+        memCacheWidth: 120,
+        memCacheHeight: 120,
         placeholder: (_, __) => Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(

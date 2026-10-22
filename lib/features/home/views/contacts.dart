@@ -614,6 +614,8 @@ class _ContactAvatar extends StatelessWidget {
     if (avatarUrl != null && avatarUrl!.trim().isNotEmpty) {
       return CachedNetworkImage(
         imageUrl: avatarUrl!,
+        memCacheWidth: 120,
+        memCacheHeight: 120,
         imageBuilder: (context, imageProvider) => CircleAvatar(
           radius: radius,
           backgroundImage: imageProvider,

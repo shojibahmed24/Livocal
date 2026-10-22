@@ -243,6 +243,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                       ? CachedNetworkImage(
                           imageUrl: widget.other.avatarUrl,
                           fit: BoxFit.cover,
+                          memCacheWidth: 600,
+                          memCacheHeight: 600,
                           errorWidget: (_, __, ___) => _buildPlaceholderAvatar(isDark),
                         )
                       : _buildPlaceholderAvatar(isDark),
