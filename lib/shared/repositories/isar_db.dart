@@ -95,6 +95,15 @@ class IsarDb {
               samples: message.attachment!.samples,
             )
           : null,
+      replyTo: message.replyTo != null
+          ? EmbeddedReplyTo(
+              messageId: message.replyTo!.messageId,
+              senderId: message.replyTo!.senderId,
+              senderName: message.replyTo!.senderName,
+              snippet: message.replyTo!.snippet,
+              attachmentType: message.replyTo!.attachmentType,
+            )
+          : null,
     );
 
     await isar.writeTxn(() async {
@@ -160,6 +169,15 @@ class IsarDb {
                     url: message.attachment!.url,
                     type: message.attachment!.type,
                     samples: message.attachment!.samples,
+                  )
+                : null,
+            replyTo: message.replyTo != null
+                ? EmbeddedReplyTo(
+                    messageId: message.replyTo!.messageId,
+                    senderId: message.replyTo!.senderId,
+                    senderName: message.replyTo!.senderName,
+                    snippet: message.replyTo!.snippet,
+                    attachmentType: message.replyTo!.attachmentType,
                   )
                 : null,
           );
@@ -408,6 +426,15 @@ class IsarDb {
               url: msg.attachment!.url ?? '',
               type: msg.attachment!.type ?? AttachmentType.document,
               samples: msg.attachment!.samples,
+            )
+          : null,
+      replyTo: msg.replyTo != null
+          ? ReplyToMessage(
+              messageId: msg.replyTo!.messageId ?? '',
+              senderId: msg.replyTo!.senderId ?? '',
+              senderName: msg.replyTo!.senderName ?? '',
+              snippet: msg.replyTo!.snippet ?? '',
+              attachmentType: msg.replyTo!.attachmentType,
             )
           : null,
       isDeleted: msg.content == '🚫 This message was deleted' ||

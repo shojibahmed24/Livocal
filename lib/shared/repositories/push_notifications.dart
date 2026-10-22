@@ -10,6 +10,7 @@ import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
 import 'package:livocal/features/settings/services/block_service.dart';
+import 'package:livocal/shared/services/mute_service.dart';
 import '../../features/chat/models/message.dart';
 import '../../features/calls/services/call_kit_service.dart';
 import '../../features/calls/services/gemini_live_translator.dart';
@@ -59,7 +60,7 @@ class PushNotificationsRepo {
       }
       if (contactId != null &&
           SharedPref.isInitialized &&
-          (SharedPref.instance.getBool('contact_muted_$contactId') ?? false)) {
+          MuteService.isContactMuted(contactId)) {
         debugPrint('[PushNotificationsRepo] Suppressing foreground notification tone for muted contact: $contactId');
         return;
       }

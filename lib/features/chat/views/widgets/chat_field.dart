@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/theme/theme.dart';
 
 class ChatField extends StatelessWidget {
@@ -22,6 +23,7 @@ class ChatField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorTheme = Theme.of(context).custom.colorTheme;
+    final enterIsSend = SharedPref.instance.getBool('chat_enter_is_send') ?? false;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 0),
       decoration: BoxDecoration(
@@ -46,9 +48,9 @@ class ChatField extends StatelessWidget {
               controller: textController,
               focusNode: focusNode,
               textCapitalization: TextCapitalization.sentences,
-              textInputAction: TextInputAction.send,
-              onSubmitted: onSubmitted,
-              maxLines: 6,
+              textInputAction: enterIsSend ? TextInputAction.send : TextInputAction.newline,
+              onSubmitted: enterIsSend ? onSubmitted : null,
+              maxLines: enterIsSend ? 1 : 6,
               minLines: 1,
               cursorColor: colorTheme.greenColor,
               cursorHeight: 20,

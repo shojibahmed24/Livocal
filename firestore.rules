@@ -250,5 +250,17 @@ service cloud.firestore {
         request.resource.data.currency in ['BDT', 'USDT', 'MINUTES'];
       allow update, delete: if false; // Status changes (verified/flagged) reserved for Admin SDK
     }
+
+    // 14. Contact & Abuse Reports (Security review ledger)
+    match /reports/{reportId} {
+      // Authenticated users can submit reports against abusive contacts.
+      // reporterId must strictly match authenticated user's uid.
+      allow create: if isAuthenticated() &&
+        request.resource.data.reporterId == request.auth.uid &&
+        request.resource.data.reportedUserId is string &&
+        request.resource.data.reason is string;
+      // Reports cannot be read, updated, or deleted by clients — strictly reserved for Admin SDK review
+      allow read, update, delete: if false;
+    }
   }
 }

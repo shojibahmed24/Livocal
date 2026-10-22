@@ -1104,23 +1104,71 @@ class _MessageCardState extends ConsumerState<MessageCard>
     required ColorTheme colorTheme,
   }) {
     final rawContent = widget.message.content;
-    final isQuote = rawContent.startsWith('💬 Replying to @');
-    String quoteHeader = '';
+    final replyTo = widget.message.replyTo;
+    final isLegacyQuote = replyTo == null && rawContent.startsWith('💬 Replying to @');
+    String legacyQuoteHeader = '';
     String actualText = rawContent;
 
-    if (isQuote) {
+    if (isLegacyQuote) {
       final newlineIndex = rawContent.indexOf('\n');
       if (newlineIndex != -1) {
-        quoteHeader = rawContent.substring(0, newlineIndex);
+        legacyQuoteHeader = rawContent.substring(0, newlineIndex);
         actualText = rawContent.substring(newlineIndex + 1);
       }
     }
+
+    final fontSizePref = SharedPref.instance.getString('chat_font_size') ?? 'Medium';
+    final double dynamicFontSize = fontSizePref == 'Small'
+        ? 14.0
+        : (fontSizePref == 'Large' ? 18.5 : 16.0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (isQuote && quoteHeader.isNotEmpty) ...[
+        if (replyTo != null) ...[
+          Container(
+            margin: const EdgeInsets.only(bottom: 6.0),
+            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.28)
+                  : Colors.black.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(8.0),
+              border: const Border(
+                left: BorderSide(
+                  color: AppColors.primary,
+                  width: 3.5,
+                ),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  replyTo.senderName,
+                  style: const TextStyle(
+                    fontSize: 12.0,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  replyTo.snippet,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12.0,
+                    fontStyle: FontStyle.italic,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ] else if (isLegacyQuote && legacyQuoteHeader.isNotEmpty) ...[
           Container(
             margin: const EdgeInsets.only(bottom: 6.0),
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
@@ -1137,7 +1185,7 @@ class _MessageCardState extends ConsumerState<MessageCard>
               ),
             ),
             child: Text(
-              quoteHeader,
+              legacyQuoteHeader,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
@@ -1153,7 +1201,7 @@ class _MessageCardState extends ConsumerState<MessageCard>
           '$actualText $textPadding',
           textWidthBasis: TextWidthBasis.longestLine,
           style: Theme.of(context).custom.textTheme.bodyText1.copyWith(
-                fontSize: biggerFont ? 40 : 16,
+                fontSize: biggerFont ? 40 : dynamicFontSize,
                 color: colorTheme.textColor1,
               ),
           softWrap: true,

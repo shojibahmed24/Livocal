@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_callkit_incoming/entities/entities.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:livocal/shared/services/native_channel.dart';
+import 'package:livocal/shared/services/mute_service.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
 class CallKitService {
@@ -78,7 +79,7 @@ class CallKitService {
     final isMuted = callerId != null &&
         callerId.isNotEmpty &&
         SharedPref.isInitialized &&
-        (SharedPref.instance.getBool('contact_muted_$callerId') ?? false);
+        MuteService.isContactMuted(callerId);
 
     // Complete Mute Suppression: do not pop CallKit UI or notification banner for muted callers
     if (isMuted) {

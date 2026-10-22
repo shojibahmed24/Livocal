@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:livocal/shared/services/mute_service.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
 /// Centralized Ringtone and Notification Tone Manager for Livocal.
@@ -67,8 +68,7 @@ class RingtoneManager {
     if (_isRinging) return;
 
     if (contactId != null && contactId.isNotEmpty) {
-      final isMuted =
-          SharedPref.instance.getBool('contact_muted_$contactId') ?? false;
+      final isMuted = MuteService.isContactMuted(contactId);
       if (isMuted) {
         debugPrint(
             '[RingtoneManager] Contact $contactId is muted. Suppressing incoming ringtone.');
@@ -144,8 +144,7 @@ class RingtoneManager {
   /// Plays a single notification tone for incoming messages.
   Future<void> playMessageNotificationTone({String? contactId}) async {
     if (contactId != null && contactId.isNotEmpty) {
-      final isMuted =
-          SharedPref.instance.getBool('contact_muted_$contactId') ?? false;
+      final isMuted = MuteService.isContactMuted(contactId);
       if (isMuted) {
         debugPrint(
             '[RingtoneManager] Contact $contactId is muted. Suppressing message tone.');

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
 
 class DeviceStorage {
   static late final String appDocsDirPath;
@@ -11,6 +12,7 @@ class DeviceStorage {
     appDocsDirPath = (await getApplicationDocumentsDirectory()).path;
     tempDirPath = (await getTemporaryDirectory()).path;
     mediaDirPath = await initMediaDir();
+    await syncMediaVisibility();
   }
 
   static Future<String> initMediaDir() async {
@@ -20,6 +22,22 @@ class DeviceStorage {
     }
 
     return dir.path;
+  }
+
+  static Future<void> syncMediaVisibility() async {
+    try {
+      final visibility = SharedPref.instance.getBool('chat_media_visibility') ?? true;
+      final noMediaFile = File("$mediaDirPath/.nomedia");
+      if (!visibility) {
+        if (!noMediaFile.existsSync()) {
+          await noMediaFile.create(recursive: true);
+        }
+      } else {
+        if (noMediaFile.existsSync()) {
+          await noMediaFile.delete();
+        }
+      }
+    } catch (_) {}
   }
 
   static String getMediaFilePath(String fileName) {

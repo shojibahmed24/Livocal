@@ -22,6 +22,7 @@ class StoredMessage {
   @Index()
   DateTime timestamp;
   EmbeddedAttachment? attachment;
+  EmbeddedReplyTo? replyTo;
 
   @Enumerated(EnumType.value, 'value')
   MessageStatus status;
@@ -35,6 +36,24 @@ class StoredMessage {
     required this.timestamp,
     required this.status,
     this.attachment,
+    this.replyTo,
+  });
+}
+
+@embedded
+class EmbeddedReplyTo {
+  String? messageId;
+  String? senderId;
+  String? senderName;
+  String? snippet;
+  String? attachmentType;
+
+  EmbeddedReplyTo({
+    this.messageId,
+    this.senderId,
+    this.senderName,
+    this.snippet,
+    this.attachmentType,
   });
 }
 

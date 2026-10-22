@@ -2972,6 +2972,69 @@ app.post('/api/admin/purge-expired-messages', authenticateAdmin, async (req, res
 });
 
 /**
+ * GET /api/admin/reports
+ * Authenticated admin endpoint to review abuse and contact reports.
+ * Protected by authenticateAdmin middleware.
+ */
+app.get('/api/admin/reports', authenticateAdmin, async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
+  try {
+    const limit = Math.min(parseInt(req.query.limit, 10) || 50, 100);
+    const snap = await firestoreDb.collection('reports')
+      .orderBy('timestamp', 'desc')
+      .limit(limit)
+      .get();
+
+    const reports = snap.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+      timestamp: doc.data().timestamp?.toDate ? doc.data().timestamp.toDate().toISOString() : null,
+    }));
+
+    return res.json({
+      success: true,
+      count: reports.length,
+      reports,
+    });
+  } catch (err) {
+    console.error('[AdminReports] Error fetching reports:', err.message);
+    return res.status(500).json({ error: 'Failed to fetch reports' });
+  }
+});
+
+/**
+ * POST /api/admin/reports/:id/action
+ * Authenticated admin endpoint to update review status of a report.
+ */
+app.post('/api/admin/reports/:id/action', authenticateAdmin, async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore service unavailable' });
+  try {
+    const { id } = req.params;
+    const { status, adminNotes } = req.body;
+    if (!status || !['pending_review', 'resolved', 'dismissed', 'action_taken'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid report status' });
+    }
+
+    const reportRef = firestoreDb.collection('reports').doc(id);
+    const doc = await reportRef.get();
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    await reportRef.update({
+      status,
+      adminNotes: adminNotes || null,
+      reviewedAt: new Date().toISOString(),
+    });
+
+    return res.json({ success: true, id, status });
+  } catch (err) {
+    console.error('[AdminReports] Error updating report:', err.message);
+    return res.status(500).json({ error: 'Failed to update report status' });
+  }
+});
+
+/**
  * POST /api/contacts/match
  * Securely matches user's local phonebook against registered users in Firestore.
  * Prevents client-side scraping of /users collection while enabling instant contact discovery.

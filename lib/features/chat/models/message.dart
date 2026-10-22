@@ -23,6 +23,42 @@ enum MessageStatus {
   }
 }
 
+class ReplyToMessage {
+  final String messageId;
+  final String senderId;
+  final String senderName;
+  final String snippet;
+  final String? attachmentType;
+
+  const ReplyToMessage({
+    required this.messageId,
+    required this.senderId,
+    required this.senderName,
+    required this.snippet,
+    this.attachmentType,
+  });
+
+  factory ReplyToMessage.fromMap(Map<String, dynamic> map) {
+    return ReplyToMessage(
+      messageId: map['messageId'] as String? ?? '',
+      senderId: map['senderId'] as String? ?? '',
+      senderName: map['senderName'] as String? ?? '',
+      snippet: map['snippet'] as String? ?? '',
+      attachmentType: map['attachmentType'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'messageId': messageId,
+      'senderId': senderId,
+      'senderName': senderName,
+      'snippet': snippet,
+      if (attachmentType != null) 'attachmentType': attachmentType,
+    };
+  }
+}
+
 class Message {
   final String id;
   final String content;
@@ -34,6 +70,7 @@ class Message {
   final bool isDeleted;
   final Timestamp? expiresAt;
   final String? disappearingDuration;
+  final ReplyToMessage? replyTo;
 
   Message({
     required this.id,
@@ -46,6 +83,7 @@ class Message {
     this.isDeleted = false,
     this.expiresAt,
     this.disappearingDuration,
+    this.replyTo,
   });
 
   factory Message.fromMap(Map<String, dynamic> msgData) {
@@ -53,6 +91,13 @@ class Message {
     final isDeletedMsg = msgData['deletedForEveryone'] == true ||
         msgData['isDeleted'] == true ||
         rawContent == '🚫 This message was deleted';
+
+    ReplyToMessage? parsedReplyTo;
+    if (msgData['replyTo'] != null && msgData['replyTo'] is Map) {
+      parsedReplyTo = ReplyToMessage.fromMap(
+        Map<String, dynamic>.from(msgData['replyTo'] as Map),
+      );
+    }
 
     return Message(
       id: msgData['id'],
@@ -74,6 +119,7 @@ class Message {
                 )
               : null),
       disappearingDuration: msgData['disappearingDuration'] as String?,
+      replyTo: parsedReplyTo,
     );
   }
 
@@ -88,6 +134,7 @@ class Message {
     bool? isDeleted,
     Timestamp? expiresAt,
     String? disappearingDuration,
+    ReplyToMessage? replyTo,
   }) {
     return Message(
       id: id ?? this.id,
@@ -100,6 +147,7 @@ class Message {
       isDeleted: isDeleted ?? this.isDeleted,
       expiresAt: expiresAt ?? this.expiresAt,
       disappearingDuration: disappearingDuration ?? this.disappearingDuration,
+      replyTo: replyTo ?? this.replyTo,
     );
   }
 
@@ -118,6 +166,7 @@ class Message {
       'timestamp': timestamp,
       if (expiresAt != null) 'expiresAt': expiresAt,
       if (disappearingDuration != null) 'disappearingDuration': disappearingDuration,
+      if (replyTo != null) 'replyTo': replyTo!.toMap(),
       "attachment": attachment?.toMap(),
       'isDeleted': isDeleted,
       'deletedForEveryone': isDeleted,
@@ -175,4 +224,3 @@ class SystemMessage {
     };
   }
 }
-

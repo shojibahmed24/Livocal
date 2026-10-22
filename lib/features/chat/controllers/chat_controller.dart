@@ -377,6 +377,7 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
     String textContent = state.messageController.text.trim();
     if (textContent.isEmpty) return;
 
+    ReplyToMessage? replyToData;
     if (state.replyingMessage != null) {
       final replyMsg = state.replyingMessage!;
       final isSelf = replyMsg.senderId == sender.id;
@@ -393,10 +394,16 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
             ? replyMsg.attachment!.fileName
             : replyMsg.attachment!.type.name;
       }
-      if (snippet.length > 60) {
-        snippet = '${snippet.substring(0, 57)}...';
+      if (snippet.length > 80) {
+        snippet = '${snippet.substring(0, 77)}...';
       }
-      textContent = '💬 Replying to @$senderLabel: "$snippet"\n$textContent';
+      replyToData = ReplyToMessage(
+        messageId: replyMsg.id,
+        senderId: replyMsg.senderId,
+        senderName: senderLabel,
+        snippet: snippet,
+        attachmentType: replyMsg.attachment?.type.name,
+      );
       clearReplyingMessage();
     }
 
@@ -425,6 +432,7 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
         timestamp: Timestamp.now(),
         expiresAt: expiresAt,
         disappearingDuration: disappearingTimer != 'Off' ? disappearingTimer : null,
+        replyTo: replyToData,
       ),
     );
 

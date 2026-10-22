@@ -38,6 +38,7 @@ import '../../../theme/color_theme.dart';
 import 'package:livocal/features/auth/domain/auth_service.dart';
 import 'package:livocal/features/home/views/settings_screen.dart';
 import 'package:livocal/features/settings/services/block_service.dart';
+import 'package:livocal/shared/services/mute_service.dart';
 import 'package:camera/camera.dart';
 import 'package:livocal/features/home/views/status_tab.dart';
 import 'package:livocal/shared/widgets/camera.dart';
@@ -284,8 +285,7 @@ class _HomePageState extends ConsumerState<HomePage>
 
       // Complete Mute Suppression: If caller is muted by user, suppress IncomingCallScreen entirely
       final callerId = incomingSession.callerId;
-      final isMuted = SharedPref.isInitialized &&
-          (SharedPref.instance.getBool('contact_muted_$callerId') ?? false);
+      final isMuted = SharedPref.isInitialized && MuteService.isContactMuted(callerId);
       if (isMuted) {
         debugPrint('[base.dart] Completely suppressing incoming call UI from muted caller: $callerId');
         ref.read(callControllerProvider.notifier).recordSuppressedMutedCall(
@@ -1434,9 +1434,7 @@ class RecentChatWidget extends StatelessWidget {
             const SizedBox(height: 5.0),
             Builder(
               builder: (context) {
-                final isMuted = SharedPref.instance
-                        .getBool('contact_muted_${chat.user.id}') ??
-                    false;
+                final isMuted = MuteService.isContactMuted(chat.user.id);
                 return Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

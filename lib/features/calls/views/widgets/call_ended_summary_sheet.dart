@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/calls/views/widgets/different_language_call_sheet.dart';
+import 'package:livocal/features/calls/views/widgets/minute_recharge_sheet.dart';
 import 'package:livocal/features/chat/views/chat.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/repositories/wallet_repository.dart';
 import 'package:livocal/theme/app_colors.dart';
 
 class CallEndedSummarySheet extends ConsumerWidget {
@@ -52,18 +54,18 @@ class CallEndedSummarySheet extends ConsumerWidget {
     );
   }
 
+  static String toBengaliNum(int n) {
+    const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+    return n.toString().split('').map((d) {
+      final idx = int.tryParse(d);
+      return idx != null ? bnDigits[idx] : d;
+    }).join('');
+  }
+
   static String formatDurationBengali(int seconds) {
     if (seconds <= 0) return '০ সেকেন্ড';
     final mins = seconds ~/ 60;
     final secs = seconds % 60;
-
-    String toBengaliNum(int n) {
-      const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
-      return n.toString().split('').map((d) {
-        final idx = int.tryParse(d);
-        return idx != null ? bnDigits[idx] : d;
-      }).join('');
-    }
 
     if (mins > 0 && secs > 0) {
       return '${toBengaliNum(mins)} মিনিট ${toBengaliNum(secs)} সেকেন্ড';
@@ -80,6 +82,16 @@ class CallEndedSummarySheet extends ConsumerWidget {
     final isDark = theme.brightness == Brightness.dark;
     final hasDuration = durationSeconds > 0 && !isMissed;
     final durationStr = formatDurationBengali(durationSeconds);
+    final walletAsync = ref.watch(walletStreamProvider(currentUser.id));
+
+    final int billedMinutes = (hasDuration && isTranslated)
+        ? ((durationSeconds + 59) ~/ 60)
+        : 0;
+    final String costStr = isMissed
+        ? '০ মিনিট (সংযোগ হয়নি)'
+        : (!isTranslated
+            ? '০ মিনিট (সাধারণ কল)'
+            : '${toBengaliNum(billedMinutes)} মিনিট কর্তন');
 
     // Dynamic positive message
     String messageText;
@@ -247,43 +259,158 @@ class CallEndedSummarySheet extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
 
-              // Duration Pill
+              // Cost & Wallet Balance Breakdown Card
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isMissed
-                      ? Colors.redAccent.withValues(alpha: 0.10)
-                      : (isDark
-                          ? const Color(0xFF223541)
-                          : Colors.teal.shade50),
-                  borderRadius: BorderRadius.circular(12),
+                  color: isDark ? const Color(0xFF1B2831) : const Color(0xFFF3F5F7),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isMissed
-                        ? Colors.redAccent.withValues(alpha: 0.25)
-                        : (isDark ? Colors.teal.shade700 : Colors.teal.shade200),
-                    width: 1,
+                    color: isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.07),
                   ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                child: Column(
                   children: [
-                    Icon(
-                      isMissed ? Icons.timer_off_outlined : Icons.timer_outlined,
-                      size: 18,
-                      color: isMissed ? Colors.redAccent : Colors.teal,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.access_time_rounded,
+                              size: 16,
+                              color: isDark ? Colors.white70 : Colors.black54,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'কল সময়কাল',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: isDark ? Colors.white70 : Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          hasDuration ? durationStr : '০ সেকেন্ড',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      hasDuration
-                          ? 'কথা হয়েছে: $durationStr'
-                          : (isMissed ? 'কোনো সংযোগ হয়নি' : 'সময়কাল: $durationStr'),
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: isMissed
-                            ? Colors.redAccent
-                            : (isDark ? Colors.tealAccent : Colors.teal.shade900),
-                      ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.monetization_on_outlined,
+                              size: 16,
+                              color: isDark ? Colors.amberAccent : Colors.orange.shade800,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'ব্যবহৃত মিনিট / খরচ',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: isDark ? Colors.white70 : Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          costStr,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.amberAccent : Colors.orange.shade800,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.account_balance_wallet_outlined,
+                              size: 16,
+                              color: AppColors.primary,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'অবশিষ্ট মিনিট ব্যালেন্স',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: isDark ? Colors.white70 : Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
+                        walletAsync.when(
+                          data: (w) => Text(
+                            '${toBengaliNum(w.effectiveRemainingMinutes)} মিনিট',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          loading: () => const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          error: (_, __) => const Text(
+                            '-- মিনিট',
+                            style: TextStyle(fontSize: 13, color: Colors.grey),
+                          ),
+                        ),
+                      ],
+                    ),
+                    walletAsync.maybeWhen(
+                      data: (w) {
+                        if (w.effectiveRemainingMinutes <= 2) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 10),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: AppColors.primary),
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                icon: const Icon(Icons.add_card_rounded, size: 16, color: AppColors.primary),
+                                label: const Text(
+                                  'মিনিট রিচার্জ করুন',
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                  showMinuteRechargeSheet(context, user: currentUser);
+                                },
+                              ),
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                      orElse: () => const SizedBox.shrink(),
                     ),
                   ],
                 ),

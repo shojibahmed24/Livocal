@@ -13,6 +13,7 @@ import 'package:livocal/shared/models/messages.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/shared/services/mute_service.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
@@ -45,7 +46,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _isMuted = SharedPref.instance.getBool('contact_muted_${widget.other.id}') ?? false;
+    _isMuted = MuteService.isContactMuted(widget.other.id);
     _isBlocked = BlockService.isBlocked(widget.other.id);
     final chatId = getChatId(widget.self.id, widget.other.id);
     _disappearingTimer =
@@ -64,9 +65,14 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
           .then((doc) {
         if (doc.exists && mounted) {
           final serverMuted = doc.data()?['muted'] == true;
-          if (serverMuted != _isMuted) {
-            setState(() => _isMuted = serverMuted);
-            SharedPref.instance.setBool('contact_muted_${widget.other.id}', serverMuted);
+          final untilMs = (doc.data()?['untilMs'] as num?)?.toInt() ?? 0;
+          if (serverMuted && (untilMs == 0 || DateTime.now().millisecondsSinceEpoch < untilMs)) {
+            if (!_isMuted) setState(() => _isMuted = true);
+            SharedPref.instance.setBool('contact_muted_${widget.other.id}', true);
+            SharedPref.instance.setInt('contact_muted_until_${widget.other.id}', untilMs);
+          } else if (_isMuted) {
+            MuteService.unmuteContact(widget.other.id);
+            setState(() => _isMuted = false);
           }
         }
       }).catchError((_) {});
@@ -518,21 +524,13 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                       setState(() {
                         _isMuted = val;
                       });
-                      SharedPref.instance.setBool('contact_muted_${widget.other.id}', val);
-                      final uid = FirebaseAuth.instance.currentUser?.uid;
-                      if (uid != null) {
-                        FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(uid)
-                            .collection('muted_contacts')
-                            .doc(widget.other.id)
-                            .set({
-                          'muted': val,
-                          'contactId': widget.other.id,
-                          'updatedAt': FieldValue.serverTimestamp(),
-                        }).catchError((e) {
-                          debugPrint('[ContactProfile] Sync muted_contacts error: $e');
-                        });
+                      if (val) {
+                        MuteService.muteContact(
+                          contactId: widget.other.id,
+                          duration: 'Always',
+                        );
+                      } else {
+                        MuteService.unmuteContact(widget.other.id);
                       }
                       showSnackBar(
                         context: context,
@@ -1014,6 +1012,14 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
 
   void _showReportConfirmation(BuildContext context) {
     bool alsoBlock = true;
+    String selectedReason = 'Spam';
+    const reportReasons = [
+      'Spam',
+      'Harassment or abuse',
+      'Fraud or scam',
+      'Inappropriate content',
+      'Other',
+    ];
 
     showAppDialog(
       context: context,
@@ -1028,9 +1034,39 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
             children: [
               const Text(
                 'The last 5 messages from this contact will be forwarded to Livocal for security review. The contact will not be notified.',
-                style: TextStyle(fontSize: 14),
+                style: TextStyle(fontSize: 13.5),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
+              const Text(
+                'Reason for report:',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade400),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: selectedReason,
+                    isExpanded: true,
+                    items: reportReasons.map((r) {
+                      return DropdownMenuItem<String>(
+                        value: r,
+                        child: Text(r, style: const TextStyle(fontSize: 13.5)),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setDialogState(() => selectedReason = val);
+                      }
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
               CheckboxListTile(
                 value: alsoBlock,
                 contentPadding: EdgeInsets.zero,
@@ -1085,6 +1121,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                 'reportedUserPhone': widget.other.phone.getFormattedNumber(),
                 'reporterId': widget.self.id,
                 'reporterPhone': widget.self.phone.getFormattedNumber(),
+                'reason': selectedReason,
                 'recentMessages': messageList,
                 'timestamp': FieldValue.serverTimestamp(),
                 'alsoBlocked': alsoBlock,
@@ -1106,7 +1143,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
 
               if (mounted) {
                 showSnackBar(
-                  context: this.context,
+                  context: context,
                   content: alsoBlock
                       ? 'Report submitted and ${widget.contactName} blocked.'
                       : 'Report submitted. Thank you for your feedback.',
@@ -1117,9 +1154,9 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
               debugPrint('[ContactProfileScreen] Report error: $e');
               if (mounted) {
                 showSnackBar(
-                  context: this.context,
-                  content: 'Report submitted. Thank you for your feedback.',
-                  type: SnacBarType.info,
+                  context: context,
+                  content: 'Failed to submit report. Please check your network and try again.',
+                  type: SnacBarType.error,
                 );
               }
             }
