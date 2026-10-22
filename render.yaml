@@ -28,6 +28,8 @@ services:
         sync: false
       - key: ADMIN_SECRET
         sync: false
+      - key: SUPER_ADMIN_UID
+        sync: false
       - key: CRYPTO_USDT_TRC20
         sync: false
       - key: CRYPTO_USDT_BEP20

@@ -189,19 +189,15 @@ class CallKitService {
 
     // Enforce genuine CallKit vibration gating at Android OS level:
     if (vibrateMode == 'Off') {
-      NativeChannel.setCallkitChannelVibration(false);
+      await NativeChannel.stopCallkitVibration();
     } else {
-      NativeChannel.setCallkitChannelVibration(true);
+      await NativeChannel.cancelVibrationSuppression();
     }
 
     await FlutterCallkitIncoming.showCallkitIncoming(callKitParams);
 
-    // If vibration is Off, immediately kill Android Vibrator looping waveform
     if (vibrateMode == 'Off') {
       NativeChannel.stopCallkitVibration();
-      Future.delayed(const Duration(milliseconds: 100), NativeChannel.stopCallkitVibration);
-      Future.delayed(const Duration(milliseconds: 300), NativeChannel.stopCallkitVibration);
-      Future.delayed(const Duration(milliseconds: 600), NativeChannel.stopCallkitVibration);
     }
   }
 
@@ -254,6 +250,7 @@ class CallKitService {
 
   /// Dismisses native call screen when answered or hung up
   Future<void> endCall(String callId) async {
+    NativeChannel.cancelVibrationSuppression();
     try {
       await FlutterCallkitIncoming.endCall(callId);
     } catch (e) {
@@ -263,6 +260,7 @@ class CallKitService {
 
   /// Dismisses all ongoing CallKit notifications
   Future<void> endAllCalls() async {
+    NativeChannel.cancelVibrationSuppression();
     try {
       await FlutterCallkitIncoming.endAllCalls();
     } catch (e) {

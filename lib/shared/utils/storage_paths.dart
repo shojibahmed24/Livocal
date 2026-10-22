@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
@@ -37,7 +38,74 @@ class DeviceStorage {
           await noMediaFile.delete();
         }
       }
+
+      // Also sync to external public directory if on Android
+      if (!kIsWeb && Platform.isAndroid) {
+        final extDirs = [
+          Directory('/storage/emulated/0/Pictures/Livocal'),
+          Directory('/storage/emulated/0/Download/Livocal'),
+        ];
+        for (final dir in extDirs) {
+          if (await dir.exists()) {
+            final pubNoMedia = File('${dir.path}/.nomedia');
+            if (!visibility) {
+              if (!pubNoMedia.existsSync()) await pubNoMedia.create();
+            } else {
+              if (pubNoMedia.existsSync()) await pubNoMedia.delete();
+            }
+          }
+        }
+      }
     } catch (_) {}
+  }
+
+  static Future<String?> saveMediaToGallery(File sourceFile, {String? fileName}) async {
+    try {
+      if (!await sourceFile.exists()) return null;
+      final name = fileName ?? sourceFile.uri.pathSegments.last;
+      Directory? targetDir;
+
+      if (!kIsWeb && Platform.isAndroid) {
+        final picturesDir = Directory('/storage/emulated/0/Pictures/Livocal');
+        bool created = true;
+        if (!await picturesDir.exists()) {
+          try {
+            await picturesDir.create(recursive: true);
+          } catch (_) {
+            created = false;
+          }
+        }
+        if (created && await picturesDir.exists()) {
+          targetDir = picturesDir;
+        } else {
+          final extDir = await getExternalStorageDirectory();
+          if (extDir != null) {
+            targetDir = Directory('${extDir.path}/Pictures');
+            if (!await targetDir.exists()) await targetDir.create(recursive: true);
+          }
+        }
+      } else {
+        targetDir = await getApplicationDocumentsDirectory();
+      }
+
+      if (targetDir == null) return null;
+
+      final targetPath = '${targetDir.path}/$name';
+      final savedFile = await sourceFile.copy(targetPath);
+
+      final visibility = SharedPref.instance.getBool('chat_media_visibility') ?? true;
+      final noMedia = File('${targetDir.path}/.nomedia');
+      if (!visibility) {
+        if (!noMedia.existsSync()) await noMedia.create();
+      } else {
+        if (noMedia.existsSync()) await noMedia.delete();
+      }
+
+      return savedFile.path;
+    } catch (e) {
+      debugPrint('[DeviceStorage] saveMediaToGallery error: $e');
+      return null;
+    }
   }
 
   static String getMediaFilePath(String fileName) {

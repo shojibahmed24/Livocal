@@ -15,6 +15,12 @@ class NativeChannel {
     } catch (_) {}
   }
 
+  static Future<void> cancelVibrationSuppression() async {
+    try {
+      await _channel.invokeMethod('cancelVibrationSuppression');
+    } catch (_) {}
+  }
+
   static Future<void> setCallkitChannelVibration(bool enabled) async {
     try {
       await _channel.invokeMethod('setCallkitChannelVibration', {'enabled': enabled});

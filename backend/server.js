@@ -166,6 +166,11 @@ const ChatMessageNotifySchema = z.object({
   expiresAt: z.string().max(64).optional(),
 });
 
+const DeleteMessageNotifySchema = z.object({
+  receiverId: z.string().min(1, 'receiverId is required').max(128),
+  messageId: z.string().min(1, 'messageId is required').max(128),
+});
+
 const MatchContactsSchema = z.object({
   phoneNumbers: z.array(z.string().min(1).max(32)).min(1, 'At least 1 phone number required').max(500),
 });
@@ -771,6 +776,56 @@ app.post(
   }
 );
 
+// Remote Delete for Everyone / Purge Silent FCM Push
+app.post(
+  '/api/notify/delete-message',
+  authenticateRequest,
+  pushLimiter,
+  validateBody(DeleteMessageNotifySchema),
+  async (req, res) => {
+    if (!firebaseApp || !messagingService) {
+      return res.status(503).json({ error: 'Firebase Admin not initialized on server' });
+    }
+
+    const { receiverId, messageId } = req.body;
+    const callerUid = req.user.uid;
+
+    try {
+      if (!firestoreDb) {
+        return res.status(503).json({ error: 'Firestore database service is currently unavailable' });
+      }
+
+      const recipientDoc = await firestoreDb.collection('users').doc(receiverId).get();
+      if (!recipientDoc.exists) {
+        return res.status(404).json({ error: 'Recipient user not found' });
+      }
+
+      const targetToken = recipientDoc.data()?.fcmToken;
+      if (!targetToken) {
+        return res.status(200).json({ success: true, message: 'Recipient has no push token' });
+      }
+
+      const fcmPayload = {
+        token: targetToken,
+        data: {
+          type: 'DELETE_MESSAGE',
+          messageId: String(messageId),
+          senderId: String(callerUid),
+        },
+        android: {
+          priority: 'high',
+        },
+      };
+
+      await messagingService.send(fcmPayload);
+      return res.status(200).json({ success: true, message: 'Delete sync notification dispatched' });
+    } catch (err) {
+      console.error('[DeleteNotify] Failed to dispatch delete message push:', err.message);
+      return res.status(500).json({ error: 'Failed to dispatch delete push' });
+    }
+  }
+);
+
 // Secure ICE Servers endpoint (Provides STUN / TURN servers with Ephemeral HMAC-SHA1 support)
 app.get(['/api/webrtc/ice-servers', '/api/turn-credentials'], authenticateRequest, (req, res) => {
   const iceServers = [
@@ -1049,7 +1104,7 @@ app.post('/api/wallet/call-end', authenticateRequest, async (req, res) => {
 
   const cleanCallId = callId.trim();
 
-  // Participant Authorization Guard: Verify user was an authentic participant (caller or callee)
+  // Participant Authorization Guard (Strict Fail-Closed)
   try {
     const callSnap = await firestoreDb.collection('calls').doc(cleanCallId).get();
     if (callSnap.exists) {
@@ -1058,17 +1113,21 @@ app.post('/api/wallet/call-end', authenticateRequest, async (req, res) => {
         return res.status(403).json({ error: 'Forbidden: You are not a participant in this call session' });
       }
     } else {
-      // If calls collection document was already cleared, guard against overwriting someone else's summary
+      // If calls collection document was already cleared, verify against existing call_summaries
       const existingSummarySnap = await firestoreDb.collection('call_summaries').doc(cleanCallId).get();
       if (existingSummarySnap.exists) {
         const sumData = existingSummarySnap.data() || {};
-        if (sumData.callerId && sumData.callerId !== callerUid && sumData.calleeId && sumData.calleeId !== callerUid) {
+        if (sumData.callerId !== callerUid && sumData.calleeId !== callerUid) {
           return res.status(403).json({ error: 'Forbidden: Cannot overwrite call summary of another user' });
         }
+      } else {
+        // Neither call session nor existing summary exists -> Reject arbitrary call ID creation!
+        return res.status(404).json({ error: 'Call session not found' });
       }
     }
   } catch (authErr) {
-    console.warn('[Call-End Auth] Participant verification error:', authErr.message);
+    console.error('[Call-End Auth] Participant verification error (fail-closed):', authErr.message);
+    return res.status(500).json({ error: 'Internal error verifying call session' });
   }
 
   try {
@@ -2983,15 +3042,61 @@ async function purgeExpiredMessagesCore() {
   if (!firestoreDb) return 0;
   const nowTimestamp = Timestamp.now();
   let deletedCount = 0;
-  const chatsSnap = await firestoreDb.collection('chats').limit(200).get();
-  for (const chatDoc of chatsSnap.docs) {
-    const msgsSnap = await chatDoc.ref.collection('messages')
-      .where('expiresAt', '<=', nowTimestamp)
-      .limit(100)
-      .get();
-    for (const mDoc of msgsSnap.docs) {
-      await mDoc.ref.delete();
-      deletedCount++;
+  let lastChatDoc = null;
+  let hasMore = true;
+
+  while (hasMore) {
+    let query = firestoreDb.collection('chats').limit(100);
+    if (lastChatDoc) {
+      query = query.startAfter(lastChatDoc);
+    }
+    const chatsSnap = await query.get();
+    if (chatsSnap.empty) {
+      hasMore = false;
+      break;
+    }
+    lastChatDoc = chatsSnap.docs[chatsSnap.docs.length - 1];
+    if (chatsSnap.docs.length < 100) {
+      hasMore = false;
+    }
+
+    for (const chatDoc of chatsSnap.docs) {
+      const msgsSnap = await chatDoc.ref.collection('messages')
+        .where('expiresAt', '<=', nowTimestamp)
+        .limit(100)
+        .get();
+
+      if (msgsSnap.empty) continue;
+
+      const purgedIds = [];
+      for (const mDoc of msgsSnap.docs) {
+        await mDoc.ref.delete();
+        purgedIds.push(mDoc.id);
+        deletedCount++;
+      }
+
+      // Notify recipient device with high-priority silent FCM push to purge local Isar storage immediately!
+      const recipientUid = chatDoc.id;
+      if (purgedIds.length > 0) {
+        try {
+          const userDoc = await firestoreDb.collection('users').doc(recipientUid).get();
+          const fcmToken = userDoc.data()?.fcmToken;
+          if (fcmToken) {
+            const messaging = getMessaging();
+            await messaging.send({
+              token: fcmToken,
+              data: {
+                type: 'PURGE_EXPIRED',
+                messageId: purgedIds[0],
+                messageIds: JSON.stringify(purgedIds),
+              },
+              android: { priority: 'high' },
+            }).catch(e => console.warn(`[PurgePush] Error sending to ${recipientUid}:`, e.message));
+          }
+        } catch (pushErr) {
+          console.warn(`[PurgePush] FCM lookup failed for ${recipientUid}:`, pushErr.message);
+        }
+      }
     }
   }
   return deletedCount;
@@ -4334,32 +4439,28 @@ wss.on('connection', (clientWs, req) => {
                           finalizeBillingSession(persistentSession.sessionKey);
                         }
                       } catch (periodicErr) {
-                        persistentSession.consecutiveFailures = (persistentSession.consecutiveFailures || 0) + 1;
-                        console.error(`[${persistentSession.sessionKey}] Periodic minute deduction error (fail count ${persistentSession.consecutiveFailures}):`, periodicErr.message);
-                        if (persistentSession.consecutiveFailures >= 2) {
-                          console.warn(`[${persistentSession.sessionKey}] Max consecutive metering failures reached. Fail-closed terminating session.`);
-                          if (persistentSession.clientWs && persistentSession.clientWs.readyState === WebSocket.OPEN) {
-                            persistentSession.clientWs.send(
-                              JSON.stringify({
-                                type: 'error',
-                                code: 'METERING_ERROR',
-                                message: 'Billing verification failed. Session ended.',
-                              })
-                            );
-                            persistentSession.clientWs.close(4402, 'METERING_ERROR');
-                          }
-                          if (persistentSession.calleeWs && persistentSession.calleeWs.readyState === WebSocket.OPEN) {
-                            persistentSession.calleeWs.send(
-                              JSON.stringify({
-                                type: 'error',
-                                code: 'METERING_ERROR',
-                                message: 'Caller billing verification failed. Session ended.',
-                              })
-                            );
-                            persistentSession.calleeWs.close(4402, 'METERING_ERROR');
-                          }
-                          finalizeBillingSession(persistentSession.sessionKey);
+                        console.error(`[${persistentSession.sessionKey}] Periodic minute deduction error (strict 1-strike fail-closed):`, periodicErr.message);
+                        if (persistentSession.clientWs && persistentSession.clientWs.readyState === WebSocket.OPEN) {
+                          persistentSession.clientWs.send(
+                            JSON.stringify({
+                              type: 'error',
+                              code: 'METERING_ERROR',
+                              message: 'Billing verification failed. Session ended.',
+                            })
+                          );
+                          persistentSession.clientWs.close(4402, 'METERING_ERROR');
                         }
+                        if (persistentSession.calleeWs && persistentSession.calleeWs.readyState === WebSocket.OPEN) {
+                          persistentSession.calleeWs.send(
+                            JSON.stringify({
+                              type: 'error',
+                              code: 'METERING_ERROR',
+                              message: 'Caller billing verification failed. Session ended.',
+                            })
+                          );
+                          persistentSession.calleeWs.close(4402, 'METERING_ERROR');
+                        }
+                        finalizeBillingSession(persistentSession.sessionKey);
                       }
                     }, 60000);
 

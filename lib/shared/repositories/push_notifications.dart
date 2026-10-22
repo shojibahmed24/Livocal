@@ -122,6 +122,29 @@ class PushNotificationsRepo {
       debugPrint('[PushNotificationsRepo] sendPushNotification failed for msg ${message.id}: $e');
     }
   }
+
+  static Future<void> sendDeleteMessagePush({
+    required String receiverId,
+    required String messageId,
+  }) async {
+    final String url = '${AppConfig.relayHttpBaseUrl}/api/notify/delete-message';
+    final idToken = await GeminiLiveTranslator.getAuthToken();
+    try {
+      await post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          if (idToken != null) 'Authorization': 'Bearer $idToken',
+        },
+        body: jsonEncode({
+          'receiverId': receiverId,
+          'messageId': messageId,
+        }),
+      );
+    } catch (e) {
+      debugPrint('[PushNotificationsRepo] sendDeleteMessagePush error: $e');
+    }
+  }
 }
 
 @pragma('vm:entry-point')
@@ -198,10 +221,19 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // 2. Remote Delete for Everyone / Purge synchronization in background
   if (data['type'] == 'DELETE_MESSAGE' || data['type'] == 'PURGE_EXPIRED') {
     final msgId = data['messageId'] as String?;
+    final msgIdsJson = data['messageIds'] as String?;
     try {
       await IsarDb.init();
       if (msgId != null && msgId.isNotEmpty) {
         await IsarDb.deleteMessage(msgId);
+      }
+      if (msgIdsJson != null && msgIdsJson.isNotEmpty) {
+        try {
+          final List<dynamic> ids = jsonDecode(msgIdsJson);
+          for (final id in ids) {
+            await IsarDb.deleteMessage(id.toString());
+          }
+        } catch (_) {}
       }
       await IsarDb.purgeDisappearingMessages();
     } catch (e) {

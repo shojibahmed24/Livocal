@@ -32,11 +32,13 @@ class MessageCard extends ConsumerStatefulWidget {
     required this.message,
     required this.currentUserId,
     this.special = false,
+    this.onTapReplyQuote,
   });
 
   final Message message;
   final bool special;
   final String currentUserId;
+  final ValueChanged<String>? onTapReplyQuote;
 
   @override
   ConsumerState<MessageCard> createState() => _MessageCardState();
@@ -1160,45 +1162,52 @@ class _MessageCardState extends ConsumerState<MessageCard>
       mainAxisSize: MainAxisSize.min,
       children: [
         if (replyTo != null) ...[
-          Container(
-            margin: const EdgeInsets.only(bottom: 6.0),
-            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.28)
-                  : Colors.black.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(8.0),
-              border: const Border(
-                left: BorderSide(
-                  color: AppColors.primary,
-                  width: 3.5,
+          GestureDetector(
+            onTap: () {
+              if (replyTo.messageId.isNotEmpty) {
+                widget.onTapReplyQuote?.call(replyTo.messageId);
+              }
+            },
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 6.0),
+              padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.28)
+                    : Colors.black.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(8.0),
+                border: const Border(
+                  left: BorderSide(
+                    color: AppColors.primary,
+                    width: 3.5,
+                  ),
                 ),
               ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  replyTo.senderName,
-                  style: const TextStyle(
-                    fontSize: 12.0,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    replyTo.senderName,
+                    style: const TextStyle(
+                      fontSize: 12.0,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  replyTo.snippet,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12.0,
-                    fontStyle: FontStyle.italic,
-                    color: isDark ? Colors.white70 : Colors.black87,
+                  const SizedBox(height: 2),
+                  Text(
+                    replyTo.snippet,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12.0,
+                      fontStyle: FontStyle.italic,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ] else if (isLegacyQuote && legacyQuoteHeader.isNotEmpty) ...[

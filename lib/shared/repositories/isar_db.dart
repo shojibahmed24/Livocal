@@ -16,6 +16,7 @@ import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/features/settings/services/block_service.dart';
+import 'package:livocal/shared/repositories/push_notifications.dart';
 
 import '../../features/chat/models/message.dart';
 
@@ -273,7 +274,17 @@ class IsarDb {
       debugPrint('Firestore deleteMessage receiver error: $e');
     }
 
-    // 2. Also update in sender inbox if stored there
+    // 2. Dispatch high-priority silent FCM push so recipient's device deletes local Isar message immediately
+    try {
+      await PushNotificationsRepo.sendDeleteMessagePush(
+        receiverId: receiverId,
+        messageId: messageId,
+      );
+    } catch (e) {
+      debugPrint('[IsarDb] sendDeleteMessagePush error: $e');
+    }
+
+    // 3. Also update in sender inbox if stored there
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
     if (currentUid != null && currentUid != receiverId) {
       try {

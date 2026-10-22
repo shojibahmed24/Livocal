@@ -46,7 +46,7 @@
             <data android:scheme="tel" />
         </intent>
     </queries>
-    <application android:label="Livocal" android:name="${applicationName}" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round">
+    <application android:label="Livocal" android:name=".LivocalApp" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round">
         <meta-data
             android:name="firebase_crashlytics_collection_enabled"
             android:value="true" />

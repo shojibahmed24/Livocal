@@ -1000,6 +1000,34 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
   final bannerKey = GlobalKey();
   int _messageLimit = 100;
   bool _isLoadingMore = false;
+  String? _highlightedMessageId;
+  Timer? _highlightTimer;
+
+  void _jumpToMessage(String targetMessageId, List<Message> messages) {
+    final targetIndex = messages.indexWhere((m) => m.id == targetMessageId);
+    if (targetIndex != -1 && scrollController.hasClients) {
+      final estimatedOffset = (targetIndex * 78.0).clamp(
+        scrollController.position.minScrollExtent,
+        scrollController.position.maxScrollExtent,
+      );
+      scrollController.animateTo(
+        estimatedOffset,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+      );
+      _highlightTimer?.cancel();
+      setState(() {
+        _highlightedMessageId = targetMessageId;
+      });
+      _highlightTimer = Timer(const Duration(milliseconds: 1800), () {
+        if (mounted) {
+          setState(() {
+            _highlightedMessageId = null;
+          });
+        }
+      });
+    }
+  }
 
   void _onScroll() {
     if (scrollController.hasClients &&
@@ -1052,6 +1080,7 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
 
   @override
   void dispose() {
+    _highlightTimer?.cancel();
     _chatSettingsSub?.cancel();
     scrollController.removeListener(_onScroll);
     scrollController.dispose();
@@ -1380,10 +1409,21 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
             if (info.visibleFraction < 0.1) return;
             markAsSeen(message);
           },
-          child: MessageCard(
-            message: message,
-            currentUserId: self.id,
-            special: isSpecial,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            decoration: BoxDecoration(
+              color: _highlightedMessageId == message.id
+                  ? AppColors.primary.withValues(alpha: 0.25)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: MessageCard(
+              message: message,
+              currentUserId: self.id,
+              special: isSpecial,
+              onTapReplyQuote: (targetId) => _jumpToMessage(targetId, messages),
+            ),
           ),
         ),
       ],

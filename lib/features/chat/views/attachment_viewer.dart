@@ -1202,16 +1202,31 @@ class _AttachmentViewerState extends State<AttachmentViewer> {
                               ],
                             ),
                           ),
-                          const Expanded(
-                            flex: 1,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Icon(Icons.star_border_outlined),
-                                Icon(Icons.turn_slight_right),
-                                Icon(Icons.more_vert),
-                              ],
-                            ),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.download_rounded, color: Colors.white),
+                                tooltip: 'Save to Gallery',
+                                onPressed: () async {
+                                  final savedPath = await DeviceStorage.saveMediaToGallery(widget.file);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          savedPath != null
+                                              ? 'Saved to Gallery (Pictures/Livocal)'
+                                              : 'Failed to save media',
+                                        ),
+                                        backgroundColor: savedPath != null
+                                            ? AppColors.primary
+                                            : Colors.redAccent,
+                                        duration: const Duration(seconds: 2),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                            ],
                           )
                         ],
                       ),
