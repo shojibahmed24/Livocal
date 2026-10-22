@@ -127,7 +127,7 @@ class PushNotificationsRepo {
     required String receiverId,
     required String messageId,
   }) async {
-    final String url = '${AppConfig.relayHttpBaseUrl}/api/notify/delete-message';
+    final url = AppConfig.deleteMessageNotifyUrl;
     final idToken = await GeminiLiveTranslator.getAuthToken();
     try {
       await post(

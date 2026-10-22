@@ -26,6 +26,9 @@ class AppConfig {
   static String get chatNotifyMessageUrl =>
       '$relayHttpBaseUrl/api/notify/chat-message';
 
+  static String get deleteMessageNotifyUrl =>
+      '$relayHttpBaseUrl/api/notify/delete-message';
+
   static String get matchContactsUrl =>
       '$relayHttpBaseUrl/api/contacts/match';
 
