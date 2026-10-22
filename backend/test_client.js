@@ -1,6 +1,6 @@
 import { WebSocket } from 'ws';
 
-console.log('Testing connection to WhatsUp Gemini Live Relay (ws://localhost:8080/ws/live-call)...');
+console.log('Testing connection to Livocal Gemini Live Relay (ws://localhost:8080/ws/live-call)...');
 
 const ws = new WebSocket('ws://localhost:8080/ws/live-call');
 
