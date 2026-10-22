@@ -1287,6 +1287,9 @@ function validateBinancePayId(id) {
   return /^\d{8,12}$/.test(trimmed) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
 }
 
+// Bangladeshi MFS Mobile Phone Number Validation (bKash / Nagad)
+const BD_PHONE_REGEX = /^(?:\+?8801|01)[3-9]\d{8}$/;
+
 const safeCompareSecrets = (provided, target) => {
   if (typeof provided !== 'string' || typeof target !== 'string') return false;
   const providedBuf = Buffer.from(provided, 'utf8');
@@ -1988,11 +1991,11 @@ app.post('/api/admin/deposit-gateways', authenticateAdmin, async (req, res) => {
   const cleanTrc20 = (cryptoUsdtTrc20 || '').trim();
   const cleanBep20 = (cryptoUsdtBep20 || '').trim();
 
-  if (cleanBkash && !/^[0-9+ ]{8,20}$/.test(cleanBkash)) {
-    return res.status(400).json({ error: 'Invalid bKash phone number format' });
+  if (cleanBkash && !BD_PHONE_REGEX.test(cleanBkash.replace(/[\s\-]/g, ''))) {
+    return res.status(400).json({ error: 'Invalid bKash phone number format. Must be a valid Bangladeshi number (e.g. 017XXXXXXXX or +8801XXXXXXXX).' });
   }
-  if (cleanNagad && !/^[0-9+ ]{8,20}$/.test(cleanNagad)) {
-    return res.status(400).json({ error: 'Invalid Nagad phone number format' });
+  if (cleanNagad && !BD_PHONE_REGEX.test(cleanNagad.replace(/[\s\-]/g, ''))) {
+    return res.status(400).json({ error: 'Invalid Nagad phone number format. Must be a valid Bangladeshi number (e.g. 018XXXXXXXX or +8801XXXXXXXX).' });
   }
   if (cleanBinance && !validateBinancePayId(cleanBinance)) {
     return res.status(400).json({ error: 'Invalid Binance Pay ID (8-12 digits or email)' });
@@ -2114,18 +2117,30 @@ app.post('/api/wallet/my-payment-settings', authenticateRequest, async (req, res
     return res.status(503).json({ error: 'Database service unavailable' });
   }
 
-  // Address validations
+  // Address & Account validations
   const cleanBinance = typeof binancePayId === 'string' ? binancePayId.trim() : '';
   const cleanTrc20 = typeof cryptoUsdtTrc20 === 'string' ? cryptoUsdtTrc20.trim() : '';
   const cleanBep20 = typeof cryptoUsdtBep20 === 'string' ? cryptoUsdtBep20.trim() : '';
   const cleanBkash = typeof bkashNumber === 'string' ? bkashNumber.trim() : '';
   const cleanNagad = typeof nagadNumber === 'string' ? nagadNumber.trim() : '';
 
-  if (cleanTrc20 && !/^T[a-zA-HJ-NP-Z0-9]{33}$/.test(cleanTrc20)) {
-    return res.status(400).json({ error: 'Invalid TRC-20 USDT address format. Must start with T and be 34 characters.' });
+  if (cleanBinance && !validateBinancePayId(cleanBinance)) {
+    return res.status(400).json({ error: 'Invalid Binance Pay ID format. Must be an 8-12 digit ID or a valid email address.' });
   }
 
-  if (cleanBep20 && !/^0x[a-fA-F0-9]{40}$/.test(cleanBep20)) {
+  if (cleanBkash && !BD_PHONE_REGEX.test(cleanBkash.replace(/[\s\-]/g, ''))) {
+    return res.status(400).json({ error: 'Invalid bKash number. Must be a valid 11-digit Bangladeshi mobile number (e.g. 017XXXXXXXX or +8801XXXXXXXX).' });
+  }
+
+  if (cleanNagad && !BD_PHONE_REGEX.test(cleanNagad.replace(/[\s\-]/g, ''))) {
+    return res.status(400).json({ error: 'Invalid Nagad number. Must be a valid 11-digit Bangladeshi mobile number (e.g. 018XXXXXXXX or +8801XXXXXXXX).' });
+  }
+
+  if (cleanTrc20 && !validateTronAddress(cleanTrc20)) {
+    return res.status(400).json({ error: 'Invalid TRC-20 USDT address format. Must start with T and be 34 Base58 characters.' });
+  }
+
+  if (cleanBep20 && !validateBscAddress(cleanBep20)) {
     return res.status(400).json({ error: 'Invalid BEP-20 USDT address format. Must start with 0x and be 42 characters.' });
   }
 
@@ -2241,6 +2256,10 @@ app.post('/api/wallet/payment-request', authenticateRequest, async (req, res) =>
   } else if (method === 'Binance_Pay') {
     if (!validateBinancePayId(identifier)) {
       return res.status(400).json({ error: 'Invalid Binance Pay ID or Email address.' });
+    }
+  } else if (method === 'bKash' || method === 'Nagad') {
+    if (!BD_PHONE_REGEX.test(identifier)) {
+      return res.status(400).json({ error: `Invalid ${method} sender phone number. Must be a valid Bangladeshi number (e.g. 017XXXXXXXX or +8801XXXXXXXX).` });
     }
   }
 

@@ -315,6 +315,16 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
                         ),
                         helperText: 'Optional • Used for 0-fee Binance transfers',
                       ),
+                      validator: (value) {
+                        final val = (value ?? '').trim();
+                        if (val.isEmpty) return null;
+                        final isDigits = RegExp(r'^\d{8,12}$').hasMatch(val);
+                        final isEmail = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(val);
+                        if (!isDigits && !isEmail) {
+                          return 'Invalid Binance Pay ID (8-12 digits or email)';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -390,6 +400,14 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
+                      validator: (value) {
+                        final val = (value ?? '').trim().replaceAll(RegExp(r'[\s\-]'), '');
+                        if (val.isEmpty) return null;
+                        if (!RegExp(r'^(?:\+?8801|01)[3-9]\d{8}$').hasMatch(val)) {
+                          return 'Invalid bKash number (e.g. 017XXXXXXXX or +8801XXXXXXXX)';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -406,6 +424,14 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
+                      validator: (value) {
+                        final val = (value ?? '').trim().replaceAll(RegExp(r'[\s\-]'), '');
+                        if (val.isEmpty) return null;
+                        if (!RegExp(r'^(?:\+?8801|01)[3-9]\d{8}$').hasMatch(val)) {
+                          return 'Invalid Nagad number (e.g. 018XXXXXXXX or +8801XXXXXXXX)';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 32),
 
