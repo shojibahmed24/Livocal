@@ -67,6 +67,13 @@ const ALLOWED_VOICES = new Set([
   'Perseus',
 ]);
 
+
+const PORT = parseInt(process.env.PORT || '8080', 10);
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY?.trim() || '';
+const DEFAULT_MODEL =
+    process.env.GEMINI_LIVE_MODEL?.trim() || 'models/gemini-3.5-live-translate-preview';
+const DEFAULT_VOICE = process.env.DEFAULT_VOICE?.trim() || 'Aoede';
+
 // Whitelist of allowed Gemini multimodal models for voice preview synthesis
 const ALLOWED_PREVIEW_MODELS = new Set([
   'gemini-2.0-flash',
@@ -103,11 +110,6 @@ if (serviceAccount) {
   }
 }
 
-const PORT = parseInt(process.env.PORT || '8080', 10);
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY?.trim() || '';
-const DEFAULT_MODEL =
-    process.env.GEMINI_LIVE_MODEL?.trim() || 'models/gemini-3.5-live-translate-preview';
-const DEFAULT_VOICE = process.env.DEFAULT_VOICE?.trim() || 'Aoede';
 
 const app = express();
 app.set('trust proxy', 1); // Trust first-hop reverse proxy (Render / Cloud Run)
