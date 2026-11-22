@@ -393,12 +393,12 @@ app.get(['/privacy-policy', '/privacy'], (req, res) => {
 
       <p>Welcome to <strong>Livocal</strong> ("we", "our", or "the App"). We are committed to safeguarding your privacy and ensuring your communications remain secure, private, and confidential.</p>
 
-      <h2>1. Zero-Retention Real-Time Voice Translation</h2>
+      <h2>1. Ephemeral Real-Time Voice Translation</h2>
       <div class="card">
         <p><strong>Strict Ephemeral Processing:</strong> During live cross-lingual calls, spoken audio is streamed ephemerally in-memory through our secure gateway to Google Gemini Live API for instant speech translation.</p>
         <ul>
           <li>Audio frames are processed entirely in volatile RAM and are <strong>never written to persistent disk storage</strong>.</li>
-          <li>Voice data is <strong>never used for AI model training</strong> or profiling.</li>
+          <li>Livocal does <strong>not</strong> use voice data for AI model training or profiling; upstream processing is governed by Google's Gemini API terms.</li>
           <li>When both participants speak the same language, the AI interpreter is automatically bypassed for 100% direct peer-to-peer WebRTC audio.</li>
         </ul>
       </div>
@@ -407,7 +407,7 @@ app.get(['/privacy-policy', '/privacy'], (req, res) => {
       <ul>
         <li><strong>Account Credentials:</strong> Your verified phone number, processed via Firebase Authentication for secure SMS OTP login.</li>
         <li><strong>Profile Information:</strong> Optional display name, about text, and avatar photo stored securely in Cloud Firestore and Firebase Storage.</li>
-        <li><strong>Contacts (Zero Harvesting):</strong> When you look up friends on Livocal, contact phone numbers are normalized and hashed on-device. We <em>do not</em> store, upload, or sell your personal address book.</li>
+        <li><strong>Contacts (No Harvesting):</strong> When you look up friends on Livocal, only the normalized phone numbers needed for matching are sent to an authenticated server endpoint. We do <em>not</em> store or sell your personal address book.</li>
         <li><strong>Messages & Media:</strong> Messages and attachments are strictly scoped to the chat participants. Legacy media and ephemeral statuses are access-restricted.</li>
         <li><strong>Ephemeral Status Updates:</strong> Status stories are automatically purged and deleted after 24 hours.</li>
       </ul>
@@ -421,10 +421,10 @@ app.get(['/privacy-policy', '/privacy'], (req, res) => {
       </ul>
 
       <h2>4. Security Standards</h2>
-      <p>All network traffic between Livocal and backend services is encrypted using <strong>TLS 1.3</strong>. Peer-to-peer audio streams use <strong>DTLS-SRTP</strong> encryption. App security PINs are protected using hardware-backed keychains (Android Keystore / iOS Keychain).</p>
+      <p>All network traffic between Livocal and backend services is encrypted using <strong>TLS</strong>. Peer-to-peer audio streams use <strong>DTLS-SRTP</strong> encryption. App security PINs are protected using hardware-backed keychains (Android Keystore / iOS Keychain) and stored only as salted hashes.</p>
 
       <h2>5. Data Deletion and Account Removal</h2>
-      <p>You have full ownership of your data. You may delete individual messages, clear chat histories, or permanently delete your account at any time via <strong>Settings &gt; Account &gt; Delete my account</strong>. Deleting your account irreversibly erases your profile, messages, attachments, and authentication records.</p>
+      <p>You have full ownership of your data. You may delete individual messages, clear chat histories, or permanently delete your account at any time via <strong>Settings &gt; Account &gt; Delete my account</strong>. Account deletion erases your profile, your inbox, attachments you own, and your authentication record. Copies of messages already delivered to another user's inbox remain with that recipient, as with any messaging service.</p>
 
       <h2>6. Contact Us</h2>
       <p>If you have any questions or privacy inquiries regarding Livocal, please contact our Data Protection Officer at:</p>
@@ -438,12 +438,12 @@ app.get(['/privacy-policy', '/privacy'], (req, res) => {
 
       <p><strong>Livocal</strong> ("আমরা", "আমাদের", বা "অ্যাপ") এ আপনাকে স্বাগতম। আমরা আপনার ব্যক্তিগত তথ্যের গোপনীয়তা রক্ষা করতে এবং আপনার প্রতিটি যোগাযোগ সম্পূর্ণরূপে সুরক্ষিত, ব্যক্তিগত এবং গোপনীয় রাখতে প্রতিশ্রুতিবদ্ধ।</p>
 
-      <h2>১. ক্ষণস্থায়ী লাইভ ভয়েস অনুবাদ (জিরো-ডাটা রিটেনশন)</h2>
+      <h2>১. ক্ষণস্থায়ী লাইভ ভয়েস অনুবাদ</h2>
       <div class="card">
         <p><strong>সম্পূর্ণ ক্ষণস্থায়ী প্রসেসিং:</strong> লাইভ দ্বিভাষিক কলের সময়, ব্যবহারকারীর কথ্য অডিও তাৎক্ষণিক অনুবাদের জন্য Google Gemini Multimodal Live API-এর মাধ্যমে শুধুমাত্র ক্ষণস্থায়ী সুরক্ষিত র‍্যামে (RAM) প্রক্রিয়া করা হয়।</p>
         <ul>
           <li>কথোপকথনের অডিও ফ্রেম কখনোই <strong>কোনো স্থায়ী ডিস্ক স্টোরেজে সংরক্ষণ বা রেকর্ড করা হয় না</strong>।</li>
-          <li>আপনার ভয়েস ডেটা কখনোই <strong>এআই মডেল প্রশিক্ষণ বা প্রোফাইলিং-এ ব্যবহার করা হয় না</strong>।</li>
+          <li>Livocal আপনার ভয়েস ডেটা <strong>এআই মডেল প্রশিক্ষণ বা প্রোফাইলিং-এ ব্যবহার করে না</strong>; আপনার কথা Google-এর Gemini API শর্তাবলী অনুযায়ী প্রক্রিয়া হয়।</li>
           <li>কলের উভয় পক্ষ একই ভাষায় কথা বললে, এআই অনুবাদক স্বয়ংক্রিয়ভাবে বাইপাস হয়ে ১০০% সরাসরি P2P WebRTC সংযোগে চলে।</li>
         </ul>
       </div>
@@ -452,7 +452,7 @@ app.get(['/privacy-policy', '/privacy'], (req, res) => {
       <ul>
         <li><strong>অ্যাকাউন্ট প্রমাণীকরণ:</strong> আপনার যাচাইকৃত ফোন নম্বর, যা Firebase Authentication-এর মাধ্যমে সুরক্ষিত SMS OTP লগইনে ব্যবহৃত হয়।</li>
         <li><strong>প্রোফাইল তথ্য:</strong> আপনার ডিসপ্লে নাম, স্ট্যাটাস বায়ো এবং প্রোফাইল ছবি যা Cloud Firestore ও Firebase Storage-এ সুরক্ষিত থাকে।</li>
-        <li><strong>কন্টাক্ট তালিকা (জিরো হার্ভেস্টিং):</strong> বন্ধুদের খুঁজে পেতে ফোনের কন্টাক্ট নম্বর ডিভাইসে হ্যাশ করে যাচাই করা হয়। আপনার সম্পূর্ণ অ্যাড্রেস বুক সার্ভারে আপলোড বা কারো কাছে বিক্রি করা হয় না।</li>
+        <li><strong>কন্টাক্ট তালিকা (হার্ভেস্টিং নয়):</strong> বন্ধুদের খুঁজে পেতে শুধু প্রয়োজনীয় ফোন নম্বর স্বাভাবিক (normalize) করে নিরাপদ সার্ভার এন্ডপয়েন্টে পাঠানো হয়। আপনার সম্পূর্ণ অ্যাড্রেস বুক সংরক্ষণ বা কারো কাছে বিক্রি করা হয় না।</li>
         <li><strong>মেসেজ ও মিডিয়া:</strong> চ্যাট মেসেজ এবং ফাইল শুধুমাত্র চ্যাট অংশগ্রহণকারীদের মধ্যেই সীমাবদ্ধ থাকে।</li>
         <li><strong>২৪-ঘণ্টার স্ট্যাটাস:</strong> যেকোনো স্ট্যাটাস পোস্ট প্রকাশের ২৪ ঘণ্টা পর স্বয়ংক্রিয়ভাবে স্থায়ীভাবে মুছে ফেলা হয়।</li>
       </ul>
@@ -466,10 +466,10 @@ app.get(['/privacy-policy', '/privacy'], (req, res) => {
       </ul>
 
       <h2>৪. নিরাপত্তা মানদণ্ড</h2>
-      <p>অ্যাপ এবং সার্ভারের মধ্যকার সমস্ত যোগাযোগ <strong>TLS 1.3</strong> দ্বারা এনক্রিপ্ট করা। সরাসরি অডিও স্ট্রিমগুলো <strong>DTLS-SRTP</strong> এনক্রিপশন ব্যবহার করে। অ্যাপ সিকিউরিটি পিন ডিভাইসের হার্ডওয়্যার-সমর্থিত Keystore/Keychain দ্বারা সুরক্ষিত।</p>
+      <p>অ্যাপ এবং সার্ভারের মধ্যকার সমস্ত যোগাযোগ <strong>TLS</strong> দ্বারা এনক্রিপ্ট করা। সরাসরি অডিও স্ট্রিমগুলো <strong>DTLS-SRTP</strong> এনক্রিপশন ব্যবহার করে। অ্যাপ সিকিউরিটি পিন ডিভাইসের হার্ডওয়্যার-সমর্থিত Keystore/Keychain-এ শুধুমাত্র সল্টেড হ্যাশ হিসেবে সংরক্ষিত হয়।</p>
 
       <h2>৫. অ্যাকাউন্ট ও ডেটা অপসারণ</h2>
-      <p>আপনার তথ্যের সম্পূর্ণ নিয়ন্ত্রণ আপনার হাতে। আপনি যেকোনো সময় নির্দিষ্ট বার্তা মুছতে, চ্যাট হিস্ট্রি পরিষ্কার করতে বা <strong>Settings &gt; Account &gt; Delete my account</strong> থেকে আপনার অ্যাকাউন্ট স্থায়ীভাবে মুছে ফেলতে পারেন।</p>
+      <p>আপনার তথ্যের সম্পূর্ণ নিয়ন্ত্রণ আপনার হাতে। আপনি যেকোনো সময় নির্দিষ্ট বার্তা মুছতে, চ্যাট হিস্ট্রি পরিষ্কার করতে বা <strong>Settings &gt; Account &gt; Delete my account</strong> থেকে আপনার অ্যাকাউন্ট স্থায়ীভাবে মুছে ফেলতে পারেন। অ্যাকাউন্ট মুছলে আপনার প্রোফাইল, ইনবক্স, আপনার মালিকানাধীন অ্যাটাচমেন্ট এবং লগইন রেকর্ড মুছে যায়। অন্য ব্যবহারকারীর ইনবক্সে ইতিমধ্যে পৌঁছে যাওয়া বার্তার কপি তাদের কাছে থাকে।</p>
 
       <h2>৬. যোগাযোগ</h2>
       <p>গোপনীয়তা সংক্রান্ত যেকোনো জিজ্ঞাসা বা প্রশ্নের জন্য আমাদের ডেটা সুরক্ষা কর্মকর্তার সাথে যোগাযোগ করুন:</p>
