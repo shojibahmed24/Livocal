@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/theme/app_colors.dart';
 
 class SwipeToAnswer extends StatefulWidget {
@@ -99,9 +100,12 @@ class _SwipeToAnswerState extends State<SwipeToAnswer> {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
-                      'Decline',
-                      style: TextStyle(
+                    Text(
+                      AppStrings.get(
+                        'decline',
+                        Localizations.localeOf(context).languageCode,
+                      ),
+                      style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -218,14 +222,21 @@ class _SwipeToAnswerState extends State<SwipeToAnswer> {
                   width: 1,
                 ),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.call_rounded, color: AppColors.primary, size: 18),
-                  SizedBox(width: 8),
+                  const Icon(
+                    Icons.call_rounded,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
                   Text(
-                    'Tap to Answer',
-                    style: TextStyle(
+                    AppStrings.get(
+                      'tapToAnswer',
+                      Localizations.localeOf(context).languageCode,
+                    ),
+                    style: const TextStyle(
                       color: AppColors.primary,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
