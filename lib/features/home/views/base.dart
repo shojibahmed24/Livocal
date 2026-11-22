@@ -194,6 +194,7 @@ class _HomePageState extends ConsumerState<HomePage>
 
     _floatingButtons = [
       FloatingActionButton(
+        tooltip: 'New chat',
         onPressed: () async {
           if (!await hasPermission(Permission.contacts)) return;
           if (!mounted) return;
@@ -212,6 +213,7 @@ class _HomePageState extends ConsumerState<HomePage>
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           FloatingActionButton(
+            tooltip: 'New status',
             backgroundColor: AppColorsDark.appBarColor,
             onPressed: () {
               Navigator.of(context).push(
@@ -226,6 +228,7 @@ class _HomePageState extends ConsumerState<HomePage>
             height: 16.0,
           ),
           FloatingActionButton(
+            tooltip: 'Camera',
             onPressed: () async {
               if (!await hasPermission(Permission.camera)) return;
               if (!mounted) return;
@@ -247,6 +250,7 @@ class _HomePageState extends ConsumerState<HomePage>
         ],
       ),
       FloatingActionButton(
+        tooltip: 'New call',
         onPressed: () async {
           if (!await hasPermission(Permission.contacts)) return;
           if (!mounted) return;
@@ -481,6 +485,7 @@ class _HomePageState extends ConsumerState<HomePage>
           actionsIconTheme: const IconThemeData(color: Colors.white),
           leading: _isSearching
               ? IconButton(
+                  tooltip: 'Back',
                   icon: const Icon(Icons.arrow_back),
                   onPressed: () {
                     setState(() {
@@ -507,6 +512,7 @@ class _HomePageState extends ConsumerState<HomePage>
           actions: [
             if (_isSearching) ...[
               IconButton(
+                tooltip: 'Clear search',
                 icon: const Icon(Icons.close),
                 onPressed: () {
                   setState(() {
@@ -516,6 +522,7 @@ class _HomePageState extends ConsumerState<HomePage>
               ),
             ] else ...[
               IconButton(
+                tooltip: 'Camera',
                 onPressed: () async {
                   if (!await hasPermission(Permission.camera)) return;
                   if (!context.mounted) return;
@@ -537,6 +544,7 @@ class _HomePageState extends ConsumerState<HomePage>
                 ),
               ),
               IconButton(
+                tooltip: 'Search',
                 onPressed: () {
                   setState(() {
                     _isSearching = true;
@@ -1391,19 +1399,25 @@ class RecentChatWidget extends StatelessWidget {
           ),
         );
       },
-      leading: GestureDetector(
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => ContactProfileScreen(
-                self: user,
-                other: chat.user,
-                contactName: title,
-              ),
-            ),
-          );
-        },
-        child: _buildAvatar(context, isDark),
+      leading: Semantics(
+        button: true,
+        label: 'View contact profile',
+        child: ExcludeSemantics(
+          child: GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => ContactProfileScreen(
+                    self: user,
+                    other: chat.user,
+                    contactName: title,
+                  ),
+                ),
+              );
+            },
+            child: _buildAvatar(context, isDark),
+          ),
+        ),
       ),
       title: Padding(
         padding: const EdgeInsets.only(bottom: 3.0),
