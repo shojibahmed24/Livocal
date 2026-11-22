@@ -7,6 +7,7 @@ import 'package:livocal/features/calls/views/widgets/minute_recharge_sheet.dart'
 import 'package:livocal/features/chat/views/chat.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/wallet_repository.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/theme/app_colors.dart';
 
 class CallEndedSummarySheet extends ConsumerWidget {
@@ -62,18 +63,40 @@ class CallEndedSummarySheet extends ConsumerWidget {
     }).join('');
   }
 
-  static String formatDurationBengali(int seconds) {
-    if (seconds <= 0) return '০ সেকেন্ড';
+  static String _num(int n, String langCode) {
+    return langCode == 'bn' ? toBengaliNum(n) : n.toString();
+  }
+
+  static String formatDurationLocalized(
+    BuildContext context,
+    WidgetRef ref,
+    int seconds,
+  ) {
+    final langCode = Localizations.localeOf(context).languageCode;
     final mins = seconds ~/ 60;
     final secs = seconds % 60;
 
     if (mins > 0 && secs > 0) {
-      return '${toBengaliNum(mins)} মিনিট ${toBengaliNum(secs)} সেকেন্ড';
+      return AppStrings.tr(
+        ref,
+        'minutesSecondsValue',
+        args: {
+          'minutes': _num(mins, langCode),
+          'seconds': _num(secs, langCode),
+        },
+      );
     } else if (mins > 0) {
-      return '${toBengaliNum(mins)} মিনিট';
-    } else {
-      return '${toBengaliNum(secs)} সেকেন্ড';
+      return AppStrings.tr(
+        ref,
+        'minutesValue',
+        args: {'minutes': _num(mins, langCode)},
+      );
     }
+    return AppStrings.tr(
+      ref,
+      'secondsValue',
+      args: {'seconds': _num(secs, langCode)},
+    );
   }
 
   @override
@@ -81,30 +104,38 @@ class CallEndedSummarySheet extends ConsumerWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final hasDuration = durationSeconds > 0 && !isMissed;
-    final durationStr = formatDurationBengali(durationSeconds);
+    final langCode = Localizations.localeOf(context).languageCode;
+    final durationStr = formatDurationLocalized(
+      context,
+      ref,
+      durationSeconds,
+    );
     final walletAsync = ref.watch(walletStreamProvider(currentUser.id));
 
     final int billedMinutes = (hasDuration && isTranslated)
         ? ((durationSeconds + 59) ~/ 60)
         : 0;
     final String costStr = isMissed
-        ? '০ মিনিট (সংযোগ হয়নি)'
+        ? AppStrings.tr(ref, 'zeroMinutesNotConnected')
         : (!isTranslated
-            ? '০ মিনিট (সাধারণ কল)'
-            : '${toBengaliNum(billedMinutes)} মিনিট কর্তন');
+            ? AppStrings.tr(ref, 'zeroMinutesNormalCall')
+            : AppStrings.tr(
+                ref,
+                'minutesDeducted',
+                args: {'minutes': _num(billedMinutes, langCode)},
+              ));
 
     // Dynamic positive message
-    String messageText;
+    final String messageText;
     if (isMissed) {
-      messageText = isIncoming
-          ? 'আপনি একটি ইনকামিং কল মিস করেছেন। চাইলে এখন কল ব্যাক করতে পারেন বা মেসেজ পাঠাতে পারেন।'
-          : 'অপর প্রান্ত থেকে কলের উত্তর মেলেনি। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।';
+      messageText = AppStrings.tr(
+        ref,
+        isIncoming ? 'missedIncomingMessage' : 'missedOutgoingMessage',
+      );
     } else if (isTranslated) {
-      messageText =
-          '🌐 লাইভ এআই ভয়েস অনুবাদ সহ আপনার কথোপকথনটি সফলভাবে সম্পন্ন হয়েছে। Livocal ব্যবহার করার জন্য ধন্যবাদ!';
+      messageText = AppStrings.tr(ref, 'translatedCallSuccessMessage');
     } else {
-      messageText =
-          'আপনার কথোপকথনটি সফলভাবে সম্পন্ন হয়েছে। চমৎকার আলাপের জন্য ধন্যবাদ!';
+      messageText = AppStrings.tr(ref, 'normalCallSuccessMessage');
     }
 
     return Container(
@@ -244,9 +275,9 @@ class CallEndedSummarySheet extends ConsumerWidget {
                           color: AppColors.primary.withValues(alpha: 0.16),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Text(
-                          '🌐 AI Call',
-                          style: TextStyle(
+                        child: Text(
+                          '🌐 ${AppStrings.tr(ref, 'aiCall')}',
+                          style: const TextStyle(
                             color: AppColors.primary,
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -284,7 +315,7 @@ class CallEndedSummarySheet extends ConsumerWidget {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'কল সময়কাল',
+                              AppStrings.tr(ref, 'callDuration'),
                               style: TextStyle(
                                 fontSize: 13,
                                 color: isDark ? Colors.white70 : Colors.black54,
@@ -293,7 +324,13 @@ class CallEndedSummarySheet extends ConsumerWidget {
                           ],
                         ),
                         Text(
-                          hasDuration ? durationStr : '০ সেকেন্ড',
+                          hasDuration
+                              ? durationStr
+                              : AppStrings.tr(
+                                  ref,
+                                  'secondsValue',
+                                  args: {'seconds': _num(0, langCode)},
+                                ),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -315,7 +352,7 @@ class CallEndedSummarySheet extends ConsumerWidget {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'ব্যবহৃত মিনিট / খরচ',
+                              AppStrings.tr(ref, 'minutesUsedCost'),
                               style: TextStyle(
                                 fontSize: 13,
                                 color: isDark ? Colors.white70 : Colors.black54,
@@ -346,7 +383,7 @@ class CallEndedSummarySheet extends ConsumerWidget {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'অবশিষ্ট মিনিট ব্যালেন্স',
+                              AppStrings.tr(ref, 'remainingMinuteBalance'),
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
@@ -357,7 +394,16 @@ class CallEndedSummarySheet extends ConsumerWidget {
                         ),
                         walletAsync.when(
                           data: (w) => Text(
-                            '${toBengaliNum(w.effectiveRemainingMinutes)} মিনিট',
+                            AppStrings.tr(
+                              ref,
+                              'minutesValue',
+                              args: {
+                                'minutes': _num(
+                                  w.effectiveRemainingMinutes,
+                                  langCode,
+                                ),
+                              },
+                            ),
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
@@ -369,9 +415,12 @@ class CallEndedSummarySheet extends ConsumerWidget {
                             height: 14,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
-                          error: (_, __) => const Text(
-                            '-- মিনিট',
-                            style: TextStyle(fontSize: 13, color: Colors.grey),
+                          error: (_, __) => Text(
+                            AppStrings.tr(ref, 'minutesPlaceholder'),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey,
+                            ),
                           ),
                         ),
                       ],
@@ -392,9 +441,9 @@ class CallEndedSummarySheet extends ConsumerWidget {
                                   ),
                                 ),
                                 icon: const Icon(Icons.add_card_rounded, size: 16, color: AppColors.primary),
-                                label: const Text(
-                                  'মিনিট রিচার্জ করুন',
-                                  style: TextStyle(
+                                label: Text(
+                                  AppStrings.tr(ref, 'rechargeMinutes'),
+                                  style: const TextStyle(
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.primary,
@@ -448,9 +497,9 @@ class CallEndedSummarySheet extends ConsumerWidget {
                         elevation: 0,
                       ),
                       icon: const Icon(Icons.call_rounded, size: 20),
-                      label: const Text(
-                        'আবার কল করুন',
-                        style: TextStyle(
+                      label: Text(
+                        AppStrings.tr(ref, 'callAgain'),
+                        style: const TextStyle(
                           fontSize: 14.5,
                           fontWeight: FontWeight.bold,
                         ),
@@ -483,9 +532,9 @@ class CallEndedSummarySheet extends ConsumerWidget {
                         ),
                       ),
                       icon: const Icon(Icons.chat_bubble_outline_rounded, size: 19),
-                      label: const Text(
-                        'মেসেজ পাঠান',
-                        style: TextStyle(
+                      label: Text(
+                        AppStrings.tr(ref, 'sendMessage'),
+                        style: const TextStyle(
                           fontSize: 14.5,
                           fontWeight: FontWeight.w600,
                         ),
@@ -512,7 +561,7 @@ class CallEndedSummarySheet extends ConsumerWidget {
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(
-                  'ঠিক আছে',
+                  AppStrings.tr(ref, 'ok'),
                   style: TextStyle(
                     color: isDark ? Colors.white54 : Colors.black54,
                     fontSize: 13.5,
