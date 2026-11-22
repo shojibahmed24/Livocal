@@ -18,7 +18,7 @@ Livocal is a secure cross-lingual communication platform offering realtime messa
 * **Encryption in Transit:** All traffic between client applications and backend relays operates over **TLS 1.3** and **WSS**. Peer-to-peer voice media is secured using **DTLS-SRTP**.
 * **Zero-Retention Voice Translation:** During cross-lingual calls, microphone PCM16 audio chunks are streamed through an authenticated, volatile in-memory gateway to Google Gemini Live API. **Audio frames are never written to disk, never logged, and never retained for AI model training.**
 * **Intelligent Same-Language Bypass:** When both participants share the same spoken language, the Gemini Live AI interpreter is automatically bypassed for 100% direct peer-to-peer WebRTC audio streaming.
-* **Zero Address Book Harvesting:** Device contacts are never scraped, uploaded, or sold. Friend discovery matches phone numbers using normalized, hashed lookups against Firestore registered accounts.
+* **No Address-Book Harvesting:** The full device address book is never stored or sold. Friend discovery sends only normalized phone numbers to an authenticated backend endpoint for matching against registered accounts; the backend returns matched profiles without exposing other users' numbers.
 * **Hardware-Backed PIN Protection:** Two-Step Verification PINs are stored securely in hardware Keystore (Android) / Keychain (iOS) with exponential brute-force backoff and lockout protection.
 * **Full Data Erasure:** Users can permanently delete individual messages, clear chat histories, or execute complete account erasure via **Settings > Account > Delete my account**.
 
@@ -70,7 +70,7 @@ Use the exact responses below when completing the Google Play Console Data Safet
 #### E. Contacts
 | Field | Collected? | Shared? | Processing Type | Purpose | Deletion Mechanism |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Contacts** | Yes | No | Ephemeral Match | App functionality (Friend discovery) | Not stored permanently on server |
+| **Contacts** | Yes | No | Normalized match via authenticated backend | App functionality (Friend discovery) | No contact list is persisted; each matched account's own phone stays in that account's profile |
 
 #### F. Device or Other Identifiers
 | Field | Collected? | Shared? | Processing Type | Purpose | Deletion Mechanism |
