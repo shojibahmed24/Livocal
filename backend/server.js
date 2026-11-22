@@ -269,6 +269,9 @@ app.get('/health', (req, res) => {
     service: 'Livocal Live Relay Gateway',
     uptime: Math.round(process.uptime()),
     hasApiKey: Boolean(GEMINI_API_KEY),
+    hasTurn: Boolean(process.env.TURN_URL && process.env.TURN_SECRET),
+    liveModel: DEFAULT_MODEL,
+    textModel: TEXT_MODEL,
     privacyRoute: true,
     timestamp: new Date().toISOString(),
   });
