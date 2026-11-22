@@ -17,8 +17,14 @@ class ChatInputMic extends ConsumerWidget {
       chatControllerProvider.select((s) => s.recordingState),
     );
 
-    return GestureDetector(
-      onTap: () async {
+    return Semantics(
+      button: true,
+      label: recordingState == RecordingState.notRecording
+          ? 'Record voice message'
+          : 'Stop recording',
+      child: ExcludeSemantics(
+        child: GestureDetector(
+          onTap: () async {
         HapticFeedback.mediumImpact();
         if (recordingState == RecordingState.notRecording) {
           await ref.read(chatControllerProvider.notifier).startRecordingLocked();
@@ -98,6 +104,8 @@ class ChatInputMic extends ConsumerWidget {
                 ],
               ),
             ),
+        ),
+      ),
     );
   }
 }
