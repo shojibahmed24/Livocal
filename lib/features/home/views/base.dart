@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:livocal/features/calls/controllers/call_controller.dart';
+import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/features/calls/models/call_model.dart';
 import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'package:livocal/features/calls/views/calls_tab.dart';
@@ -783,15 +784,221 @@ class _HomePageState extends ConsumerState<HomePage>
             parent: AlwaysScrollableScrollPhysics(),
           ),
           children: [
-            RecentChatsBody(
+            ChatsTabWithHero(
               user: widget.user,
-              searchQuery: _isSearching ? _searchController.text.trim().toLowerCase() : '',
+              searchQuery: _isSearching
+                  ? _searchController.text.trim().toLowerCase()
+                  : '',
             ),
             StatusTab(user: widget.user),
             CallsTab(user: widget.user),
           ],
         ),
         floatingActionButton: _floatingButtons[_tabController.index],
+      ),
+    );
+  }
+}
+
+/// Chats tab = AI call hero + the existing recent-chat list.
+class ChatsTabWithHero extends StatelessWidget {
+  final User user;
+  final String searchQuery;
+
+  const ChatsTabWithHero({
+    super.key,
+    required this.user,
+    this.searchQuery = '',
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        if (searchQuery.isEmpty) _AiCallHero(user: user),
+        Expanded(
+          child: RecentChatsBody(user: user, searchQuery: searchQuery),
+        ),
+      ],
+    );
+  }
+}
+
+/// Brand hero that finally makes Livocal's AI translation value visible on
+/// the first screen instead of hiding it behind the call flow.
+class _AiCallHero extends ConsumerWidget {
+  final User user;
+
+  const _AiCallHero({required this.user});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final myLang =
+        CallLanguageRegistry.fromCode(CallRepository.getMyLanguageCode());
+    final walletAsync = ref.watch(walletStreamProvider(user.id));
+    final minutes = walletAsync.maybeWhen(
+      data: (wallet) => wallet.effectiveRemainingMinutes,
+      orElse: () => null,
+    );
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: AppColors.brandGradient,
+        borderRadius: BorderRadius.circular(AppRadius.radiusXl),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.28),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Colors.white,
+                  size: 15,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'LIVE AI TRANSLATION',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.1,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  borderRadius: AppRadius.full,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.timer_outlined,
+                      color: Colors.white,
+                      size: 12,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      minutes == null ? '…' : '$minutes min',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            AppStrings.tr(ref, 'heroTitle'),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 19,
+              fontWeight: FontWeight.w800,
+              height: 1.2,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            AppStrings.tr(ref, 'heroSubtitle'),
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.84),
+              fontSize: 12.5,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  borderRadius: AppRadius.full,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      myLang.flagEmoji,
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      myLang.nativeName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Icon(
+                Icons.arrow_forward_rounded,
+                color: Colors.white70,
+                size: 15,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                '70+ languages',
+                style: TextStyle(color: Colors.white70, fontSize: 11),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.radiusMd),
+                ),
+              ),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ContactsPage(user: user),
+                ),
+              ),
+              icon: const Icon(Icons.call_rounded, size: 18),
+              label: Text(
+                AppStrings.tr(ref, 'newCall'),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
