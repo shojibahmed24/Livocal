@@ -76,7 +76,7 @@ const DEFAULT_VOICE = process.env.DEFAULT_VOICE?.trim() || 'Aoede';
 // Text translation model (chat messages). Override with GEMINI_TEXT_MODEL
 // when the default model is retired or a newer Flash model is preferred.
 const TEXT_MODEL =
-    process.env.GEMINI_TEXT_MODEL?.trim() || 'gemini-1.5-flash';
+    process.env.GEMINI_TEXT_MODEL?.trim() || 'gemini-2.5-flash';
 
 // Whitelist of allowed Gemini multimodal models for voice preview synthesis
 const ALLOWED_PREVIEW_MODELS = new Set([

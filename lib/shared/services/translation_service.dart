@@ -85,7 +85,7 @@ class TranslationService {
     // a code change: --dart-define=GEMINI_TEXT_MODEL=gemini-2.5-flash
     const textModel = String.fromEnvironment(
       'GEMINI_TEXT_MODEL',
-      defaultValue: 'gemini-1.5-flash',
+      defaultValue: 'gemini-2.5-flash',
     );
     final url = Uri.parse(
       'https://generativelanguage.googleapis.com/v1beta/models/$textModel:generateContent?key=$apiKey',
