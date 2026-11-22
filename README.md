@@ -135,6 +135,7 @@ firebase deploy --only storage:rules
 2. **Live Transcripts:** Transcripts are visible only to the active caller and callee, are deleted on hang-up, and carry a 24-hour Firestore TTL backstop.
 3. **Attachments:** Cloud Storage attachments enforce authenticated access and a 25MB file size ceiling.
 4. **Relay Gateway:** Every relay REST/WS request is authenticated with a verified Firebase ID token; admin endpoints additionally require a timing-safe `x-admin-secret` or an `admin: true` custom claim.
+5. **App Check:** After registering Play Integrity (Android) / DeviceCheck (iOS) in the Firebase Console, build with `--dart-define=ENABLE_APP_CHECK=true` and enforce App Check for Firestore, Storage, and Auth. It is off by default so QA builds are not blocked before console setup.
 
 ---
 

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -41,6 +42,24 @@ void main() async {
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     } catch (fcmErr) {
       debugPrint("FCM background handler registration error: $fcmErr");
+    }
+
+    // Firebase App Check is opt-in so QA/debug builds keep working before the
+    // provider is registered in the Firebase console. Enable with:
+    //   flutter run --dart-define=ENABLE_APP_CHECK=true
+    if (const bool.fromEnvironment('ENABLE_APP_CHECK')) {
+      try {
+        await FirebaseAppCheck.instance.activate(
+          androidProvider: kDebugMode
+              ? AndroidProvider.debug
+              : AndroidProvider.playIntegrity,
+          appleProvider: kDebugMode
+              ? AppleProvider.debug
+              : AppleProvider.deviceCheck,
+        );
+      } catch (e, st) {
+        debugPrint('App Check activation error: $e\n$st');
+      }
     }
 
     // Explicitly enable Crashlytics collection in production
