@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/theme/theme.dart';
 
@@ -54,8 +55,11 @@ class ChatField extends StatelessWidget {
               minLines: 1,
               cursorColor: colorTheme.greenColor,
               cursorHeight: 20,
-              decoration: const InputDecoration(
-                hintText: 'Message',
+              decoration: InputDecoration(
+                hintText: AppStrings.get(
+                  'messageHint',
+                  Localizations.localeOf(context).languageCode,
+                ),
                 border: InputBorder.none,
               ),
             ),

@@ -396,9 +396,9 @@ class _CallsTabState extends ConsumerState<CallsTab>
                         color: Colors.teal.withValues(alpha: 0.14),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text(
-                        '🗣️ Free Call',
-                        style: TextStyle(
+                      child: Text(
+                        AppStrings.tr(ref, 'freeCall'),
+                        style: const TextStyle(
                           color: Colors.teal,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,

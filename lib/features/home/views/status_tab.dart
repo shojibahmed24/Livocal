@@ -327,7 +327,7 @@ class _StatusTabState extends ConsumerState<StatusTab>
                   ),
                 ),
                 title: Text(
-                  'My status',
+                  AppStrings.tr(ref, 'myStatus'),
                   style: textTheme.titleMedium.copyWith(fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(
@@ -435,9 +435,12 @@ class _StatusTabState extends ConsumerState<StatusTab>
                           color: Colors.red.shade300,
                         ),
                         const SizedBox(height: 12),
-                        const Text(
-                          "Couldn't load status updates",
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                        Text(
+                          AppStrings.tr(ref, 'couldNotLoadStatus'),
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         TextButton.icon(
@@ -455,7 +458,10 @@ class _StatusTabState extends ConsumerState<StatusTab>
               if (allStatuses.isEmpty) {
                 return Column(
                   children: [
-                    _buildSectionHeader('Recent updates', isDark),
+                    _buildSectionHeader(
+                      AppStrings.tr(ref, 'recentUpdates'),
+                      isDark,
+                    ),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
                       child: Column(
@@ -466,18 +472,21 @@ class _StatusTabState extends ConsumerState<StatusTab>
                             color: Colors.grey.withValues(alpha: 0.4),
                           ),
                           const SizedBox(height: 16),
-                          const Text(
-                            'No recent updates',
-                            style: TextStyle(
+                          Text(
+                            AppStrings.tr(ref, 'noRecentUpdates'),
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
-                            'Status updates from your contacts will appear here. They disappear after 24 hours.',
+                          Text(
+                            AppStrings.tr(ref, 'statusUpdatesDesc'),
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 13, color: Colors.grey),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey,
+                            ),
                           ),
                         ],
                       ),
@@ -498,7 +507,10 @@ class _StatusTabState extends ConsumerState<StatusTab>
                 children: [
                   // Section: Recent Updates (Unviewed statuses with green ring)
                   if (recentUpdates.isNotEmpty) ...[
-                    _buildSectionHeader('Recent updates', isDark),
+                    _buildSectionHeader(
+                      AppStrings.tr(ref, 'recentUpdates'),
+                      isDark,
+                    ),
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -568,7 +580,7 @@ class _StatusTabState extends ConsumerState<StatusTab>
                 const Icon(Icons.privacy_tip_outlined, size: 13, color: Colors.grey),
                 const SizedBox(width: 6),
                 Text(
-                  'Your status updates are protected by your privacy settings',
+                  AppStrings.tr(ref, 'statusPrivacyNote'),
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
               ],

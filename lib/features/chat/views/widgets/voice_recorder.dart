@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/chat/views/widgets/recording_visualiser.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/theme/theme.dart';
 
 import '../../../../shared/utils/abc.dart';
@@ -95,7 +96,7 @@ class VoiceRecorderField extends ConsumerWidget {
             ],
           ),
           Text(
-            "◀ Slide to cancel",
+            AppStrings.tr(ref, 'slideToCancel'),
             style: TextStyle(
               color: Theme.of(context).brightness == Brightness.dark
                   ? colorTheme.iconColor
