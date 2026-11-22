@@ -18,6 +18,7 @@ import 'package:livocal/features/chat/views/widgets/chat_date.dart';
 import 'package:livocal/features/chat/views/widgets/chat_field.dart';
 import 'package:livocal/features/chat/views/widgets/chat_mic.dart';
 import 'package:livocal/features/chat/views/widgets/message_cards.dart';
+import 'package:livocal/features/chat/views/chat_search_screen.dart';
 import 'package:livocal/features/chat/views/widgets/scroll_btn.dart';
 import 'package:livocal/features/chat/views/widgets/voice_recorder.dart';
 import 'package:livocal/features/settings/services/block_service.dart';
@@ -321,6 +322,16 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                     ),
                   );
                   break;
+                case 'search':
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ChatSearchScreen(
+                        self: self,
+                        other: other,
+                      ),
+                    ),
+                  );
+                  break;
                 case 'clear_chat':
                   final confirmed = await showAppDialog<bool>(
                     context: context,
@@ -423,6 +434,10 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             itemBuilder: (context) {
               final isMuted = MuteService.isContactMuted(other.id);
               return [
+                PopupMenuItem(
+                  value: 'search',
+                  child: Text(AppStrings.tr(ref, 'searchInChat')),
+                ),
                 PopupMenuItem(
                   value: 'view_contact',
                   child: Text(AppStrings.tr(ref, 'viewContact')),
