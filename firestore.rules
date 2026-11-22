@@ -25,6 +25,12 @@ service cloud.firestore {
       return isCallParty(callDoc);
     }
 
+    // System messages (delivery/read receipts) carry an `action` field and are
+    // only allowed to mutate their `processedBy` dedupe list.
+    function isSystemMessage(data) {
+      return data.keys().hasAny(['action']) && data.action != null;
+    }
+
     // 1. User Profiles & Realtime Presence
     match /users/{userId} {
       // Security: Allow get for individual profile inspection by known ID
@@ -94,16 +100,52 @@ service cloud.firestore {
         // Enforcement: Cannot send messages to a user who has blocked the sender
         allow create: if isAuthenticated()
           && request.resource.data.senderId == request.auth.uid
+          && (
+            isSystemMessage(request.resource.data)
+            || (
+              request.resource.data.id == messageId
+              && request.resource.data.content is string
+              && request.resource.data.content.size() <= 10000
+            )
+          )
           && !exists(/databases/$(database)/documents/users/$(receiverId)/blocked_users/$(request.auth.uid));
         // Only recipient or sender can read, update (delivery ticks), or delete
         allow read, delete: if isAuthenticated() && (
           request.auth.uid == receiverId ||
           request.auth.uid == resource.data.senderId
         );
-        allow update: if isAuthenticated() && (
-          request.auth.uid == receiverId ||
-          request.auth.uid == resource.data.senderId
-        );
+        // Integrity: identity/content are immutable after create. Senders may
+        // only tombstone a message (delete for everyone); receipts may only
+        // touch processedBy. Prevents either party rewriting chat history.
+        allow update: if isAuthenticated()
+          && (
+            request.auth.uid == receiverId ||
+            request.auth.uid == resource.data.senderId
+          )
+          && (
+            (
+              isSystemMessage(resource.data)
+              && request.resource.data.diff(resource.data)
+                   .affectedKeys().hasOnly(['processedBy'])
+            )
+            ||
+            (
+              !isSystemMessage(resource.data)
+              && request.resource.data.id == resource.data.id
+              && request.resource.data.senderId == resource.data.senderId
+              && request.resource.data.receiverId == resource.data.receiverId
+              && request.resource.data.diff(resource.data)
+                   .affectedKeys().hasOnly([
+                     'status', 'deliveredAt', 'readAt', 'expiresAt',
+                     'deletedForEveryone', 'content', 'attachment'
+                   ])
+              && (
+                !request.resource.data.diff(resource.data)
+                   .affectedKeys().hasAny(['content', 'attachment'])
+                || request.resource.data.deletedForEveryone == true
+              )
+            )
+          );
       }
     }
 

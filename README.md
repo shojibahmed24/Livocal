@@ -99,9 +99,13 @@ cp .env.example .env
 PORT=8080
 GEMINI_API_KEY=AIzaSy...
 GEMINI_LIVE_MODEL=models/gemini-3.5-live-translate-preview
+GEMINI_TEXT_MODEL=gemini-1.5-flash
 DEFAULT_VOICE=Aoede
-RELAY_API_SECRET=your_super_secret_key_here
 FIREBASE_SERVICE_ACCOUNT={"type":"service_account",...}
+FIREBASE_STORAGE_BUCKET=livocal24.firebasestorage.app
+ADMIN_SECRET=your_strong_admin_secret_16_chars_min
+TURN_URL=turn:your-turn-server:3478?transport=udp
+TURN_SECRET=your_coturn_static_auth_secret
 ```
 
 Start the backend:
@@ -128,9 +132,9 @@ firebase deploy --only storage:rules
 ## 🔒 Security Best Practices
 
 1. **WebRTC Signaling:** ICE candidate exchanges (`callerCandidates`, `calleeCandidates`) and call sessions are restricted to authenticated participants only.
-2. **Live Transcripts:** Real-time call transcripts are isolated strictly to the active caller and callee.
-3. **Attachments:** Cloud Storage attachments enforce authenticated access and a 50MB file size ceiling.
-4. **Relay Gateway:** The Node.js backend can enforce `RELAY_API_SECRET` to prevent unauthorized consumption of Gemini Live API quotas.
+2. **Live Transcripts:** Transcripts are visible only to the active caller and callee, are deleted on hang-up, and carry a 24-hour Firestore TTL backstop.
+3. **Attachments:** Cloud Storage attachments enforce authenticated access and a 25MB file size ceiling.
+4. **Relay Gateway:** Every relay REST/WS request is authenticated with a verified Firebase ID token; admin endpoints additionally require a timing-safe `x-admin-secret` or an `admin: true` custom claim.
 
 ---
 

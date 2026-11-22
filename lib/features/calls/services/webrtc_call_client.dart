@@ -103,27 +103,14 @@ class WebRtcCallClient {
     }
   }
 
+  // STUN-only bootstrap. TURN credentials are ephemeral and must come from
+  // the authenticated backend (/api/webrtc/ice-servers) — never hardcode a
+  // shared public TURN username/password in the client.
   static Map<String, dynamic> _iceConfiguration = {
     'iceServers': [
       {'urls': 'stun:stun.l.google.com:19302'},
       {'urls': 'stun:stun1.l.google.com:19302'},
       {'urls': 'stun:stun2.l.google.com:19302'},
-      {'urls': 'stun:stun.relay.metered.ca:80'},
-      {
-        'urls': 'turn:standard.relay.metered.ca:80',
-        'username': 'openrelayproject',
-        'credential': 'openrelayproject',
-      },
-      {
-        'urls': 'turn:standard.relay.metered.ca:443',
-        'username': 'openrelayproject',
-        'credential': 'openrelayproject',
-      },
-      {
-        'urls': 'turn:standard.relay.metered.ca:443?transport=tcp',
-        'username': 'openrelayproject',
-        'credential': 'openrelayproject',
-      },
     ],
     'sdpSemantics': 'unified-plan',
   };

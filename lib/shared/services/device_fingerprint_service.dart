@@ -72,8 +72,15 @@ class DeviceFingerprintService {
         rawHardwareId = 'web_${webInfo.vendor}_${webInfo.userAgent}';
       } else if (Platform.isAndroid) {
         final androidInfo = await deviceInfo.androidInfo;
-        // Bind to immutable hardware characteristics that survive app reinstall
-        rawHardwareId = 'android_${androidInfo.id}_${androidInfo.model}_${androidInfo.brand}_${androidInfo.hardware}';
+        // Bind to hardware/build characteristics that are stable across app
+        // reinstalls. `androidInfo.id` is the OS build ID and changes on every
+        // system update, which let users reset the trial unintentionally.
+        // Existing installs keep their already-stored fingerprint; only new
+        // installs use this stronger composition.
+        rawHardwareId =
+            'android_${androidInfo.fingerprint}_${androidInfo.board}_'
+            '${androidInfo.device}_${androidInfo.model}_'
+            '${androidInfo.manufacturer}';
       } else if (Platform.isIOS) {
         final iosInfo = await deviceInfo.iosInfo;
         rawHardwareId = 'ios_${iosInfo.identifierForVendor ?? ''}_${iosInfo.model}';

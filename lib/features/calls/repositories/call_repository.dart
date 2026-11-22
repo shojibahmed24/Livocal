@@ -294,12 +294,18 @@ class CallRepository {
   ) async {
     if (firestore == null) return;
     try {
+      final data = entry.toMap();
+      // TTL backstop: even if the explicit call-end cleanup fails, Firestore's
+      // transcripts TTL policy removes the entry after 24 hours.
+      data['expiresAt'] = Timestamp.fromDate(
+        DateTime.now().add(const Duration(hours: 24)),
+      );
       await firestore!
           .collection('calls')
           .doc(callId)
           .collection('transcripts')
           .doc(entry.id)
-          .set(entry.toMap())
+          .set(data)
           .timeout(const Duration(seconds: 3));
     } catch (e) {
       debugPrint('[CallRepository] sendTranscriptToCall failed for $callId: $e');
