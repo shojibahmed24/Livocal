@@ -381,9 +381,9 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
                     ),
                   ),
                   onPressed: () => _navigateToLoginPage(context),
-                  child: const Text(
-                    'Agree and continue',
-                    style: TextStyle(
+                  child: Text(
+                    AppStrings.tr(ref, 'agreeAndContinue'),
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.3,
