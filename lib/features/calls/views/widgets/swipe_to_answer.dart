@@ -58,6 +58,7 @@ class _SwipeToAnswerState extends State<SwipeToAnswer> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     const double sliderHeight = 60.0;
     const double thumbSize = 52.0;
     const double thumbPadding = 4.0;
@@ -105,8 +106,10 @@ class _SwipeToAnswerState extends State<SwipeToAnswer> {
                         'decline',
                         Localizations.localeOf(context).languageCode,
                       ),
-                      style: const TextStyle(
-                        color: Colors.white70,
+                      style: TextStyle(
+                        color: isDark
+                            ? Colors.white70
+                            : AppColors.lightTextSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -130,7 +133,9 @@ class _SwipeToAnswerState extends State<SwipeToAnswer> {
                       child: Container(
                         height: sliderHeight,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF16203A),
+                          color: isDark
+                              ? AppColors.darkSurfaceContainer
+                              : AppColors.lightSurfaceContainer,
                           borderRadius: BorderRadius.circular(sliderHeight / 2),
                           border: Border.all(
                             color: AppColors.primary.withValues(alpha: 0.35),
@@ -149,8 +154,14 @@ class _SwipeToAnswerState extends State<SwipeToAnswer> {
                                   Text(
                                     widget.label,
                                     style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: (1.0 - (_dragPosition / maxDrag).clamp(0.0, 1.0)) * 0.85,
+                                      color: (isDark
+                                              ? Colors.white
+                                              : AppColors.lightTextPrimary)
+                                          .withValues(
+                                        alpha: (1.0 -
+                                                (_dragPosition / maxDrag)
+                                                    .clamp(0.0, 1.0)) *
+                                            0.85,
                                       ),
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
