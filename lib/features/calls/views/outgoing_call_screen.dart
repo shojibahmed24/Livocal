@@ -13,6 +13,7 @@ import 'package:livocal/features/calls/views/widgets/call_scaffold.dart';
 import 'package:livocal/features/calls/views/widgets/insufficient_minutes_sheet.dart';
 import 'package:livocal/features/calls/views/widgets/minute_recharge_sheet.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/theme/app_colors.dart';
 
 class OutgoingCallScreen extends ConsumerStatefulWidget {
@@ -103,10 +104,12 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
             Navigator.of(context).pop();
           }
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to initiate call. Please check your network connection.'),
+            SnackBar(
+              content: Text(
+                AppStrings.tr(ref, 'failedToInitiateCall'),
+              ),
               backgroundColor: Colors.redAccent,
-              duration: Duration(seconds: 3),
+              duration: const Duration(seconds: 3),
             ),
           );
         }

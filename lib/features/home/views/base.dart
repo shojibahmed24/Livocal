@@ -501,9 +501,12 @@ class _HomePageState extends ConsumerState<HomePage>
                   autofocus: true,
                   style: const TextStyle(color: Colors.white, fontSize: 17),
                   cursorColor: colorTheme.greenColor,
-                  decoration: const InputDecoration(
-                    hintText: 'Search chats, messages...',
-                    hintStyle: TextStyle(color: Colors.white60, fontSize: 15),
+                  decoration: InputDecoration(
+                    hintText: AppStrings.tr(ref, 'searchChatsHint'),
+                    hintStyle: const TextStyle(
+                      color: Colors.white60,
+                      fontSize: 15,
+                    ),
                     border: InputBorder.none,
                   ),
                   onChanged: (_) => setState(() {}),

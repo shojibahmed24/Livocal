@@ -9,6 +9,7 @@ import 'package:livocal/features/calls/views/widgets/language_picker_sheet.dart'
 import 'package:livocal/features/calls/views/widgets/swipe_to_answer.dart';
 import 'package:livocal/features/calls/services/call_kit_service.dart';
 import 'package:livocal/features/calls/services/ringtone_manager.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/theme/app_colors.dart';
 
 class IncomingCallScreen extends ConsumerStatefulWidget {
@@ -232,9 +233,11 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
                                 .setMyLanguage(picked.code);
                             if (!synced && context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Language applied locally (cloud sync offline).'),
-                                  duration: Duration(seconds: 2),
+                                SnackBar(
+                                  content: Text(
+                                    AppStrings.tr(ref, 'languageAppliedLocally'),
+                                  ),
+                                  duration: const Duration(seconds: 2),
                                 ),
                               );
                             }

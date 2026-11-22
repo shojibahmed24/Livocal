@@ -10,6 +10,7 @@ import 'package:livocal/features/status/views/status_view_screen.dart';
 import 'package:livocal/features/status/views/text_status_composer_screen.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/widgets/shimmer_skeleton.dart';
 import 'package:livocal/theme/app_colors.dart';
@@ -135,7 +136,7 @@ class _StatusTabState extends ConsumerState<StatusTab>
           children: [
             ListTile(
               leading: const Icon(Icons.camera_alt, color: AppColors.primary),
-              title: const Text('Take a photo'),
+              title: Text(AppStrings.tr(ref, 'takePhoto')),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickAndUploadPhotoStatus(ImageSource.camera);
@@ -143,7 +144,7 @@ class _StatusTabState extends ConsumerState<StatusTab>
             ),
             ListTile(
               leading: const Icon(Icons.photo_library, color: AppColors.primary),
-              title: const Text('Choose from gallery'),
+              title: Text(AppStrings.tr(ref, 'chooseFromGallery')),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickAndUploadPhotoStatus(ImageSource.gallery);
@@ -151,7 +152,7 @@ class _StatusTabState extends ConsumerState<StatusTab>
             ),
             ListTile(
               leading: const Icon(Icons.edit, color: AppColors.primary),
-              title: const Text('Text status'),
+              title: Text(AppStrings.tr(ref, 'textStatus')),
               onTap: () {
                 Navigator.pop(ctx);
                 _openTextStatusComposer();
@@ -351,7 +352,7 @@ class _StatusTabState extends ConsumerState<StatusTab>
                               children: [
                                 ListTile(
                                   leading: const Icon(Icons.visibility),
-                                  title: const Text('View status'),
+                                  title: Text(AppStrings.tr(ref, 'viewStatus')),
                                   onTap: () async {
                                     Navigator.pop(ctx);
                                     await Navigator.push(
@@ -366,7 +367,7 @@ class _StatusTabState extends ConsumerState<StatusTab>
                                 ),
                                 ListTile(
                                   leading: const Icon(Icons.add),
-                                  title: const Text('Add new status'),
+                                  title: Text(AppStrings.tr(ref, 'addNewStatus')),
                                   onTap: () {
                                     Navigator.pop(ctx);
                                     _showAddStatusOptions();
@@ -442,7 +443,7 @@ class _StatusTabState extends ConsumerState<StatusTab>
                         TextButton.icon(
                           onPressed: () => setState(() {}),
                           icon: const Icon(Icons.refresh_rounded, size: 18),
-                          label: const Text('Retry'),
+                          label: Text(AppStrings.tr(ref, 'retryTooltip')),
                         ),
                       ],
                     ),
