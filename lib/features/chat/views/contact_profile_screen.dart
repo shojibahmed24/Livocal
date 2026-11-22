@@ -17,6 +17,7 @@ import 'package:livocal/shared/services/mute_service.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:flutter_contacts/flutter_contacts.dart' as fc;
 import 'package:share_plus/share_plus.dart';
 import 'package:livocal/theme/color_theme.dart';
@@ -134,7 +135,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.share, color: Colors.white),
-                tooltip: 'Share contact',
+                tooltip: AppStrings.tr(ref, 'shareContact'),
                 onPressed: _shareContact,
               ),
               PopupMenuButton<String>(
@@ -162,43 +163,43 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                   }
                 },
                 itemBuilder: (ctx) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'share',
                     child: Row(
                       children: [
-                        Icon(Icons.share_outlined, size: 20, color: Color(0xFF8696A0)),
-                        SizedBox(width: 12),
-                        Text('Share contact'),
+                        const Icon(Icons.share_outlined, size: 20, color: Color(0xFF8696A0)),
+                        const SizedBox(width: 12),
+                        Text(AppStrings.tr(ref, 'shareContact')),
                       ],
                     ),
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'edit',
                     child: Row(
                       children: [
-                        Icon(Icons.edit_outlined, size: 20, color: Color(0xFF8696A0)),
-                        SizedBox(width: 12),
-                        Text('Edit contact'),
+                        const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF8696A0)),
+                        const SizedBox(width: 12),
+                        Text(AppStrings.tr(ref, 'editContact')),
                       ],
                     ),
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'view_in_address_book',
                     child: Row(
                       children: [
-                        Icon(Icons.contacts_outlined, size: 20, color: Color(0xFF8696A0)),
-                        SizedBox(width: 12),
-                        Text('View in address book'),
+                        const Icon(Icons.contacts_outlined, size: 20, color: Color(0xFF8696A0)),
+                        const SizedBox(width: 12),
+                        Text(AppStrings.tr(ref, 'viewInAddressBook')),
                       ],
                     ),
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'encryption_info',
                     child: Row(
                       children: [
-                        Icon(Icons.shield_outlined, size: 20, color: Color(0xFF8696A0)),
-                        SizedBox(width: 12),
-                        Text('Encryption info'),
+                        const Icon(Icons.shield_outlined, size: 20, color: Color(0xFF8696A0)),
+                        const SizedBox(width: 12),
+                        Text(AppStrings.tr(ref, 'encryptionInfo')),
                       ],
                     ),
                   ),
@@ -222,13 +223,16 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                       ],
                     ),
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'report',
                     child: Row(
                       children: [
-                        Icon(Icons.thumb_down_outlined, size: 20, color: Colors.redAccent),
-                        SizedBox(width: 12),
-                        Text('Report contact', style: TextStyle(color: Colors.redAccent)),
+                        const Icon(Icons.thumb_down_outlined, size: 20, color: Colors.redAccent),
+                        const SizedBox(width: 12),
+                        Text(
+                          AppStrings.tr(ref, 'reportContact'),
+                          style: const TextStyle(color: Colors.redAccent),
+                        ),
                       ],
                     ),
                   ),
@@ -391,7 +395,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'About and phone number',
+                    AppStrings.tr(ref, 'aboutAndPhoneNumber'),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -399,16 +403,20 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'Hey there! I am using Livocal.',
-                    style: TextStyle(
+                  Text(
+                    AppStrings.tr(ref, 'defaultAbout'),
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Online Status: ${widget.other.activityStatus.value}',
+                    AppStrings.tr(
+                      ref,
+                      'onlineStatus',
+                      args: {'status': widget.other.activityStatus.value},
+                    ),
                     style: TextStyle(
                       fontSize: 13,
                       color: widget.other.activityStatus == UserActivityStatus.online
@@ -482,7 +490,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
               color: cardBg,
               child: ListTile(
                 leading: const Icon(Icons.photo_library_outlined, color: Color(0xFF8696A0)),
-                title: const Text('Media, links, and docs'),
+                title: Text(AppStrings.tr(ref, 'mediaLinksDocs')),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -518,8 +526,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                 children: [
                   SwitchListTile(
                     secondary: const Icon(Icons.notifications_outlined, color: Color(0xFF8696A0)),
-                    title: const Text('Mute notifications'),
-                    subtitle: const Text('Silence alerts for new messages from this contact'),
+                    title: Text(AppStrings.tr(ref, 'muteNotifications')),
+                    subtitle: Text(AppStrings.tr(ref, 'muteDesc')),
                     value: _isMuted,
                     activeThumbColor: AppColors.primary,
                     onChanged: (val) {
@@ -546,7 +554,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                   const Divider(height: 1, indent: 56),
                   ListTile(
                     leading: const Icon(Icons.music_note_outlined, color: Color(0xFF8696A0)),
-                    title: const Text('Custom notifications'),
+                    title: Text(AppStrings.tr(ref, 'customNotifications')),
                     subtitle: Text(
                       (SharedPref.instance.getBool('custom_notif_enabled_${widget.other.id}') ?? false)
                           ? 'Enabled'
@@ -570,10 +578,10 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                   const Divider(height: 1, indent: 56),
                   ListTile(
                     leading: const Icon(Icons.shield_outlined, color: Color(0xFF8696A0)),
-                    title: const Text('Encryption & Security'),
-                    subtitle: const Text(
-                      'Messages and calls use secure TLS/SRTP transport and ephemeral translation',
-                      style: TextStyle(fontSize: 12),
+                    title: Text(AppStrings.tr(ref, 'encryptionAndSecurity')),
+                    subtitle: Text(
+                      AppStrings.tr(ref, 'encryptionDesc'),
+                      style: const TextStyle(fontSize: 12),
                     ),
                     trailing: const Icon(Icons.info_outline, color: Color(0xFF8696A0), size: 20),
                     onTap: () => _showEncryptionDialog(context),
@@ -618,7 +626,11 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                   ListTile(
                     leading: const Icon(Icons.thumb_down_outlined, color: Colors.redAccent),
                     title: Text(
-                      'Report ${widget.contactName}',
+                      AppStrings.tr(
+                        ref,
+                        'reportContactName',
+                        args: {'name': widget.contactName},
+                      ),
                       style: const TextStyle(color: Colors.redAccent),
                     ),
                     onTap: () => _showReportConfirmation(context),
@@ -698,9 +710,12 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
             children: [
               const Icon(Icons.translate_rounded, color: AppColors.primary, size: 48),
               const SizedBox(height: 16),
-              const Text(
-                'Gemini AI Live Translation',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Text(
+                AppStrings.tr(ref, 'geminiAiLiveTranslation'),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
@@ -717,7 +732,9 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 ),
                 icon: const Icon(Icons.phone_in_talk),
-                label: const Text('Start Translated Voice Call'),
+                label: Text(
+                  AppStrings.tr(ref, 'startTranslatedVoiceCall'),
+                ),
                 onPressed: () async {
                   Navigator.pop(ctx);
                   await initiateSmartCall(
@@ -1034,14 +1051,17 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'The last 5 messages from this contact will be forwarded to Livocal for security review. The contact will not be notified.',
-                style: TextStyle(fontSize: 13.5),
+              Text(
+                AppStrings.tr(ref, 'reportForwardWarning'),
+                style: const TextStyle(fontSize: 13.5),
               ),
               const SizedBox(height: 14),
-              const Text(
-                'Reason for report:',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              Text(
+                AppStrings.tr(ref, 'reasonForReport'),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 6),
               Container(
@@ -1073,9 +1093,12 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                 value: alsoBlock,
                 contentPadding: EdgeInsets.zero,
                 activeColor: AppColors.primary,
-                title: const Text(
-                  'Block contact and clear messages',
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500),
+                title: Text(
+                  AppStrings.tr(ref, 'blockContactClearMessages'),
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 controlAffinity: ListTileControlAffinity.leading,
                 onChanged: (val) {
