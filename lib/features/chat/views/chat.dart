@@ -26,6 +26,7 @@ import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/services/mute_service.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/widgets/bottom_inset.dart';
@@ -171,7 +172,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
                           return snapshot.data!.value == 'Online'
                               ? Text(
-                                  'Online',
+                                  AppStrings.tr(ref, 'online'),
                                   style: Theme.of(context).custom.textTheme.caption.copyWith(
                                         color: Colors.white.withValues(alpha: 0.85),
                                         fontSize: 12,
@@ -422,20 +423,24 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             itemBuilder: (context) {
               final isMuted = MuteService.isContactMuted(other.id);
               return [
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'view_contact',
-                  child: Text('View contact'),
+                  child: Text(AppStrings.tr(ref, 'viewContact')),
                 ),
                 PopupMenuItem(
                   value: 'mute',
-                  child: Text(isMuted ? 'Unmute notifications' : 'Mute notifications'),
+                  child: Text(
+                    isMuted
+                        ? AppStrings.tr(ref, 'unmuteNotifications')
+                        : AppStrings.tr(ref, 'muteNotifications'),
+                  ),
                 ),
                 const PopupMenuDivider(),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'clear_chat',
                   child: Text(
-                    'Clear chat',
-                    style: TextStyle(color: Colors.redAccent),
+                    AppStrings.tr(ref, 'clearChat'),
+                    style: const TextStyle(color: Colors.redAccent),
                   ),
                 ),
               ];
@@ -552,7 +557,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                           const Icon(Icons.block, size: 18, color: Colors.redAccent),
                           const SizedBox(width: 8),
                           Text(
-                            'You blocked this contact. Tap to unblock.',
+                            AppStrings.tr(ref, 'blockedTapToUnblock'),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: isDark ? Colors.white70 : Colors.black87,
@@ -1237,7 +1242,13 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Say hello to ${other.name.isNotEmpty ? other.name : "your contact"}',
+                        other.name.isNotEmpty
+                            ? AppStrings.tr(
+                                ref,
+                                'sayHelloTo',
+                                args: {'name': other.name},
+                              )
+                            : AppStrings.tr(ref, 'sayHello'),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -1249,7 +1260,7 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'No messages here yet. Send a greeting or voice note to begin the conversation.',
+                        AppStrings.tr(ref, 'noMessagesYet'),
                         style: TextStyle(
                           fontSize: 13.5,
                           color: isDarkTheme
@@ -1285,9 +1296,9 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
                               );
                         },
                         icon: const Text('👋', style: TextStyle(fontSize: 16)),
-                        label: const Text(
-                          'Say hello!',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                        label: Text(
+                          AppStrings.tr(ref, 'sayHello'),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -1357,7 +1368,11 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
-                              'Disappearing messages are on ($disappearingTimer)',
+                              AppStrings.tr(
+                                ref,
+                                'disappearingMessagesOn',
+                                args: {'timer': disappearingTimer},
+                              ),
                               style: const TextStyle(
                                 fontSize: 11.5,
                                 color: Color(0xFF8696A0),
