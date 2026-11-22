@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'package:livocal/shared/services/translation_service.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
@@ -184,6 +185,7 @@ class _ChatTranslationSheetContentState
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final langCode = Localizations.localeOf(context).languageCode;
     const primaryColor = AppColors.primary;
 
     return Padding(
@@ -225,15 +227,19 @@ class _ChatTranslationSheetContentState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'In-Chat AI Live Translation',
-                        style: TextStyle(
+                      Text(
+                        AppStrings.get('inChatAiTranslation', langCode),
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
-                        'Powered by Gemini Live API for ${widget.peerName}',
+                        AppStrings.get(
+                          'poweredByGeminiFor',
+                          langCode,
+                          args: {'name': widget.peerName},
+                        ),
                         style: const TextStyle(
                           fontSize: 12,
                           color: Colors.grey,
@@ -254,9 +260,12 @@ class _ChatTranslationSheetContentState
                     if (context.mounted) {
                       showSnackBar(
                         context: context,
-                        content: val
-                            ? 'In-Chat Live Translation Enabled'
-                            : 'In-Chat Live Translation Disabled',
+                        content: AppStrings.get(
+                          val
+                              ? 'inChatTranslationEnabled'
+                              : 'inChatTranslationDisabled',
+                          langCode,
+                        ),
                         type: SnacBarType.info,
                       );
                     }
@@ -265,9 +274,9 @@ class _ChatTranslationSheetContentState
               ],
             ),
             const Divider(height: 24),
-            const Text(
-              'Language Preferences',
-              style: TextStyle(
+            Text(
+              AppStrings.get('languagePreferences', langCode),
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey,
@@ -290,9 +299,12 @@ class _ChatTranslationSheetContentState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'My Language',
-                          style: TextStyle(fontSize: 11, color: Colors.grey),
+                        Text(
+                          AppStrings.get('myLanguage', langCode),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         DropdownButton<CallLanguage>(
@@ -389,13 +401,13 @@ class _ChatTranslationSheetContentState
             const SizedBox(height: 16),
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text(
-                'Auto-translate incoming messages',
-                style: TextStyle(fontSize: 14),
+              title: Text(
+                AppStrings.get('autoTranslateIncoming', langCode),
+                style: const TextStyle(fontSize: 14),
               ),
-              subtitle: const Text(
-                'Automatically displays translations below received messages',
-                style: TextStyle(fontSize: 12),
+              subtitle: Text(
+                AppStrings.get('autoTranslateIncomingDesc', langCode),
+                style: const TextStyle(fontSize: 12),
               ),
               value: _autoTranslateIncoming,
               fillColor: WidgetStateProperty.resolveWith(
@@ -410,13 +422,13 @@ class _ChatTranslationSheetContentState
             ),
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text(
-                'Live Voice Note Transcription',
-                style: TextStyle(fontSize: 14),
+              title: Text(
+                AppStrings.get('liveVoiceNoteTranscription', langCode),
+                style: const TextStyle(fontSize: 14),
               ),
-              subtitle: const Text(
-                'Transcribe and translate incoming audio voice messages',
-                style: TextStyle(fontSize: 12),
+              subtitle: Text(
+                AppStrings.get('liveVoiceNoteDesc', langCode),
+                style: const TextStyle(fontSize: 12),
               ),
               value: _autoTranscribeVoiceNotes,
               fillColor: WidgetStateProperty.resolveWith(
@@ -430,9 +442,9 @@ class _ChatTranslationSheetContentState
               },
             ),
             const Divider(height: 20),
-            const Text(
-              'Test Realtime Translation',
-              style: TextStyle(
+            Text(
+              AppStrings.get('testRealtimeTranslation', langCode),
+              style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey,
@@ -476,7 +488,7 @@ class _ChatTranslationSheetContentState
                             color: Colors.white,
                           ),
                         )
-                      : const Text('Translate'),
+                      : Text(AppStrings.get('translate', langCode)),
                 ),
               ],
             ),
@@ -517,13 +529,24 @@ class _ChatTranslationSheetContentState
                   showSnackBar(
                     context: context,
                     content: _liveTranslationEnabled
-                        ? 'Translation settings applied: ${_myLanguage.flagEmoji} ⇄ ${_peerLanguage.flagEmoji}'
-                        : 'In-Chat Live Translation Disabled for ${widget.peerName}',
+                        ? AppStrings.get(
+                            'translationSettingsApplied',
+                            langCode,
+                            args: {
+                              'my': _myLanguage.flagEmoji,
+                              'peer': _peerLanguage.flagEmoji,
+                            },
+                          )
+                        : AppStrings.get(
+                            'inChatTranslationDisabledFor',
+                            langCode,
+                            args: {'name': widget.peerName},
+                          ),
                     type: SnacBarType.info,
                   );
                 }
               },
-              child: const Text('Save & Apply Settings'),
+              child: Text(AppStrings.get('saveApplySettings', langCode)),
             ),
           ],
         ),
