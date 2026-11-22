@@ -157,7 +157,13 @@ class _MessageCardState extends ConsumerState<MessageCard>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Translation error: ${e.toString().replaceAll("Exception: ", "")}',
+                AppStrings.tr(
+                  ref,
+                  'translationError',
+                  args: {
+                    'error': e.toString().replaceAll("Exception: ", ""),
+                  },
+                ),
               ),
               duration: const Duration(seconds: 3),
             ),
@@ -210,7 +216,7 @@ class _MessageCardState extends ConsumerState<MessageCard>
                 if (!isDeleted)
                   ListTile(
                     leading: const Icon(Icons.reply_rounded, color: AppColors.primary),
-                    title: const Text('Reply'),
+                    title: Text(AppStrings.tr(ref, 'replyAction')),
                     onTap: () {
                       Navigator.pop(ctx);
                       ref
@@ -221,7 +227,7 @@ class _MessageCardState extends ConsumerState<MessageCard>
                 if (!isDeleted && !widget.message.content.startsWith('💰'))
                   ListTile(
                     leading: Icon(Icons.forward_rounded, color: colorTheme.iconColor),
-                    title: const Text('Forward'),
+                    title: Text(AppStrings.tr(ref, 'forwardAction')),
                     onTap: () {
                       Navigator.pop(ctx);
                       _showForwardSheet(context, widget.message);
@@ -230,14 +236,16 @@ class _MessageCardState extends ConsumerState<MessageCard>
                 if (!isDeleted && widget.message.content.isNotEmpty)
                   ListTile(
                     leading: Icon(Icons.copy_rounded, color: colorTheme.iconColor),
-                    title: const Text('Copy Text'),
+                    title: Text(AppStrings.tr(ref, 'copyTextAction')),
                     onTap: () {
                       Clipboard.setData(ClipboardData(text: widget.message.content));
                       Navigator.pop(ctx);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Message copied to clipboard'),
-                          duration: Duration(seconds: 2),
+                        SnackBar(
+                          content: Text(
+                            AppStrings.tr(ref, 'messageCopied'),
+                          ),
+                          duration: const Duration(seconds: 2),
                         ),
                       );
                     },
@@ -251,9 +259,12 @@ class _MessageCardState extends ConsumerState<MessageCard>
                       color: AppColors.primary,
                     ),
                     title: Text(
-                      _translatedContent == null
-                          ? 'Translate Message'
-                          : 'Hide Translation',
+                      AppStrings.tr(
+                        ref,
+                        _translatedContent == null
+                            ? 'translateMessage'
+                            : 'hideTranslation',
+                      ),
                     ),
                     onTap: () {
                       Navigator.pop(ctx);
@@ -274,7 +285,12 @@ class _MessageCardState extends ConsumerState<MessageCard>
                           isStarred ? Icons.star_rounded : Icons.star_border_rounded,
                           color: isStarred ? Colors.amber : colorTheme.iconColor,
                         ),
-                        title: Text(isStarred ? 'Unstar' : 'Star'),
+                        title: Text(
+                          AppStrings.tr(
+                            ref,
+                            isStarred ? 'unstar' : 'star',
+                          ),
+                        ),
                         onTap: () async {
                           Navigator.pop(ctx);
                           final list = SharedPref.instance.getStringList('starred_message_ids') ?? [];
@@ -288,7 +304,14 @@ class _MessageCardState extends ConsumerState<MessageCard>
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(isStarred ? 'Message unstarred' : 'Message starred'),
+                                content: Text(
+                                  AppStrings.tr(
+                                    ref,
+                                    isStarred
+                                        ? 'messageUnstarred'
+                                        : 'messageStarred',
+                                  ),
+                                ),
                                 duration: const Duration(seconds: 2),
                               ),
                             );
@@ -299,15 +322,17 @@ class _MessageCardState extends ConsumerState<MessageCard>
                   ),
                 ListTile(
                   leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                  title: const Text('Delete for me'),
+                  title: Text(AppStrings.tr(ref, 'deleteForMe')),
                   onTap: () async {
                     Navigator.pop(ctx);
                     await IsarDb.deleteMessage(widget.message.id);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Message deleted for you'),
-                          duration: Duration(seconds: 2),
+                        SnackBar(
+                          content: Text(
+                            AppStrings.tr(ref, 'messageDeletedForYou'),
+                          ),
+                          duration: const Duration(seconds: 2),
                         ),
                       );
                     }
@@ -316,7 +341,7 @@ class _MessageCardState extends ConsumerState<MessageCard>
                 if (isSender && widget.message.status == MessageStatus.pending)
                   ListTile(
                     leading: const Icon(Icons.refresh_rounded, color: Colors.green),
-                    title: const Text('Resend message'),
+                    title: Text(AppStrings.tr(ref, 'resendMessage')),
                     onTap: () async {
                       Navigator.pop(ctx);
                       try {
@@ -329,7 +354,11 @@ class _MessageCardState extends ConsumerState<MessageCard>
                         await IsarDb.updateMessage(widget.message.id, status: MessageStatus.sent);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Message sent')),
+                            SnackBar(
+                              content: Text(
+                                AppStrings.tr(ref, 'messageSent'),
+                              ),
+                            ),
                           );
                         }
                       } catch (e) {
@@ -337,7 +366,9 @@ class _MessageCardState extends ConsumerState<MessageCard>
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: const Text('Failed to resend message. Please check connection.'),
+                              content: Text(
+                                AppStrings.tr(ref, 'resendFailed'),
+                              ),
                               backgroundColor: Colors.red.shade700,
                             ),
                           );
@@ -348,9 +379,9 @@ class _MessageCardState extends ConsumerState<MessageCard>
                 if (isSender && !isDeleted)
                   ListTile(
                     leading: const Icon(Icons.delete_forever, color: Colors.red),
-                    title: const Text(
-                      'Delete for everyone',
-                      style: TextStyle(color: Colors.red),
+                    title: Text(
+                      AppStrings.tr(ref, 'deleteForEveryone'),
+                      style: const TextStyle(color: Colors.red),
                     ),
                     onTap: () async {
                       Navigator.pop(ctx);
@@ -361,9 +392,14 @@ class _MessageCardState extends ConsumerState<MessageCard>
                       );
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Message deleted for everyone'),
-                            duration: Duration(seconds: 2),
+                          SnackBar(
+                            content: Text(
+                              AppStrings.tr(
+                                ref,
+                                'messageDeletedForEveryone',
+                              ),
+                            ),
+                            duration: const Duration(seconds: 2),
                           ),
                         );
                       }
@@ -415,9 +451,9 @@ class _MessageCardState extends ConsumerState<MessageCard>
                         children: [
                           const Icon(Icons.forward_rounded, color: AppColors.primary),
                           const SizedBox(width: 8),
-                          const Text(
-                            'Forward message to...',
-                            style: TextStyle(
+                          Text(
+                            AppStrings.tr(ref, 'forwardMessageTo'),
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
@@ -436,11 +472,11 @@ class _MessageCardState extends ConsumerState<MessageCard>
                         child: Center(child: CircularProgressIndicator()),
                       )
                     else if (contacts.isEmpty)
-                      const Expanded(
+                      Expanded(
                         child: Center(
                           child: Text(
-                            'No contacts found',
-                            style: TextStyle(color: Colors.grey),
+                            AppStrings.tr(ref, 'noContactsFound'),
+                            style: const TextStyle(color: Colors.grey),
                           ),
                         ),
                       )
@@ -505,12 +541,18 @@ class _MessageCardState extends ConsumerState<MessageCard>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dlgCtx) => AlertDialog(
-        title: const Text('Forward message?'),
-        content: Text('Send this message to ${targetContact.displayName}?'),
+        title: Text(AppStrings.tr(ref, 'forwardMessageQuestion')),
+        content: Text(
+          AppStrings.tr(
+            ref,
+            'sendMessageToConfirm',
+            args: {'name': targetContact.displayName},
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dlgCtx, false),
-            child: const Text('Cancel'),
+            child: Text(AppStrings.tr(ref, 'cancel')),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -518,7 +560,7 @@ class _MessageCardState extends ConsumerState<MessageCard>
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.pop(dlgCtx, true),
-            child: const Text('Forward'),
+            child: Text(AppStrings.tr(ref, 'forwardAction')),
           ),
         ],
       ),
@@ -561,7 +603,13 @@ class _MessageCardState extends ConsumerState<MessageCard>
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Message forwarded to ${targetContact.displayName}'),
+            content: Text(
+              AppStrings.tr(
+                ref,
+                'messageForwardedTo',
+                args: {'name': targetContact.displayName},
+              ),
+            ),
             backgroundColor: AppColors.primary,
             duration: const Duration(seconds: 2),
           ),
@@ -572,7 +620,7 @@ class _MessageCardState extends ConsumerState<MessageCard>
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Failed to forward message'),
+            content: Text(AppStrings.tr(ref, 'forwardFailed')),
             backgroundColor: Colors.red.shade700,
           ),
         );
@@ -738,7 +786,11 @@ class _MessageCardState extends ConsumerState<MessageCard>
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
-                'TrxID: $refId',
+                AppStrings.tr(
+                  ref,
+                  'trxIdLabel',
+                  args: {'id': refId},
+                ),
                 style: TextStyle(
                   fontFamily: 'monospace',
                   fontSize: 10.5,
@@ -1104,9 +1156,9 @@ class _MessageCardState extends ConsumerState<MessageCard>
                             color: AppColors.primary.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: const Text(
-                            'AI',
-                            style: TextStyle(
+                          child: Text(
+                            AppStrings.tr(ref, 'aiLabel'),
+                            style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
                               color: AppColors.primary,
@@ -1278,7 +1330,7 @@ class _MessageCardState extends ConsumerState<MessageCard>
               ),
               const SizedBox(width: 6),
               Text(
-                'Translating...',
+                AppStrings.tr(ref, 'translating'),
                 style: TextStyle(
                   fontSize: 11,
                   fontStyle: FontStyle.italic,
@@ -1307,18 +1359,18 @@ class _MessageCardState extends ConsumerState<MessageCard>
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Row(
+                Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.translate_rounded,
                       size: 10,
                       color: AppColors.primary,
                     ),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     Text(
-                      'Translated',
-                      style: TextStyle(
+                      AppStrings.tr(ref, 'translated'),
+                      style: const TextStyle(
                         fontSize: 9.5,
                         fontWeight: FontWeight.w700,
                         color: AppColors.primary,
@@ -1523,7 +1575,7 @@ class _MessageCardState extends ConsumerState<MessageCard>
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
-                                        'This message was deleted $textPadding',
+                                        '${AppStrings.tr(ref, 'deletedMessagePlaceholder')} $textPadding',
                                         textWidthBasis:
                                             TextWidthBasis.longestLine,
                                         style: TextStyle(
