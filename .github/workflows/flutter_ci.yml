@@ -1,8 +1,8 @@
 name: Livocal CI
 
 on:
+  # Run on every pushed branch so feature-branch fixes are validated before merge.
   push:
-    branches: [ main ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
