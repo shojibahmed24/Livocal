@@ -877,7 +877,10 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                   children: [
                     _CallControlButton(
                       icon: callState.isMuted ? Icons.mic_off : Icons.mic,
-                      label: callState.isMuted ? 'Unmute' : 'Mute',
+                      label: AppStrings.tr(
+                        ref,
+                        callState.isMuted ? 'unmuteBtn' : 'muteBtn',
+                      ),
                       isActive: callState.isMuted,
                       activeColor: Colors.amber,
                       onTap: controller.toggleMute,
@@ -886,32 +889,46 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                       icon: callState.isSpeakerphoneOn
                           ? Icons.volume_up_rounded
                           : Icons.hearing_rounded,
-                      label: callState.isSpeakerphoneOn ? 'Speaker' : 'Earpiece',
+                      label: AppStrings.tr(
+                        ref,
+                        callState.isSpeakerphoneOn
+                            ? 'speakerBtn'
+                            : 'earpieceBtn',
+                      ),
                       isActive: callState.isSpeakerphoneOn,
                       activeColor: colorTheme.greenColor,
                       onTap: controller.toggleSpeakerphone,
                     ),
                     _CallControlButton(
                       icon: Icons.translate_rounded,
-                      label: callState.translationEnabled ? 'Translate On' : 'Translate Off',
+                      label: AppStrings.tr(
+                        ref,
+                        callState.translationEnabled
+                            ? 'translateOnBtn'
+                            : 'translateOffBtn',
+                      ),
                       isActive: callState.translationEnabled,
                       activeColor: const Color(0xFF53BDEC),
                       onTap: () => controller.toggleTranslationEnabled(!callState.translationEnabled),
                     ),
-                    InkWell(
-                      onTap: () async {
-                        HapticFeedback.heavyImpact();
-                        await controller.endCall();
-                        if (context.mounted) Navigator.of(context).pop();
-                      },
-                      borderRadius: BorderRadius.circular(32),
-                      child: const CircleAvatar(
-                        radius: 28,
-                        backgroundColor: Color(0xFFE53935),
-                        child: Icon(
-                          Icons.call_end_rounded,
-                          color: Colors.white,
-                          size: 28,
+                    Semantics(
+                      button: true,
+                      label: AppStrings.tr(ref, 'endCallBtn'),
+                      child: InkWell(
+                        onTap: () async {
+                          HapticFeedback.heavyImpact();
+                          await controller.endCall();
+                          if (context.mounted) Navigator.of(context).pop();
+                        },
+                        borderRadius: BorderRadius.circular(32),
+                        child: const CircleAvatar(
+                          radius: 28,
+                          backgroundColor: Color(0xFFE53935),
+                          child: Icon(
+                            Icons.call_end_rounded,
+                            color: Colors.white,
+                            size: 28,
+                          ),
                         ),
                       ),
                     ),
@@ -1109,35 +1126,46 @@ class _CallControlButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      borderRadius: BorderRadius.circular(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircleAvatar(
-            radius: 24,
-            backgroundColor:
-                isActive ? activeColor.withValues(alpha: 0.25) : Colors.white10,
-            child: Icon(
-              icon,
-              color: isActive ? activeColor : Colors.white,
-              size: 22,
-            ),
+    // Screen readers get one clear toggle target instead of an unlabeled icon
+    // followed by a duplicate text node.
+    return Semantics(
+      button: true,
+      toggled: isActive,
+      label: label,
+      child: ExcludeSemantics(
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          borderRadius: BorderRadius.circular(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: isActive
+                    ? activeColor.withValues(alpha: 0.25)
+                    : Colors.white10,
+                child: Icon(
+                  icon,
+                  color: isActive ? activeColor : Colors.white,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isActive ? activeColor : Colors.white70,
+                  fontSize: 11,
+                  fontWeight:
+                      isActive ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: isActive ? activeColor : Colors.white70,
-              fontSize: 11,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
