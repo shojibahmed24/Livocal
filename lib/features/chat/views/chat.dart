@@ -19,6 +19,7 @@ import 'package:livocal/features/chat/views/widgets/chat_field.dart';
 import 'package:livocal/features/chat/views/widgets/chat_mic.dart';
 import 'package:livocal/features/chat/views/widgets/message_cards.dart';
 import 'package:livocal/features/chat/views/chat_search_screen.dart';
+import 'package:livocal/features/chat/views/widgets/pinned_messages_sheet.dart';
 import 'package:livocal/features/chat/views/widgets/scroll_btn.dart';
 import 'package:livocal/features/chat/views/widgets/voice_recorder.dart';
 import 'package:livocal/features/settings/services/block_service.dart';
@@ -332,6 +333,13 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                     ),
                   );
                   break;
+                case 'pinned_messages':
+                  showPinnedMessagesSheet(
+                    context,
+                    self: self,
+                    other: other,
+                  );
+                  break;
                 case 'clear_chat':
                   final confirmed = await showAppDialog<bool>(
                     context: context,
@@ -437,6 +445,10 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                 PopupMenuItem(
                   value: 'search',
                   child: Text(AppStrings.tr(ref, 'searchInChat')),
+                ),
+                PopupMenuItem(
+                  value: 'pinned_messages',
+                  child: Text(AppStrings.tr(ref, 'pinnedMessages')),
                 ),
                 PopupMenuItem(
                   value: 'view_contact',

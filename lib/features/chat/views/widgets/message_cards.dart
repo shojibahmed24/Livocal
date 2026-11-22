@@ -320,6 +320,57 @@ class _MessageCardState extends ConsumerState<MessageCard>
                       );
                     },
                   ),
+                if (!isDeleted)
+                  Builder(
+                    builder: (pinContext) {
+                      final chatId = getChatId(
+                        widget.message.senderId,
+                        widget.message.receiverId,
+                      );
+                      final prefKey = 'pinned_$chatId';
+                      final pinned =
+                          SharedPref.instance.getStringList(prefKey) ?? [];
+                      final isPinned = pinned.contains(widget.message.id);
+                      return ListTile(
+                        leading: Icon(
+                          isPinned
+                              ? Icons.push_pin_rounded
+                              : Icons.push_pin_outlined,
+                          color: colorTheme.iconColor,
+                        ),
+                        title: Text(
+                          AppStrings.tr(
+                            ref,
+                            isPinned ? 'unpinMessage' : 'pinMessage',
+                          ),
+                        ),
+                        onTap: () async {
+                          Navigator.pop(pinContext);
+                          if (isPinned) {
+                            pinned.remove(widget.message.id);
+                          } else {
+                            pinned.add(widget.message.id);
+                          }
+                          await SharedPref.instance
+                              .setStringList(prefKey, pinned);
+                          if (mounted) setState(() {});
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  AppStrings.tr(
+                                    ref,
+                                    isPinned ? 'unpinMessage' : 'pinMessage',
+                                  ),
+                                ),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+                      );
+                    },
+                  ),
                 ListTile(
                   leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
                   title: Text(AppStrings.tr(ref, 'deleteForMe')),
