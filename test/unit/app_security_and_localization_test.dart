@@ -136,6 +136,18 @@ void main() {
       expect(await SecurePinService.verifyPin('654321'), isFalse);
     });
 
+    test('PIN is stored as a salted hash, never as plaintext', () async {
+      await SecurePinService.disablePin();
+      await SecurePinService.setPin('246810');
+
+      final stored = await FlutterSecureStorage()
+          .read(key: 'livocal_two_step_pin');
+      expect(stored, isNotNull);
+      expect(stored, isNot(equals('246810')));
+      expect(stored, startsWith('v2\$'));
+      expect(await SecurePinService.verifyPin('246810'), isTrue);
+    });
+
     test('Legacy migration: plaintext PIN in SharedPref is migrated to Keystore and purged', () async {
       await SecurePinService.disablePin();
       await SharedPref.instance.setString('two_step_pin', '987654');
