@@ -23,29 +23,26 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<_OnboardingSlide> _slides = const [
+  List<_OnboardingSlide> get _slides => [
     _OnboardingSlide(
       icon: Icons.bolt_rounded,
-      badge: 'NEXT-GEN CONNECT',
-      title: 'Welcome to Livocal',
-      description:
-          'Ultra-fast, private messaging and crystal-clear voice communication engineered for seamless daily connectivity.',
+      badge: AppStrings.tr(ref, 'welcomeBadge1'),
+      title: AppStrings.tr(ref, 'welcomeTitle1'),
+      description: AppStrings.tr(ref, 'welcomeDesc1'),
       accentColor: AppColors.primary,
     ),
     _OnboardingSlide(
       icon: Icons.translate_rounded,
-      badge: 'GEMINI LIVE AI',
-      title: 'Real-Time Voice Translation',
-      description:
-          'Break language barriers in real-time. Speak in বাংলা or English with sub-second bidirectional live audio translation during calls.',
-      accentColor: Color(0xFF00B0FF),
+      badge: AppStrings.tr(ref, 'welcomeBadge2'),
+      title: AppStrings.tr(ref, 'welcomeTitle2'),
+      description: AppStrings.tr(ref, 'welcomeDesc2'),
+      accentColor: const Color(0xFF00B0FF),
     ),
     _OnboardingSlide(
       icon: Icons.shield_outlined,
-      badge: 'PRIVACY BY DESIGN',
-      title: 'Private & Secure by Default',
-      description:
-          'DTLS-SRTP encrypted voice streams, protected personal data, zero address-book harvesting, and biometric app lock.',
+      badge: AppStrings.tr(ref, 'welcomeBadge3'),
+      title: AppStrings.tr(ref, 'welcomeTitle3'),
+      description: AppStrings.tr(ref, 'welcomeDesc3'),
       accentColor: AppColors.primary,
     ),
   ];

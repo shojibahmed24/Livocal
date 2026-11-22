@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:livocal/features/status/models/status_model.dart';
 import 'package:livocal/features/status/services/status_service.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/theme/app_colors.dart';
 
 class StatusViewScreen extends StatefulWidget {
@@ -185,15 +186,22 @@ class _StatusViewScreenState extends State<StatusViewScreen>
                         fit: BoxFit.contain,
                         placeholder: (_, __) =>
                             const CircularProgressIndicator(color: Colors.white),
-                        errorWidget: (_, __, ___) => const Center(
+                        errorWidget: (ctx, __, ___) => Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.broken_image, size: 64, color: Colors.white54),
-                              SizedBox(height: 8),
+                              const Icon(
+                                Icons.broken_image,
+                                size: 64,
+                                color: Colors.white54,
+                              ),
+                              const SizedBox(height: 8),
                               Text(
-                                'Failed to load media',
-                                style: TextStyle(color: Colors.white54),
+                                AppStrings.get(
+                                  'failedToLoadMedia',
+                                  Localizations.localeOf(ctx).languageCode,
+                                ),
+                                style: const TextStyle(color: Colors.white54),
                               ),
                             ],
                           ),

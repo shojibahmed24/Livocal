@@ -11,6 +11,7 @@ import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/models/user_wallet.dart';
 import 'package:livocal/shared/repositories/wallet_repository.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/app_tokens.dart';
@@ -254,7 +255,7 @@ class _SendPaymentSheetContentState
 
     try {
       final clientMessageId = const Uuid().v4();
-      String methodDisplay = 'Livocal In-App Wallet';
+      String methodDisplay = AppStrings.tr(ref, 'livocalInAppWallet');
       String txId = '';
       String? paymentRecordId;
 
@@ -467,7 +468,11 @@ class _SendPaymentSheetContentState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Send Payment to ${widget.contactName}',
+                        AppStrings.tr(
+                          ref,
+                          'sendPaymentTo',
+                          args: {'name': widget.contactName},
+                        ),
                         style: const TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
@@ -582,9 +587,9 @@ class _SendPaymentSheetContentState
             const SizedBox(height: 16),
 
             // Payment method selector
-            const Text(
-              'Select Payment Method',
-              style: TextStyle(
+            Text(
+              AppStrings.tr(ref, 'selectPaymentMethod'),
+              style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: Colors.grey,
@@ -617,15 +622,22 @@ class _SendPaymentSheetContentState
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Livocal In-App Wallet',
-                                  style: TextStyle(
+                                Text(
+                                  AppStrings.tr(ref, 'livocalInAppWallet'),
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 Text(
-                                  'Balance: $availableMinutes mins (transfers $neededMinutes mins)',
+                                  AppStrings.tr(
+                                    ref,
+                                    'walletBalanceTransfer',
+                                    args: {
+                                      'available': '$availableMinutes',
+                                      'needed': '$neededMinutes',
+                                    },
+                                  ),
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: hasEnoughWallet
@@ -640,19 +652,19 @@ class _SendPaymentSheetContentState
                       ),
                     ),
                     const Divider(height: 1),
-                    const RadioListTile<String>(
+                    RadioListTile<String>(
                       value: 'mfs',
                       title: Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.phone_android,
                             size: 20,
                             color: Colors.pinkAccent,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
-                            'bKash / Nagad MFS (Direct Send)',
-                            style: TextStyle(
+                            AppStrings.tr(ref, 'bkashNagadMfs'),
+                            style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                             ),
@@ -661,19 +673,19 @@ class _SendPaymentSheetContentState
                       ),
                     ),
                     const Divider(height: 1),
-                    const RadioListTile<String>(
+                    RadioListTile<String>(
                       value: 'crypto',
                       title: Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.currency_bitcoin,
                             size: 20,
                             color: Colors.orange,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
-                            'Crypto (Binance Pay / USDT)',
-                            style: TextStyle(
+                            AppStrings.tr(ref, 'cryptoBinanceUsdt'),
+                            style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                             ),
@@ -708,7 +720,11 @@ class _SendPaymentSheetContentState
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Short by ${neededMinutes - availableMinutes} mins to complete this transfer.',
+                        AppStrings.tr(
+                          ref,
+                          'shortByMinutes',
+                          args: {'minutes': '${neededMinutes - availableMinutes}'},
+                        ),
                         style: const TextStyle(fontSize: 12.5),
                       ),
                     ),
@@ -728,7 +744,7 @@ class _SendPaymentSheetContentState
                           onRecharged: _fetchWallet,
                         );
                       },
-                      child: const Text('Recharge'),
+                      child: Text(AppStrings.tr(ref, 'rechargeNowBtn')),
                     ),
                   ],
                 ),
@@ -786,7 +802,15 @@ class _SendPaymentSheetContentState
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              'Live Rate: \$1.00 ≈ ${_usdToBdtRate.toInt()} BDT  |  Total: ${_calculatedBdtAmount.toStringAsFixed(0)} BDT',
+                              AppStrings.tr(
+                                ref,
+                                'liveRateSummary',
+                                args: {
+                                  'rate': '${_usdToBdtRate.toInt()}',
+                                  'total':
+                                      _calculatedBdtAmount.toStringAsFixed(0),
+                                },
+                              ),
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
@@ -867,7 +891,7 @@ class _SendPaymentSheetContentState
                               });
                             }
                           },
-                          child: const Text('PASTE'),
+                          child: Text(AppStrings.tr(ref, 'paste')),
                         ),
                       ),
                     ),
@@ -1022,7 +1046,7 @@ class _SendPaymentSheetContentState
                               });
                             }
                           },
-                          child: const Text('PASTE'),
+                          child: Text(AppStrings.tr(ref, 'paste')),
                         ),
                       ),
                     ),
@@ -1056,7 +1080,14 @@ class _SendPaymentSheetContentState
                       ),
                     )
                   : Text(
-                      'Confirm Payment: \$${_amountController.text.trim().isEmpty ? "0" : _amountController.text.trim()}',
+                      AppStrings.tr(
+                        ref,
+                        'confirmPayment',
+                        args: {
+                          'amount':
+                              '\$${_amountController.text.trim().isEmpty ? "0" : _amountController.text.trim()}',
+                        },
+                      ),
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
