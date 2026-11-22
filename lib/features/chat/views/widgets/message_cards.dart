@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_emoji/flutter_emoji.dart';
 import 'package:livocal/features/chat/models/call_log_helper.dart';
 import 'package:livocal/features/chat/models/message.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/shared/services/translation_service.dart';
@@ -1002,7 +1003,9 @@ class _MessageCardState extends ConsumerState<MessageCard>
     if (data == null) return const SizedBox.shrink();
 
     final isMissed = data.isMissed;
-    final durationStr = CallLogHelper.formatDurationBengali(data.duration);
+    final langCode = Localizations.localeOf(context).languageCode;
+    final durationStr =
+        CallLogHelper.formatDurationLocalized(data.duration, langCode);
     final time = widget.message.timestamp.toDate();
     final hour = time.hour % 12 == 0 ? 12 : time.hour % 12;
     final min = time.minute.toString().padLeft(2, '0');
@@ -1017,13 +1020,25 @@ class _MessageCardState extends ConsumerState<MessageCard>
     IconData iconData;
     if (isMissed) {
       iconData = Icons.call_missed_rounded;
-      title = isSentMessageCard ? 'আউটগোয়িং কল (মিসড)' : 'মিসড ভয়েস কল';
+      title = isSentMessageCard
+          ? AppStrings.get('outgoingMissedCall', langCode)
+          : AppStrings.get('missedVoiceCall', langCode);
     } else {
-      iconData = isSentMessageCard ? Icons.call_made_rounded : Icons.call_received_rounded;
-      title = isSentMessageCard ? 'আউটগোয়িং ভয়েস কল' : 'ইনকামিং ভয়েস কল';
+      iconData = isSentMessageCard
+          ? Icons.call_made_rounded
+          : Icons.call_received_rounded;
+      title = isSentMessageCard
+          ? AppStrings.get('outgoingVoiceCall', langCode)
+          : AppStrings.get('incomingVoiceCall', langCode);
     }
 
-    final subtitle = isMissed ? 'কোনো উত্তর নেই' : 'কথা হয়েছে: $durationStr';
+    final subtitle = isMissed
+        ? AppStrings.get('noAnswer', langCode)
+        : AppStrings.get(
+            'talkedFor',
+            langCode,
+            args: {'duration': durationStr},
+          );
 
     return Center(
       child: Container(

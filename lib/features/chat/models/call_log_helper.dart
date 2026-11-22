@@ -1,3 +1,5 @@
+import 'package:livocal/shared/utils/app_localizations.dart';
+
 class CallLogData {
   final String direction; // 'outgoing' | 'incoming'
   final String status; // 'answered' | 'missed' | 'declined'
@@ -68,28 +70,44 @@ class CallLogHelper {
     }
   }
 
-  /// Formats seconds into Bengali natural duration: e.g. "২ মিনিট ৪৫ সেকেন্ড"
-  static String formatDurationBengali(int seconds) {
-    if (seconds <= 0) return '০ সেকেন্ড';
+  static String _toBengali(int n) {
+    const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+    return n.toString().split('').map((d) {
+      final idx = int.tryParse(d);
+      return idx != null ? bnDigits[idx] : d;
+    }).join('');
+  }
+
+  /// Formats seconds using the active app locale.
+  static String formatDurationLocalized(int seconds, String langCode) {
     final mins = seconds ~/ 60;
     final secs = seconds % 60;
-
-    String toBengali(int n) {
-      const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
-      return n.toString().split('').map((d) {
-        final idx = int.tryParse(d);
-        return idx != null ? bnDigits[idx] : d;
-      }).join('');
-    }
+    String num(int value) =>
+        langCode == 'bn' ? _toBengali(value) : value.toString();
 
     if (mins > 0 && secs > 0) {
-      return '${toBengali(mins)} মিনিট ${toBengali(secs)} সেকেন্ড';
+      return AppStrings.get(
+        'minutesSecondsValue',
+        langCode,
+        args: {'minutes': num(mins), 'seconds': num(secs)},
+      );
     } else if (mins > 0) {
-      return '${toBengali(mins)} মিনিট';
-    } else {
-      return '${toBengali(secs)} সেকেন্ড';
+      return AppStrings.get(
+        'minutesValue',
+        langCode,
+        args: {'minutes': num(mins)},
+      );
     }
+    return AppStrings.get(
+      'secondsValue',
+      langCode,
+      args: {'seconds': num(secs)},
+    );
   }
+
+  /// Backwards-compatible Bengali formatter.
+  static String formatDurationBengali(int seconds) =>
+      formatDurationLocalized(seconds, 'bn');
 
   /// Short duration string: e.g. "2m 45s" or "45s"
   static String formatDurationShort(int seconds) {
@@ -101,7 +119,11 @@ class CallLogHelper {
   }
 
   /// Formats the subtitle text for Home Screen Recent Chats list
-  static String formatSnippet(String? content, {required bool isSentByMe}) {
+  static String formatSnippet(
+    String? content, {
+    required bool isSentByMe,
+    String langCode = 'en',
+  }) {
     final data = parse(content);
     if (data == null) return content ?? '';
 
@@ -111,14 +133,16 @@ class CallLogHelper {
     final bool effectiveOutgoing = isSentByMe;
 
     if (data.isMissed) {
-      return effectiveOutgoing ? '↗️ মিসড কল' : '🔴 মিসড ভয়েস কল';
-    } else if (data.isDeclined) {
-      return '🚫 প্রত্যাখ্যাত কল';
-    } else {
-      final durStr = formatDurationBengali(data.duration);
       return effectiveOutgoing
-          ? '📞 ভয়েস কল ($durStr)'
-          : '📞 ইনকামিং কল ($durStr)';
+          ? '↗️ ${AppStrings.get('missedCall', langCode)}'
+          : '🔴 ${AppStrings.get('missedVoiceCall', langCode)}';
+    } else if (data.isDeclined) {
+      return '🚫 ${AppStrings.get('declinedCall', langCode)}';
+    } else {
+      final durStr = formatDurationLocalized(data.duration, langCode);
+      return effectiveOutgoing
+          ? '📞 ${AppStrings.get('voiceCall', langCode)} ($durStr)'
+          : '📞 ${AppStrings.get('incomingCall', langCode)} ($durStr)';
     }
   }
 }
