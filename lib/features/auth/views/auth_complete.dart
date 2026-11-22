@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/features/home/views/base.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/theme/theme.dart';
 
@@ -66,7 +67,7 @@ class _AuthCompletePageState extends ConsumerState<AuthCompletePage> {
             children: [
               const SizedBox(height: 40),
               Text(
-                'Initialising',
+                AppStrings.tr(ref, 'initialising'),
                 style: TextStyle(
                   fontSize: 20,
                   color: colorTheme.textColor2,
@@ -74,7 +75,7 @@ class _AuthCompletePageState extends ConsumerState<AuthCompletePage> {
               ),
               const SizedBox(height: 6.0),
               Text(
-                'Please wait a moment',
+                AppStrings.tr(ref, 'pleaseWait'),
                 style: TextStyle(color: colorTheme.greyColor),
               ),
               Expanded(

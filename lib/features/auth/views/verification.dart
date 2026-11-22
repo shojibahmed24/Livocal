@@ -7,6 +7,7 @@ import 'package:livocal/features/auth/controllers/verification_controller.dart';
 import 'package:livocal/features/auth/views/login.dart';
 
 import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/color_theme.dart';
 import 'package:livocal/theme/theme.dart';
@@ -74,7 +75,7 @@ class _VerificationPageState extends ConsumerState<VerificationPage> {
               : AppColors.lightIcon,
         ),
         title: Text(
-          'Verifying your number',
+          AppStrings.tr(ref, 'verifyingNumber'),
           style: TextStyle(
             color: Theme.of(context).brightness == Brightness.dark
                 ? AppColors.darkTextPrimary
@@ -168,7 +169,7 @@ class _VerificationPageState extends ConsumerState<VerificationPage> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12.0),
               child: Text(
-                'Enter 6-digit code',
+                AppStrings.tr(ref, 'enter6DigitCode'),
                 style: TextStyle(color: colorTheme.greyColor),
               ),
             ),
@@ -181,7 +182,7 @@ class _VerificationPageState extends ConsumerState<VerificationPage> {
                             widget.phone.rawNumber,
                           ),
               child: Text(
-                'Didn\'t receive code?',
+                AppStrings.tr(ref, 'didntReceiveCode'),
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:livocal/features/auth/controllers/login_controller.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/theme.dart';
@@ -64,7 +65,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               : AppColors.lightIcon,
         ),
         title: Text(
-          'Enter your phone number',
+          AppStrings.tr(ref, 'enterPhoneNumber'),
           style: TextStyle(
             color: Theme.of(context).brightness == Brightness.dark
                 ? AppColors.darkTextPrimary
@@ -212,7 +213,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           Padding(
             padding: const EdgeInsets.only(top: 16.0),
             child: Text(
-              'Carrier charges may apply.',
+              AppStrings.tr(ref, 'carrierCharges'),
               style: TextStyle(color: colorTheme.textColor2),
             ),
           ),
@@ -238,9 +239,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 onPressed: () => ref
                     .read(loginControllerProvider.notifier)
                     .onNextBtnPressed(context),
-                child: const Text(
-                  'Next',
-                  style: TextStyle(
+                child: Text(
+                  AppStrings.tr(ref, 'next'),
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.3,
