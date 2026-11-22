@@ -119,7 +119,7 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 8),
                       child: Text(
-                        'Select contact to block',
+                        AppStrings.tr(ref, 'selectContactToBlock'),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -131,7 +131,7 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
                       child: availableContacts.isEmpty
                           ? Center(
                               child: Text(
-                                'No contacts available to block',
+                                AppStrings.tr(ref, 'noContactsToBlock'),
                                 style: TextStyle(
                                   color: isDark ? Colors.white60 : Colors.black54,
                                 ),
@@ -183,8 +183,7 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
         title: 'Block ${selectedContact.displayName}?',
         icon: Icons.block_flipped,
         iconColor: Colors.redAccent,
-        contentText:
-            'Blocked contacts will no longer be able to call you or send you messages.',
+        contentText: AppStrings.tr(ref, 'blockedContactsDesc'),
         actions: [
           AppDialogAction(
             label: AppStrings.tr(ref, 'cancel'),
@@ -292,7 +291,7 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Blocked contacts will no longer be able to call you or send you messages.',
+                          AppStrings.tr(ref, 'blockedContactsDesc'),
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 14,
@@ -309,7 +308,7 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                       child: Text(
-                        'Tap a contact to unblock them.',
+                        AppStrings.tr(ref, 'tapToUnblock'),
                         style: TextStyle(
                           fontSize: 13,
                           color: isDark ? Colors.white60 : Colors.black54,
@@ -364,9 +363,11 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
                               style: TextButton.styleFrom(
                                 foregroundColor: AppColors.primary,
                               ),
-                              child: const Text(
-                                'Unblock',
-                                style: TextStyle(fontWeight: FontWeight.w600),
+                              child: Text(
+                                AppStrings.tr(ref, 'unblock'),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                             onTap: () => _handleUnblock(item),

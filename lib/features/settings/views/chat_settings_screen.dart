@@ -115,16 +115,19 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
                     ),
                   ),
                 ),
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(20, 16, 20, 12),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
                   child: Text(
-                    'Chat Wallpaper',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    AppStrings.tr(ref, 'chatWallpaper'),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 ListTile(
                   leading: const Icon(Icons.wallpaper_rounded, color: AppColors.primary),
-                  title: const Text('Default Doodle Wallpaper'),
+                  title: Text(AppStrings.tr(ref, 'defaultDoodleWallpaper')),
                   onTap: () async {
                     await SharedPref.instance.setString('chat_wallpaper', 'Default');
                     if (mounted) setState(() => _wallpaper = 'Default');
@@ -132,7 +135,7 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
                     if (mounted) {
                       showSnackBar(
                         context: context,
-                        content: 'Wallpaper reset to default',
+                        content: AppStrings.tr(ref, 'wallpaperResetDefault'),
                         type: SnacBarType.info,
                       );
                     }
@@ -140,7 +143,7 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.photo_library_outlined, color: AppColors.primary),
-                  title: const Text('Choose from Gallery'),
+                  title: Text(AppStrings.tr(ref, 'chooseFromGallery')),
                   onTap: () async {
                     Navigator.pop(ctx);
                     final picker = ImagePicker();
@@ -328,18 +331,18 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
 
     String wallpaperLabel = _wallpaper;
     if (_wallpaper.startsWith('color_')) {
-      wallpaperLabel = 'Solid Color';
+      wallpaperLabel = AppStrings.tr(ref, 'solidColor');
     } else if (_wallpaper.startsWith('/')) {
-      wallpaperLabel = 'Custom Photo';
+      wallpaperLabel = AppStrings.tr(ref, 'customPhoto');
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chats'),
+        title: Text(AppStrings.tr(ref, 'chats')),
       ),
       body: ListView(
         children: [
-          const SettingsSectionHeader(title: 'Display'),
+          SettingsSectionHeader(title: AppStrings.tr(ref, 'display')),
           SettingsRow(
             icon: Icons.brightness_6_rounded,
             title: AppStrings.tr(ref, 'theme'),

@@ -6,6 +6,7 @@ import 'package:livocal/features/chat/views/chat.dart';
 import 'package:livocal/shared/models/messages.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/widgets/shimmer_skeleton.dart';
@@ -162,9 +163,9 @@ class _StarredMessagesScreenState extends ConsumerState<StarredMessagesScreen> {
                 }
               },
               itemBuilder: (context) => [
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'unstar_all',
-                  child: Text('Unstar all'),
+                  child: Text(AppStrings.tr(ref, 'unstarAll')),
                 ),
               ],
             ),
@@ -195,16 +196,16 @@ class _StarredMessagesScreenState extends ConsumerState<StarredMessagesScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        const Text(
-                          'No starred messages',
-                          style: TextStyle(
+                        Text(
+                          AppStrings.tr(ref, 'noStarredMessages'),
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Tap and hold on any message in a chat to star it, so you can easily find it later.',
+                          AppStrings.tr(ref, 'starredEmptyHint'),
                           style: TextStyle(
                             fontSize: 14,
                             color: isDark

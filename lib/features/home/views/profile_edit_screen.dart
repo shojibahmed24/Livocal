@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/attachment_utils.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
@@ -78,7 +79,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt, color: AppColors.primary),
-                title: const Text('Camera'),
+                title: Text(AppStrings.tr(ref, 'camera')),
                 onTap: () async {
                   Navigator.pop(ctx);
                   final file = await capturePhoto();
@@ -90,7 +91,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library, color: AppColors.primary),
-                title: const Text('Gallery'),
+                title: Text(AppStrings.tr(ref, 'gallery')),
                 onTap: () async {
                   Navigator.pop(ctx);
                   final file = await pickImageFromGallery();
@@ -103,7 +104,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               if (_currentUser.avatarUrl.isNotEmpty || _newProfileImage != null)
                 ListTile(
                   leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                  title: const Text('Remove Photo', style: TextStyle(color: Colors.redAccent)),
+                  title: Text(
+                    AppStrings.tr(ref, 'removePhoto'),
+                    style: const TextStyle(color: Colors.redAccent),
+                  ),
                   onTap: () async {
                     Navigator.pop(ctx);
                     setState(() {
@@ -370,7 +374,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             // Name Tile
             ListTile(
               leading: const Icon(Icons.person_outline),
-              title: const Text('Name', style: TextStyle(color: Colors.grey, fontSize: 13)),
+              title: Text(
+                AppStrings.tr(ref, 'nameLabel'),
+                style: const TextStyle(color: Colors.grey, fontSize: 13),
+              ),
               subtitle: Text(
                 _currentUser.name,
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -380,11 +387,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 onPressed: _showEditNameDialog,
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.only(left: 72, right: 16, bottom: 16),
+            Padding(
+              padding: const EdgeInsets.only(left: 72, right: 16, bottom: 16),
               child: Text(
-                'This is not your username or pin. This name will be visible to your Livocal contacts.',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+                AppStrings.tr(ref, 'nameVisibilityHint'),
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
             ),
             const Divider(height: 1),
@@ -392,7 +399,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             // About / Status Tile
             ListTile(
               leading: const Icon(Icons.info_outline),
-              title: const Text('About', style: TextStyle(color: Colors.grey, fontSize: 13)),
+              title: Text(
+                AppStrings.tr(ref, 'aboutLabel'),
+                style: const TextStyle(color: Colors.grey, fontSize: 13),
+              ),
               subtitle: Text(
                 _aboutController.text,
                 style: const TextStyle(fontSize: 15),
@@ -407,7 +417,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             // Phone Number Tile
             ListTile(
               leading: const Icon(Icons.phone_outlined),
-              title: const Text('Phone', style: TextStyle(color: Colors.grey, fontSize: 13)),
+              title: Text(
+                AppStrings.tr(ref, 'phoneLabel'),
+                style: const TextStyle(color: Colors.grey, fontSize: 13),
+              ),
               subtitle: Text(
                 _currentUser.phone.getFormattedNumber(),
                 style: const TextStyle(fontSize: 15),

@@ -54,9 +54,9 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
         foregroundColor: Colors.white,
         iconTheme: const IconThemeData(color: Colors.white),
         actionsIconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'Select contact',
-          style: TextStyle(
+        title: Text(
+          AppStrings.tr(ref, 'selectContact'),
+          style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
@@ -103,7 +103,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                           context.findRenderObject() as RenderBox?,
                         ),
                     child: Text(
-                      'Invite a friend',
+                      AppStrings.tr(ref, 'inviteFriend'),
                       style: Theme.of(context)
                           .custom
                           .textTheme
@@ -115,7 +115,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                         .read(contactPickerControllerProvider.notifier)
                         .openContacts,
                     child: Text(
-                      'Contacts',
+                      AppStrings.tr(ref, 'contacts'),
                       style: Theme.of(context)
                           .custom
                           .textTheme
@@ -129,7 +129,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                           .refreshContactsList();
                     },
                     child: Text(
-                      'Refresh',
+                      AppStrings.tr(ref, 'refresh'),
                       style: Theme.of(context)
                           .custom
                           .textTheme
@@ -141,7 +141,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                         .read(contactPickerControllerProvider.notifier)
                         .showHelp,
                     child: Text(
-                      'Help',
+                      AppStrings.tr(ref, 'help'),
                       style: popupMenuTextStyle,
                     )),
               ];
@@ -169,7 +169,11 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12.0),
                 child: Text(
-                  'No results found for \'${searchQuery.trim()}\'',
+                  AppStrings.tr(
+                    ref,
+                    'noResultsFor',
+                    args: {'query': searchQuery.trim()},
+                  ),
                   textAlign: TextAlign.center,
                   style: Theme.of(context).custom.textTheme.caption,
                 ),
@@ -243,7 +247,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                           ),
                           Expanded(
                             child: Text(
-                              'New contact',
+                              AppStrings.tr(ref, 'newContact'),
                               style: Theme.of(context).custom.textTheme.bold,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -265,7 +269,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                   horizontal: 16.0,
                 ),
                 child: Text(
-                  'More',
+                  AppStrings.tr(ref, 'more'),
                   style: Theme.of(context).custom.textTheme.caption,
                 ),
               ),
@@ -295,7 +299,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                           ),
                           Expanded(
                             child: Text(
-                              'New Contact',
+                              AppStrings.tr(ref, 'newContact'),
                               style: Theme.of(context).custom.textTheme.bold,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -329,7 +333,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                         ),
                         Expanded(
                           child: Text(
-                            'Share invite link',
+                            AppStrings.tr(ref, 'shareInviteLink'),
                             style: Theme.of(context).custom.textTheme.bold,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -361,7 +365,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                         ),
                         Expanded(
                           child: Text(
-                            'Contacts help',
+                            AppStrings.tr(ref, 'contactsHelp'),
                             style: Theme.of(context).custom.textTheme.bold,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -389,7 +393,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
           horizontal: 16.0,
         ),
         child: Text(
-          'Contacts on Livocal',
+          AppStrings.tr(ref, 'contactsOnLivocal'),
           style: Theme.of(context).custom.textTheme.caption,
         ),
       ),
@@ -412,7 +416,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
           horizontal: 16.0,
         ),
         child: Text(
-          'Invite to Livocal',
+          AppStrings.tr(ref, 'inviteToLivocal'),
           style: Theme.of(context).custom.textTheme.caption,
         ),
       ),
@@ -496,7 +500,7 @@ class LocalContactsList extends StatelessWidget {
                         .read(contactPickerControllerProvider.notifier)
                         .sendSms(contact.phoneNumber),
                     child: Text(
-                      'INVITE',
+                      AppStrings.tr(ref, 'invite'),
                       style: Theme.of(context).textTheme.bodySmall!.copyWith(
                           color:
                               Theme.of(context).custom.colorTheme.greenColor),

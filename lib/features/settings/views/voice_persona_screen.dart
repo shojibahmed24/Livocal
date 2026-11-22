@@ -298,9 +298,11 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
     final synced = await CallRepository.setMyLanguageCode(langCode, isExplicit: true);
     if (!synced && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Language preference saved locally; cloud sync offline.'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(
+            AppStrings.tr(ref, 'languagePreferenceSavedLocally'),
+          ),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
@@ -438,9 +440,11 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
       if (!playedAudio) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Voice preview temporarily unavailable. Please check internet connection.'),
-              duration: Duration(seconds: 3),
+            SnackBar(
+              content: Text(
+                AppStrings.tr(ref, 'voicePreviewOffline'),
+              ),
+              duration: const Duration(seconds: 3),
             ),
           );
         }
