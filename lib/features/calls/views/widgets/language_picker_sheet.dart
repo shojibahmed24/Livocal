@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/features/calls/services/gemini_live_translator.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/theme.dart';
 
@@ -48,6 +49,7 @@ class _UniversalLanguagePickerSheetState
   @override
   Widget build(BuildContext context) {
     final colorTheme = Theme.of(context).custom.colorTheme;
+    final langCode = Localizations.localeOf(context).languageCode;
     final filtered = CallLanguageRegistry.search(_query);
     final popular = CallLanguageRegistry.popularLanguages;
 
@@ -95,7 +97,14 @@ class _UniversalLanguagePickerSheetState
                             ),
                           ),
                           Text(
-                            '${CallLanguageRegistry.allLanguages.length}+ Gemini Live Languages Supported (Any-to-Any)',
+                            AppStrings.get(
+                              'languagesSupported',
+                              langCode,
+                              args: {
+                                'count':
+                                    '${CallLanguageRegistry.allLanguages.length}',
+                              },
+                            ),
                             style: TextStyle(
                               fontSize: 12,
                               color: colorTheme.greyColor,
@@ -153,7 +162,7 @@ class _UniversalLanguagePickerSheetState
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'POPULAR LANGUAGES',
+                      AppStrings.get('popularLanguages', langCode),
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
@@ -286,6 +295,7 @@ class _GeminiLiveSettingsSheetState extends State<_GeminiLiveSettingsSheet> {
   @override
   Widget build(BuildContext context) {
     final colorTheme = Theme.of(context).custom.colorTheme;
+    final langCode = Localizations.localeOf(context).languageCode;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Padding(
@@ -317,10 +327,13 @@ class _GeminiLiveSettingsSheetState extends State<_GeminiLiveSettingsSheet> {
                 children: [
                   Icon(Icons.auto_awesome, color: colorTheme.greenColor),
                   const SizedBox(width: 10),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'AI Interpreter Voice & Preferences',
-                      style: TextStyle(
+                      AppStrings.get(
+                        'aiInterpreterVoicePreferences',
+                        langCode,
+                      ),
+                      style: const TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -331,7 +344,7 @@ class _GeminiLiveSettingsSheetState extends State<_GeminiLiveSettingsSheet> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Customize how translated speech sounds during calls. The AI automatically detects languages in real-time.',
+                AppStrings.get('aiVoicePrefsDesc', langCode),
                 style: TextStyle(color: colorTheme.greyColor, fontSize: 12.5),
               ),
               const SizedBox(height: 16),
@@ -357,16 +370,16 @@ class _GeminiLiveSettingsSheetState extends State<_GeminiLiveSettingsSheet> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Zero-Trust Cloud AI Relay Active',
-                            style: TextStyle(
+                          Text(
+                            AppStrings.get('zeroTrustRelayActive', langCode),
+                            style: const TextStyle(
                               color: AppColors.primary,
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
                             ),
                           ),
                           Text(
-                            'Live API keys and audio pipelines are securely managed on the backend server.',
+                            AppStrings.get('zeroTrustRelayDesc', langCode),
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.8),
                               fontSize: 11.5,
@@ -379,9 +392,9 @@ class _GeminiLiveSettingsSheetState extends State<_GeminiLiveSettingsSheet> {
                 ),
               ),
               const SizedBox(height: 18),
-              const Text(
-                'Select AI Interpreter Voice',
-                style: TextStyle(
+              Text(
+                AppStrings.get('selectAiInterpreterVoice', langCode),
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
@@ -389,7 +402,7 @@ class _GeminiLiveSettingsSheetState extends State<_GeminiLiveSettingsSheet> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Choose the synthetic voice profile used when speaking translated audio to you.',
+                AppStrings.get('selectAiVoiceDesc', langCode),
                 style: TextStyle(color: colorTheme.greyColor, fontSize: 11.5),
               ),
               const SizedBox(height: 10),
@@ -443,9 +456,12 @@ class _GeminiLiveSettingsSheetState extends State<_GeminiLiveSettingsSheet> {
                     if (context.mounted) Navigator.of(context).pop();
                   },
                   icon: const Icon(Icons.check_circle_outline),
-                  label: const Text(
-                    'Save Voice Preference',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  label: Text(
+                    AppStrings.get('saveVoicePreference', langCode),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
                   ),
                 ),
               ),

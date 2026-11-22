@@ -4,6 +4,7 @@ import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'package:livocal/features/calls/views/outgoing_call_screen.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/theme/app_colors.dart';
 
@@ -125,6 +126,7 @@ class DifferentLanguageCallSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final langCode = Localizations.localeOf(context).languageCode;
     final bgColor = isDark ? const Color(0xFF1B2730) : Colors.white;
     final cardColor = isDark ? const Color(0xFF101D25) : const Color(0xFFF0F4F8);
 
@@ -178,18 +180,11 @@ class DifferentLanguageCallSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Different Language Detected',
+                        AppStrings.get('differentLanguageDetected', langCode),
                         style: TextStyle(
                           color: isDark ? Colors.white : Colors.black87,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        'ভাষার ভিন্নতা পাওয়া গেছে',
-                        style: TextStyle(
-                          color: isDark ? Colors.white60 : Colors.black54,
-                          fontSize: 12,
                         ),
                       ),
                     ],
@@ -218,9 +213,12 @@ class DifferentLanguageCallSheet extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const Text(
-                          'You Speak',
-                          style: TextStyle(color: Colors.grey, fontSize: 11),
+                        Text(
+                          AppStrings.get('youSpeak', langCode),
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 11,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -262,8 +260,15 @@ class DifferentLanguageCallSheet extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
-                          '$calleeDisplayName Speaks',
-                          style: const TextStyle(color: Colors.grey, fontSize: 11),
+                          AppStrings.get(
+                            'peerSpeaks',
+                            langCode,
+                            args: {'name': calleeDisplayName},
+                          ),
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 11,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -319,9 +324,12 @@ class DifferentLanguageCallSheet extends StatelessWidget {
                   elevation: 2,
                 ),
                 icon: const Icon(Icons.auto_awesome_rounded, size: 20),
-                label: const Text(
-                  'Call with AI Voice Translation',
-                  style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold),
+                label: Text(
+                  AppStrings.get('callWithAiTranslation', langCode),
+                  style: const TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 onPressed: () {
                   Navigator.of(context).pop();
@@ -358,9 +366,12 @@ class DifferentLanguageCallSheet extends StatelessWidget {
                   ),
                 ),
                 icon: const Icon(Icons.call_rounded, size: 18),
-                label: const Text(
-                  'Direct Voice Call (Free)',
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+                label: Text(
+                  AppStrings.get('directVoiceCallFree', langCode),
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 onPressed: () {
                   Navigator.of(context).pop();

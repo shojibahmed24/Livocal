@@ -377,7 +377,13 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                             ],
                           ),
                           Text(
-                            'Registered Livocal User (${_foundUser!.phone.getFormattedNumber()})',
+                            AppStrings.tr(
+                              ref,
+                              'registeredLivocalUser',
+                              args: {
+                                'phone': _foundUser!.phone.getFormattedNumber(),
+                              },
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -407,7 +413,7 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Direct call will ring on this phone if Livocal is installed.',
+                        AppStrings.tr(ref, 'directCallRings'),
                         style: TextStyle(
                           color: isDark ? Colors.amber[200] : Colors.amber[900],
                           fontSize: 12,
