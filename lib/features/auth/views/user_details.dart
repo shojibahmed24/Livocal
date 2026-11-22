@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/auth/controllers/user_details_controller.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/widgets/bottom_inset.dart';
 
@@ -97,7 +98,7 @@ class _UserProfileCreationPageState
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Profile photo'),
+                    Text(AppStrings.tr(ref, 'profilePhoto')),
                     if (userImg != null) ...[
                       GestureDetector(
                         onTap: () => ref
@@ -359,16 +360,24 @@ class _UserProfileCreationPageState
                       final currentCode = CallRepository.getMyLanguageCode();
                       final picked = await showUniversalLanguagePicker(
                         context,
-                        title: 'Select Your Spoken Language',
+                        title: AppStrings.tr(
+                          ref,
+                          'selectYourSpokenLanguage',
+                        ),
                         selectedCode: currentCode,
                       );
                       if (picked != null) {
                         final synced = await CallRepository.setMyLanguageCode(picked.code, isExplicit: true);
                         if (!synced && context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Language preference saved locally (cloud sync offline).'),
-                              duration: Duration(seconds: 3),
+                            SnackBar(
+                              content: Text(
+                                AppStrings.tr(
+                                  ref,
+                                  'languagePreferenceSavedLocally',
+                                ),
+                              ),
+                              duration: const Duration(seconds: 3),
                             ),
                           );
                         }

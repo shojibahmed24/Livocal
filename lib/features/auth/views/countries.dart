@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:livocal/features/auth/controllers/login_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/widgets/search.dart';
 import 'package:livocal/theme/color_theme.dart';
 import 'package:livocal/theme/theme.dart';
@@ -80,9 +81,9 @@ class _CountryPageState extends ConsumerState<CountryPage> {
               debugPrint('[Countries] searchResults index out of range: $e\n$st');
               return Column(
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Text('No matches found'),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(AppStrings.tr(ref, 'noMatchesFound')),
                   ),
                   Divider(
                     color: colorTheme.greyColor,

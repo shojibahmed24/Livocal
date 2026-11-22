@@ -67,7 +67,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/livocal.git
+git clone https://github.com/shojibahmed24/Livocal.git
 cd livocal
 
 # Install dependencies
