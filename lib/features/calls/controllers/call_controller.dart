@@ -1615,6 +1615,15 @@ class CallController extends StateNotifier<CallControllerState> {
     _geminiStateSub = null;
     await _geminiTranscriptSub?.cancel();
     _geminiTranscriptSub = null;
+
+    // Transcripts are ephemeral call metadata. Delete them only after the
+    // transcript stream is cancelled so no late entry can re-create them.
+    // Fire-and-forget: hang-up must not wait on a Firestore round-trip.
+    final endedCallId = _currentRunningCallId;
+    if (endedCallId != null && endedCallId.isNotEmpty) {
+      unawaited(repo.deleteCallTranscripts(endedCallId));
+    }
+
     await _geminiInterruptedSub?.cancel();
     _geminiInterruptedSub = null;
     await _geminiBillingSub?.cancel();

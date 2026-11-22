@@ -998,7 +998,7 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
                         children: const [
                           TextSpan(text: 'Your personal messages are '),
                           TextSpan(
-                            text: 'end-to-end encrypted',
+                            text: 'encrypted in transit and stored securely',
                             style: TextStyle(
                               color: Color(0xFF25D366),
                               fontWeight: FontWeight.w600,

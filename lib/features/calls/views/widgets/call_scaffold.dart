@@ -164,7 +164,7 @@ class CallScaffold extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      badgeText ?? 'Livocal End-to-End Encrypted',
+                      badgeText ?? 'Livocal Secure Call',
                       style: const TextStyle(
                         color: AppColors.primary,
                         fontSize: 12,

@@ -306,6 +306,33 @@ class CallRepository {
     }
   }
 
+  /// Deletes all stored live-translation transcript entries for a call.
+  /// Transcripts are ephemeral call metadata; retaining them after hang-up
+  /// conflicts with the app's privacy promise and Play data-safety policy.
+  Future<void> deleteCallTranscripts(String callId) async {
+    if (firestore == null || callId.isEmpty) return;
+    try {
+      final collection = firestore!
+          .collection('calls')
+          .doc(callId)
+          .collection('transcripts');
+      final snapshot = await collection
+          .limit(500)
+          .get()
+          .timeout(const Duration(seconds: 3));
+      if (snapshot.docs.isEmpty) return;
+      final batch = firestore!.batch();
+      for (final doc in snapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit().timeout(const Duration(seconds: 5));
+    } catch (e) {
+      debugPrint(
+        '[CallRepository] deleteCallTranscripts failed for $callId: $e',
+      );
+    }
+  }
+
   Stream<CallSession?> watchCallSession(String callId, String ownId) {
     if (firestore == null) return const Stream.empty();
     return firestore!

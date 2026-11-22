@@ -79,4 +79,8 @@ class AppConfig {
 
   static String get walletMyPaymentSettingsUrl =>
       '$relayHttpBaseUrl/api/wallet/my-payment-settings';
+
+  /// Full account erasure (Firestore + Storage + Firebase Auth) via Admin SDK.
+  static String get accountDeleteUrl =>
+      '$relayHttpBaseUrl/api/account/delete';
 }

@@ -314,7 +314,10 @@ CRITICAL OPERATING RULES:
           relayUrl,
           headers: headers,
         ).timeout(
-          const Duration(seconds: 4),
+          // Render free instances can cold-start in ~10-30s. A 4s timeout made
+          // the first translated call fail, so allow more time for the relay
+          // to wake up before falling back to the direct Gemini endpoint.
+          const Duration(seconds: 15),
         );
         _ws!.pingInterval = const Duration(seconds: 15);
         _isConnected = true;

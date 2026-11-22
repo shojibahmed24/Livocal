@@ -81,8 +81,14 @@ class TranslationService {
     required String targetLangName,
     String? sourceLangName,
   }) async {
+    // Keep the model configurable so a retired model can be replaced without
+    // a code change: --dart-define=GEMINI_TEXT_MODEL=gemini-2.5-flash
+    const textModel = String.fromEnvironment(
+      'GEMINI_TEXT_MODEL',
+      defaultValue: 'gemini-1.5-flash',
+    );
     final url = Uri.parse(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey',
+      'https://generativelanguage.googleapis.com/v1beta/models/$textModel:generateContent?key=$apiKey',
     );
 
     final prompt = sourceLangName != null

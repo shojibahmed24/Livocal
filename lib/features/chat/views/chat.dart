@@ -1483,7 +1483,7 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Messages and calls are end-to-end encrypted and private.',
+                  'Messages are encrypted in transit and stored securely. Calls use DTLS-SRTP.',
                   style: TextStyle(
                     fontSize: 12,
                     height: 1.3,

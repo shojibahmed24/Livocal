@@ -51,7 +51,7 @@ Use the exact responses below when completing the Google Play Console Data Safet
 #### B. Messages
 | Field | Collected? | Shared? | Processing Type | Purpose | Deletion Mechanism |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **In-app messages** | Yes | No | Stored (Encrypted) | App functionality (User communication) | Delete for me, Delete for everyone, Clear chats |
+| **In-app messages** | Yes | No | Stored (encrypted at rest by Firebase) | App functionality (User communication) | Delete for me, Delete for everyone, Clear chats |
 
 #### C. Photos and Videos
 | Field | Collected? | Shared? | Processing Type | Purpose | Deletion Mechanism |

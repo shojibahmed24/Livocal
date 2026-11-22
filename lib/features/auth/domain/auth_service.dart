@@ -1,16 +1,19 @@
 import 'package:livocal/features/calls/repositories/call_repository.dart';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide User;
+import 'package:http/http.dart' as http;
 import 'package:livocal/features/auth/data/repositories/auth_repository.dart';
 import 'package:livocal/features/auth/views/welcome.dart';
+import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/repositories/firebase_storage.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:livocal/shared/utils/secure_pin_service.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
@@ -167,30 +170,67 @@ class AuthController {
     );
   }
 
-  static Future<void> deleteAccount({
+  /// Full account erasure. The backend performs the cascade (Storage,
+  /// Firestore collections/subcollections, then Firebase Auth) with Admin SDK
+  /// privileges, so wallet/payment PII and media cannot be left behind.
+  ///
+  /// Returns `true` only after the server confirmed deletion. On any failure
+  /// the local session is kept so the user can safely retry.
+  static Future<bool> deleteAccount({
     required BuildContext context,
     required WidgetRef ref,
     required String userId,
   }) async {
-    try {
-      await FirebaseFirestore.instance.collection('users').doc(userId).delete();
-    } catch (e) {
-      debugPrint('[AuthController] Delete user doc error: $e');
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      if (context.mounted) {
+        showSnackBar(
+          context: context,
+          content: 'You are not signed in. Please sign in and try again.',
+          type: SnacBarType.error,
+        );
+      }
+      return false;
     }
 
     try {
-      await FirebaseFirestore.instance.collection('fcmTokens').doc(userId).delete();
-    } catch (e) {
-      debugPrint('[AuthController] Delete fcmToken doc error: $e');
-    }
+      final idToken = await user.getIdToken(true);
+      final response = await http
+          .post(
+            Uri.parse(AppConfig.accountDeleteUrl),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $idToken',
+            },
+            body: jsonEncode({'confirm': 'DELETE'}),
+          )
+          .timeout(const Duration(seconds: 60));
 
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        await user.delete();
+      if (response.statusCode != 200) {
+        debugPrint(
+          '[AuthController] deleteAccount failed (${response.statusCode}): ${response.body}',
+        );
+        if (context.mounted) {
+          showSnackBar(
+            context: context,
+            content:
+                'Account deletion could not be completed. Please check your connection and retry.',
+            type: SnacBarType.error,
+          );
+        }
+        return false;
       }
     } catch (e) {
-      debugPrint('[AuthController] FirebaseAuth delete user error: $e');
+      debugPrint('[AuthController] deleteAccount network error: $e');
+      if (context.mounted) {
+        showSnackBar(
+          context: context,
+          content:
+              'Account deletion could not be completed. Please check your connection and retry.',
+          type: SnacBarType.error,
+        );
+      }
+      return false;
     }
 
     if (context.mounted) {
@@ -200,5 +240,6 @@ class AuthController {
         userId: userId,
       );
     }
+    return true;
   }
 }

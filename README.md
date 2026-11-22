@@ -1,6 +1,6 @@
 # Livocal 🎙️🌐
 
-> **Real-Time AI Voice Translation Calling & End-to-End Encrypted Messaging**  
+> **Real-Time AI Voice Translation Calling & Secure Messaging**
 > Built with Flutter, WebRTC, Firebase, Node.js Gateway, and the Gemini Multimodal Live API.
 
 ---

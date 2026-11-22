@@ -42,7 +42,7 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
     ),
     _OnboardingSlide(
       icon: Icons.shield_outlined,
-      badge: 'ZERO-KNOWLEDGE PRIVACY',
+      badge: 'PRIVACY BY DESIGN',
       title: 'Private & Secure by Default',
       description:
           'DTLS-SRTP encrypted voice streams, protected personal data, zero address-book harvesting, and biometric app lock.',

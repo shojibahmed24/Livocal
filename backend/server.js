@@ -73,6 +73,10 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY?.trim() || '';
 const DEFAULT_MODEL =
     process.env.GEMINI_LIVE_MODEL?.trim() || 'models/gemini-3.5-live-translate-preview';
 const DEFAULT_VOICE = process.env.DEFAULT_VOICE?.trim() || 'Aoede';
+// Text translation model (chat messages). Override with GEMINI_TEXT_MODEL
+// when the default model is retired or a newer Flash model is preferred.
+const TEXT_MODEL =
+    process.env.GEMINI_TEXT_MODEL?.trim() || 'gemini-1.5-flash';
 
 // Whitelist of allowed Gemini multimodal models for voice preview synthesis
 const ALLOWED_PREVIEW_MODELS = new Set([
@@ -99,6 +103,12 @@ if (serviceAccount) {
     firebaseApp = initializeApp({
       credential: cert(serviceAccount),
       projectId: serviceAccount.project_id || 'livocal24',
+      // New Firebase projects use <projectId>.firebasestorage.app; without
+      // this the Admin SDK may default to the legacy appspot.com bucket and
+      // account-deletion/cleanup would target the wrong bucket.
+      storageBucket:
+        process.env.FIREBASE_STORAGE_BUCKET?.trim() ||
+        `${serviceAccount.project_id || 'livocal24'}.firebasestorage.app`,
     });
     messagingService = getMessaging(firebaseApp);
     firestoreDb = getFirestore(firebaseApp);
@@ -3293,7 +3303,7 @@ app.post(
     }
 
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
       const prompt = `Translate the following text from ${sourceLang || 'auto'} to ${targetLang}. Output strictly the direct translated text only, without quotes, notes, or preamble:\n\n${text}`;
 
       const apiRes = await fetch(url, {
@@ -3436,6 +3446,168 @@ app.post(
       console.error('[VoicePreview] Synthesis error:', err?.message || err);
       return res.status(500).json({ error: 'Voice preview synthesis failed' });
     }
+  }
+);
+
+/**
+ * POST /api/account/delete
+ * Full self-service account erasure. Deletes owned Storage objects, Firestore
+ * documents/subcollections and finally the Firebase Auth record.
+ *
+ * Order is deliberate: destructive data cleanup runs first, Auth deletion is
+ * last (point of no return). If any owned-data step fails we keep the Auth
+ * user so the client can safely retry.
+ */
+app.post(
+  '/api/account/delete',
+  apiLimiter,
+  authenticateRequest,
+  async (req, res) => {
+    const uid = req.user?.uid;
+    if (!uid) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Explicit confirmation guards against accidental destructive calls.
+    if (req.body?.confirm !== 'DELETE') {
+      return res.status(400).json({ error: 'CONFIRMATION_REQUIRED' });
+    }
+
+    if (!firestoreDb || !authService) {
+      return res.status(503).json({ error: 'Account service unavailable' });
+    }
+
+    const errors = [];
+    const deleted = { calls: 0, statuses: 0, storageObjects: 0 };
+
+    async function deleteStoragePrefix(prefix, filter) {
+      if (!storageService) return 0;
+      let count = 0;
+      try {
+        const bucket = storageService.bucket();
+        let pageToken;
+        do {
+          const [files, nextQuery] = await bucket.getFiles({
+            prefix,
+            maxResults: 200,
+            pageToken,
+          });
+          for (const file of files) {
+            if (filter && !filter(file.name)) continue;
+            await file.delete({ ignoreNotFound: true });
+            count++;
+          }
+          pageToken = nextQuery?.pageToken;
+        } while (pageToken);
+      } catch (err) {
+        console.error(
+          `[AccountDelete] Storage prefix '${prefix}' failed for ${uid}:`,
+          err?.message || err
+        );
+        errors.push(`storage:${prefix}`);
+      }
+      return count;
+    }
+
+    // 1. Owned Cloud Storage objects (avatars, statuses, sent attachments,
+    //    and attachments received from other users).
+    deleted.storageObjects += await deleteStoragePrefix(`userAvatars/${uid}/`);
+    deleted.storageObjects += await deleteStoragePrefix(`avatars/${uid}.`);
+    deleted.storageObjects += await deleteStoragePrefix(`statuses/${uid}/`);
+    deleted.storageObjects += await deleteStoragePrefix(`attachments/${uid}/`);
+    deleted.storageObjects += await deleteStoragePrefix('attachments/', (name) => {
+      const parts = name.split('/');
+      return parts.length >= 4 && parts[2] === uid;
+    });
+
+    // 2. Calls (includes transcripts and ICE candidate subcollections).
+    try {
+      for (const field of ['callerId', 'calleeId']) {
+        const snap = await firestoreDb
+          .collection('calls')
+          .where(field, '==', uid)
+          .get();
+        for (const doc of snap.docs) {
+          await firestoreDb.recursiveDelete(doc.ref);
+          deleted.calls++;
+        }
+      }
+    } catch (err) {
+      console.error(`[AccountDelete] Calls cleanup failed for ${uid}:`, err?.message || err);
+      errors.push('calls');
+    }
+
+    // 3. Status updates authored by the user.
+    try {
+      const snap = await firestoreDb
+        .collection('statuses')
+        .where('userId', '==', uid)
+        .get();
+      for (const doc of snap.docs) {
+        await firestoreDb.recursiveDelete(doc.ref);
+        deleted.statuses++;
+      }
+    } catch (err) {
+      console.error(`[AccountDelete] Statuses cleanup failed for ${uid}:`, err?.message || err);
+      errors.push('statuses');
+    }
+
+    // 4. Own chat inbox. Messages already delivered to other users' inboxes
+    //    remain with the recipient (same behaviour as mainstream messengers).
+    try {
+      await firestoreDb
+        .recursiveDelete(firestoreDb.collection('chats').doc(uid));
+    } catch (err) {
+      console.error(`[AccountDelete] Inbox cleanup failed for ${uid}:`, err?.message || err);
+      errors.push('chats');
+    }
+
+    // 5. Push token.
+    try {
+      await firestoreDb.collection('fcmTokens').doc(uid).delete();
+    } catch (err) {
+      console.error(`[AccountDelete] FCM token cleanup failed for ${uid}:`, err?.message || err);
+      errors.push('fcmTokens');
+    }
+
+    // 6. Profile + private subcollections (wallet/payment PII, blocks, mutes,
+    //    linked devices). Recursive delete is required because Firestore does
+    //    not cascade deletes automatically.
+    try {
+      await firestoreDb.recursiveDelete(
+        firestoreDb.collection('users').doc(uid)
+      );
+    } catch (err) {
+      console.error(`[AccountDelete] Profile cleanup failed for ${uid}:`, err?.message || err);
+      errors.push('users');
+    }
+
+    // Financial ledgers (call_billing_records, p2p_transfers, p2p_payments)
+    // and abuse reports are retained for accounting/legal obligations.
+
+    if (errors.length > 0) {
+      return res.status(500).json({
+        error: 'ACCOUNT_DELETE_PARTIAL',
+        message:
+          'Some account data could not be deleted. Please try again or contact support.',
+        failed: errors,
+      });
+    }
+
+    // 7. Point of no return: remove the sign-in record last.
+    try {
+      await authService.deleteUser(uid);
+    } catch (err) {
+      console.error(`[AccountDelete] Auth deletion failed for ${uid}:`, err?.message || err);
+      return res.status(500).json({
+        error: 'ACCOUNT_DELETE_AUTH_FAILED',
+        message:
+          'Profile data was erased but the sign-in record could not be removed. Please contact support.',
+      });
+    }
+
+    console.log(`[AccountDelete] Completed for ${uid}:`, deleted);
+    return res.json({ success: true, deleted });
   }
 );
 
