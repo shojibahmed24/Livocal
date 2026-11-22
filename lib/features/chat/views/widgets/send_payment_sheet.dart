@@ -453,7 +453,7 @@ class _SendPaymentSheetContentState
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      colors: [Color(0xFF00A884), Color(0xFF25D366)],
+                      colors: [Color(0xFF5B6CF9), Color(0xFF00D4C8)],
                     ),
                   ),
                   child: const Icon(
@@ -641,7 +641,7 @@ class _SendPaymentSheetContentState
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: hasEnoughWallet
-                                        ? const Color(0xFF25D366)
+                                        ? const Color(0xFF00D4C8)
                                         : Colors.redAccent,
                                   ),
                                 ),
@@ -756,7 +756,7 @@ class _SendPaymentSheetContentState
                 decoration: BoxDecoration(
                   color: isDark
                       ? const Color(0xFF222E35)
-                      : const Color(0xFFF0F2F5),
+                      : const Color(0xFFEEF1FA),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -905,7 +905,7 @@ class _SendPaymentSheetContentState
                 decoration: BoxDecoration(
                   color: isDark
                       ? const Color(0xFF222E35)
-                      : const Color(0xFFF0F2F5),
+                      : const Color(0xFFEEF1FA),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(

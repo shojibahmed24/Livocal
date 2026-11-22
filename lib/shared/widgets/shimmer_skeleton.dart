@@ -73,7 +73,7 @@ class _AppShimmerState extends State<AppShimmer>
         ? const Color(0xFF1E2A30)
         : const Color(0xFFE5E7EB);
     final highlightColor = isDark
-        ? const Color(0xFF2A3942)
+        ? const Color(0xFF1E2A47)
         : const Color(0xFFF3F4F6);
 
     return AnimatedBuilder(

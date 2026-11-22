@@ -224,7 +224,7 @@ class LoginController extends StateNotifier<Country> {
             'You entered the phone number:',
             style: TextStyle(
               fontSize: 14,
-              color: isDark ? const Color(0xFF8696A0) : Colors.black87,
+              color: isDark ? const Color(0xFF8A96B2) : Colors.black87,
             ),
           ),
           const SizedBox(height: 12.0),
@@ -241,7 +241,7 @@ class LoginController extends StateNotifier<Country> {
             'Is this OK, or would you like to edit the number?',
             style: TextStyle(
               fontSize: 13.5,
-              color: isDark ? const Color(0xFF8696A0) : Colors.black54,
+              color: isDark ? const Color(0xFF8A96B2) : Colors.black54,
             ),
           ),
         ],

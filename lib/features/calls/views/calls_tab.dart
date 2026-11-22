@@ -315,7 +315,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
                 },
                 child: CircleAvatar(
                   radius: 24,
-                  backgroundColor: const Color(0xFF1F2C34),
+                  backgroundColor: const Color(0xFF16203A),
                   backgroundImage: record.peerAvatar.isNotEmpty
                       ? CachedNetworkImageProvider(record.peerAvatar)
                       : null,

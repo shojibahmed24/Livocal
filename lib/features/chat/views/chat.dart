@@ -226,7 +226,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                       Icons.translate_rounded,
                       size: 24,
                       color: isTransEnabled
-                          ? const Color(0xFF25D366)
+                          ? const Color(0xFF00D4C8)
                           : Colors.white,
                     ),
                     if (isTransEnabled)
@@ -238,7 +238,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                           height: 8,
                           decoration: const BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Color(0xFF25D366),
+                            color: Color(0xFF00D4C8),
                           ),
                         ),
                       ),
@@ -455,7 +455,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           BoxDecoration bgDecoration;
           if (wp.startsWith('color_')) {
             final colorInt =
-                int.tryParse(wp.replaceFirst('color_', '')) ?? 0xFF0B141A;
+                int.tryParse(wp.replaceFirst('color_', '')) ?? 0xFF0A0F1E;
             bgDecoration = BoxDecoration(color: Color(colorInt));
           } else if (wp != 'Default' && File(wp).existsSync()) {
             bgDecoration = BoxDecoration(
@@ -505,7 +505,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1F2C34) : Colors.white,
+                      color: isDark ? const Color(0xFF16203A) : Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
@@ -781,7 +781,7 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
       margin: const EdgeInsets.only(left: 6.0, right: 6.0, bottom: 6.0),
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1F2C34) : const Color(0xFFEFEFEF),
+        color: isDark ? const Color(0xFF16203A) : const Color(0xFFEFEFEF),
         borderRadius: BorderRadius.circular(12.0),
         border: const Border(
           left: BorderSide(
@@ -1364,7 +1364,7 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
                         mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.timer_outlined, size: 14, color: Color(0xFF8696A0)),
+                          const Icon(Icons.timer_outlined, size: 14, color: Color(0xFF8A96B2)),
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
@@ -1375,7 +1375,7 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
                               ),
                               style: const TextStyle(
                                 fontSize: 11.5,
-                                color: Color(0xFF8696A0),
+                                color: Color(0xFF8A96B2),
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -1481,7 +1481,7 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
                 : const Color(0xFFFFF9E6),
             border: Border.all(
               color: isDarkTheme
-                  ? const Color(0xFF233138)
+                  ? const Color(0xFF22304D)
                   : const Color(0xFFFFE082),
               width: 1,
             ),

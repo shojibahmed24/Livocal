@@ -37,7 +37,7 @@ class QrCodeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF1F2C34) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF16203A) : Colors.white;
 
     return Scaffold(
       appBar: AppBar(
@@ -118,7 +118,7 @@ class QrCodeScreen extends ConsumerWidget {
                       user.phone.getFormattedNumber(),
                       style: TextStyle(
                         fontSize: 14,
-                        color: isDark ? const Color(0xFF8696A0) : Colors.grey.shade600,
+                        color: isDark ? const Color(0xFF8A96B2) : Colors.grey.shade600,
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -159,7 +159,7 @@ class QrCodeScreen extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 13,
                   height: 1.4,
-                  color: isDark ? const Color(0xFF8696A0) : Colors.grey.shade600,
+                  color: isDark ? const Color(0xFF8A96B2) : Colors.grey.shade600,
                 ),
               ),
               const SizedBox(height: 28),
@@ -217,7 +217,7 @@ class _QrCodePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF111B21)
+      ..color = const Color(0xFF0A0F1E)
       ..style = PaintingStyle.fill;
 
     const int modules = 25;

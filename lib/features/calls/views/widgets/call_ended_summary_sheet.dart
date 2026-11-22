@@ -140,7 +140,7 @@ class CallEndedSummarySheet extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF131D24) : Colors.white,
+        color: isDark ? const Color(0xFF121A2B) : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         boxShadow: [
           BoxShadow(
@@ -210,7 +210,7 @@ class CallEndedSummarySheet extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFF1B2831)
+                      ? const Color(0xFF1E2A47)
                       : const Color(0xFFF3F5F7),
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
@@ -295,7 +295,7 @@ class CallEndedSummarySheet extends ConsumerWidget {
                 margin: const EdgeInsets.symmetric(vertical: 12),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1B2831) : const Color(0xFFF3F5F7),
+                  color: isDark ? const Color(0xFF1E2A47) : const Color(0xFFF3F5F7),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.07),

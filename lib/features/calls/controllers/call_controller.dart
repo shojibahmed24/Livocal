@@ -25,6 +25,7 @@ import 'package:livocal/features/calls/services/webrtc_call_client.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/wallet_repository.dart';
 import 'package:livocal/shared/repositories/firebase_firestore.dart';
+import 'package:livocal/shared/repositories/push_notifications.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
@@ -1471,6 +1472,37 @@ class CallController extends StateNotifier<CallControllerState> {
   bool _lowBalanceAlerted = false;
   bool _exhaustedBubbleAdded = false;
 
+
+  /// Declines the incoming call and sends a short chat message to the caller.
+  /// Used by the "Decline with message" quick replies on the incoming screen.
+  Future<void> declineWithMessage(String text) async {
+    final current = state.activeSession;
+    final self = getCurrentUser();
+    if (current == null || self == null || current.peerId.isEmpty) {
+      await endCall(endStatus: CallStateStatus.rejected, isDeclined: true);
+      return;
+    }
+    final message = Message(
+      id: const Uuid().v4(),
+      content: text,
+      senderId: self.id,
+      receiverId: current.peerId,
+      timestamp: Timestamp.now(),
+      status: MessageStatus.sent,
+    );
+    try {
+      await IsarDb.addMessage(message);
+      await ref
+          ?.read(firebaseFirestoreRepositoryProvider)
+          .sendMessage(message);
+      ref
+          ?.read(pushNotificationsRepoProvider)
+          .sendPushNotification(message);
+    } catch (e) {
+      debugPrint('[CallController] declineWithMessage send failed: $e');
+    }
+    await endCall(endStatus: CallStateStatus.rejected, isDeclined: true);
+  }
 
   Future<void> endCall({
     CallStateStatus? endStatus,

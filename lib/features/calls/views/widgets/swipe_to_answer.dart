@@ -130,7 +130,7 @@ class _SwipeToAnswerState extends State<SwipeToAnswer> {
                       child: Container(
                         height: sliderHeight,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF18252D),
+                          color: const Color(0xFF16203A),
                           borderRadius: BorderRadius.circular(sliderHeight / 2),
                           border: Border.all(
                             color: AppColors.primary.withValues(alpha: 0.35),

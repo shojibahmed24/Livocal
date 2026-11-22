@@ -499,7 +499,7 @@ class _ChatTranslationSheetContentState
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFF2A3942)
+                      ? const Color(0xFF1E2A47)
                       : const Color(0xFFE7FCE3),
                   borderRadius: BorderRadius.circular(8),
                 ),

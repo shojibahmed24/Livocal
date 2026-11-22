@@ -116,8 +116,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF1F2C34) : Colors.white;
-    final scaffoldBg = isDark ? const Color(0xFF121B22) : const Color(0xFFF0F2F5);
+    final cardBg = isDark ? const Color(0xFF16203A) : Colors.white;
+    final scaffoldBg = isDark ? const Color(0xFF121B22) : const Color(0xFFEEF1FA);
 
     return Scaffold(
       backgroundColor: scaffoldBg,
@@ -167,7 +167,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     value: 'share',
                     child: Row(
                       children: [
-                        const Icon(Icons.share_outlined, size: 20, color: Color(0xFF8696A0)),
+                        const Icon(Icons.share_outlined, size: 20, color: Color(0xFF8A96B2)),
                         const SizedBox(width: 12),
                         Text(AppStrings.tr(ref, 'shareContact')),
                       ],
@@ -177,7 +177,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     value: 'edit',
                     child: Row(
                       children: [
-                        const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF8696A0)),
+                        const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF8A96B2)),
                         const SizedBox(width: 12),
                         Text(AppStrings.tr(ref, 'editContact')),
                       ],
@@ -187,7 +187,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     value: 'view_in_address_book',
                     child: Row(
                       children: [
-                        const Icon(Icons.contacts_outlined, size: 20, color: Color(0xFF8696A0)),
+                        const Icon(Icons.contacts_outlined, size: 20, color: Color(0xFF8A96B2)),
                         const SizedBox(width: 12),
                         Text(AppStrings.tr(ref, 'viewInAddressBook')),
                       ],
@@ -197,7 +197,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     value: 'encryption_info',
                     child: Row(
                       children: [
-                        const Icon(Icons.shield_outlined, size: 20, color: Color(0xFF8696A0)),
+                        const Icon(Icons.shield_outlined, size: 20, color: Color(0xFF8A96B2)),
                         const SizedBox(width: 12),
                         Text(AppStrings.tr(ref, 'encryptionInfo')),
                       ],
@@ -399,7 +399,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
+                      color: isDark ? const Color(0xFF8A96B2) : const Color(0xFF5B6785),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -489,7 +489,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
             child: Container(
               color: cardBg,
               child: ListTile(
-                leading: const Icon(Icons.photo_library_outlined, color: Color(0xFF8696A0)),
+                leading: const Icon(Icons.photo_library_outlined, color: Color(0xFF8A96B2)),
                 title: Text(AppStrings.tr(ref, 'mediaLinksDocs')),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -525,7 +525,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
               child: Column(
                 children: [
                   SwitchListTile(
-                    secondary: const Icon(Icons.notifications_outlined, color: Color(0xFF8696A0)),
+                    secondary: const Icon(Icons.notifications_outlined, color: Color(0xFF8A96B2)),
                     title: Text(AppStrings.tr(ref, 'muteNotifications')),
                     subtitle: Text(AppStrings.tr(ref, 'muteDesc')),
                     value: _isMuted,
@@ -553,7 +553,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                   ),
                   const Divider(height: 1, indent: 56),
                   ListTile(
-                    leading: const Icon(Icons.music_note_outlined, color: Color(0xFF8696A0)),
+                    leading: const Icon(Icons.music_note_outlined, color: Color(0xFF8A96B2)),
                     title: Text(AppStrings.tr(ref, 'customNotifications')),
                     subtitle: Text(
                       (SharedPref.instance.getBool('custom_notif_enabled_${widget.other.id}') ?? false)
@@ -577,18 +577,18 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                   ),
                   const Divider(height: 1, indent: 56),
                   ListTile(
-                    leading: const Icon(Icons.shield_outlined, color: Color(0xFF8696A0)),
+                    leading: const Icon(Icons.shield_outlined, color: Color(0xFF8A96B2)),
                     title: Text(AppStrings.tr(ref, 'encryptionAndSecurity')),
                     subtitle: Text(
                       AppStrings.tr(ref, 'encryptionDesc'),
                       style: const TextStyle(fontSize: 12),
                     ),
-                    trailing: const Icon(Icons.info_outline, color: Color(0xFF8696A0), size: 20),
+                    trailing: const Icon(Icons.info_outline, color: Color(0xFF8A96B2), size: 20),
                     onTap: () => _showEncryptionDialog(context),
                   ),
                   const Divider(height: 1, indent: 56),
                   ListTile(
-                    leading: const Icon(Icons.timer_outlined, color: Color(0xFF8696A0)),
+                    leading: const Icon(Icons.timer_outlined, color: Color(0xFF8A96B2)),
                     title: const Text('Disappearing messages'),
                     subtitle: Text(_disappearingTimer, style: const TextStyle(fontSize: 12)),
                     trailing: const Icon(Icons.chevron_right, color: Colors.grey),
@@ -648,7 +648,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
 
   Widget _buildPlaceholderAvatar(bool isDark) {
     return Container(
-      color: isDark ? const Color(0xFF233138) : const Color(0xFFDFE5E7),
+      color: isDark ? const Color(0xFF22304D) : const Color(0xFFDFE5E7),
       child: Center(
         child: Icon(
           Icons.person,
@@ -697,7 +697,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF1F2C34)
+          ? const Color(0xFF16203A)
           : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),

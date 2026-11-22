@@ -192,7 +192,7 @@ class _MessageCardState extends ConsumerState<MessageCard>
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF1F2C34)
+          ? const Color(0xFF16203A)
           : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
@@ -418,7 +418,7 @@ class _MessageCardState extends ConsumerState<MessageCard>
       context: context,
       isScrollControlled: true,
       backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF1F2C34)
+          ? const Color(0xFF16203A)
           : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -1098,7 +1098,7 @@ class _MessageCardState extends ConsumerState<MessageCard>
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.88),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF182229) : const Color(0xFFF0F2F5),
+          color: isDark ? const Color(0xFF182229) : const Color(0xFFEEF1FA),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isMissed

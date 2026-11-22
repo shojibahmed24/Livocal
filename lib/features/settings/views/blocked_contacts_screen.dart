@@ -83,7 +83,7 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
     final selectedContact = await showModalBottomSheet<Contact>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
+      backgroundColor: isDark ? const Color(0xFF16203A) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -270,8 +270,8 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
                             color: isDark
-                                ? const Color(0xFF1F2C34)
-                                : const Color(0xFFF0F2F5),
+                                ? const Color(0xFF16203A)
+                                : const Color(0xFFEEF1FA),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(

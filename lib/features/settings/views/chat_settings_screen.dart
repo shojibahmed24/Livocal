@@ -80,7 +80,7 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
   void _showWallpaperPicker() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final solidColors = [
-      {'name': 'Teal Slate', 'color': 0xFF0B141A},
+      {'name': 'Teal Slate', 'color': 0xFF0A0F1E},
       {'name': 'Ocean Navy', 'color': 0xFF101D25},
       {'name': 'Forest Green', 'color': 0xFF0A2E23},
       {'name': 'Warm Amber', 'color': 0xFF2A1F0D},
@@ -93,7 +93,7 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
+      backgroundColor: isDark ? const Color(0xFF16203A) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),

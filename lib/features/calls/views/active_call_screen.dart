@@ -154,7 +154,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
         final shouldEnd = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            backgroundColor: const Color(0xFF1F2C34),
+            backgroundColor: const Color(0xFF16203A),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: const Text('End call?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             content: const Text('Are you sure you want to end this call?', style: TextStyle(color: Colors.white70)),
@@ -179,7 +179,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFF0B141A),
+        backgroundColor: const Color(0xFF0A0F1E),
         body: SafeArea(
           child: Column(
             children: [
@@ -513,7 +513,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                 margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1F2C34),
+                  color: const Color(0xFF16203A),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: _borderColorForGeminiState(
@@ -632,7 +632,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                                 vertical: 8,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF111B21),
+                                color: const Color(0xFF0A0F1E),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Column(
@@ -700,7 +700,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                                 vertical: 8,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF111B21),
+                                color: const Color(0xFF0A0F1E),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Column(
@@ -742,7 +742,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                   margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF111B21),
+                    color: const Color(0xFF0A0F1E),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: Colors.white.withValues(alpha: 0.06),
@@ -827,7 +827,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1F2C34),
+                    color: const Color(0xFF16203A),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -869,7 +869,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                 decoration: const BoxDecoration(
-                  color: Color(0xFF1F2C34),
+                  color: Color(0xFF16203A),
                   borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
                 ),
                 child: Row(
@@ -1025,8 +1025,8 @@ class _TranscriptBubbleCard extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: isSelf
-              ? const Color(0xFF005C4B).withValues(alpha: 0.85)
-              : const Color(0xFF1F2C34),
+              ? const Color(0xFF3F4ED8).withValues(alpha: 0.85)
+              : const Color(0xFF16203A),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelf

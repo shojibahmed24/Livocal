@@ -388,8 +388,8 @@ class _UserProfileCreationPageState
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
                         color: Theme.of(context).brightness == Brightness.dark
-                            ? const Color(0xFF1F2C34)
-                            : const Color(0xFFF0F2F5),
+                            ? const Color(0xFF16203A)
+                            : const Color(0xFFEEF1FA),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: colorTheme.greenColor.withValues(alpha: 0.5),

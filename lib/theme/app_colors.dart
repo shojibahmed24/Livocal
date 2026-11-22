@@ -1,44 +1,55 @@
 import 'package:flutter/material.dart';
 
-/// Centralized Brand Colors for Livocal.
-/// Single source of truth for all brand and theme colors.
+/// Centralized brand colors for Livocal.
+///
+/// Livocal's identity is built around a deep "ink" canvas, an electric indigo
+/// primary and an aqua accent that represents live AI translation. This is
+/// intentionally distinct from the green WhatsApp palette the app started from.
 class AppColors {
-  // Brand Emerald Green - Livocal's unique identity (distinct from WhatsApp teal)
-  static const Color primary = Color(0xFF00B386);
-  static const Color primaryLight = Color(0xFF26C49B);
-  static const Color primaryDark = Color(0xFF008F6B);
-  static const Color primaryContainerLight = Color(0xFFD6F5EC);
-  static const Color primaryContainerDark = Color(0xFF004D38);
+  // Brand — electric indigo + aqua.
+  static const Color primary = Color(0xFF5B6CF9);
+  static const Color primaryLight = Color(0xFF8B98FF);
+  static const Color primaryDark = Color(0xFF3F4ED8);
+  static const Color primaryContainerLight = Color(0xFFE4E7FF);
+  static const Color primaryContainerDark = Color(0xFF1B2350);
+  static const Color accent = Color(0xFF00D4C8);
+  static const Color accentDark = Color(0xFF00A79E);
 
-  // Dark Theme Palette
-  static const Color darkBackground = Color(0xFF111B21);
-  static const Color darkSurface = Color(0xFF1F2C34);
-  static const Color darkSurfaceContainer = Color(0xFF202C33);
-  static const Color darkSurfaceContainerHigh = Color(0xFF2A3942);
-  static const Color darkDivider = Color(0xFF252D32);
-  static const Color darkTextPrimary = Color(0xFFE9EDEF);
-  static const Color darkTextSecondary = Color(0xFF8696A0);
-  static const Color darkIcon = Color(0xFF8594A3);
-  static const Color darkIncomingBubble = Color(0xFF1F2C33);
-  static const Color darkOutgoingBubble = Color(0xFF005C4B);
+  static const LinearGradient brandGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [primary, accent],
+  );
 
-  // Light Theme Palette
-  static const Color lightBackground = Color(0xFFFFFFFF);
-  static const Color lightSurface = Color(0xFFF7F8FA);
-  static const Color lightSurfaceContainer = Color(0xFFF0F2F5);
-  static const Color lightSurfaceContainerHigh = Color(0xFFE9EDEF);
-  static const Color lightDivider = Color(0xFFE0E0E0);
-  static const Color lightTextPrimary = Color(0xFF111B21);
-  static const Color lightTextSecondary = Color(0xFF667781);
-  static const Color lightIcon = Color(0xFF54656F);
+  // Dark theme palette — deep ink instead of WhatsApp charcoal.
+  static const Color darkBackground = Color(0xFF0A0F1E);
+  static const Color darkSurface = Color(0xFF121A2B);
+  static const Color darkSurfaceContainer = Color(0xFF16203A);
+  static const Color darkSurfaceContainerHigh = Color(0xFF1E2A47);
+  static const Color darkDivider = Color(0xFF22304D);
+  static const Color darkTextPrimary = Color(0xFFE8ECF7);
+  static const Color darkTextSecondary = Color(0xFF8A96B2);
+  static const Color darkIcon = Color(0xFF8A96B2);
+  static const Color darkIncomingBubble = Color(0xFF16203A);
+  static const Color darkOutgoingBubble = Color(0xFF3F4ED8);
+
+  // Light theme palette.
+  static const Color lightBackground = Color(0xFFF7F8FC);
+  static const Color lightSurface = Color(0xFFFFFFFF);
+  static const Color lightSurfaceContainer = Color(0xFFEEF1FA);
+  static const Color lightSurfaceContainerHigh = Color(0xFFE3E8F5);
+  static const Color lightDivider = Color(0xFFDDE3F0);
+  static const Color lightTextPrimary = Color(0xFF0F172A);
+  static const Color lightTextSecondary = Color(0xFF5B6785);
+  static const Color lightIcon = Color(0xFF5B6785);
   static const Color lightIncomingBubble = Color(0xFFFFFFFF);
-  static const Color lightOutgoingBubble = Color(0xFFD9FDD3);
+  static const Color lightOutgoingBubble = Color(0xFFDDE2FF);
 
-  // Accents & System Feedback
-  static const Color error = Color(0xFFF15C6D);
-  static const Color errorLight = Color(0xFFD32F2F);
-  static const Color success = Color(0xFF00B386);
-  static const Color warning = Color(0xFFFFD279);
-  static const Color info = Color(0xFF53BDEB);
-  static const Color grey = Color(0xFF8696A0);
+  // Accents & system feedback.
+  static const Color error = Color(0xFFFF5C7A);
+  static const Color errorLight = Color(0xFFD92D4E);
+  static const Color success = Color(0xFF22C55E);
+  static const Color warning = Color(0xFFFFB020);
+  static const Color info = Color(0xFF4CC3FF);
+  static const Color grey = Color(0xFF8A96B2);
 }

@@ -34,8 +34,8 @@ class InsufficientMinutesSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surfaceColor = isDark ? const Color(0xFF1F2C34) : Colors.white;
-    final textColor = isDark ? Colors.white : const Color(0xFF111B21);
+    final surfaceColor = isDark ? const Color(0xFF16203A) : Colors.white;
+    final textColor = isDark ? Colors.white : const Color(0xFF0A0F1E);
     final secondaryText = isDark ? Colors.grey[400] : Colors.grey[600];
 
     return Container(
@@ -118,7 +118,7 @@ class InsufficientMinutesSheet extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF2A3942) : const Color(0xFFF0F2F5),
+                color: isDark ? const Color(0xFF1E2A47) : const Color(0xFFEEF1FA),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(

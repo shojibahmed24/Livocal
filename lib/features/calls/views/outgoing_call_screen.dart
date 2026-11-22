@@ -8,13 +8,16 @@ import 'package:livocal/features/calls/models/call_model.dart';
 import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'package:livocal/features/calls/views/active_call_screen.dart';
 import 'package:livocal/features/calls/views/widgets/call_ended_summary_sheet.dart';
-import 'package:livocal/shared/utils/navigator_key.dart';
 import 'package:livocal/features/calls/views/widgets/call_scaffold.dart';
 import 'package:livocal/features/calls/views/widgets/insufficient_minutes_sheet.dart';
 import 'package:livocal/features/calls/views/widgets/minute_recharge_sheet.dart';
+import 'package:livocal/features/chat/views/chat.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/repositories/wallet_repository.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
+import 'package:livocal/shared/utils/navigator_key.dart';
 import 'package:livocal/theme/app_colors.dart';
+import 'package:livocal/theme/app_tokens.dart';
 
 class OutgoingCallScreen extends ConsumerStatefulWidget {
   final User caller;
@@ -51,7 +54,6 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
       vsync: this,
       duration: const Duration(milliseconds: 2200),
     )..repeat();
-    // Note: Timer haptic spam removed; ringback tone & network state handle feedback.
 
     _resolvedSettings = CallRepository.getPeerTranslationSettings(
       peerId: widget.callee.id,
@@ -64,7 +66,9 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      final session = await ref.read(callControllerProvider.notifier).startOutgoingCall(
+      final session = await ref
+          .read(callControllerProvider.notifier)
+          .startOutgoingCall(
             caller: widget.caller,
             callee: widget.callee,
             calleeDisplayName: widget.calleeDisplayName,
@@ -103,18 +107,90 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
           if (Navigator.of(context).canPop()) {
             Navigator.of(context).pop();
           }
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                AppStrings.tr(ref, 'failedToInitiateCall'),
-              ),
-              backgroundColor: Colors.redAccent,
-              duration: const Duration(seconds: 3),
-            ),
-          );
+          _showFailureSheet();
         }
       }
     });
+  }
+
+  void _showFailureSheet() {
+    final targetCtx = appNavigatorKey.currentContext;
+    if (targetCtx == null) return;
+    final isDark = Theme.of(targetCtx).brightness == Brightness.dark;
+    showModalBottomSheet(
+      context: targetCtx,
+      backgroundColor:
+          isDark ? AppColors.darkSurface : AppColors.lightBackground,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.radiusLg)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.grey.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Icon(Icons.call_missed_rounded,
+                size: 40, color: AppColors.error),
+            const SizedBox(height: 8),
+            const Text(
+              'Call failed',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.refresh_rounded),
+              title: const Text('Try again'),
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.of(targetCtx).push(
+                  MaterialPageRoute(
+                    builder: (_) => OutgoingCallScreen(
+                      caller: widget.caller,
+                      callee: widget.callee,
+                      calleeDisplayName: widget.calleeDisplayName,
+                      overrideMyLangCode: widget.overrideMyLangCode,
+                      overridePeerLangCode: widget.overridePeerLangCode,
+                      initialTranslationEnabled: widget.initialTranslationEnabled,
+                    ),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.chat_bubble_outline_rounded),
+              title: Text(
+                AppStrings.get(
+                  'sendMessage',
+                  Localizations.localeOf(targetCtx).languageCode,
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.of(targetCtx).push(
+                  MaterialPageRoute(
+                    builder: (_) => ChatPage(
+                      self: widget.caller,
+                      other: widget.callee,
+                      otherUserContactName: widget.calleeDisplayName,
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -155,9 +231,7 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
       if (session != null && session.status == CallStateStatus.connected) {
         _navigated = true;
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => const ActiveCallScreen(),
-          ),
+          MaterialPageRoute(builder: (_) => const ActiveCallScreen()),
         );
       } else if (session == null &&
           previous?.activeSession != null &&
@@ -191,197 +265,383 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
             ? callState.peerLanguage
             : CallLanguageRegistry.fromCode(_resolvedSettings.peerLangCode));
     final status = session?.status ?? CallStateStatus.dialing;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    String statusText;
-    switch (status) {
-      case CallStateStatus.dialing:
-        statusText = 'Calling...';
-        break;
-      case CallStateStatus.ringing:
-        statusText = 'Ringing...';
-        break;
-      case CallStateStatus.connectingAi:
-      case CallStateStatus.connected:
-        statusText = 'Connecting AI Interpreter...';
-        break;
-      case CallStateStatus.rejected:
-        statusText = 'Call Declined';
-        break;
-      case CallStateStatus.busy:
-        statusText = 'User Busy';
-        break;
-      case CallStateStatus.missed:
-        statusText = 'No Answer';
-        break;
-      default:
-        statusText = 'Calling...';
-    }
+    final statusText = switch (status) {
+      CallStateStatus.dialing => 'Calling...',
+      CallStateStatus.ringing => 'Ringing...',
+      CallStateStatus.connectingAi ||
+      CallStateStatus.connected =>
+        'Connecting AI interpreter...',
+      CallStateStatus.rejected => 'Call declined',
+      CallStateStatus.busy => 'User busy',
+      CallStateStatus.missed => 'No answer',
+      _ => 'Calling...',
+    };
 
     final effectiveTrans = session != null
         ? session.translationEnabled
         : _resolvedSettings.isEffectivelyTranslated;
     final isTranslatedCall = effectiveTrans &&
-        (myLang.code.toLowerCase().trim() != peerLang.code.toLowerCase().trim());
+        (myLang.code.toLowerCase().trim() !=
+            peerLang.code.toLowerCase().trim());
+    final isDialing = status == CallStateStatus.dialing ||
+        status == CallStateStatus.ringing ||
+        status == CallStateStatus.connectingAi;
 
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
-        debugPrint('[OutgoingCallScreen] User pressed back. Ending outgoing call cleanly.');
+        debugPrint('[OutgoingCallScreen] Back pressed. Ending call cleanly.');
         await _endCall();
       },
       child: CallScaffold(
-      peerName: widget.calleeDisplayName,
-      peerAvatar: widget.callee.avatarUrl,
-      peerPhone: widget.callee.phone.getFormattedNumber(),
-      statusText: statusText,
-      badgeText: isTranslatedCall
-          ? 'AI Translated Call • Gemini Live 3.5'
-          : 'Free Direct Call • DTLS-SRTP Encrypted',
-      badgeIcon: isTranslatedCall ? Icons.translate_rounded : Icons.lock_outline_rounded,
-      pulseAnimation: _ringController,
-      middleWidget: isTranslatedCall
-          ? Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF18252D).withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.35),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.auto_awesome_rounded, color: AppColors.primary, size: 16),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        "Live AI Translation: ${myLang.flagEmoji} ${myLang.nativeName} ⇄ ${peerLang.flagEmoji} ${peerLang.nativeName}",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          : null,
-      bottomWidget: Container(
-        margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        decoration: BoxDecoration(
-          color: const Color(0xFF18252D),
-          borderRadius: BorderRadius.circular(32),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        peerName: widget.calleeDisplayName,
+        peerAvatar: widget.callee.avatarUrl,
+        peerPhone: widget.callee.phone.getFormattedNumber(),
+        statusText: statusText,
+        badgeText: isTranslatedCall
+            ? 'AI translated call • Gemini Live'
+            : 'Free direct call • DTLS-SRTP',
+        badgeIcon: isTranslatedCall
+            ? Icons.auto_awesome_rounded
+            : Icons.lock_outline_rounded,
+        pulseAnimation: _ringController,
+        subStatus: Column(
           children: [
-            _DialControlButton(
-              icon: callState.isSpeakerphoneOn
-                  ? Icons.volume_up_rounded
-                  : Icons.hearing_rounded,
-              label: 'Speaker',
-              isActive: callState.isSpeakerphoneOn,
-              onTap: () {
-                HapticFeedback.lightImpact();
-                ref.read(callControllerProvider.notifier).toggleSpeakerphone();
-              },
-            ),
-            _DialControlButton(
-              icon: callState.isMuted
-                  ? Icons.mic_off_rounded
-                  : Icons.mic_rounded,
-              label: 'Mute',
-              isActive: callState.isMuted,
-              onTap: () {
-                HapticFeedback.lightImpact();
-                ref.read(callControllerProvider.notifier).toggleMute();
-              },
-            ),
-            GestureDetector(
-              onTap: _endCall,
-              child: const Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundColor: Color(0xFFE53935),
-                    child: Icon(
-                      Icons.call_end_rounded,
-                      color: Colors.white,
-                      size: 28,
+            _StatusTimeline(isDark: isDark, status: status),
+            const SizedBox(height: 8),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                _Chip(
+                  icon: Icons.translate_rounded,
+                  label: isTranslatedCall
+                      ? 'AI translation ON'
+                      : 'Free direct call',
+                  color: isTranslatedCall
+                      ? AppColors.accent
+                      : AppColors.success,
+                  isDark: isDark,
+                ),
+                ref.watch(walletStreamProvider(widget.caller.id)).when(
+                      data: (wallet) => _Chip(
+                        icon: Icons.timer_outlined,
+                        label: AppStrings.tr(
+                          ref,
+                          'minutesLeft',
+                          args: {
+                            'minutes':
+                                '${wallet.effectiveRemainingMinutes}',
+                          },
+                        ),
+                        color: AppColors.primary,
+                        isDark: isDark,
+                      ),
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, __) => const SizedBox.shrink(),
                     ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'End',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
+              ],
             ),
           ],
         ),
+        middleWidget: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkSurfaceContainer : Colors.white,
+              borderRadius: BorderRadius.circular(AppRadius.radiusXl),
+              border: Border.all(
+                color: (isTranslatedCall ? AppColors.accent : AppColors.primary)
+                    .withValues(alpha: 0.35),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  isTranslatedCall
+                      ? Icons.auto_awesome_rounded
+                      : Icons.lock_outline_rounded,
+                  color: isTranslatedCall ? AppColors.accent : AppColors.primary,
+                  size: 16,
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    isTranslatedCall
+                        ? '${myLang.flagEmoji} ${myLang.nativeName} ⇄ ${peerLang.flagEmoji} ${peerLang.nativeName}'
+                        : 'Secure direct voice call',
+                    style: TextStyle(
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.lightTextPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        bottomWidget: Container(
+          margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkSurfaceContainer : Colors.white,
+            borderRadius: BorderRadius.circular(AppRadius.radiusXl),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.12),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _DialControlButton(
+                icon: callState.isSpeakerphoneOn
+                    ? Icons.volume_up_rounded
+                    : Icons.hearing_rounded,
+                label: AppStrings.tr(ref, 'speakerBtn'),
+                isActive: callState.isSpeakerphoneOn,
+                isDark: isDark,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  ref
+                      .read(callControllerProvider.notifier)
+                      .toggleSpeakerphone();
+                },
+              ),
+              _DialControlButton(
+                icon: callState.isMuted
+                    ? Icons.mic_off_rounded
+                    : Icons.mic_rounded,
+                label: AppStrings.tr(ref, 'muteBtn'),
+                isActive: callState.isMuted,
+                isDark: isDark,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  ref.read(callControllerProvider.notifier).toggleMute();
+                },
+              ),
+              _DialControlButton(
+                icon: Icons.call_end_rounded,
+                label: isDialing
+                    ? AppStrings.tr(ref, 'cancel')
+                    : AppStrings.tr(ref, 'endCallBtn'),
+                isActive: false,
+                isDark: isDark,
+                danger: true,
+                onTap: _endCall,
+              ),
+            ],
+          ),
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
+
+class _StatusTimeline extends StatelessWidget {
+  final bool isDark;
+  final CallStateStatus status;
+
+  const _StatusTimeline({required this.isDark, required this.status});
+
+  int get _activeIndex {
+    switch (status) {
+      case CallStateStatus.dialing:
+        return 0;
+      case CallStateStatus.ringing:
+        return 1;
+      case CallStateStatus.connectingAi:
+        return 2;
+      case CallStateStatus.connected:
+        return 3;
+      default:
+        return -1;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const labels = ['Dial', 'Ring', 'AI', 'Live'];
+    final inactive =
+        isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(labels.length, (index) {
+        final active = _activeIndex >= index;
+        return Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: active ? AppColors.primary : inactive.withValues(alpha: 0.35),
+                boxShadow: active
+                    ? [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.45),
+                          blurRadius: 6,
+                        ),
+                      ]
+                    : null,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              labels[index],
+              style: TextStyle(
+                fontSize: 9.5,
+                color: active ? AppColors.primary : inactive,
+                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+            if (index != labels.length - 1)
+              Container(
+                width: 18,
+                height: 1,
+                margin: const EdgeInsets.symmetric(horizontal: 6),
+                color: (_activeIndex > index
+                        ? AppColors.primary
+                        : inactive)
+                    .withValues(alpha: 0.35),
+              ),
+          ],
+        );
+      }),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool isDark;
+
+  const _Chip({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.14 : 0.12),
+        borderRadius: AppRadius.full,
+        border: Border.all(color: color.withValues(alpha: 0.32)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _DialControlButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isActive;
+  final bool isDark;
+  final bool danger;
   final VoidCallback onTap;
 
   const _DialControlButton({
     required this.icon,
     required this.label,
     required this.isActive,
+    required this.isDark,
     required this.onTap,
+    this.danger = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: isActive ? const Color(0xFF0B141A) : Colors.white,
-              size: 23,
-            ),
+    final bg = danger
+        ? AppColors.error
+        : isActive
+            ? AppColors.primary
+            : (isDark
+                ? AppColors.darkSurfaceContainerHigh
+                : AppColors.lightSurfaceContainer);
+    final fg = danger || isActive
+        ? Colors.white
+        : (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary);
+    return Semantics(
+      button: true,
+      label: label,
+      toggled: isActive,
+      child: ExcludeSemantics(
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadius.radiusFull),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: bg,
+                  shape: BoxShape.circle,
+                  boxShadow: danger
+                      ? [
+                          BoxShadow(
+                            color: AppColors.error.withValues(alpha: 0.35),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Icon(icon, color: fg, size: 24),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.lightTextSecondary,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 11,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

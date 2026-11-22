@@ -353,7 +353,7 @@ class AppAuthGuardState extends State<AppAuthGuard>
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13,
-                    color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
+                    color: isDark ? const Color(0xFF8A96B2) : const Color(0xFF5B6785),
                   ),
                 ),
 

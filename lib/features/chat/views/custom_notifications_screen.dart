@@ -413,7 +413,7 @@ class _CustomNotificationsScreenState
                   leading: Icon(
                     Icons.music_note_outlined,
                     color: _useCustomNotifications
-                        ? const Color(0xFF8696A0)
+                        ? const Color(0xFF8A96B2)
                         : disabledColor,
                   ),
                   title: Text(
@@ -446,7 +446,7 @@ class _CustomNotificationsScreenState
                   leading: Icon(
                     Icons.vibration_outlined,
                     color: _useCustomNotifications
-                        ? const Color(0xFF8696A0)
+                        ? const Color(0xFF8A96B2)
                         : disabledColor,
                   ),
                   title: Text(
@@ -491,7 +491,7 @@ class _CustomNotificationsScreenState
                   secondary: Icon(
                     Icons.priority_high_rounded,
                     color: _useCustomNotifications
-                        ? const Color(0xFF8696A0)
+                        ? const Color(0xFF8A96B2)
                         : disabledColor,
                   ),
                   title: Text(
@@ -568,7 +568,7 @@ class _CustomNotificationsScreenState
                   leading: Icon(
                     Icons.ring_volume_outlined,
                     color: _useCustomNotifications
-                        ? const Color(0xFF8696A0)
+                        ? const Color(0xFF8A96B2)
                         : disabledColor,
                   ),
                   title: Text(
@@ -601,7 +601,7 @@ class _CustomNotificationsScreenState
                   leading: Icon(
                     Icons.vibration_outlined,
                     color: _useCustomNotifications
-                        ? const Color(0xFF8696A0)
+                        ? const Color(0xFF8A96B2)
                         : disabledColor,
                   ),
                   title: Text(

@@ -390,7 +390,7 @@ class _HomePageState extends ConsumerState<HomePage>
             color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF00A884).withValues(alpha: 0.35),
+                color: const Color(0xFF5B6CF9).withValues(alpha: 0.35),
                 blurRadius: 6,
                 offset: const Offset(0, 1.5),
               ),
@@ -418,14 +418,14 @@ class _HomePageState extends ConsumerState<HomePage>
               TextSpan(
                 text: 'Li ',
                 style: TextStyle(
-                  color: isDark ? const Color(0xFFF0F2F5) : Colors.white,
+                  color: isDark ? const Color(0xFFEEF1FA) : Colors.white,
                   fontWeight: FontWeight.w800,
                 ),
               ),
               const TextSpan(
                 text: 'Vocal',
                 style: TextStyle(
-                  color: Color(0xFF25D366),
+                  color: Color(0xFF00D4C8),
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -440,14 +440,14 @@ class _HomePageState extends ConsumerState<HomePage>
           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF00A884), Color(0xFF25D366)],
+              colors: [Color(0xFF5B6CF9), Color(0xFF00D4C8)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(5),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF25D366).withValues(alpha: 0.35),
+                color: const Color(0xFF00D4C8).withValues(alpha: 0.35),
                 blurRadius: 4,
                 offset: const Offset(0, 1),
               ),
@@ -738,17 +738,17 @@ class _HomePageState extends ConsumerState<HomePage>
             indicator: const UnderlineTabIndicator(
               borderSide: BorderSide(
                 width: 3.2,
-                color: Color(0xFF25D366),
+                color: Color(0xFF00D4C8),
               ),
               borderRadius: BorderRadius.all(Radius.circular(3)),
               insets: EdgeInsets.symmetric(horizontal: 16),
             ),
             indicatorSize: TabBarIndicatorSize.label,
             labelColor: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF25D366)
+                ? const Color(0xFF00D4C8)
                 : Colors.white,
             unselectedLabelColor: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF8696A0)
+                ? const Color(0xFF8A96B2)
                 : Colors.white70,
             labelStyle: const TextStyle(
               fontSize: 14.5,
@@ -761,7 +761,7 @@ class _HomePageState extends ConsumerState<HomePage>
               letterSpacing: 0.3,
             ),
             dividerColor: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF252D32)
+                ? const Color(0xFF22304D)
                 : Colors.white24,
             dividerHeight: 1.0,
             tabs: [
@@ -990,7 +990,7 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
               thickness: 0.5,
               indent: 82,
               endIndent: 16,
-              color: isDark ? const Color(0xFF1F2C34) : const Color(0xFFF0F2F5),
+              color: isDark ? const Color(0xFF16203A) : const Color(0xFFEEF1FA),
             );
           },
           itemBuilder: (context, index) {
@@ -1003,7 +1003,7 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
                     Icon(
                       Icons.lock_rounded,
                       size: 13,
-                      color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
+                      color: isDark ? const Color(0xFF8A96B2) : const Color(0xFF5B6785),
                     ),
                     const SizedBox(width: 6),
                     RichText(
@@ -1011,14 +1011,14 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
                       text: TextSpan(
                         style: TextStyle(
                           fontSize: 12.0,
-                          color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
+                          color: isDark ? const Color(0xFF8A96B2) : const Color(0xFF5B6785),
                         ),
                         children: const [
                           TextSpan(text: 'Your personal messages are '),
                           TextSpan(
                             text: 'encrypted in transit and stored securely',
                             style: TextStyle(
-                              color: Color(0xFF25D366),
+                              color: Color(0xFF00D4C8),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -1178,7 +1178,7 @@ class RecentChatWidget extends StatelessWidget {
 
   List<Color> _getGradientForName(String name) {
     const gradients = [
-      [Color(0xFF00A884), Color(0xFF128C7E)],
+      [Color(0xFF5B6CF9), Color(0xFF128C7E)],
       [Color(0xFF2563EB), Color(0xFF1D4ED8)],
       [Color(0xFF7C3AED), Color(0xFF6D28D9)],
       [Color(0xFFDB2777), Color(0xFFBE185D)],
@@ -1276,7 +1276,7 @@ class RecentChatWidget extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: const Color(0xFF25D366).withValues(alpha: 0.18),
+          color: const Color(0xFF00D4C8).withValues(alpha: 0.18),
           width: 1.5,
         ),
       ),
@@ -1288,8 +1288,8 @@ class RecentChatWidget extends StatelessWidget {
 
   Widget _buildSubtitle(BuildContext context, bool isDark, bool hasUnread) {
     final textColor = hasUnread
-        ? (isDark ? const Color(0xFFE9EDEF) : const Color(0xFF111B21))
-        : (isDark ? const Color(0xFF8696A0) : const Color(0xFF667781));
+        ? (isDark ? const Color(0xFFE9EDEF) : const Color(0xFF0A0F1E))
+        : (isDark ? const Color(0xFF8A96B2) : const Color(0xFF5B6785));
 
     String text = msgContent;
     if (text == "\u00A0" || text.isEmpty) {
@@ -1311,7 +1311,7 @@ class RecentChatWidget extends StatelessWidget {
           attachmentLabel = isSentByMe ? 'মিসড কল' : 'মিসড ভয়েস কল';
         } else {
           attachmentIcon = isSentByMe ? Icons.call_made_rounded : Icons.call_received_rounded;
-          iconCustomColor = isDark ? Colors.tealAccent : const Color(0xFF00A884);
+          iconCustomColor = isDark ? Colors.tealAccent : const Color(0xFF5B6CF9);
           attachmentLabel = isSentByMe
               ? (durStr.isNotEmpty ? "ভয়েস কল ($durStr)" : "ভয়েস কল")
               : (durStr.isNotEmpty ? "ইনকামিং কল ($durStr)" : "ইনকামিং কল");
@@ -1352,7 +1352,7 @@ class RecentChatWidget extends StatelessWidget {
             'assets/images/$msgStatus.png',
             color: msgStatus == 'SEEN'
                 ? const Color(0xFF53BDEB)
-                : (isDark ? const Color(0xFF8696A0) : const Color(0xFF667781)),
+                : (isDark ? const Color(0xFF8A96B2) : const Color(0xFF5B6785)),
             width: 16.0,
           ),
           const SizedBox(width: 4.0),
@@ -1361,7 +1361,7 @@ class RecentChatWidget extends StatelessWidget {
           Icon(
             attachmentIcon,
             size: 16.0,
-            color: iconCustomColor ?? (isDark ? const Color(0xFF8696A0) : const Color(0xFF667781)),
+            color: iconCustomColor ?? (isDark ? const Color(0xFF8A96B2) : const Color(0xFF5B6785)),
           ),
           const SizedBox(width: 4.0),
         ],
@@ -1441,7 +1441,7 @@ class RecentChatWidget extends StatelessWidget {
             letterSpacing: -0.2,
             color: isDark
                 ? const Color(0xFFE9EDEF)
-                : const Color(0xFF111B21),
+                : const Color(0xFF0A0F1E),
           ),
         ),
       ),
@@ -1468,7 +1468,7 @@ class RecentChatWidget extends StatelessWidget {
                       const Icon(
                         Icons.volume_off_rounded,
                         size: 15,
-                        color: Color(0xFF8696A0),
+                        color: Color(0xFF8A96B2),
                       ),
                       const SizedBox(width: 4),
                     ],
@@ -1480,14 +1480,14 @@ class RecentChatWidget extends StatelessWidget {
                             horizontal: 6.5, vertical: 2.0),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [Color(0xFF00A884), Color(0xFF25D366)],
+                            colors: [Color(0xFF5B6CF9), Color(0xFF00D4C8)],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF25D366).withValues(alpha: 0.35),
+                              color: const Color(0xFF00D4C8).withValues(alpha: 0.35),
                               blurRadius: 4,
                               offset: const Offset(0, 1),
                             ),
@@ -1542,10 +1542,10 @@ class RecentChatTime extends StatelessWidget {
             fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
             letterSpacing: -0.1,
             color: hasUnread
-                ? const Color(0xFF25D366)
+                ? const Color(0xFF00D4C8)
                 : (isDark
-                    ? const Color(0xFF8696A0)
-                    : const Color(0xFF667781)),
+                    ? const Color(0xFF8A96B2)
+                    : const Color(0xFF5B6785)),
           ),
         );
       },

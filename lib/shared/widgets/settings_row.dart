@@ -96,7 +96,7 @@ class SettingsRow extends StatelessWidget {
                       subtitle!,
                       style: TextStyle(
                         fontSize: 13,
-                        color: isDark ? const Color(0xFF8696A0) : Colors.grey.shade600,
+                        color: isDark ? const Color(0xFF8A96B2) : Colors.grey.shade600,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -133,7 +133,7 @@ class SettingsSectionHeader extends StatelessWidget {
           fontSize: 11.5,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.8,
-          color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
+          color: isDark ? const Color(0xFF8A96B2) : const Color(0xFF5B6785),
         ),
       ),
     );

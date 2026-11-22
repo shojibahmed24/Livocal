@@ -193,7 +193,7 @@ class _StatusTabState extends ConsumerState<StatusTab>
       ),
       child: CircleAvatar(
         radius: radius,
-        backgroundColor: const Color(0xFF1F2C34),
+        backgroundColor: const Color(0xFF16203A),
         backgroundImage: avatarUrl.isNotEmpty
             ? CachedNetworkImageProvider(avatarUrl)
             : null,
@@ -216,14 +216,14 @@ class _StatusTabState extends ConsumerState<StatusTab>
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: isDark
-          ? const Color(0xFF1F2C34).withValues(alpha: 0.5)
+          ? const Color(0xFF16203A).withValues(alpha: 0.5)
           : Colors.grey.shade100,
       child: Text(
         title,
         style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.bold,
-          color: isDark ? const Color(0xFF8696A0) : const Color(0xFF667781),
+          color: isDark ? const Color(0xFF8A96B2) : const Color(0xFF5B6785),
         ),
       ),
     );
@@ -346,7 +346,7 @@ class _StatusTabState extends ConsumerState<StatusTab>
                           showModalBottomSheet(
                             context: context,
                             backgroundColor:
-                                isDark ? const Color(0xFF1F2C34) : Colors.white,
+                                isDark ? const Color(0xFF16203A) : Colors.white,
                             builder: (ctx) => Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [

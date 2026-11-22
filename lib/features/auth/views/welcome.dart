@@ -284,7 +284,7 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
                             fontSize: 14,
                             height: 1.45,
                             color: isDark
-                                ? const Color(0xFF8696A0)
+                                ? const Color(0xFF8A96B2)
                                 : const Color(0xFF536471),
                           ),
                         ),
@@ -328,8 +328,8 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
                     fontSize: 12.5,
                     height: 1.4,
                     color: isDark
-                        ? const Color(0xFF8696A0)
-                        : const Color(0xFF667781),
+                        ? const Color(0xFF8A96B2)
+                        : const Color(0xFF5B6785),
                   ),
                   children: [
                     const TextSpan(text: 'Read our '),

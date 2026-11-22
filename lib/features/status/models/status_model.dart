@@ -58,7 +58,7 @@ class StatusModel {
       mediaUrl: map['mediaUrl'],
       colorValue: map['colorValue'] is int
           ? map['colorValue']
-          : (int.tryParse(map['colorValue']?.toString() ?? '') ?? 0xFF00B386),
+          : (int.tryParse(map['colorValue']?.toString() ?? '') ?? 0xFF5B6CF9),
       timestamp: ts,
       privacy: map['privacy'] ?? 'My contacts',
       allowedUserIds: (map['allowedUserIds'] as List?)
