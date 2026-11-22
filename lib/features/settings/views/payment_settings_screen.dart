@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:livocal/features/calls/services/gemini_live_translator.dart';
 import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
@@ -231,7 +232,7 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Payment Receiving Accounts'),
+        title: Text(AppStrings.tr(ref, 'paymentReceivingAccounts')),
         elevation: 0.5,
       ),
       body: _isLoading
@@ -263,9 +264,9 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'P2P Payment Settings',
-                                  style: TextStyle(
+                                Text(
+                                  AppStrings.tr(ref, 'p2pPaymentSettings'),
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13.5,
                                     color: primaryColor,
@@ -273,7 +274,7 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
                                 ),
                                 const SizedBox(height: 3),
                                 Text(
-                                  'Configure the accounts where other users can transfer money and cryptocurrency to you in chats. Ensure your TRC-20 and BEP-20 addresses are accurate.',
+                                  AppStrings.tr(ref, 'p2pPaymentSettingsDesc'),
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: isDark
@@ -292,7 +293,7 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
 
                     // Section 1: Crypto & Binance Pay
                     Text(
-                      'Cryptocurrency & Binance',
+                      AppStrings.tr(ref, 'cryptocurrencyAndBinance'),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
@@ -306,7 +307,7 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
                       controller: _binancePayController,
                       keyboardType: TextInputType.text,
                       decoration: InputDecoration(
-                        labelText: 'Binance Pay ID / Binance Email',
+                        labelText: AppStrings.tr(ref, 'binancePayIdLabel'),
                         hintText: 'e.g. 849201842 or user@email.com',
                         prefixIcon: const Icon(Icons.currency_bitcoin_rounded,
                             color: Colors.amber),
@@ -333,7 +334,7 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
                       controller: _trc20Controller,
                       keyboardType: TextInputType.text,
                       decoration: InputDecoration(
-                        labelText: 'USDT TRC-20 Address (Tron Network)',
+                        labelText: AppStrings.tr(ref, 'usdtTrc20Label'),
                         hintText: 'Starts with T (34 characters)',
                         prefixIcon: const Icon(Icons.account_balance_wallet,
                             color: Colors.redAccent),
@@ -357,7 +358,7 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
                       controller: _bep20Controller,
                       keyboardType: TextInputType.text,
                       decoration: InputDecoration(
-                        labelText: 'USDT BEP-20 Address (BNB Smart Chain)',
+                        labelText: AppStrings.tr(ref, 'usdtBep20Label'),
                         hintText: 'Starts with 0x (42 characters)',
                         prefixIcon: const Icon(Icons.toll_rounded,
                             color: Colors.amber),
@@ -378,7 +379,7 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
 
                     // Section 2: Mobile Financial Services (bKash / Nagad)
                     Text(
-                      'Mobile Financial Services (MFS)',
+                      AppStrings.tr(ref, 'mobileFinancialServices'),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
@@ -392,7 +393,7 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
                       controller: _bkashController,
                       keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
-                        labelText: 'bKash Personal Number',
+                        labelText: AppStrings.tr(ref, 'bkashPersonalLabel'),
                         hintText: 'e.g. 017XXXXXXXX',
                         prefixIcon: const Icon(Icons.phone_android_rounded,
                             color: Colors.pinkAccent),
@@ -416,7 +417,7 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
                       controller: _nagadController,
                       keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
-                        labelText: 'Nagad Personal Number',
+                        labelText: AppStrings.tr(ref, 'nagadPersonalLabel'),
                         hintText: 'e.g. 018XXXXXXXX',
                         prefixIcon: const Icon(Icons.phone_android_rounded,
                             color: Colors.deepOrangeAccent),
@@ -458,9 +459,9 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
                                       AlwaysStoppedAnimation(Colors.white),
                                 ),
                               )
-                            : const Text(
-                                'Save Payment Accounts',
-                                style: TextStyle(
+                            : Text(
+                                AppStrings.tr(ref, 'savePaymentAccounts'),
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
