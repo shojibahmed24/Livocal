@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:livocal/features/calls/models/call_language.dart';
+import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'package:livocal/features/calls/views/widgets/different_language_call_sheet.dart';
 import 'package:livocal/features/calls/views/widgets/direct_dial_sheet.dart';
 import 'package:livocal/features/home/controllers/contacts_controller.dart';
@@ -393,7 +395,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
           horizontal: 16.0,
         ),
         child: Text(
-          AppStrings.tr(ref, 'contactsOnLivocal'),
+          '${AppStrings.tr(ref, 'contactsOnLivocal')} · ${contactsOnLivocal.length}',
           style: Theme.of(context).custom.textTheme.caption,
         ),
       ),
@@ -416,7 +418,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
           horizontal: 16.0,
         ),
         child: Text(
-          AppStrings.tr(ref, 'inviteToLivocal'),
+          '${AppStrings.tr(ref, 'inviteToLivocal')} · ${contactsNotOnLivocal.length}',
           style: Theme.of(context).custom.textTheme.caption,
         ),
       ),
@@ -529,40 +531,82 @@ class LivocalContactsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final sorted = [...contactsOnLivocal]..sort(
+        (a, b) => a.displayName.toLowerCase().compareTo(
+              b.displayName.toLowerCase(),
+            ),
+      );
+    final groups = <String, List<Contact>>{};
+    for (final contact in sorted) {
+      final clean = contact.displayName.trim();
+      final letter = clean.isEmpty ? '#' : clean[0].toUpperCase();
+      groups.putIfAbsent(letter, () => []).add(contact);
+    }
+
     return Column(
       children: [
-        for (var contact in contactsOnLivocal)
-          InkWell(
-            onTap: () => ref
-                .read(contactPickerControllerProvider.notifier)
-                .pickContact(context, user, contact),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              child: Row(
+        for (final entry in groups.entries) ...[
+          _ContactSectionHeader(letter: entry.key, count: entry.value.length),
+          for (final contact in entry.value)
+            _LivocalContactRow(
+              user: user,
+              contact: contact,
+              ref: ref,
+            ),
+        ],
+      ],
+    );
+  }
+}
+
+class _LivocalContactRow extends StatelessWidget {
+  final User user;
+  final Contact contact;
+  final WidgetRef ref;
+
+  const _LivocalContactRow({
+    required this.user,
+    required this.contact,
+    required this.ref,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final langCode = CallRepository.inferPeerLanguageCode(
+      contact.userId ?? '',
+      contact.displayName,
+      phone: contact.phoneNumber,
+    );
+    final lang = CallLanguageRegistry.fromCode(langCode);
+    return InkWell(
+      onTap: () => ref
+          .read(contactPickerControllerProvider.notifier)
+          .pickContact(context, user, contact),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        child: Row(
+          children: [
+            _ContactAvatar(
+              displayName: contact.displayName,
+              avatarUrl: contact.avatarUrl,
+              radius: 20,
+            ),
+            const SizedBox(width: 18.0),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _ContactAvatar(
-                    displayName: contact.displayName,
-                    avatarUrl: contact.avatarUrl,
-                    radius: 20,
+                  Text(
+                    contact.displayName,
+                    style: Theme.of(context).custom.textTheme.bold,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(
-                    width: 18.0,
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          contact.displayName,
-                          style: Theme.of(context).custom.textTheme.bold,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
                           contact.phoneNumber.isNotEmpty
                               ? contact.phoneNumber
                               : 'Hey there! I\'m using Livocal.',
@@ -570,34 +614,95 @@ class LivocalContactsList extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.call_rounded,
-                      color: AppColors.primary,
-                    ),
-                    tooltip: 'Call with Live AI Translation',
-                    onPressed: () async {
-                      final receiver =
-                          await IsarDb.getUserById(contact.userId!);
-                      if (receiver != null && context.mounted) {
-                        await initiateSmartCall(
-                          context,
-                          ref,
-                          caller: user,
-                          callee: receiver,
-                          calleeDisplayName: contact.displayName,
-                        );
-                      }
-                    },
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 1,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '${lang.flagEmoji} ${lang.nativeName}',
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
+            IconButton(
+              icon: const Icon(
+                Icons.call_rounded,
+                color: AppColors.primary,
+              ),
+              tooltip: 'Call with Live AI Translation',
+              onPressed: () async {
+                final receiver = await IsarDb.getUserById(contact.userId!);
+                if (receiver != null && context.mounted) {
+                  await initiateSmartCall(
+                    context,
+                    ref,
+                    caller: user,
+                    callee: receiver,
+                    calleeDisplayName: contact.displayName,
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ContactSectionHeader extends StatelessWidget {
+  final String letter;
+  final int count;
+
+  const _ContactSectionHeader({required this.letter, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Row(
+        children: [
+          Text(
+            letter,
+            style: const TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
+            ),
           ),
-      ],
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              '$count',
+              style: const TextStyle(
+                fontSize: 9.5,
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
