@@ -3570,6 +3570,20 @@ app.post(
       errors.push('fcmTokens');
     }
 
+    // 5b. Per-chat settings documents that reference this participant.
+    try {
+      const snap = await firestoreDb
+        .collection('chat_settings')
+        .where('participants', 'array-contains', uid)
+        .get();
+      for (const doc of snap.docs) {
+        await doc.ref.delete();
+      }
+    } catch (err) {
+      console.error(`[AccountDelete] chat_settings cleanup failed for ${uid}:`, err?.message || err);
+      errors.push('chat_settings');
+    }
+
     // 6. Profile + private subcollections (wallet/payment PII, blocks, mutes,
     //    linked devices). Recursive delete is required because Firestore does
     //    not cascade deletes automatically.
