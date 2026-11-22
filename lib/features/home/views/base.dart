@@ -839,14 +839,14 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    "Couldn't load chats",
+                    AppStrings.tr(ref, 'couldNotLoadChats'),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Please check your connection and tap retry.',
+                    AppStrings.tr(ref, 'checkConnectionRetry'),
                     textAlign: TextAlign.center,
                     style: TextStyle(color: colorTheme.greyColor, fontSize: 13),
                   ),
@@ -864,7 +864,7 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
                       setState(() {});
                     },
                     icon: const Icon(Icons.refresh_rounded, size: 18),
-                    label: const Text('Retry'),
+                    label: Text(AppStrings.tr(ref, 'retryTooltip')),
                   ),
                 ],
               ),
@@ -893,7 +893,11 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
               child: Padding(
                 padding: const EdgeInsets.all(32.0),
                 child: Text(
-                  'No chats found matching "$searchQuery"',
+                  AppStrings.tr(
+                    ref,
+                    'noChatsMatching',
+                    args: {'query': searchQuery},
+                  ),
                   style: const TextStyle(color: Colors.grey, fontSize: 15),
                 ),
               ),
@@ -923,14 +927,14 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'No conversations yet',
+                    AppStrings.tr(ref, 'noConversationsYet'),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Start chatting with your contacts with real-time translation and voice calls.',
+                    AppStrings.tr(ref, 'startChattingDesc'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: colorTheme.greyColor,
@@ -961,9 +965,12 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
                       );
                     },
                     icon: const Icon(Icons.add_comment_rounded, size: 20),
-                    label: const Text(
-                      'Start new chat',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    label: Text(
+                      AppStrings.tr(ref, 'startNewChat'),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
                     ),
                   ),
                 ],

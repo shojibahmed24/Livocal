@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
 
@@ -24,6 +26,7 @@ import 'firebase_options.dart';
 
 import 'package:livocal/features/calls/services/gemini_live_translator.dart';
 import 'package:livocal/features/settings/services/block_service.dart';
+import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/services/native_channel.dart';
 import 'package:livocal/shared/utils/navigator_key.dart';
 import 'package:livocal/theme/theme.dart';
@@ -103,11 +106,27 @@ void main() async {
   }
 
   ErrorWidget.builder = (details) => CustomErrorWidget(details: details);
+
+  // Render free instances cold-start in 10-30s. Wake the relay while the user
+  // is still on the login/home screen so the first translated call does not
+  // pay the cold-start penalty (and fail its 15s connect timeout).
+  unawaited(_warmUpRelay());
+
   return runApp(
     const ProviderScope(
       child: Livocal(),
     ),
   );
+}
+
+Future<void> _warmUpRelay() async {
+  try {
+    await http
+        .get(Uri.parse('${AppConfig.relayHttpBaseUrl}/health'))
+        .timeout(const Duration(seconds: 8));
+  } catch (e) {
+    debugPrint('Relay warm-up skipped: $e');
+  }
 }
 
 class Livocal extends ConsumerStatefulWidget {

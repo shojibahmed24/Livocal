@@ -202,6 +202,7 @@ void main() {
       expect(AppConfig.matchContactsUrl, endsWith('/api/contacts/match'));
       expect(AppConfig.iceServersUrl, endsWith('/api/webrtc/ice-servers'));
       expect(AppConfig.liveCallWsUrl, endsWith('/ws/live-call'));
+      expect(AppConfig.accountDeleteUrl, endsWith('/api/account/delete'));
     });
   });
 }
