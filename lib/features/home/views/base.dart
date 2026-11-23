@@ -1434,7 +1434,10 @@ class RecentChatWidget extends StatelessWidget {
               ? Icons.call_missed_outgoing_rounded
               : Icons.call_missed_rounded;
           iconCustomColor = Colors.redAccent;
-          attachmentLabel = isSentByMe ? 'মিসড কল' : 'মিসড ভয়েস কল';
+          attachmentLabel = AppStrings.ctx(
+            context,
+            isSentByMe ? 'missedCall' : 'missedVoiceCall',
+          );
         } else {
           attachmentIcon = isSentByMe
               ? Icons.call_made_rounded
@@ -1442,8 +1445,12 @@ class RecentChatWidget extends StatelessWidget {
           iconCustomColor =
               isDark ? Colors.tealAccent : const Color(0xFF5B6CF9);
           attachmentLabel = isSentByMe
-              ? (durStr.isNotEmpty ? "ভয়েস কল ($durStr)" : "ভয়েস কল")
-              : (durStr.isNotEmpty ? "ইনকামিং কল ($durStr)" : "ইনকামিং কল");
+              ? (durStr.isNotEmpty
+                  ? '${AppStrings.ctx(context, 'voiceCall')} ($durStr)'
+                  : AppStrings.ctx(context, 'voiceCall'))
+              : (durStr.isNotEmpty
+                  ? '${AppStrings.ctx(context, 'incomingCallLabel')} ($durStr)'
+                  : AppStrings.ctx(context, 'incomingCallLabel'));
         }
         text = attachmentLabel;
       }

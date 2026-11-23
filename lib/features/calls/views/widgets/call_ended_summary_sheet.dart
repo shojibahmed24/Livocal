@@ -112,9 +112,8 @@ class CallEndedSummarySheet extends ConsumerWidget {
     );
     final walletAsync = ref.watch(walletStreamProvider(currentUser.id));
 
-    final int billedMinutes = (hasDuration && isTranslated)
-        ? ((durationSeconds + 59) ~/ 60)
-        : 0;
+    final int billedMinutes =
+        (hasDuration && isTranslated) ? ((durationSeconds + 59) ~/ 60) : 0;
     final String costStr = isMissed
         ? AppStrings.tr(ref, 'zeroMinutesNotConnected')
         : (!isTranslated
@@ -196,7 +195,8 @@ class CallEndedSummarySheet extends ConsumerWidget {
 
               // Title
               Text(
-                isMissed ? 'কলটি সংযোগ করা যায়নি' : 'কল সমাপ্ত হয়েছে',
+                AppStrings.tr(
+                    ref, isMissed ? 'callNotConnectedTitle' : 'callEndedTitle'),
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -207,14 +207,17 @@ class CallEndedSummarySheet extends ConsumerWidget {
 
               // User Info Card
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: isDark
                       ? const Color(0xFF1E2A47)
                       : const Color(0xFFF3F5F7),
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-                    color: isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.06),
+                    color: isDark
+                        ? Colors.white12
+                        : Colors.black.withValues(alpha: 0.06),
                   ),
                 ),
                 child: Row(
@@ -293,12 +296,17 @@ class CallEndedSummarySheet extends ConsumerWidget {
               // Cost & Wallet Balance Breakdown Card
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E2A47) : const Color(0xFFF3F5F7),
+                  color: isDark
+                      ? const Color(0xFF1E2A47)
+                      : const Color(0xFFF3F5F7),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.07),
+                    color: isDark
+                        ? Colors.white12
+                        : Colors.black.withValues(alpha: 0.07),
                   ),
                 ),
                 child: Column(
@@ -348,7 +356,9 @@ class CallEndedSummarySheet extends ConsumerWidget {
                             Icon(
                               Icons.monetization_on_outlined,
                               size: 16,
-                              color: isDark ? Colors.amberAccent : Colors.orange.shade800,
+                              color: isDark
+                                  ? Colors.amberAccent
+                                  : Colors.orange.shade800,
                             ),
                             const SizedBox(width: 6),
                             Text(
@@ -365,7 +375,9 @@ class CallEndedSummarySheet extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.amberAccent : Colors.orange.shade800,
+                            color: isDark
+                                ? Colors.amberAccent
+                                : Colors.orange.shade800,
                           ),
                         ),
                       ],
@@ -434,13 +446,16 @@ class CallEndedSummarySheet extends ConsumerWidget {
                               width: double.infinity,
                               child: OutlinedButton.icon(
                                 style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: AppColors.primary),
-                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  side: const BorderSide(
+                                      color: AppColors.primary),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 8),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                 ),
-                                icon: const Icon(Icons.add_card_rounded, size: 16, color: AppColors.primary),
+                                icon: const Icon(Icons.add_card_rounded,
+                                    size: 16, color: AppColors.primary),
                                 label: Text(
                                   AppStrings.tr(ref, 'rechargeMinutes'),
                                   style: const TextStyle(
@@ -451,7 +466,8 @@ class CallEndedSummarySheet extends ConsumerWidget {
                                 ),
                                 onPressed: () {
                                   Navigator.of(context).pop();
-                                  showMinuteRechargeSheet(context, user: currentUser);
+                                  showMinuteRechargeSheet(context,
+                                      user: currentUser);
                                 },
                               ),
                             ),
@@ -531,7 +547,8 @@ class CallEndedSummarySheet extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      icon: const Icon(Icons.chat_bubble_outline_rounded, size: 19),
+                      icon: const Icon(Icons.chat_bubble_outline_rounded,
+                          size: 19),
                       label: Text(
                         AppStrings.tr(ref, 'sendMessage'),
                         style: const TextStyle(

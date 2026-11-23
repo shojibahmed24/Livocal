@@ -5227,6 +5227,11 @@ class AppStrings {
       'blockAction': 'Block',
       'blockFailed': 'Could not block {name}. Check your connection.',
       'addBlockedContact': 'Add blocked contact',
+      'callEndedTitle': 'Call ended',
+      'callNotConnectedTitle': 'Call not connected',
+      'missedCall': 'Missed call',
+      'missedVoiceCall': 'Missed voice call',
+      'incomingCallLabel': 'Incoming call',
     },
     'bn': {
       'updatesTab': 'আপডেট',
@@ -5326,6 +5331,11 @@ class AppStrings {
       'blockAction': 'ব্লক করুন',
       'blockFailed': '{name}-কে ব্লক করা যায়নি। সংযোগ দেখুন।',
       'addBlockedContact': 'ব্লক করা কন্টাক্ট যোগ করুন',
+      'callEndedTitle': 'কল সমাপ্ত হয়েছে',
+      'callNotConnectedTitle': 'কলটি সংযোগ করা যায়নি',
+      'missedCall': 'মিসড কল',
+      'missedVoiceCall': 'মিসড ভয়েস কল',
+      'incomingCallLabel': 'ইনকামিং কল',
     },
     'hi': {
       'updatesTab': 'अपडेट',
@@ -5425,6 +5435,11 @@ class AppStrings {
       'blockAction': 'ब्लॉक करें',
       'blockFailed': '{name} को ब्लॉक नहीं कर सके। कनेक्शन जाँचें।',
       'addBlockedContact': 'ब्लॉक किया संपर्क जोड़ें',
+      'callEndedTitle': 'कॉल समाप्त हुई',
+      'callNotConnectedTitle': 'कॉल कनेक्ट नहीं हुई',
+      'missedCall': 'छूटी कॉल',
+      'missedVoiceCall': 'छूटी वॉइस कॉल',
+      'incomingCallLabel': 'इनकमिंग कॉल',
     },
     'ar': {
       'updatesTab': 'التحديثات',
@@ -5522,6 +5537,11 @@ class AppStrings {
       'blockAction': 'حظر',
       'blockFailed': 'تعذّر حظر {name}. تحقّق من الاتصال.',
       'addBlockedContact': 'إضافة جهة اتصال محظورة',
+      'callEndedTitle': 'انتهت المكالمة',
+      'callNotConnectedTitle': 'لم يتم الاتصال',
+      'missedCall': 'مكالمة فائتة',
+      'missedVoiceCall': 'مكالمة صوتية فائتة',
+      'incomingCallLabel': 'مكالمة واردة',
     },
     'es': {
       'updatesTab': 'Novedades',
@@ -5622,6 +5642,11 @@ class AppStrings {
       'blockAction': 'Bloquear',
       'blockFailed': 'No se pudo bloquear a {name}. Revisa tu conexión.',
       'addBlockedContact': 'Añadir contacto bloqueado',
+      'callEndedTitle': 'Llamada finalizada',
+      'callNotConnectedTitle': 'La llamada no se conectó',
+      'missedCall': 'Llamada perdida',
+      'missedVoiceCall': 'Llamada de voz perdida',
+      'incomingCallLabel': 'Llamada entrante',
     },
     'fr': {
       'updatesTab': 'Actus',
@@ -5721,6 +5746,11 @@ class AppStrings {
       'blockAction': 'Bloquer',
       'blockFailed': 'Impossible de bloquer {name}. Vérifiez la connexion.',
       'addBlockedContact': 'Ajouter un contact bloqué',
+      'callEndedTitle': 'Appel terminé',
+      'callNotConnectedTitle': 'Appel non abouti',
+      'missedCall': 'Appel manqué',
+      'missedVoiceCall': 'Appel vocal manqué',
+      'incomingCallLabel': 'Appel entrant',
     },
     'de': {
       'updatesTab': 'Updates',
@@ -5822,6 +5852,11 @@ class AppStrings {
       'blockFailed':
           '{name} konnte nicht blockiert werden. Prüfe die Verbindung.',
       'addBlockedContact': 'Blockierten Kontakt hinzufügen',
+      'callEndedTitle': 'Anruf beendet',
+      'callNotConnectedTitle': 'Anruf nicht verbunden',
+      'missedCall': 'Verpasster Anruf',
+      'missedVoiceCall': 'Verpasster Sprachanruf',
+      'incomingCallLabel': 'Eingehender Anruf',
     },
   };
 
@@ -5862,6 +5897,12 @@ class AppStrings {
   static String trContext(BuildContext context, WidgetRef ref, String key) {
     final lang = ref.watch(appLocaleProvider).languageCode;
     return get(key, lang);
+  }
+
+  /// Locale-aware lookup for widgets that don't hold a `WidgetRef`.
+  static String ctx(BuildContext context, String key,
+      {Map<String, String>? args}) {
+    return get(key, Localizations.localeOf(context).languageCode, args: args);
   }
 
   static List<String> get supportedLanguages =>
