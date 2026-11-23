@@ -57,7 +57,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
       if (_transcriptScrollController.hasClients) {
         _transcriptScrollController.animateTo(
           _transcriptScrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 250),
+          duration: Duration(milliseconds: 250),
           curve: Curves.easeOut,
         );
       }
@@ -116,12 +116,12 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
               SnackBar(
                 content: Text(AppStrings.tr(ref, 'minutesExhaustedAlert')),
                 backgroundColor: Colors.redAccent,
-                duration: const Duration(seconds: 4),
+                duration: Duration(seconds: 4),
               ),
             );
           } else if (error == 'CALL_CONNECTION_FAILED') {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
+              SnackBar(
                 content: Text('Audio stream could not be established. Please check your network and try again.'),
                 backgroundColor: Colors.redAccent,
                 duration: Duration(seconds: 4),
@@ -154,19 +154,19 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
         final shouldEnd = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            backgroundColor: const Color(0xFF16203A),
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text('End call?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            content: const Text('Are you sure you want to end this call?', style: TextStyle(color: Colors.white70)),
+            title: Text('End call?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
+            content: Text('Are you sure you want to end this call?', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Keep Talking', style: TextStyle(color: AppColors.primary)),
+                child: Text('Keep Talking', style: TextStyle(color: AppColors.primary)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
                 onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('End Call', style: TextStyle(color: Colors.white)),
+                child: Text('End Call', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
               ),
             ],
           ),
@@ -179,13 +179,13 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFF0A0F1E),
+        backgroundColor: Theme.of(context).colorScheme.surface,
         body: SafeArea(
           child: Column(
             children: [
               // 1. Top Call Status & Peer Header
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+                padding: EdgeInsets.fromLTRB(16, 10, 16, 6),
                 child: Row(
                   children: [
                     CircleAvatar(
@@ -193,10 +193,10 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                       backgroundColor: colorTheme.appBarColor,
                       backgroundImage: peerAvatar.isNotEmpty
                           ? CachedNetworkImageProvider(peerAvatar)
-                          : const AssetImage('assets/images/avatar.png')
+                          : AssetImage('assets/images/avatar.png')
                               as ImageProvider,
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,13 +205,13 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                             peerName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontSize: 17.5,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          SizedBox(height: 2),
                           Row(
                             children: [
                               Container(
@@ -226,7 +226,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                                   shape: BoxShape.circle,
                                 ),
                               ),
-                              const SizedBox(width: 6),
+                              SizedBox(width: 6),
                               Flexible(
                                 child: Text(
                                   '$formattedTime • $dynamicLanguageIndicator',
@@ -239,9 +239,9 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                                 ),
                               ),
                               if (callState.networkQuality != CallNetworkQuality.good) ...[
-                                const SizedBox(width: 6),
+                                SizedBox(width: 6),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(
+                                  padding: EdgeInsets.symmetric(
                                     horizontal: 5,
                                     vertical: 1.5,
                                   ),
@@ -256,13 +256,13 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                                     children: [
                                       Text(
                                         callState.networkQuality.emoji,
-                                        style: const TextStyle(fontSize: 8.5),
+                                        style: TextStyle(fontSize: 8.5),
                                       ),
-                                      const SizedBox(width: 3),
+                                      SizedBox(width: 3),
                                       Text(
                                         callState.networkQuality.label,
-                                        style: const TextStyle(
-                                          color: Colors.white,
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface,
                                           fontSize: 9.5,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -272,9 +272,9 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                                 ),
                               ],
                               if (callState.isLowDataMode && callState.networkQuality == CallNetworkQuality.good) ...[
-                                const SizedBox(width: 6),
+                                SizedBox(width: 6),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(
+                                  padding: EdgeInsets.symmetric(
                                     horizontal: 5,
                                     vertical: 1.5,
                                   ),
@@ -282,15 +282,15 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                                     color: Colors.amber.shade900.withValues(alpha: 0.85),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
-                                  child: const Row(
+                                  child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.bolt, color: Colors.white, size: 10),
+                                      Icon(Icons.bolt, color: Theme.of(context).colorScheme.onSurface, size: 10),
                                       SizedBox(width: 2),
                                       Text(
                                         'Low Data',
                                         style: TextStyle(
-                                          color: Colors.white,
+                                          color: Theme.of(context).colorScheme.onSurface,
                                           fontSize: 9.5,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -324,36 +324,36 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
               if (callState.webrtcState == WebRtcCallState.disconnected ||
                   callState.webrtcState == WebRtcCallState.failed)
                 Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  margin: EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.red.shade900.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
                     children: [
-                      const SizedBox(
+                      SizedBox(
                         width: 14,
                         height: 14,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.onSurface),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           callState.webrtcState == WebRtcCallState.disconnected
                               ? 'Network connection lost. Reconnecting...'
                               : 'Call connection lost. Disconnecting in 10s...',
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       InkWell(
                         onTap: () {
                           HapticFeedback.lightImpact();
@@ -361,27 +361,27 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                         },
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
+                          padding: EdgeInsets.symmetric(
                             horizontal: 10,
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white24,
+                            color: Theme.of(context).colorScheme.outlineVariant,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
                                 Icons.refresh_rounded,
                                 size: 14,
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                               SizedBox(width: 4),
                               Text(
                                 'Retry',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -397,21 +397,21 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
               if (callState.webrtcState == WebRtcCallState.connected &&
                   callState.networkQuality == CallNetworkQuality.poor)
                 Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  margin: EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.amber.shade900.withValues(alpha: 0.85),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.wifi_off_rounded, color: Colors.white, size: 16),
+                      Icon(Icons.wifi_off_rounded, color: Theme.of(context).colorScheme.onSurface, size: 16),
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Unstable internet detected • Adaptive Low-Data mode active (16kbps voice)',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontSize: 11.5,
                             fontWeight: FontWeight.w600,
                           ),
@@ -424,8 +424,8 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
               // Translation Minutes Exhausted Banner with Recharge CTA
               if (callState.isTranslationExhausted)
                 Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  margin: EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.amber.shade900.withValues(alpha: 0.95),
                     borderRadius: BorderRadius.circular(10),
@@ -435,31 +435,31 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.warning_amber_rounded,
                         color: Colors.amberAccent,
                         size: 20,
                       ),
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               AppStrings.tr(ref, 'minutesExhaustedTitle'),
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            SizedBox(height: 2),
                             Text(
                               (session?.isIncoming ?? false)
                                   ? AppStrings.tr(ref, 'callerMinutesExhaustedDirectVoiceDesc')
                                   : AppStrings.tr(ref, 'callContinuingDirectVoiceDesc'),
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.9),
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.9),
                                 fontSize: 11,
                               ),
                             ),
@@ -467,12 +467,12 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                         ),
                       ),
                       if (!(session?.isIncoming ?? false)) ...[
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
+                            backgroundColor: Theme.of(context).colorScheme.onSurface,
                             foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(
+                            padding: EdgeInsets.symmetric(
                               horizontal: 12,
                               vertical: 6,
                             ),
@@ -497,7 +497,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                           },
                           child: Text(
                             AppStrings.tr(ref, 'rechargeNowBtn'),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 11.5,
                             ),
@@ -510,10 +510,10 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
 
               // 2. Gemini Live AI Status + Dynamic N x N Any-Language Switcher HUD
               Container(
-                margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                padding: const EdgeInsets.all(12),
+                margin: EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF16203A),
+                  color: Theme.of(context).colorScheme.surfaceContainer,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: _borderColorForGeminiState(
@@ -532,7 +532,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                           rmsLevel: callState.micRmsLevel,
                           activeColor: colorTheme.greenColor,
                         ),
-                        const SizedBox(width: 10),
+                        SizedBox(width: 10),
                         Expanded(
                           child: Row(
                             children: [
@@ -540,8 +540,8 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                                 child: Text(
                                   callState.geminiState.label,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSurface,
                                     fontWeight: FontWeight.w600,
                                     fontSize: 13,
                                   ),
@@ -549,7 +549,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                               ),
                               if (callState.geminiState ==
                                   GeminiLiveState.error) ...[
-                                const SizedBox(width: 8),
+                                SizedBox(width: 8),
                                 InkWell(
                                   onTap: () {
                                     HapticFeedback.lightImpact();
@@ -557,7 +557,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                                   },
                                   borderRadius: BorderRadius.circular(12),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(
+                                    padding: EdgeInsets.symmetric(
                                       horizontal: 8,
                                       vertical: 3,
                                     ),
@@ -565,19 +565,19 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                                       color: Colors.amber.shade800,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: const Row(
+                                    child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Icon(
                                           Icons.refresh_rounded,
                                           size: 13,
-                                          color: Colors.white,
+                                          color: Theme.of(context).colorScheme.onSurface,
                                         ),
                                         SizedBox(width: 3),
                                         Text(
                                           'Retry',
                                           style: TextStyle(
-                                            color: Colors.white,
+                                            color: Theme.of(context).colorScheme.onSurface,
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -593,7 +593,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                         Switch(
                           value: callState.translationEnabled,
                           activeTrackColor: AppColors.primary,
-                          activeThumbColor: Colors.white,
+                          activeThumbColor: Theme.of(context).colorScheme.onSurface,
                           onChanged: (val) {
                             HapticFeedback.lightImpact();
                             controller.toggleTranslationEnabled(val);
@@ -601,7 +601,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     // Universal N x N Language Pair Selector Row (Change ANY language mid-call!)
                     Row(
                       children: [
@@ -618,7 +618,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                                 final synced = await controller.setMyLanguage(picked.code);
                                 if (!synced && context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
+                                    SnackBar(
                                       content: Text('Language applied locally (cloud sync offline).'),
                                       duration: Duration(seconds: 2),
                                     ),
@@ -627,12 +627,12 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                               }
                             },
                             child: Container(
-                              padding: const EdgeInsets.symmetric(
+                              padding: EdgeInsets.symmetric(
                                 horizontal: 10,
                                 vertical: 8,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF0A0F1E),
+                                color: Theme.of(context).colorScheme.surface,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Column(
@@ -646,13 +646,13 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
+                                  SizedBox(height: 2),
                                   Text(
                                     '${myLang.flagEmoji} ${myLang.nativeName}',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Colors.white,
+                                    style: TextStyle(
+                                      color: Theme.of(context).colorScheme.onSurface,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13.5,
                                     ),
@@ -663,12 +663,12 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          padding: EdgeInsets.symmetric(horizontal: 6),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(20),
                             onTap: controller.swapLanguages,
                             child: Container(
-                              padding: const EdgeInsets.all(8),
+                              padding: EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: colorTheme.greenColor.withValues(alpha: 0.18),
                                 shape: BoxShape.circle,
@@ -695,18 +695,18 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                               }
                             },
                             child: Container(
-                              padding: const EdgeInsets.symmetric(
+                              padding: EdgeInsets.symmetric(
                                 horizontal: 10,
                                 vertical: 8,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF0A0F1E),
+                                color: Theme.of(context).colorScheme.surface,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'PEER SPEAKS & HEARS',
                                     style: TextStyle(
                                       color: Color(0xFF53BDEC),
@@ -714,13 +714,13 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
+                                  SizedBox(height: 2),
                                   Text(
                                     '${peerLang.flagEmoji} ${peerLang.nativeName}',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Colors.white,
+                                    style: TextStyle(
+                                      color: Theme.of(context).colorScheme.onSurface,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13.5,
                                     ),
@@ -739,13 +739,13 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
               // 3. Live Bilingual Subtitle / Transcript Stream Area
               Expanded(
                 child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  margin: EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0A0F1E),
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.06),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.06),
                     ),
                   ),
                   child: callState.transcripts.isEmpty
@@ -782,7 +782,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                                   },
                                   borderRadius: BorderRadius.circular(16),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(
+                                    padding: EdgeInsets.symmetric(
                                       horizontal: 10,
                                       vertical: 5,
                                     ),
@@ -796,16 +796,16 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                                         ),
                                       ],
                                     ),
-                                    child: const Row(
+                                    child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Icon(Icons.arrow_downward,
-                                            color: Colors.white, size: 13),
+                                            color: Theme.of(context).colorScheme.onSurface, size: 13),
                                         SizedBox(width: 4),
                                         Text(
                                           'Latest',
                                           style: TextStyle(
-                                            color: Colors.white,
+                                            color: Theme.of(context).colorScheme.onSurface,
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -823,11 +823,11 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
               // 5. 3-Way Audio Ducking Mode Bar
               Padding(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                    EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                 child: Container(
-                  padding: const EdgeInsets.all(4),
+                  padding: EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF16203A),
+                    color: Theme.of(context).colorScheme.surfaceContainer,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -837,7 +837,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                         child: GestureDetector(
                           onTap: () => controller.setAudioMode(mode),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 7),
+                            padding: EdgeInsets.symmetric(vertical: 7),
                             decoration: BoxDecoration(
                               color: selected
                                   ? colorTheme.greenColor
@@ -848,7 +848,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                               mode.label,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: selected ? Colors.black : Colors.white70,
+                                color: selected ? Colors.black : Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontWeight: selected
                                     ? FontWeight.bold
                                     : FontWeight.w500,
@@ -865,11 +865,11 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
 
               // 6. Bottom WhatsApp Call Controls Dock
               Container(
-                margin: const EdgeInsets.only(top: 6),
+                margin: EdgeInsets.only(top: 6),
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF16203A),
+                    EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainer,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
                 ),
                 child: Row(
@@ -908,7 +908,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                             : 'translateOffBtn',
                       ),
                       isActive: callState.translationEnabled,
-                      activeColor: const Color(0xFF53BDEC),
+                      activeColor: Color(0xFF53BDEC),
                       onTap: () => controller.toggleTranslationEnabled(!callState.translationEnabled),
                     ),
                     Semantics(
@@ -921,7 +921,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                           if (context.mounted) Navigator.of(context).pop();
                         },
                         borderRadius: BorderRadius.circular(32),
-                        child: const CircleAvatar(
+                        child: CircleAvatar(
                           radius: 28,
                           backgroundColor: Color(0xFFE53935),
                           child: Icon(
@@ -945,7 +945,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
   Color _borderColorForGeminiState(GeminiLiveState state, Color green) {
     switch (state) {
       case GeminiLiveState.speaking:
-        return const Color(0xFF53BDEC);
+        return Color(0xFF53BDEC);
       case GeminiLiveState.translating:
         return Colors.amberAccent;
       case GeminiLiveState.listening:
@@ -954,7 +954,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
       case GeminiLiveState.error:
         return Colors.redAccent;
       default:
-        return Colors.white24;
+        return Theme.of(context).colorScheme.outlineVariant;
     }
   }
 }
@@ -964,7 +964,7 @@ class _AnimatedVoicePulseDot extends StatelessWidget {
   final double rmsLevel;
   final Color activeColor;
 
-  const _AnimatedVoicePulseDot({
+  _AnimatedVoicePulseDot({
     required this.state,
     required this.rmsLevel,
     required this.activeColor,
@@ -975,7 +975,7 @@ class _AnimatedVoicePulseDot extends StatelessWidget {
     final size = 12.0 + (rmsLevel * 10.0);
     Color dotColor = activeColor;
     if (state == GeminiLiveState.speaking) {
-      dotColor = const Color(0xFF53BDEC);
+      dotColor = Color(0xFF53BDEC);
     } else if (state == GeminiLiveState.translating) {
       dotColor = Colors.amber;
     }
@@ -984,7 +984,7 @@ class _AnimatedVoicePulseDot extends StatelessWidget {
       height: 24,
       child: Center(
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
+          duration: Duration(milliseconds: 120),
           width: size,
           height: size,
           decoration: BoxDecoration(
@@ -1007,7 +1007,7 @@ class _AnimatedVoicePulseDot extends StatelessWidget {
 class _TranscriptBubbleCard extends StatelessWidget {
   final LiveTranscriptEntry entry;
 
-  const _TranscriptBubbleCard({required this.entry});
+  _TranscriptBubbleCard({required this.entry});
 
   @override
   Widget build(BuildContext context) {
@@ -1018,20 +1018,20 @@ class _TranscriptBubbleCard extends StatelessWidget {
     return Align(
       alignment: isSelf ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 5),
-        padding: const EdgeInsets.all(11),
+        margin: EdgeInsets.symmetric(vertical: 5),
+        padding: EdgeInsets.all(11),
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width * 0.84,
         ),
         decoration: BoxDecoration(
           color: isSelf
-              ? const Color(0xFF3F4ED8).withValues(alpha: 0.85)
-              : const Color(0xFF16203A),
+              ? Color(0xFF3F4ED8).withValues(alpha: 0.85)
+              : Theme.of(context).colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelf
                 ? AppColors.primary.withValues(alpha: 0.4)
-                : const Color(0xFF53BDEC).withValues(alpha: 0.35),
+                : Color(0xFF53BDEC).withValues(alpha: 0.35),
           ),
         ),
         child: Column(
@@ -1045,24 +1045,24 @@ class _TranscriptBubbleCard extends StatelessWidget {
                     entry.speakerName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white70,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: Colors.black26,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     '${src.flagEmoji} ${src.codeUpper} ➔ ${tgt.flagEmoji} ${tgt.codeUpper}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.amberAccent,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -1071,30 +1071,30 @@ class _TranscriptBubbleCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 5),
+            SizedBox(height: 5),
             Text(
               entry.originalText,
-              style: const TextStyle(
-                color: Colors.white70,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 12.5,
                 fontStyle: FontStyle.italic,
               ),
             ),
-            const Divider(color: Colors.white24, height: 10),
+            Divider(color: Theme.of(context).colorScheme.outlineVariant, height: 10),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
+                Icon(
                   Icons.volume_up_rounded,
                   color: Color(0xFF53BDEC),
                   size: 16,
                 ),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     entry.translatedText,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 14.5,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1116,7 +1116,7 @@ class _CallControlButton extends StatelessWidget {
   final Color activeColor;
   final VoidCallback onTap;
 
-  const _CallControlButton({
+  _CallControlButton({
     required this.icon,
     required this.label,
     required this.isActive,
@@ -1146,18 +1146,18 @@ class _CallControlButton extends StatelessWidget {
                 radius: 24,
                 backgroundColor: isActive
                     ? activeColor.withValues(alpha: 0.25)
-                    : Colors.white10,
+                    : Theme.of(context).colorScheme.surfaceContainerHigh,
                 child: Icon(
                   icon,
-                  color: isActive ? activeColor : Colors.white,
+                  color: isActive ? activeColor : Theme.of(context).colorScheme.onSurface,
                   size: 22,
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
                 label,
                 style: TextStyle(
-                  color: isActive ? activeColor : Colors.white70,
+                  color: isActive ? activeColor : Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 11,
                   fontWeight:
                       isActive ? FontWeight.bold : FontWeight.normal,
