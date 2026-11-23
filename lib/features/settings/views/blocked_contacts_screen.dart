@@ -37,16 +37,20 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
   Future<void> _handleUnblock(BlockedContactInfo contact) async {
     final confirmed = await showAppDialog<bool>(
       context: context,
-      title: 'Unblock contact',
+      title: AppStrings.tr(ref, 'unblockContact'),
       icon: Icons.lock_open_rounded,
-      contentText: 'Unblock ${contact.name}? They will be able to send you messages and call you.',
+      contentText: AppStrings.tr(
+        ref,
+        'unblockConfirmBody',
+        args: {'name': contact.name},
+      ),
       actions: [
         AppDialogAction(
           label: AppStrings.tr(ref, 'cancel'),
           onPressed: () => Navigator.pop(context, false),
         ),
         AppDialogAction(
-          label: 'Unblock',
+          label: AppStrings.tr(ref, 'unblockAction'),
           isPrimary: true,
           onPressed: () => Navigator.pop(context, true),
         ),
@@ -60,7 +64,11 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
         if (mounted) {
           showSnackBar(
             context: context,
-            content: 'Unblocked ${contact.name}',
+            content: AppStrings.tr(
+              ref,
+              'unblockedName',
+              args: {'name': contact.name},
+            ),
             type: SnacBarType.info,
           );
         }
@@ -68,7 +76,11 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
         if (mounted) {
           showSnackBar(
             context: context,
-            content: 'Failed to unblock ${contact.name}. Please check connection.',
+            content: AppStrings.tr(
+              ref,
+              'unblockFailed',
+              args: {'name': contact.name},
+            ),
             type: SnacBarType.error,
           );
         }
@@ -133,7 +145,8 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
                               child: Text(
                                 AppStrings.tr(ref, 'noContactsToBlock'),
                                 style: TextStyle(
-                                  color: isDark ? Colors.white60 : Colors.black54,
+                                  color:
+                                      isDark ? Colors.white60 : Colors.black54,
                                 ),
                               ),
                             )
@@ -146,8 +159,8 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
                                 final c = availableContacts[index];
                                 return ListTile(
                                   leading: CircleAvatar(
-                                    backgroundColor:
-                                        AppColors.primary.withValues(alpha: 0.15),
+                                    backgroundColor: AppColors.primary
+                                        .withValues(alpha: 0.15),
                                     child: Text(
                                       c.displayName.isNotEmpty
                                           ? c.displayName[0].toUpperCase()
@@ -180,7 +193,11 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
     if (selectedContact != null && mounted) {
       final confirmed = await showAppDialog<bool>(
         context: context,
-        title: 'Block ${selectedContact.displayName}?',
+        title: AppStrings.tr(
+          ref,
+          'blockConfirmTitle',
+          args: {'name': selectedContact.displayName},
+        ),
         icon: Icons.block_flipped,
         iconColor: Colors.redAccent,
         contentText: AppStrings.tr(ref, 'blockedContactsDesc'),
@@ -190,7 +207,7 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
             onPressed: () => Navigator.pop(context, false),
           ),
           AppDialogAction(
-            label: 'BLOCK',
+            label: AppStrings.tr(ref, 'blockAction'),
             isDestructive: true,
             onPressed: () => Navigator.pop(context, true),
           ),
@@ -233,7 +250,11 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
           if (mounted) {
             showSnackBar(
               context: context,
-              content: 'Failed to block ${selectedContact.displayName}. Please check connection.',
+              content: AppStrings.tr(
+                ref,
+                'blockFailed',
+                args: {'name': selectedContact.displayName},
+              ),
               type: SnacBarType.error,
             );
           }
@@ -252,7 +273,7 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.person_add_alt_1_rounded),
-            tooltip: 'Add blocked contact',
+            tooltip: AppStrings.tr(ref, 'addBlockedContact'),
             onPressed: _pickContactToBlock,
           ),
         ],
@@ -277,7 +298,8 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
                           child: Icon(
                             Icons.block_flipped,
                             size: 64,
-                            color: isDark ? Colors.white38 : Colors.grey.shade400,
+                            color:
+                                isDark ? Colors.white38 : Colors.grey.shade400,
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -325,7 +347,8 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
                           return ListTile(
                             leading: CircleAvatar(
                               radius: 22,
-                              backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                              backgroundColor:
+                                  AppColors.primary.withValues(alpha: 0.15),
                               backgroundImage: item.avatarUrl.isNotEmpty
                                   ? NetworkImage(item.avatarUrl)
                                   : null,
@@ -354,7 +377,9 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
                                     item.phone,
                                     style: TextStyle(
                                       fontSize: 13,
-                                      color: isDark ? Colors.white54 : Colors.black45,
+                                      color: isDark
+                                          ? Colors.white54
+                                          : Colors.black45,
                                     ),
                                   )
                                 : null,

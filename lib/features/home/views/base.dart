@@ -1539,7 +1539,10 @@ class RecentChatWidget extends StatelessWidget {
       },
       leading: Semantics(
         button: true,
-        label: 'View contact profile',
+        label: AppStrings.get(
+          'viewContactProfile',
+          SharedPref.instance.getString('app_language') ?? 'en',
+        ),
         child: ExcludeSemantics(
           child: GestureDetector(
             onTap: () {

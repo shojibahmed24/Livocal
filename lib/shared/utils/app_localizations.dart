@@ -5218,6 +5218,15 @@ class AppStrings {
       'shareWithAllContacts': 'Share with all contacts in phonebook',
       'hideStatusFromSelected': 'Hide status from selected contacts',
       'shareOnlyWithChosen': 'Share only with chosen friends',
+      'unblockAction': 'Unblock',
+      'unblockConfirmBody':
+          'Unblock {name}? They will be able to send you messages and call you.',
+      'unblockedName': 'Unblocked {name}',
+      'unblockFailed': 'Could not unblock {name}. Check your connection.',
+      'blockConfirmTitle': 'Block {name}?',
+      'blockAction': 'Block',
+      'blockFailed': 'Could not block {name}. Check your connection.',
+      'addBlockedContact': 'Add blocked contact',
     },
     'bn': {
       'updatesTab': 'আপডেট',
@@ -5308,6 +5317,15 @@ class AppStrings {
       'shareWithAllContacts': 'ফোনবুকের সব কন্টাক্টের সাথে শেয়ার',
       'hideStatusFromSelected': 'নির্বাচিত কন্টাক্ট থেকে স্ট্যাটাস লুকান',
       'shareOnlyWithChosen': 'শুধু বাছাই করা বন্ধুদের সাথে শেয়ার',
+      'unblockAction': 'ব্লক তুলুন',
+      'unblockConfirmBody':
+          '{name}-এর ব্লক তুলবেন? এরপর সে আপনাকে মেসেজ ও কল করতে পারবে।',
+      'unblockedName': '{name}-এর ব্লক তোলা হয়েছে',
+      'unblockFailed': '{name}-এর ব্লক তোলা যায়নি। সংযোগ দেখুন।',
+      'blockConfirmTitle': '{name}-কে ব্লক করবেন?',
+      'blockAction': 'ব্লক করুন',
+      'blockFailed': '{name}-কে ব্লক করা যায়নি। সংযোগ দেখুন।',
+      'addBlockedContact': 'ব্লক করা কন্টাক্ট যোগ করুন',
     },
     'hi': {
       'updatesTab': 'अपडेट',
@@ -5398,6 +5416,15 @@ class AppStrings {
       'shareWithAllContacts': 'फ़ोनबुक के सभी संपर्कों के साथ साझा करें',
       'hideStatusFromSelected': 'चुने हुए संपर्कों से स्टेटस छिपाएँ',
       'shareOnlyWithChosen': 'केवल चुने हुए दोस्तों के साथ साझा करें',
+      'unblockAction': 'अनब्लॉक करें',
+      'unblockConfirmBody':
+          '{name} को अनब्लॉक करें? इसके बाद वे आपको संदेश और कॉल कर सकेंगे।',
+      'unblockedName': '{name} अनब्लॉक हुआ',
+      'unblockFailed': '{name} को अनब्लॉक नहीं कर सके। कनेक्शन जाँचें।',
+      'blockConfirmTitle': '{name} को ब्लॉक करें?',
+      'blockAction': 'ब्लॉक करें',
+      'blockFailed': '{name} को ब्लॉक नहीं कर सके। कनेक्शन जाँचें।',
+      'addBlockedContact': 'ब्लॉक किया संपर्क जोड़ें',
     },
     'ar': {
       'updatesTab': 'التحديثات',
@@ -5487,6 +5514,14 @@ class AppStrings {
       'shareWithAllContacts': 'مشاركة مع كل جهات الاتصال',
       'hideStatusFromSelected': 'إخفاء الحالة عن جهات محددة',
       'shareOnlyWithChosen': 'المشاركة فقط مع أصدقاء مختارين',
+      'unblockAction': 'إلغاء الحظر',
+      'unblockConfirmBody': 'إلغاء حظر {name}؟ سيتمكن من مراسلتك والاتصال بك.',
+      'unblockedName': 'تم إلغاء حظر {name}',
+      'unblockFailed': 'تعذّر إلغاء حظر {name}. تحقّق من الاتصال.',
+      'blockConfirmTitle': 'حظر {name}؟',
+      'blockAction': 'حظر',
+      'blockFailed': 'تعذّر حظر {name}. تحقّق من الاتصال.',
+      'addBlockedContact': 'إضافة جهة اتصال محظورة',
     },
     'es': {
       'updatesTab': 'Novedades',
@@ -5578,6 +5613,15 @@ class AppStrings {
       'shareWithAllContacts': 'Compartir con todos los contactos',
       'hideStatusFromSelected': 'Ocultar a contactos seleccionados',
       'shareOnlyWithChosen': 'Compartir solo con amigos elegidos',
+      'unblockAction': 'Desbloquear',
+      'unblockConfirmBody':
+          '¿Desbloquear a {name}? Podrá enviarte mensajes y llamarte.',
+      'unblockedName': '{name} desbloqueado',
+      'unblockFailed': 'No se pudo desbloquear a {name}. Revisa tu conexión.',
+      'blockConfirmTitle': '¿Bloquear a {name}?',
+      'blockAction': 'Bloquear',
+      'blockFailed': 'No se pudo bloquear a {name}. Revisa tu conexión.',
+      'addBlockedContact': 'Añadir contacto bloqueado',
     },
     'fr': {
       'updatesTab': 'Actus',
@@ -5668,6 +5712,15 @@ class AppStrings {
       'shareWithAllContacts': 'Partager avec tous les contacts',
       'hideStatusFromSelected': 'Masquer à certains contacts',
       'shareOnlyWithChosen': 'Partager seulement avec des amis choisis',
+      'unblockAction': 'Débloquer',
+      'unblockConfirmBody':
+          'Débloquer {name} ? Cette personne pourra vous écrire et vous appeler.',
+      'unblockedName': '{name} débloqué',
+      'unblockFailed': 'Impossible de débloquer {name}. Vérifiez la connexion.',
+      'blockConfirmTitle': 'Bloquer {name} ?',
+      'blockAction': 'Bloquer',
+      'blockFailed': 'Impossible de bloquer {name}. Vérifiez la connexion.',
+      'addBlockedContact': 'Ajouter un contact bloqué',
     },
     'de': {
       'updatesTab': 'Updates',
@@ -5758,6 +5811,17 @@ class AppStrings {
       'shareWithAllContacts': 'Mit allen Kontakten teilen',
       'hideStatusFromSelected': 'Vor ausgewählten Kontakten verbergen',
       'shareOnlyWithChosen': 'Nur mit ausgewählten Freunden teilen',
+      'unblockAction': 'Entsperren',
+      'unblockConfirmBody':
+          '{name} entsperren? Die Person kann dir wieder schreiben und dich anrufen.',
+      'unblockedName': '{name} entsperrt',
+      'unblockFailed':
+          '{name} konnte nicht entsperrt werden. Prüfe die Verbindung.',
+      'blockConfirmTitle': '{name} blockieren?',
+      'blockAction': 'Blockieren',
+      'blockFailed':
+          '{name} konnte nicht blockiert werden. Prüfe die Verbindung.',
+      'addBlockedContact': 'Blockierten Kontakt hinzufügen',
     },
   };
 
