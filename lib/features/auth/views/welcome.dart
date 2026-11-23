@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -158,12 +157,29 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
     );
   }
 
+  static String _languageLabel(String code) {
+    switch (code) {
+      case 'bn':
+        return 'বাংলা (Bangla)';
+      case 'hi':
+        return 'हिन्दी (Hindi)';
+      case 'ar':
+        return 'العربية (Arabic)';
+      case 'es':
+        return 'Español (Spanish)';
+      case 'fr':
+        return 'Français (French)';
+      case 'de':
+        return 'Deutsch (German)';
+      default:
+        return 'English';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorTheme = Theme.of(context).custom.colorTheme;
-    final currentLocale = ref.watch(appLocaleProvider);
-    final isBengali = currentLocale.languageCode == 'bn';
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : Colors.white,
@@ -325,46 +341,54 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
 
             const SizedBox(height: 24),
 
-            // Legal notice with Tappable Links
+            // Legal notice with tappable links (localized sentence + links)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32.0),
-              child: RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    height: 1.4,
-                    color: isDark
-                        ? const Color(0xFF8A96B2)
-                        : const Color(0xFF5B6785),
+              child: Column(
+                children: [
+                  Text(
+                    AppStrings.tr(ref, 'legalConsentShort'),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      height: 1.4,
+                      color: isDark
+                          ? const Color(0xFF8A96B2)
+                          : const Color(0xFF5B6785),
+                    ),
                   ),
-                  children: [
-                    const TextSpan(text: 'Read our '),
-                    TextSpan(
-                      text: 'Privacy Policy',
-                      style: const TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                        decoration: TextDecoration.underline,
+                  const SizedBox(height: 6),
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 16,
+                    children: [
+                      InkWell(
+                        onTap: () => _openUrl(AppConfig.privacyPolicyUrl),
+                        child: Text(
+                          AppStrings.tr(ref, 'legalPrivacyPolicy'),
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
                       ),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () => _openUrl(AppConfig.privacyPolicyUrl),
-                    ),
-                    const TextSpan(
-                        text: '. Tap "Agree and continue" to accept the '),
-                    TextSpan(
-                      text: 'Terms of Service',
-                      style: const TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                        decoration: TextDecoration.underline,
+                      InkWell(
+                        onTap: _showTermsDialog,
+                        child: Text(
+                          AppStrings.tr(ref, 'legalTermsOfService'),
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
                       ),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = _showTermsDialog,
-                    ),
-                    const TextSpan(text: '.'),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ),
             ),
 
@@ -412,7 +436,9 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      isBengali ? 'বাংলা (Bangla)' : 'English',
+                      _languageLabel(
+                        ref.watch(appLocaleProvider).languageCode,
+                      ),
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,

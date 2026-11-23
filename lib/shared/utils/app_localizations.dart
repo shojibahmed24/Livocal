@@ -5232,6 +5232,9 @@ class AppStrings {
       'missedCall': 'Missed call',
       'missedVoiceCall': 'Missed voice call',
       'incomingCallLabel': 'Incoming call',
+      'legalConsentShort': 'By continuing you agree to our policies.',
+      'legalPrivacyPolicy': 'Privacy Policy',
+      'legalTermsOfService': 'Terms of Service',
     },
     'bn': {
       'updatesTab': 'আপডেট',
@@ -5336,6 +5339,10 @@ class AppStrings {
       'missedCall': 'মিসড কল',
       'missedVoiceCall': 'মিসড ভয়েস কল',
       'incomingCallLabel': 'ইনকামিং কল',
+      'legalConsentShort':
+          'চালিয়ে যাওয়ার মাধ্যমে আপনি আমাদের নীতিমালায় সম্মত হচ্ছেন।',
+      'legalPrivacyPolicy': 'গোপনীয়তা নীতি',
+      'legalTermsOfService': 'ব্যবহারের শর্তাবলী',
     },
     'hi': {
       'updatesTab': 'अपडेट',
@@ -5440,6 +5447,9 @@ class AppStrings {
       'missedCall': 'छूटी कॉल',
       'missedVoiceCall': 'छूटी वॉइस कॉल',
       'incomingCallLabel': 'इनकमिंग कॉल',
+      'legalConsentShort': 'जारी रखकर आप हमारी नीतियों से सहमत होते हैं।',
+      'legalPrivacyPolicy': 'गोपनीयता नीति',
+      'legalTermsOfService': 'सेवा की शर्तें',
     },
     'ar': {
       'updatesTab': 'التحديثات',
@@ -5542,6 +5552,9 @@ class AppStrings {
       'missedCall': 'مكالمة فائتة',
       'missedVoiceCall': 'مكالمة صوتية فائتة',
       'incomingCallLabel': 'مكالمة واردة',
+      'legalConsentShort': 'بالمتابعة فإنك توافق على سياساتنا.',
+      'legalPrivacyPolicy': 'سياسة الخصوصية',
+      'legalTermsOfService': 'شروط الخدمة',
     },
     'es': {
       'updatesTab': 'Novedades',
@@ -5647,6 +5660,9 @@ class AppStrings {
       'missedCall': 'Llamada perdida',
       'missedVoiceCall': 'Llamada de voz perdida',
       'incomingCallLabel': 'Llamada entrante',
+      'legalConsentShort': 'Al continuar aceptas nuestras políticas.',
+      'legalPrivacyPolicy': 'Política de privacidad',
+      'legalTermsOfService': 'Términos del servicio',
     },
     'fr': {
       'updatesTab': 'Actus',
@@ -5751,6 +5767,9 @@ class AppStrings {
       'missedCall': 'Appel manqué',
       'missedVoiceCall': 'Appel vocal manqué',
       'incomingCallLabel': 'Appel entrant',
+      'legalConsentShort': 'En continuant, vous acceptez nos politiques.',
+      'legalPrivacyPolicy': 'Politique de confidentialité',
+      'legalTermsOfService': 'Conditions d’utilisation',
     },
     'de': {
       'updatesTab': 'Updates',
@@ -5857,6 +5876,10 @@ class AppStrings {
       'missedCall': 'Verpasster Anruf',
       'missedVoiceCall': 'Verpasster Sprachanruf',
       'incomingCallLabel': 'Eingehender Anruf',
+      'legalConsentShort':
+          'Wenn du fortfährst, stimmst du unseren Richtlinien zu.',
+      'legalPrivacyPolicy': 'Datenschutzerklärung',
+      'legalTermsOfService': 'Nutzungsbedingungen',
     },
   };
 

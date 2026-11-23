@@ -201,7 +201,10 @@ class _HomePageState extends ConsumerState<HomePage>
 
     _floatingButtons = [
       FloatingActionButton(
-        tooltip: AppStrings.tr(ref, 'newChatTooltip'),
+        tooltip: AppStrings.get(
+          'newChatTooltip',
+          SharedPref.instance.getString('app_language') ?? 'en',
+        ),
         onPressed: () async {
           if (!await hasPermission(Permission.contacts)) return;
           if (!mounted) return;
@@ -220,7 +223,10 @@ class _HomePageState extends ConsumerState<HomePage>
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           FloatingActionButton(
-            tooltip: AppStrings.tr(ref, 'newStatusTooltip'),
+            tooltip: AppStrings.get(
+              'newStatusTooltip',
+              SharedPref.instance.getString('app_language') ?? 'en',
+            ),
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -256,7 +262,10 @@ class _HomePageState extends ConsumerState<HomePage>
         ],
       ),
       FloatingActionButton(
-        tooltip: AppStrings.tr(ref, 'newCallTooltip'),
+        tooltip: AppStrings.get(
+          'newCallTooltip',
+          SharedPref.instance.getString('app_language') ?? 'en',
+        ),
         onPressed: () async {
           if (!await hasPermission(Permission.contacts)) return;
           if (!mounted) return;
