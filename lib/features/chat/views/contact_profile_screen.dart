@@ -355,7 +355,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                 children: [
                   _buildActionButton(
                     icon: Icons.call,
-                    label: 'Audio Call',
+                    label: AppStrings.tr(ref, 'audioCall'),
                     color: AppColors.primary,
                     onTap: () async {
                       if (_isBlocked) {
@@ -414,7 +414,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                   ),
                   _buildActionButton(
                     icon: Icons.translate_rounded,
-                    label: 'AI Translate',
+                    label: AppStrings.tr(ref, 'aiTranslate'),
                     color: AppColors.primary,
                     onTap: () {
                       _showTranslationInfo(context);

@@ -54,7 +54,7 @@ class _StatusTabState extends ConsumerState<StatusTab>
       final captionController = TextEditingController();
       final confirm = await showAppDialog<bool>(
         context: context,
-        title: 'Add Status Caption',
+        title: AppStrings.tr(ref, 'addStatusCaption'),
         icon: Icons.add_photo_alternate_outlined,
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -66,9 +66,9 @@ class _StatusTabState extends ConsumerState<StatusTab>
             const SizedBox(height: 12),
             TextField(
               controller: captionController,
-              decoration: const InputDecoration(
-                hintText: 'Add a caption...',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: AppStrings.tr(ref, 'addCaptionHint'),
+                border: const OutlineInputBorder(),
               ),
             ),
           ],
@@ -89,7 +89,7 @@ class _StatusTabState extends ConsumerState<StatusTab>
       if (confirm == true && mounted) {
         showSnackBar(
           context: context,
-          content: 'Uploading status...',
+          content: AppStrings.tr(ref, 'uploadingStatus'),
           type: SnacBarType.info,
         );
 
@@ -105,7 +105,7 @@ class _StatusTabState extends ConsumerState<StatusTab>
           setState(() {});
           showSnackBar(
             context: context,
-            content: 'Status uploaded successfully',
+            content: AppStrings.tr(ref, 'statusUploaded'),
             type: SnacBarType.info,
           );
         }
