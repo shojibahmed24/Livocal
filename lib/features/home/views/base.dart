@@ -10,6 +10,7 @@ import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/features/calls/models/call_model.dart';
 import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'package:livocal/features/calls/views/calls_tab.dart';
+import 'package:livocal/features/calls/views/dialer_tab.dart';
 import 'package:livocal/features/calls/views/incoming_call_screen.dart';
 import 'package:livocal/features/calls/services/call_kit_service.dart';
 import 'package:livocal/features/calls/services/ringtone_manager.dart';
@@ -47,6 +48,7 @@ import 'package:livocal/features/home/views/status_tab.dart';
 import 'package:livocal/shared/widgets/camera.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
+import 'package:livocal/shared/utils/dialer_strings.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/features/home/views/starred_messages_screen.dart';
 import 'package:livocal/features/chat/controllers/chat_controller.dart';
@@ -194,7 +196,7 @@ class _HomePageState extends ConsumerState<HomePage>
     });
 
     TimeTicker.ensureStarted();
-    _tabController = TabController(length: 3, vsync: this, initialIndex: 0);
+    _tabController = TabController(length: 4, vsync: this, initialIndex: 0);
     _tabController.addListener(handleTabIndexChange);
 
     _floatingButtons = [
@@ -392,7 +394,7 @@ class _HomePageState extends ConsumerState<HomePage>
     final colorTheme = Theme.of(context).custom.colorTheme;
 
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: livocalAppBar(
           context,
@@ -597,8 +599,8 @@ class _HomePageState extends ConsumerState<HomePage>
                 }
               },
               itemBuilder: (context) {
-                if (_tabController.index == 2) {
-                  // CALLS tab
+                if (_tabController.index >= 2) {
+                  // CALLS / KEYPAD tabs
                   return [
                     PopupMenuItem(
                       value: 'clear_call_log',
@@ -671,6 +673,8 @@ class _HomePageState extends ConsumerState<HomePage>
                   AppStrings.tr(ref, 'chats'),
                   AppStrings.tr(ref, 'status'),
                   AppStrings.tr(ref, 'calls'),
+                  DialerStrings.of(ref.watch(appLocaleProvider).languageCode)
+                      .keypad,
                 ],
               ),
             Expanded(
@@ -688,12 +692,15 @@ class _HomePageState extends ConsumerState<HomePage>
                   ),
                   StatusTab(user: widget.user),
                   CallsTab(user: widget.user),
+                  DialerTab(user: widget.user),
                 ],
               ),
             ),
           ],
         ),
-        floatingActionButton: _floatingButtons[_tabController.index],
+        floatingActionButton: _tabController.index == 3
+            ? null
+            : _floatingButtons[_tabController.index],
       ),
     );
   }

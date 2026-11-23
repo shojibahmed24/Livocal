@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/calls/models/call_language.dart';
@@ -10,7 +9,10 @@ import 'package:livocal/shared/models/contact.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/ui/livocal_app_bar.dart';
+import 'package:livocal/shared/ui/livocal_avatar.dart';
+import 'package:livocal/shared/ui/pill_chip.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
+import 'package:livocal/shared/utils/contact_filter_strings.dart';
 import 'package:livocal/shared/utils/contact_grouping.dart';
 import 'package:livocal/shared/widgets/search.dart';
 import 'package:livocal/theme/app_colors.dart';
@@ -25,7 +27,11 @@ class ContactsPage extends ConsumerStatefulWidget {
   ConsumerState<ContactsPage> createState() => _ContactsPageState();
 }
 
+enum _ContactFilter { all, livocal, invite }
+
 class _ContactsPageState extends ConsumerState<ContactsPage> {
+  _ContactFilter _filter = _ContactFilter.all;
+
   @override
   void initState() {
     ref.read(contactPickerControllerProvider.notifier).init();
@@ -46,8 +52,16 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
         .searchController
         .text;
 
-    bool buildLivocalContactsList = contactsOnLivocal.isNotEmpty;
-    bool buildLocalContactsList = contactsNotOnLivocal.isNotEmpty;
+    final filters = ContactFilterStrings.of(
+      ref.watch(appLocaleProvider).languageCode,
+    );
+    final showLivocal = _filter != _ContactFilter.invite;
+    final showInvite = _filter != _ContactFilter.livocal;
+
+    final bool buildLivocalContactsList =
+        contactsOnLivocal.isNotEmpty && showLivocal;
+    final bool buildLocalContactsList =
+        contactsNotOnLivocal.isNotEmpty && showInvite;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -167,6 +181,39 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
           physics: const BouncingScrollPhysics(),
           shrinkWrap: true,
           children: [
+            if (searchQuery.isEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
+                child: Row(
+                  children: [
+                    PillChip(
+                      label:
+                          '${filters.all} · ${contactsOnLivocal.length + contactsNotOnLivocal.length}',
+                      tone: ChipTone.brand,
+                      filled: _filter == _ContactFilter.all,
+                      onTap: () => setState(() => _filter = _ContactFilter.all),
+                    ),
+                    const SizedBox(width: 8),
+                    PillChip(
+                      label:
+                          '${filters.onLivocal} · ${contactsOnLivocal.length}',
+                      tone: ChipTone.accent,
+                      filled: _filter == _ContactFilter.livocal,
+                      onTap: () =>
+                          setState(() => _filter = _ContactFilter.livocal),
+                    ),
+                    const SizedBox(width: 8),
+                    PillChip(
+                      label:
+                          '${filters.invite} · ${contactsNotOnLivocal.length}',
+                      tone: ChipTone.neutral,
+                      filled: _filter == _ContactFilter.invite,
+                      onTap: () =>
+                          setState(() => _filter = _ContactFilter.invite),
+                    ),
+                  ],
+                ),
+              ),
             if (!buildLivocalContactsList &&
                 !buildLocalContactsList &&
                 searchQuery.isNotEmpty)
@@ -267,8 +314,8 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                 ],
               ),
             if (searchQuery.isEmpty &&
-                contactsOnLivocal.isEmpty &&
-                contactsNotOnLivocal.isEmpty)
+                (!showLivocal || contactsOnLivocal.isEmpty) &&
+                (!showInvite || contactsNotOnLivocal.isEmpty))
               _ContactsEmptyState(ref: ref),
             if (contactsOnLivocal.isNotEmpty)
               ..._buildLivocalContactsList(context, contactsOnLivocal),
@@ -725,73 +772,14 @@ class _ContactAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (avatarUrl != null && avatarUrl!.trim().isNotEmpty) {
-      return CachedNetworkImage(
-        imageUrl: avatarUrl!,
-        memCacheWidth: 120,
-        memCacheHeight: 120,
-        imageBuilder: (context, imageProvider) => CircleAvatar(
-          radius: radius,
-          backgroundImage: imageProvider,
-        ),
-        placeholder: (context, url) => CircleAvatar(
-          radius: radius,
-          backgroundColor: Colors.grey.withValues(alpha: 0.2),
-          child: SizedBox(
-            width: radius,
-            height: radius,
-            child: const CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
-        errorWidget: (context, url, error) => _buildInitials(),
-      );
-    }
-    return _buildInitials();
-  }
-
-  Widget _buildInitials() {
-    final initials = _getInitials(displayName);
-    return CircleAvatar(
-      radius: radius,
-      backgroundColor: _getAvatarColor(displayName),
-      child: Text(
-        initials,
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: radius * 0.75,
-        ),
-      ),
+    return LivocalAvatar(
+      name: displayName,
+      imageUrl: avatarUrl,
+      size: radius * 2,
+      ring: (avatarUrl != null && avatarUrl!.trim().isNotEmpty)
+          ? AvatarRing.brand
+          : AvatarRing.none,
     );
-  }
-
-  static String _getInitials(String name) {
-    if (name.trim().isEmpty) return '?';
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.length >= 2) {
-      final first = parts[0].isNotEmpty ? parts[0][0] : '';
-      final second = parts[1].isNotEmpty ? parts[1][0] : '';
-      final res = '$first$second'.toUpperCase();
-      if (res.isNotEmpty) return res;
-    }
-    return name
-        .trim()
-        .substring(0, name.trim().length.clamp(1, 2))
-        .toUpperCase();
-  }
-
-  static Color _getAvatarColor(String name) {
-    const colors = [
-      AppColors.primary,
-      Color(0xFF1E88E5),
-      Color(0xFFE53935),
-      Color(0xFF8E24AA),
-      Color(0xFFFB8C00),
-      Color(0xFF00897B),
-      Color(0xFF3949AB),
-      Color(0xFF43A047),
-    ];
-    return colors[name.hashCode.abs() % colors.length];
   }
 }
 
