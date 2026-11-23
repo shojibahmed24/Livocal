@@ -11,27 +11,30 @@ import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/models/user_wallet.dart';
 import 'package:livocal/shared/repositories/wallet_repository.dart';
+import 'package:livocal/shared/ui/livocal_buttons.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
-import 'package:livocal/theme/app_tokens.dart';
 
 void showSendPaymentSheet({
   required BuildContext context,
   required User self,
   required User other,
   required String contactName,
-  required Function(String amount, String note, [String? method, String? txId, String? paymentRecordId, String? messageId])
+  required Function(String amount, String note,
+          [String? method,
+          String? txId,
+          String? paymentRecordId,
+          String? messageId])
       onPaymentConfirmed,
 }) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightBackground,
+    backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
     shape: const RoundedRectangleBorder(
-      borderRadius:
-          BorderRadius.vertical(top: Radius.circular(AppRadius.radiusLg)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
     builder: (ctx) => _SendPaymentSheetContent(
       self: self,
@@ -53,8 +56,11 @@ class _SendPaymentSheetContent extends ConsumerStatefulWidget {
   final User self;
   final User other;
   final String contactName;
-  final Function(String amount, String note, [String? method, String? txId, String? paymentRecordId, String? messageId])
-      onPaymentConfirmed;
+  final Function(String amount, String note,
+      [String? method,
+      String? txId,
+      String? paymentRecordId,
+      String? messageId]) onPaymentConfirmed;
 
   @override
   ConsumerState<_SendPaymentSheetContent> createState() =>
@@ -70,7 +76,8 @@ class _SendPaymentSheetContentState
 
   String _selectedMethod = 'wallet'; // 'wallet', 'mfs', 'crypto'
   String _mfsType = 'bKash'; // 'bKash' or 'Nagad'
-  String _cryptoNetwork = 'Binance Pay'; // 'Binance Pay', 'USDT TRC-20', 'USDT BEP-20'
+  String _cryptoNetwork =
+      'Binance Pay'; // 'Binance Pay', 'USDT TRC-20', 'USDT BEP-20'
   bool _isProcessing = false;
   UserWallet? _wallet;
   String? _p2pIdempotencyKey;
@@ -144,7 +151,8 @@ class _SendPaymentSheetContentState
         }
       }
     } catch (backendErr) {
-      debugPrint('[PaymentSheet] Backend recipient-payment-settings error: $backendErr');
+      debugPrint(
+          '[PaymentSheet] Backend recipient-payment-settings error: $backendErr');
     }
 
     // 2. Fallback to private wallet settings doc if permitted (never reads from public user doc)
@@ -175,7 +183,8 @@ class _SendPaymentSheetContentState
         });
       }
     } catch (e) {
-      debugPrint('[PaymentSheet] _fetchRecipientPaymentSettings fallback error: $e');
+      debugPrint(
+          '[PaymentSheet] _fetchRecipientPaymentSettings fallback error: $e');
       if (mounted) setState(() => _isLoadingRecipientSettings = false);
     }
   }
@@ -229,7 +238,8 @@ class _SendPaymentSheetContentState
     }
   }
 
-  bool get _isCurrentCryptoConfigured => _currentCryptoDepositAddress.isNotEmpty;
+  bool get _isCurrentCryptoConfigured =>
+      _currentCryptoDepositAddress.isNotEmpty;
 
   int get _calculatedMinutesForAmount {
     final amt = double.tryParse(_amountController.text.trim()) ?? 0;
@@ -251,7 +261,8 @@ class _SendPaymentSheetContentState
 
     setState(() => _isProcessing = true);
     final rawNote = _noteController.text.trim();
-    final cleanNote = rawNote.length > 100 ? rawNote.substring(0, 100) : rawNote;
+    final cleanNote =
+        rawNote.length > 100 ? rawNote.substring(0, 100) : rawNote;
 
     try {
       final clientMessageId = const Uuid().v4();
@@ -294,7 +305,8 @@ class _SendPaymentSheetContentState
           if (mounted) {
             showSnackBar(
               context: context,
-              content: transferResult.message ?? 'Wallet transfer failed. Please try again.',
+              content: transferResult.message ??
+                  'Wallet transfer failed. Please try again.',
               type: SnacBarType.error,
             );
           }
@@ -311,7 +323,8 @@ class _SendPaymentSheetContentState
           setState(() => _isProcessing = false);
           showSnackBar(
             context: context,
-            content: 'Please enter a valid 8-10 character alphanumeric $_mfsType TrxID (e.g. BL9A7K2M9X)',
+            content:
+                'Please enter a valid 8-10 character alphanumeric $_mfsType TrxID (e.g. BL9A7K2M9X)',
             type: SnacBarType.error,
           );
           return;
@@ -322,7 +335,8 @@ class _SendPaymentSheetContentState
           setState(() => _isProcessing = false);
           showSnackBar(
             context: context,
-            content: '${widget.contactName} has not configured a verified $_cryptoNetwork address. Please send minutes via Livocal Wallet.',
+            content:
+                '${widget.contactName} has not configured a verified $_cryptoNetwork address. Please send minutes via Livocal Wallet.',
             type: SnacBarType.error,
           );
           return;
@@ -334,7 +348,8 @@ class _SendPaymentSheetContentState
           setState(() => _isProcessing = false);
           showSnackBar(
             context: context,
-            content: 'Please enter a valid Transaction Hash / Binance Order ID (min 8 chars)',
+            content:
+                'Please enter a valid Transaction Hash / Binance Order ID (min 8 chars)',
             type: SnacBarType.error,
           );
           return;
@@ -356,9 +371,14 @@ class _SendPaymentSheetContentState
             'boundMessageId': clientMessageId,
             'type': _selectedMethod,
             'currency': _selectedMethod == 'mfs' ? 'BDT' : 'USDT',
-            'bdtAmount': _selectedMethod == 'mfs' ? _calculatedBdtAmount.toStringAsFixed(0) : null,
-            'cryptoNetwork': _selectedMethod == 'crypto' ? _cryptoNetwork : null,
-            'recipientAddress': _selectedMethod == 'crypto' ? _currentCryptoDepositAddress : _recipientPhone,
+            'bdtAmount': _selectedMethod == 'mfs'
+                ? _calculatedBdtAmount.toStringAsFixed(0)
+                : null,
+            'cryptoNetwork':
+                _selectedMethod == 'crypto' ? _cryptoNetwork : null,
+            'recipientAddress': _selectedMethod == 'crypto'
+                ? _currentCryptoDepositAddress
+                : _recipientPhone,
             'methodDisplay': methodDisplay,
             'amount': amountStr,
             'senderId': widget.self.id,
@@ -377,7 +397,8 @@ class _SendPaymentSheetContentState
             setState(() => _isProcessing = false);
             showSnackBar(
               context: context,
-              content: 'Failed to record payment verification. Please check connection and try again.',
+              content:
+                  'Failed to record payment verification. Please check connection and try again.',
               type: SnacBarType.error,
             );
           }
@@ -452,9 +473,7 @@ class _SendPaymentSheetContentState
                   height: 40,
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF5B6CF9), Color(0xFF00D4C8)],
-                    ),
+                    gradient: AppColors.brandGradient,
                   ),
                   child: const Icon(
                     Icons.payments_rounded,
@@ -723,7 +742,9 @@ class _SendPaymentSheetContentState
                         AppStrings.tr(
                           ref,
                           'shortByMinutes',
-                          args: {'minutes': '${neededMinutes - availableMinutes}'},
+                          args: {
+                            'minutes': '${neededMinutes - availableMinutes}'
+                          },
                         ),
                         style: const TextStyle(fontSize: 12.5),
                       ),
@@ -767,7 +788,8 @@ class _SendPaymentSheetContentState
                         ChoiceChip(
                           label: const Text('bKash'),
                           selected: _mfsType == 'bKash',
-                          selectedColor: Colors.pinkAccent.withValues(alpha: 0.25),
+                          selectedColor:
+                              Colors.pinkAccent.withValues(alpha: 0.25),
                           onSelected: (_) => setState(() => _mfsType = 'bKash'),
                         ),
                         const SizedBox(width: 8),
@@ -782,13 +804,18 @@ class _SendPaymentSheetContentState
                     const SizedBox(height: 8),
                     // Live USD to BDT Conversion Rate Display
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 7),
                       decoration: BoxDecoration(
-                        color: (_mfsType == 'bKash' ? Colors.pinkAccent : Colors.orange)
+                        color: (_mfsType == 'bKash'
+                                ? Colors.pinkAccent
+                                : Colors.orange)
                             .withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: (_mfsType == 'bKash' ? Colors.pinkAccent : Colors.orange)
+                          color: (_mfsType == 'bKash'
+                                  ? Colors.pinkAccent
+                                  : Colors.orange)
                               .withValues(alpha: 0.3),
                         ),
                       ),
@@ -797,7 +824,9 @@ class _SendPaymentSheetContentState
                           Icon(
                             Icons.currency_exchange_rounded,
                             size: 16,
-                            color: _mfsType == 'bKash' ? Colors.pinkAccent : Colors.orange,
+                            color: _mfsType == 'bKash'
+                                ? Colors.pinkAccent
+                                : Colors.orange,
                           ),
                           const SizedBox(width: 6),
                           Expanded(
@@ -859,8 +888,7 @@ class _SendPaymentSheetContentState
                             );
                             showSnackBar(
                               context: context,
-                              content:
-                                  '$_targetMfsNumber copied to clipboard!',
+                              content: '$_targetMfsNumber copied to clipboard!',
                               type: SnacBarType.info,
                             );
                           },
@@ -872,7 +900,8 @@ class _SendPaymentSheetContentState
                     TextField(
                       controller: _trxIdController,
                       decoration: InputDecoration(
-                        hintText: 'Enter 8-10 digit alphanumeric $_mfsType TrxID',
+                        hintText:
+                            'Enter 8-10 digit alphanumeric $_mfsType TrxID',
                         hintStyle: const TextStyle(fontSize: 13),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -919,10 +948,12 @@ class _SendPaymentSheetContentState
                         'USDT BEP-20',
                       ].map((net) {
                         return ChoiceChip(
-                          label: Text(net, style: const TextStyle(fontSize: 12)),
+                          label:
+                              Text(net, style: const TextStyle(fontSize: 12)),
                           selected: _cryptoNetwork == net,
                           selectedColor: Colors.orange.withValues(alpha: 0.25),
-                          onSelected: (_) => setState(() => _cryptoNetwork = net),
+                          onSelected: (_) =>
+                              setState(() => _cryptoNetwork = net),
                         );
                       }).toList(),
                     ),
@@ -956,7 +987,9 @@ class _SendPaymentSheetContentState
                               child: Text(
                                 '${widget.contactName} has not added their verified $_cryptoNetwork address yet. To prevent loss of cryptocurrency, direct crypto transfer to this user is unavailable. Please transfer minutes via Livocal Wallet.',
                                 style: TextStyle(
-                                  color: isDark ? Colors.amber.shade200 : Colors.amber.shade900,
+                                  color: isDark
+                                      ? Colors.amber.shade200
+                                      : Colors.amber.shade900,
                                   fontSize: 12,
                                   height: 1.3,
                                 ),
@@ -968,11 +1001,14 @@ class _SendPaymentSheetContentState
                     ] else ...[
                       // Recipient's Verified Crypto Deposit Address with 1-Tap Copy
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 9),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E282D) : Colors.white,
+                          color:
+                              isDark ? const Color(0xFF1E282D) : Colors.white,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+                          border: Border.all(
+                              color: Colors.orange.withValues(alpha: 0.35)),
                         ),
                         child: Row(
                           children: [
@@ -1009,7 +1045,8 @@ class _SendPaymentSheetContentState
                               tooltip: 'Copy Address',
                               onPressed: () {
                                 Clipboard.setData(
-                                  ClipboardData(text: _currentCryptoDepositAddress),
+                                  ClipboardData(
+                                      text: _currentCryptoDepositAddress),
                                 );
                                 showSnackBar(
                                   context: context,
@@ -1057,42 +1094,21 @@ class _SendPaymentSheetContentState
             ],
 
             // Submit Button
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                minimumSize: const Size.fromHeight(48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                ),
+            PrimaryButton(
+              label: AppStrings.tr(
+                ref,
+                'confirmPayment',
+                args: {
+                  'amount':
+                      '\$${_amountController.text.trim().isEmpty ? "0" : _amountController.text.trim()}',
+                },
               ),
+              loading: _isProcessing,
               onPressed: (_isProcessing ||
-                      (_selectedMethod == 'crypto' && !_isCurrentCryptoConfigured))
+                      (_selectedMethod == 'crypto' &&
+                          !_isCurrentCryptoConfigured))
                   ? null
                   : _processPayment,
-              child: _isProcessing
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Text(
-                      AppStrings.tr(
-                        ref,
-                        'confirmPayment',
-                        args: {
-                          'amount':
-                              '\$${_amountController.text.trim().isEmpty ? "0" : _amountController.text.trim()}',
-                        },
-                      ),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
             ),
           ],
         ),

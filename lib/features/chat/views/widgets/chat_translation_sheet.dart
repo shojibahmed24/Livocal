@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'package:livocal/shared/services/translation_service.dart';
+import 'package:livocal/shared/ui/livocal_buttons.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
-import 'package:livocal/theme/app_tokens.dart';
 
 void showInChatTranslationSheet({
   required BuildContext context,
@@ -18,10 +18,9 @@ void showInChatTranslationSheet({
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightBackground,
+    backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
     shape: const RoundedRectangleBorder(
-      borderRadius:
-          BorderRadius.vertical(top: Radius.circular(AppRadius.radiusLg)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
     builder: (ctx) => _ChatTranslationSheetContent(
       peerName: peerName,
@@ -80,7 +79,8 @@ class _ChatTranslationSheetContentState
       if (savedEnabled == null && prefs.containsKey('${p}_enabled')) {
         savedEnabled = prefs.getBool('${p}_enabled');
       }
-      if (savedAutoIncoming == null && prefs.containsKey('${p}_auto_incoming')) {
+      if (savedAutoIncoming == null &&
+          prefs.containsKey('${p}_auto_incoming')) {
         savedAutoIncoming = prefs.getBool('${p}_auto_incoming');
       }
       if (savedAutoVoice == null && prefs.containsKey('${p}_auto_voice')) {
@@ -105,8 +105,8 @@ class _ChatTranslationSheetContentState
         if (matches.isNotEmpty) _myLanguage = matches.first;
       } else {
         final myCode = CallRepository.getMyLanguageCode();
-        final matches = CallLanguageRegistry.allLanguages
-            .where((l) => l.code == myCode);
+        final matches =
+            CallLanguageRegistry.allLanguages.where((l) => l.code == myCode);
         if (matches.isNotEmpty) _myLanguage = matches.first;
       }
 
@@ -119,8 +119,8 @@ class _ChatTranslationSheetContentState
           widget.peerId ?? '',
           widget.peerName,
         );
-        final matches = CallLanguageRegistry.allLanguages
-            .where((l) => l.code == inferred);
+        final matches =
+            CallLanguageRegistry.allLanguages.where((l) => l.code == inferred);
         if (matches.isNotEmpty) _peerLanguage = matches.first;
       }
     });
@@ -336,7 +336,8 @@ class _ChatTranslationSheetContentState
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: IconButton(
-                    icon: const Icon(Icons.swap_horiz, color: AppColors.primary),
+                    icon:
+                        const Icon(Icons.swap_horiz, color: AppColors.primary),
                     onPressed: () async {
                       setState(() {
                         final temp = _myLanguage;
@@ -474,8 +475,9 @@ class _ChatTranslationSheetContentState
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
+                    minimumSize: const Size(88, 48),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                   onPressed: _isTranslating ? null : _runQuickTest,
@@ -499,9 +501,9 @@ class _ChatTranslationSheetContentState
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFF1E2A47)
-                      : const Color(0xFFE7FCE3),
-                  borderRadius: BorderRadius.circular(8),
+                      ? AppColors.accent.withValues(alpha: 0.12)
+                      : AppColors.accent.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   _translatedPreview,
@@ -513,15 +515,8 @@ class _ChatTranslationSheetContentState
               ),
             ],
             const SizedBox(height: 20),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                minimumSize: const Size.fromHeight(46),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                ),
-              ),
+            PrimaryButton(
+              label: AppStrings.get('saveApplySettings', langCode),
               onPressed: () async {
                 await _savePreferences();
                 if (context.mounted) {
@@ -546,7 +541,6 @@ class _ChatTranslationSheetContentState
                   );
                 }
               },
-              child: Text(AppStrings.get('saveApplySettings', langCode)),
             ),
           ],
         ),

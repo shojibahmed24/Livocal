@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/models/user_wallet.dart';
 import 'package:livocal/shared/repositories/wallet_repository.dart';
+import 'package:livocal/shared/ui/livocal_buttons.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
@@ -35,7 +36,8 @@ class MinuteRechargeSheet extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<MinuteRechargeSheet> createState() => _MinuteRechargeSheetState();
+  ConsumerState<MinuteRechargeSheet> createState() =>
+      _MinuteRechargeSheetState();
 }
 
 class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
@@ -60,10 +62,8 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
     return 25.0;
   }
 
-  String get _bkashNumber =>
-      _depositInfo?['bkash']?['number'] as String? ?? '';
-  String get _nagadNumber =>
-      _depositInfo?['nagad']?['number'] as String? ?? '';
+  String get _bkashNumber => _depositInfo?['bkash']?['number'] as String? ?? '';
+  String get _nagadNumber => _depositInfo?['nagad']?['number'] as String? ?? '';
   String get _binancePayId =>
       _depositInfo?['binancePay']?['payId'] as String? ?? '';
   String get _trc20Address =>
@@ -110,7 +110,8 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
       if (!mounted) return;
       setState(() {
         _isLoadingDepositInfo = false;
-        _depositInfoError = '${AppStrings.tr(ref, 'depositAccountNotFound')} ($e)';
+        _depositInfoError =
+            '${AppStrings.tr(ref, 'depositAccountNotFound')} ($e)';
       });
     }
   }
@@ -174,7 +175,8 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
 
     // Client-side address and tx hash sanity checks
     if (_selectedPaymentMethod == 'Crypto USDT') {
-      if (_selectedCryptoNetwork == 'TRC-20' && (!identifier.startsWith('T') || identifier.length != 34)) {
+      if (_selectedCryptoNetwork == 'TRC-20' &&
+          (!identifier.startsWith('T') || identifier.length != 34)) {
         showSnackBar(
           context: context,
           content: AppStrings.tr(ref, 'trc20AddressLengthError'),
@@ -182,7 +184,8 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
         );
         return;
       }
-      if (_selectedCryptoNetwork == 'BEP-20' && (!identifier.startsWith('0x') || identifier.length != 42)) {
+      if (_selectedCryptoNetwork == 'BEP-20' &&
+          (!identifier.startsWith('0x') || identifier.length != 42)) {
         showSnackBar(
           context: context,
           content: AppStrings.tr(ref, 'bep20AddressLengthError'),
@@ -211,7 +214,9 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
     if (_selectedPaymentMethod == 'Binance Pay') {
       paymentMethodKey = 'Binance_Pay';
     } else if (_selectedPaymentMethod == 'Crypto USDT') {
-      paymentMethodKey = _selectedCryptoNetwork == 'BEP-20' ? 'Crypto_USDT_BEP20' : 'Crypto_USDT_TRC20';
+      paymentMethodKey = _selectedCryptoNetwork == 'BEP-20'
+          ? 'Crypto_USDT_BEP20'
+          : 'Crypto_USDT_TRC20';
     }
 
     final repo = ref.read(walletRepositoryProvider);
@@ -221,9 +226,13 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
       trxId: trxId,
       paymentMethod: paymentMethodKey,
       promoCode: promo.isNotEmpty ? promo : null,
-      senderPhone: _selectedPaymentMethod == 'bKash / Nagad' ? identifier : widget.user.phoneNumber,
+      senderPhone: _selectedPaymentMethod == 'bKash / Nagad'
+          ? identifier
+          : widget.user.phoneNumber,
       minutes: _selectedPackMinutes,
-      amount: _selectedPaymentMethod == 'bKash / Nagad' ? _selectedPackAmount : _selectedPackAmountUsdt,
+      amount: _selectedPaymentMethod == 'bKash / Nagad'
+          ? _selectedPackAmount
+          : _selectedPackAmountUsdt,
     );
 
     if (!mounted) return;
@@ -252,7 +261,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? const Color(0xFF131D2A) : Colors.white;
+    final bgColor = isDark ? AppColors.darkSurface : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black87;
     const primaryColor = AppColors.primary;
     final walletAsync = ref.watch(walletStreamProvider(widget.user.id));
@@ -302,7 +311,8 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                   color: primaryColor.withValues(alpha: 0.18),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.diamond_rounded, color: AppColors.primary, size: 22),
+                child: const Icon(Icons.diamond_rounded,
+                    color: AppColors.primary, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -349,7 +359,8 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                           : [const Color(0xFFE8F5E9), const Color(0xFFE0F2F1)],
                     ),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: primaryColor.withValues(alpha: 0.35)),
+                    border:
+                        Border.all(color: primaryColor.withValues(alpha: 0.35)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -360,12 +371,17 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                           Row(
                             children: [
                               Text(
-                                wallet.effectiveRemainingMinutes > 0 ? '💎' : '⚠️',
+                                wallet.effectiveRemainingMinutes > 0
+                                    ? '💎'
+                                    : '⚠️',
                                 style: const TextStyle(fontSize: 18),
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                AppStrings.trParams(ref, 'currentBalanceText', {'minutes': '${wallet.effectiveRemainingMinutes}'}),
+                                AppStrings.trParams(ref, 'currentBalanceText', {
+                                  'minutes':
+                                      '${wallet.effectiveRemainingMinutes}'
+                                }),
                                 style: TextStyle(
                                   color: textColor,
                                   fontWeight: FontWeight.bold,
@@ -376,13 +392,15 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                           ),
                           if (wallet.trialActive && !wallet.isTrialExpired)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
                                 color: primaryColor.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                AppStrings.trParams(ref, 'trialBadgeText', {'minutes': '${wallet.trialMinutes}'}),
+                                AppStrings.trParams(ref, 'trialBadgeText',
+                                    {'minutes': '${wallet.trialMinutes}'}),
                                 style: const TextStyle(
                                   color: AppColors.primary,
                                   fontSize: 11,
@@ -408,7 +426,8 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                       const Divider(height: 16, thickness: 0.8),
                       Row(
                         children: [
-                          const Icon(Icons.check_circle_outline, color: AppColors.primary, size: 14),
+                          const Icon(Icons.check_circle_outline,
+                              color: AppColors.primary, size: 14),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
@@ -425,7 +444,8 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.auto_awesome, color: AppColors.accent, size: 14),
+                          const Icon(Icons.auto_awesome,
+                              color: AppColors.accent, size: 14),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
@@ -545,7 +565,8 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       child: Row(
                         children: [
-                          const Icon(Icons.discount_outlined, color: AppColors.primary, size: 16),
+                          const Icon(Icons.discount_outlined,
+                              color: AppColors.primary, size: 16),
                           const SizedBox(width: 6),
                           Text(
                             AppStrings.tr(ref, 'havePromoCode'),
@@ -569,11 +590,16 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                           style: TextStyle(color: textColor, fontSize: 13),
                           decoration: InputDecoration(
                             hintText: 'e.g. LIVOCAL2026',
-                            hintStyle: TextStyle(color: isDark ? Colors.white38 : Colors.black38, fontSize: 12),
+                            hintStyle: TextStyle(
+                                color: isDark ? Colors.white38 : Colors.black38,
+                                fontSize: 12),
                             isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 10),
                             filled: true,
-                            fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                            fillColor: isDark
+                                ? const Color(0xFF0F172A)
+                                : const Color(0xFFF1F5F9),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                               borderSide: BorderSide.none,
@@ -584,17 +610,20 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                       const SizedBox(width: 8),
                       TextButton(
                         onPressed: () {
-                          final code = _promoController.text.trim().toUpperCase();
+                          final code =
+                              _promoController.text.trim().toUpperCase();
                           if (code == 'LIVOCAL2026') {
                             showSnackBar(
                               context: context,
-                              content: AppStrings.trParams(ref, 'promoAppliedBonus', {'bonus': '20'}),
+                              content: AppStrings.trParams(
+                                  ref, 'promoAppliedBonus', {'bonus': '20'}),
                               type: SnacBarType.info,
                             );
                           } else if (code == 'FREELANCERPRO') {
                             showSnackBar(
                               context: context,
-                              content: AppStrings.trParams(ref, 'promoAppliedBonus', {'bonus': '30'}),
+                              content: AppStrings.trParams(
+                                  ref, 'promoAppliedBonus', {'bonus': '30'}),
                               type: SnacBarType.info,
                             );
                           } else {
@@ -605,7 +634,9 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                             );
                           }
                         },
-                        child: Text(AppStrings.tr(ref, 'apply'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                        child: Text(AppStrings.tr(ref, 'apply'),
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -615,9 +646,12 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                    color: isDark
+                        ? const Color(0xFF0F172A)
+                        : const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: primaryColor.withValues(alpha: 0.35)),
+                    border:
+                        Border.all(color: primaryColor.withValues(alpha: 0.35)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -638,8 +672,10 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                             _selectedPaymentMethod == 'bKash / Nagad'
                                 ? AppStrings.tr(ref, 'realPaymentGuideBkash')
                                 : (_selectedPaymentMethod == 'Binance Pay'
-                                    ? AppStrings.tr(ref, 'realPaymentGuideBinance')
-                                    : AppStrings.tr(ref, 'realPaymentGuideCrypto')),
+                                    ? AppStrings.tr(
+                                        ref, 'realPaymentGuideBinance')
+                                    : AppStrings.tr(
+                                        ref, 'realPaymentGuideCrypto')),
                             style: TextStyle(
                               color: textColor,
                               fontWeight: FontWeight.bold,
@@ -656,21 +692,35 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                           children: [
                             Text(
                               AppStrings.tr(ref, 'selectNetwork'),
-                              style: TextStyle(color: isDark ? Colors.white70 : Colors.black87, fontSize: 12, fontWeight: FontWeight.w600),
+                              style: TextStyle(
+                                  color:
+                                      isDark ? Colors.white70 : Colors.black87,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(width: 10),
                             ChoiceChip(
-                              label: const Text('TRC-20 (TRON)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                              label: const Text('TRC-20 (TRON)',
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold)),
                               selected: _selectedCryptoNetwork == 'TRC-20',
-                              onSelected: (_) => setState(() => _selectedCryptoNetwork = 'TRC-20'),
-                              selectedColor: primaryColor.withValues(alpha: 0.25),
+                              onSelected: (_) => setState(
+                                  () => _selectedCryptoNetwork = 'TRC-20'),
+                              selectedColor:
+                                  primaryColor.withValues(alpha: 0.25),
                             ),
                             const SizedBox(width: 6),
                             ChoiceChip(
-                              label: const Text('BEP-20 (BSC)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                              label: const Text('BEP-20 (BSC)',
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold)),
                               selected: _selectedCryptoNetwork == 'BEP-20',
-                              onSelected: (_) => setState(() => _selectedCryptoNetwork = 'BEP-20'),
-                              selectedColor: primaryColor.withValues(alpha: 0.25),
+                              onSelected: (_) => setState(
+                                  () => _selectedCryptoNetwork = 'BEP-20'),
+                              selectedColor:
+                                  primaryColor.withValues(alpha: 0.25),
                             ),
                           ],
                         ),
@@ -679,65 +729,97 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
 
                       // Payment Account / Address Card
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          color:
+                              isDark ? const Color(0xFF1E293B) : Colors.white,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
+                          border: Border.all(
+                              color: isDark ? Colors.white12 : Colors.black12),
                         ),
                         child: _isLoadingDepositInfo
                             ? Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     const SizedBox(
                                       width: 14,
                                       height: 14,
-                                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: AppColors.primary),
                                     ),
                                     const SizedBox(width: 10),
                                     Text(
-                                      AppStrings.tr(ref, 'loadingDepositAccount'),
-                                      style: const TextStyle(fontSize: 12, color: AppColors.primary),
+                                      AppStrings.tr(
+                                          ref, 'loadingDepositAccount'),
+                                      style: const TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.primary),
                                     ),
                                   ],
                                 ),
                               )
-                            : (_depositInfoError != null || _currentDepositAccount.isEmpty)
+                            : (_depositInfoError != null ||
+                                    _currentDepositAccount.isEmpty)
                                 ? Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 4),
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 4),
                                     child: Row(
                                       children: [
                                         Expanded(
                                           child: Text(
-                                            _depositInfoError ?? AppStrings.tr(ref, 'depositAccountNotFound'),
-                                            style: const TextStyle(color: Colors.redAccent, fontSize: 11),
+                                            _depositInfoError ??
+                                                AppStrings.tr(ref,
+                                                    'depositAccountNotFound'),
+                                            style: const TextStyle(
+                                                color: Colors.redAccent,
+                                                fontSize: 11),
                                           ),
                                         ),
                                         IconButton(
-                                          icon: const Icon(Icons.refresh, size: 18, color: AppColors.primary),
+                                          icon: const Icon(Icons.refresh,
+                                              size: 18,
+                                              color: AppColors.primary),
                                           onPressed: _fetchDepositInfo,
-                                          tooltip: AppStrings.tr(ref, 'retryTooltip'),
+                                          tooltip: AppStrings.tr(
+                                              ref, 'retryTooltip'),
                                         ),
                                       ],
                                     ),
                                   )
                                 : Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              _selectedPaymentMethod == 'bKash / Nagad'
-                                                  ? AppStrings.tr(ref, 'bkashMerchantNumber')
-                                                  : (_selectedPaymentMethod == 'Binance Pay'
-                                                      ? AppStrings.tr(ref, 'binancePayOfficialId')
-                                                      : AppStrings.trParams(ref, 'cryptoOfficialDepositAddress', {'network': _selectedCryptoNetwork})),
+                                              _selectedPaymentMethod ==
+                                                      'bKash / Nagad'
+                                                  ? AppStrings.tr(ref,
+                                                      'bkashMerchantNumber')
+                                                  : (_selectedPaymentMethod ==
+                                                          'Binance Pay'
+                                                      ? AppStrings.tr(ref,
+                                                          'binancePayOfficialId')
+                                                      : AppStrings.trParams(
+                                                          ref,
+                                                          'cryptoOfficialDepositAddress',
+                                                          {
+                                                              'network':
+                                                                  _selectedCryptoNetwork
+                                                            })),
                                               style: TextStyle(
-                                                color: isDark ? Colors.white60 : Colors.black54,
+                                                color: isDark
+                                                    ? Colors.white60
+                                                    : Colors.black54,
                                                 fontSize: 11,
                                               ),
                                             ),
@@ -758,10 +840,13 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                                       ),
                                       TextButton.icon(
                                         style: TextButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                          backgroundColor: primaryColor.withValues(alpha: 0.12),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 6),
+                                          backgroundColor: primaryColor
+                                              .withValues(alpha: 0.12),
                                         ),
-                                        icon: const Icon(Icons.copy_rounded, size: 16, color: AppColors.primary),
+                                        icon: const Icon(Icons.copy_rounded,
+                                            size: 16, color: AppColors.primary),
                                         label: Text(
                                           AppStrings.tr(ref, 'copyBtn'),
                                           style: const TextStyle(
@@ -771,11 +856,16 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                                           ),
                                         ),
                                         onPressed: () {
-                                          final textToCopy = _currentDepositAccount;
-                                          Clipboard.setData(ClipboardData(text: textToCopy));
+                                          final textToCopy =
+                                              _currentDepositAccount;
+                                          Clipboard.setData(
+                                              ClipboardData(text: textToCopy));
                                           showSnackBar(
                                             context: context,
-                                            content: AppStrings.trParams(ref, 'copiedToClipboardSnack', {'text': textToCopy}),
+                                            content: AppStrings.trParams(
+                                                ref,
+                                                'copiedToClipboardSnack',
+                                                {'text': textToCopy}),
                                             type: SnacBarType.info,
                                           );
                                         },
@@ -786,10 +876,22 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                       const SizedBox(height: 10),
                       Text(
                         _selectedPaymentMethod == 'bKash / Nagad'
-                            ? AppStrings.trParams(ref, 'paymentInstructionBkash', {'amount': _selectedPackAmount.toStringAsFixed(0)})
+                            ? AppStrings.trParams(
+                                ref, 'paymentInstructionBkash', {
+                                'amount': _selectedPackAmount.toStringAsFixed(0)
+                              })
                             : (_selectedPaymentMethod == 'Binance Pay'
-                                ? AppStrings.trParams(ref, 'paymentInstructionBinance', {'amount': _selectedPackAmountUsdt.toStringAsFixed(0)})
-                                : AppStrings.trParams(ref, 'paymentInstructionCrypto', {'amount': _selectedPackAmountUsdt.toStringAsFixed(0), 'network': _selectedCryptoNetwork})),
+                                ? AppStrings.trParams(
+                                    ref, 'paymentInstructionBinance', {
+                                    'amount': _selectedPackAmountUsdt
+                                        .toStringAsFixed(0)
+                                  })
+                                : AppStrings.trParams(
+                                    ref, 'paymentInstructionCrypto', {
+                                    'amount': _selectedPackAmountUsdt
+                                        .toStringAsFixed(0),
+                                    'network': _selectedCryptoNetwork
+                                  })),
                         style: TextStyle(
                           color: isDark ? Colors.white70 : Colors.black87,
                           fontSize: 11.5,
@@ -806,23 +908,36 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                               ? AppStrings.tr(ref, 'senderNumberInputLabel')
                               : (_selectedPaymentMethod == 'Binance Pay'
                                   ? AppStrings.tr(ref, 'binancePayIdInputLabel')
-                                  : AppStrings.tr(ref, 'senderAddressInputLabel')),
-                          labelStyle: TextStyle(color: isDark ? Colors.white60 : Colors.black54, fontSize: 12),
+                                  : AppStrings.tr(
+                                      ref, 'senderAddressInputLabel')),
+                          labelStyle: TextStyle(
+                              color: isDark ? Colors.white60 : Colors.black54,
+                              fontSize: 12),
                           hintText: _selectedPaymentMethod == 'bKash / Nagad'
                               ? '017xxxxxxxx'
-                              : (_selectedPaymentMethod == 'Binance Pay' ? '849201842' : 'TXvJ... / 0x48...'),
-                          hintStyle: TextStyle(color: isDark ? Colors.white30 : Colors.black38, fontSize: 12),
+                              : (_selectedPaymentMethod == 'Binance Pay'
+                                  ? '849201842'
+                                  : 'TXvJ... / 0x48...'),
+                          hintStyle: TextStyle(
+                              color: isDark ? Colors.white30 : Colors.black38,
+                              fontSize: 12),
                           prefixIcon: Icon(
-                            _selectedPaymentMethod == 'bKash / Nagad' ? Icons.phone_android_rounded : Icons.account_box_rounded,
+                            _selectedPaymentMethod == 'bKash / Nagad'
+                                ? Icons.phone_android_rounded
+                                : Icons.account_box_rounded,
                             size: 18,
                           ),
                           isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 12),
                           filled: true,
-                          fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          fillColor:
+                              isDark ? const Color(0xFF1E293B) : Colors.white,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.black12),
+                            borderSide: BorderSide(
+                                color:
+                                    isDark ? Colors.white12 : Colors.black12),
                           ),
                         ),
                       ),
@@ -830,26 +945,40 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                       // TrxID / TxHash Field
                       TextField(
                         controller: _trxIdController,
-                        style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            color: textColor,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold),
                         decoration: InputDecoration(
                           labelText: _selectedPaymentMethod == 'bKash / Nagad'
                               ? AppStrings.tr(ref, 'trxIdInputLabel')
                               : (_selectedPaymentMethod == 'Binance Pay'
-                                  ? AppStrings.tr(ref, 'binancePayOrderIdInputLabel')
+                                  ? AppStrings.tr(
+                                      ref, 'binancePayOrderIdInputLabel')
                                   : AppStrings.tr(ref, 'txHashInputLabel')),
-                          labelStyle: TextStyle(color: isDark ? Colors.white60 : Colors.black54, fontSize: 12),
+                          labelStyle: TextStyle(
+                              color: isDark ? Colors.white60 : Colors.black54,
+                              fontSize: 12),
                           hintText: _selectedPaymentMethod == 'bKash / Nagad'
                               ? 'e.g. BKA8X92K4L'
-                              : (_selectedPaymentMethod == 'Binance Pay' ? 'e.g. 293847291039485' : 'e.g. 0x8a9b... / 7c4e...'),
-                          hintStyle: TextStyle(color: isDark ? Colors.white30 : Colors.black38, fontSize: 12),
+                              : (_selectedPaymentMethod == 'Binance Pay'
+                                  ? 'e.g. 293847291039485'
+                                  : 'e.g. 0x8a9b... / 7c4e...'),
+                          hintStyle: TextStyle(
+                              color: isDark ? Colors.white30 : Colors.black38,
+                              fontSize: 12),
                           prefixIcon: const Icon(Icons.tag_rounded, size: 18),
                           isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 12),
                           filled: true,
-                          fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          fillColor:
+                              isDark ? const Color(0xFF1E293B) : Colors.white,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.black12),
+                            borderSide: BorderSide(
+                                color:
+                                    isDark ? Colors.white12 : Colors.black12),
                           ),
                         ),
                       ),
@@ -863,35 +992,14 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
           const SizedBox(height: 12),
 
           // Primary Recharge Action Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                elevation: 2,
-              ),
-              onPressed: _isProcessing ? null : _processRecharge,
-              child: _isProcessing
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
-                    )
-                  : Text(
-                      _selectedPaymentMethod == 'bKash / Nagad'
-                          ? AppStrings.trParams(ref, 'submitPaymentBdt', {'amount': _selectedPackAmount.toStringAsFixed(0)})
-                          : AppStrings.trParams(ref, 'submitPaymentUsdt', {'amount': _selectedPackAmountUsdt.toStringAsFixed(0)}),
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-            ),
+          PrimaryButton(
+            label: _selectedPaymentMethod == 'bKash / Nagad'
+                ? AppStrings.trParams(ref, 'submitPaymentBdt',
+                    {'amount': _selectedPackAmount.toStringAsFixed(0)})
+                : AppStrings.trParams(ref, 'submitPaymentUsdt',
+                    {'amount': _selectedPackAmountUsdt.toStringAsFixed(0)}),
+            loading: _isProcessing,
+            onPressed: _isProcessing ? null : _processRecharge,
           ),
         ],
       ),
@@ -914,7 +1022,8 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
 
     return InkWell(
       borderRadius: BorderRadius.circular(14),
-      onTap: () => _selectPack(packId: packId, minutes: minutes, amount: amount),
+      onTap: () =>
+          _selectPack(packId: packId, minutes: minutes, amount: amount),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
@@ -925,7 +1034,9 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
           border: Border.all(
             color: isSelected
                 ? primaryColor
-                : (isPopular ? const Color(0xFFF59E0B).withValues(alpha: 0.5) : (isDark ? Colors.white12 : Colors.black12)),
+                : (isPopular
+                    ? const Color(0xFFF59E0B).withValues(alpha: 0.5)
+                    : (isDark ? Colors.white12 : Colors.black12)),
             width: isSelected ? 1.8 : 1,
           ),
         ),
@@ -935,8 +1046,12 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
             Row(
               children: [
                 Icon(
-                  isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-                  color: isSelected ? primaryColor : (isDark ? Colors.white38 : Colors.black38),
+                  isSelected
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_off,
+                  color: isSelected
+                      ? primaryColor
+                      : (isDark ? Colors.white38 : Colors.black38),
                   size: 20,
                 ),
                 const SizedBox(width: 10),
@@ -952,15 +1067,19 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                 ),
                 if (badge != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: isPopular ? const Color(0xFFF59E0B).withValues(alpha: 0.2) : primaryColor.withValues(alpha: 0.2),
+                      color: isPopular
+                          ? const Color(0xFFF59E0B).withValues(alpha: 0.2)
+                          : primaryColor.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       badge,
                       style: TextStyle(
-                        color: isPopular ? const Color(0xFFF59E0B) : primaryColor,
+                        color:
+                            isPopular ? const Color(0xFFF59E0B) : primaryColor,
                         fontSize: 10.5,
                         fontWeight: FontWeight.bold,
                       ),
@@ -1024,13 +1143,19 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
               : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? primaryColor : (isDark ? Colors.white12 : Colors.black12),
+            color: isSelected
+                ? primaryColor
+                : (isDark ? Colors.white12 : Colors.black12),
             width: isSelected ? 1.5 : 1,
           ),
         ),
         child: Row(
           children: [
-            Icon(icon, color: isSelected ? primaryColor : (isDark ? Colors.white54 : Colors.black54), size: 18),
+            Icon(icon,
+                color: isSelected
+                    ? primaryColor
+                    : (isDark ? Colors.white54 : Colors.black54),
+                size: 18),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
@@ -1039,7 +1164,9 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                   Text(
                     title,
                     style: TextStyle(
-                      color: isSelected ? primaryColor : (isDark ? Colors.white : Colors.black87),
+                      color: isSelected
+                          ? primaryColor
+                          : (isDark ? Colors.white : Colors.black87),
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),

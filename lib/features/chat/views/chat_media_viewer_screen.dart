@@ -10,6 +10,8 @@ import 'package:livocal/features/chat/models/attachement.dart';
 import 'package:livocal/shared/models/messages.dart';
 import 'package:livocal/shared/repositories/download_service.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/ui/livocal_app_bar.dart';
+import 'package:livocal/theme/text_theme.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/utils/storage_paths.dart';
 import 'package:livocal/theme/app_colors.dart';
@@ -55,7 +57,8 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
         final type = msg.attachment?.type;
         if (type == AttachmentType.image || type == AttachmentType.video) {
           media.add(msg);
-        } else if (type == AttachmentType.document || type == AttachmentType.audio) {
+        } else if (type == AttachmentType.document ||
+            type == AttachmentType.audio) {
           docs.add(msg);
         }
       }
@@ -102,21 +105,34 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: isDark ? AppColors.darkSurface : AppColors.primary,
-          foregroundColor: Colors.white,
-          scrolledUnderElevation: 0,
-          iconTheme: const IconThemeData(color: Colors.white),
-          actionsIconTheme: const IconThemeData(color: Colors.white),
+        appBar: livocalAppBar(
+          context,
           title: Text(
             widget.contactName,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontFamily: CustomTextTheme.display,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.2,
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.lightTextPrimary,
+            ),
           ),
-          bottom: const TabBar(
-            indicatorColor: Colors.white,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            tabs: [
+          bottom: TabBar(
+            indicatorColor: AppColors.primary,
+            indicatorSize: TabBarIndicatorSize.label,
+            labelColor:
+                isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+            unselectedLabelColor: isDark
+                ? AppColors.darkTextSecondary
+                : AppColors.lightTextSecondary,
+            labelStyle: const TextStyle(
+              fontFamily: CustomTextTheme.display,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w700,
+            ),
+            tabs: const [
               Tab(text: 'Media'),
               Tab(text: 'Docs'),
               Tab(text: 'Links'),
@@ -177,13 +193,15 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
                                       fit: StackFit.expand,
                                       children: [
                                         isLocal && file.existsSync()
-                                            ? Image.file(file, fit: BoxFit.cover)
+                                            ? Image.file(file,
+                                                fit: BoxFit.cover)
                                             : CachedNetworkImage(
                                                 imageUrl: fileUrl,
                                                 fit: BoxFit.cover,
-                                                fadeInDuration:
-                                                    const Duration(milliseconds: 200),
-                                                placeholder: (_, __) => Container(
+                                                fadeInDuration: const Duration(
+                                                    milliseconds: 200),
+                                                placeholder: (_, __) =>
+                                                    Container(
                                                   color: isDark
                                                       ? Colors.white10
                                                       : Colors.black12,
@@ -204,7 +222,8 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
                                               radius: 16,
                                               backgroundColor: Colors.black54,
                                               child: Icon(Icons.play_arrow,
-                                                  color: Colors.white, size: 20),
+                                                  color: Colors.white,
+                                                  size: 20),
                                             ),
                                           ),
                                       ],
@@ -230,7 +249,8 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
                         : ListView.separated(
                             physics: const AlwaysScrollableScrollPhysics(),
                             itemCount: _docMessages.length,
-                            separatorBuilder: (_, __) => const Divider(height: 1),
+                            separatorBuilder: (_, __) =>
+                                const Divider(height: 1),
                             itemBuilder: (context, index) {
                               final msg = _docMessages[index];
                               final isAudio =
@@ -252,7 +272,8 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
                                   msg.attachment?.fileName ?? 'File',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontWeight: FontWeight.w500),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w500),
                                 ),
                                 subtitle: Text(
                                   '${_formatFileSize(msg.attachment?.fileSize)} • ${DateFormat('MMM d, yyyy').format(msg.timestamp)}',
@@ -284,7 +305,8 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
                         : ListView.separated(
                             physics: const AlwaysScrollableScrollPhysics(),
                             itemCount: _linkMessages.length,
-                            separatorBuilder: (_, __) => const Divider(height: 1),
+                            separatorBuilder: (_, __) =>
+                                const Divider(height: 1),
                             itemBuilder: (context, index) {
                               final msg = _linkMessages[index];
                               final urlMatch = RegExp(r'https?://[^\s]+')
@@ -320,7 +342,8 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
                                       await launchUrl(uri,
                                           mode: LaunchMode.externalApplication);
                                     } catch (e) {
-                                      debugPrint('ChatMediaViewerScreen.launchUrl error: $e');
+                                      debugPrint(
+                                          'ChatMediaViewerScreen.launchUrl error: $e');
                                       if (context.mounted) {
                                         showSnackBar(
                                           context: context,
@@ -341,7 +364,7 @@ class _ChatMediaViewerScreenState extends ConsumerState<ChatMediaViewerScreen> {
     );
   }
 
-    void _handleDocTap(StoredMessage msg) {
+  void _handleDocTap(StoredMessage msg) {
     final fileName = msg.attachment?.fileName?.toLowerCase() ?? '';
     final isVideo = msg.attachment?.type == AttachmentType.video ||
         fileName.endsWith('.mp4') ||
@@ -530,7 +553,9 @@ class _FullScreenMediaViewerState extends State<_FullScreenMediaViewer> {
   Future<void> _initVideoPlayer() async {
     final fileUrl = widget.msg.attachment?.url ?? '';
     final fileName = widget.msg.attachment?.fileName ?? '';
-    final localPath = fileName.isNotEmpty ? DeviceStorage.getMediaFilePath(fileName) : fileUrl;
+    final localPath = fileName.isNotEmpty
+        ? DeviceStorage.getMediaFilePath(fileName)
+        : fileUrl;
     final file = File(localPath);
 
     final directFile = File(fileUrl);
@@ -538,7 +563,8 @@ class _FullScreenMediaViewerState extends State<_FullScreenMediaViewer> {
       _videoController = VideoPlayerController.file(file);
     } else if (directFile.existsSync()) {
       _videoController = VideoPlayerController.file(directFile);
-    } else if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
+    } else if (fileUrl.startsWith('http://') ||
+        fileUrl.startsWith('https://')) {
       _videoController = VideoPlayerController.networkUrl(Uri.parse(fileUrl));
     }
 
@@ -588,10 +614,13 @@ class _FullScreenMediaViewerState extends State<_FullScreenMediaViewer> {
   Widget build(BuildContext context) {
     final fileUrl = widget.msg.attachment?.url ?? '';
     final fileName = widget.msg.attachment?.fileName ?? '';
-    final localPath = fileName.isNotEmpty ? DeviceStorage.getMediaFilePath(fileName) : fileUrl;
+    final localPath = fileName.isNotEmpty
+        ? DeviceStorage.getMediaFilePath(fileName)
+        : fileUrl;
     final file = File(localPath);
     final isLocal = file.existsSync();
-    final dateStr = DateFormat('MMM d, yyyy • h:mm a').format(widget.msg.timestamp);
+    final dateStr =
+        DateFormat('MMM d, yyyy • h:mm a').format(widget.msg.timestamp);
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -635,7 +664,9 @@ class _FullScreenMediaViewerState extends State<_FullScreenMediaViewer> {
                               child: IconButton(
                                 iconSize: 36,
                                 icon: Icon(
-                                  _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                                  _isPlaying
+                                      ? Icons.pause_rounded
+                                      : Icons.play_arrow_rounded,
                                   color: Colors.white,
                                 ),
                                 onPressed: _togglePlayPause,
@@ -658,10 +689,12 @@ class _FullScreenMediaViewerState extends State<_FullScreenMediaViewer> {
                       : CachedNetworkImage(
                           imageUrl: fileUrl,
                           placeholder: (_, __) => const Center(
-                            child: CircularProgressIndicator(color: Colors.white),
+                            child:
+                                CircularProgressIndicator(color: Colors.white),
                           ),
                           errorWidget: (_, __, ___) => const Center(
-                            child: Icon(Icons.broken_image, size: 64, color: Colors.white54),
+                            child: Icon(Icons.broken_image,
+                                size: 64, color: Colors.white54),
                           ),
                         ),
                 ),
