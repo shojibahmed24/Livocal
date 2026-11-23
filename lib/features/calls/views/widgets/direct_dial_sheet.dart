@@ -13,6 +13,7 @@ import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/repositories/wallet_repository.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
+import 'package:livocal/shared/utils/phone_normalizer.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
 
@@ -114,11 +115,16 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
       return;
     }
 
-    final cleanPhone = phone.replaceAll(RegExp(r"[^\d+]"), "");
-    final String phoneCode = cleanPhone.startsWith('+') ? '' : '+880';
-    final String phoneNumber = cleanPhone.startsWith('+')
-        ? cleanPhone
-        : (cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone);
+    final parts = PhoneNormalizer.parse(countryCode: '880', input: phone);
+    if (parts == null) {
+      showSnackBar(
+        context: context,
+        content: 'Please enter a valid phone number',
+        type: SnacBarType.error,
+      );
+      return;
+    }
+    final String cleanPhone = parts.e164;
 
     User? resolvedUser = _foundUser;
     resolvedUser ??= await ref.read(firebaseFirestoreRepositoryProvider).getUserByPhone(cleanPhone);
@@ -129,9 +135,9 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
           name: phone,
           avatarUrl: '',
           phone: Phone(
-            code: phoneCode,
-            number: phoneNumber,
-            formattedNumber: phone,
+            code: parts.code,
+            number: parts.number,
+            formattedNumber: parts.e164,
           ),
           activityStatus: UserActivityStatus.online,
         );
@@ -161,11 +167,16 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
       return;
     }
 
-    final cleanPhone = phone.replaceAll(RegExp(r"[^\d+]"), "");
-    final String phoneCode = cleanPhone.startsWith('+') ? '' : '+880';
-    final String phoneNumber = cleanPhone.startsWith('+')
-        ? cleanPhone
-        : (cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone);
+    final parts = PhoneNormalizer.parse(countryCode: '880', input: phone);
+    if (parts == null) {
+      showSnackBar(
+        context: context,
+        content: 'Please enter a valid phone number',
+        type: SnacBarType.error,
+      );
+      return;
+    }
+    final String cleanPhone = parts.e164;
 
     User? resolvedUser = _foundUser;
     resolvedUser ??= await ref.read(firebaseFirestoreRepositoryProvider).getUserByPhone(cleanPhone);
@@ -176,9 +187,9 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
           name: phone,
           avatarUrl: '',
           phone: Phone(
-            code: phoneCode,
-            number: phoneNumber,
-            formattedNumber: phone,
+            code: parts.code,
+            number: parts.number,
+            formattedNumber: parts.e164,
           ),
           activityStatus: UserActivityStatus.online,
         );

@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/features/calls/models/call_model.dart';
+import 'package:livocal/shared/utils/phone_normalizer.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
 final callRepositoryProvider = Provider<CallRepository>((ref) {
@@ -389,18 +390,7 @@ class CallRepository {
 
     // 2. Secondary listener: calleeId == 'phone_$clean' (when dialed by raw phone number)
     if (ownPhone != null && ownPhone.trim().isNotEmpty) {
-      final clean = ownPhone.replaceAll(RegExp(r'[\s\-\(\)]'), '').trim();
-      final phoneCandidates = <String>{clean};
-      if (clean.startsWith('+')) {
-        phoneCandidates.add(clean.substring(1));
-      } else {
-        phoneCandidates.add('+$clean');
-        if (clean.startsWith('0')) {
-          phoneCandidates.add('+880${clean.substring(1)}');
-        } else {
-          phoneCandidates.add('+880$clean');
-        }
-      }
+      final phoneCandidates = PhoneNormalizer.matchKeys(ownPhone.trim());
 
       for (final p in phoneCandidates) {
         subs.add(firestore!

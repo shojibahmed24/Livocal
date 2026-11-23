@@ -9,6 +9,7 @@ import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/features/chat/models/message.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/utils/phone_normalizer.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/features/settings/services/block_service.dart';
 
@@ -196,20 +197,7 @@ class FirebaseFirestoreRepo {
       final clean = phoneNumber.replaceAll(RegExp(r'[\s\-\(\)]'), '');
       if (clean.isEmpty) return null;
 
-      final candidates = <String>{clean};
-      if (clean.startsWith('+')) {
-        candidates.add(clean.substring(1));
-      } else {
-        candidates.add('+$clean');
-        if (clean.startsWith('0')) {
-          candidates.add('+880${clean.substring(1)}');
-          candidates.add('880${clean.substring(1)}');
-          candidates.add(clean.substring(1));
-        } else {
-          candidates.add('+880$clean');
-          candidates.add('0$clean');
-        }
-      }
+      final candidates = PhoneNormalizer.matchKeys(clean);
 
       // 1. Check local cache first
       for (final cand in candidates) {

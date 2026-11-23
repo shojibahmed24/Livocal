@@ -8,6 +8,7 @@ import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/models/contact.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/utils/phone_normalizer.dart';
 
 final contactsRepositoryProvider = Provider((ref) => ContactsRepository(ref));
 
@@ -22,6 +23,19 @@ class ContactsRepository {
 
   Future<void> createNewContact() async {
     FlutterContacts.openExternalInsert();
+  }
+
+  /// Asks for read access to the device address book.
+  ///
+  /// The picker calls this from an explicit "Allow access" card, because a
+  /// silent denial previously produced an empty contact list with no way back.
+  Future<bool> requestPermission() async {
+    try {
+      return await FlutterContacts.requestPermission(readonly: true);
+    } catch (e) {
+      debugPrint('[ContactsRepository] requestPermission error: $e');
+      return false;
+    }
   }
 
   Future<Contact?> getContactByPhone(String phoneNumber) async {
@@ -86,15 +100,7 @@ class ContactsRepository {
             rawPhoneNumber: phone.number,
             normalizedPhone: normalized,
           ));
-          allNormalized.add(normalized);
-          // Also add without country code prefix for matching
-          if (normalized.startsWith('+')) {
-            // Strip country code: e.g. +8801721013902 -> 01721013902 (keep local)
-            final withoutPlus = normalized.substring(1);
-            if (withoutPlus.length > 4) {
-              allNormalized.add(withoutPlus);
-            }
-          }
+          allNormalized.addAll(PhoneNormalizer.matchKeys(normalized));
         }
       }
 
@@ -157,17 +163,11 @@ class ContactsRepository {
                 final normalizedRaw = _normalize(rawNumber);
                 final normalizedCodeNum = _normalize('$code$number');
 
-                if (normalizedRaw.isNotEmpty) {
-                  registeredByPhone[normalizedRaw] = entry;
-                  if (normalizedRaw.startsWith('+')) {
-                    registeredByPhone[normalizedRaw.substring(1)] = entry;
-                  }
+                for (final key in PhoneNormalizer.matchKeys(normalizedRaw)) {
+                  registeredByPhone[key] = entry;
                 }
-                if (normalizedCodeNum.isNotEmpty && normalizedCodeNum != normalizedRaw) {
-                  registeredByPhone[normalizedCodeNum] = entry;
-                  if (normalizedCodeNum.startsWith('+')) {
-                    registeredByPhone[normalizedCodeNum.substring(1)] = entry;
-                  }
+                for (final key in PhoneNormalizer.matchKeys(normalizedCodeNum)) {
+                  registeredByPhone[key] = entry;
                 }
               }
             } else {
@@ -223,23 +223,11 @@ class ContactsRepository {
             continue;
           }
 
-          // Direct match
-          _FirestoreUser? match = registeredByPhone[entry.normalizedPhone];
-
-          // Try without leading +
-          if (match == null && entry.normalizedPhone.startsWith('+')) {
-            match = registeredByPhone[entry.normalizedPhone.substring(1)];
-          }
-
-          // Try with common country codes if no + prefix
-          if (match == null && !entry.normalizedPhone.startsWith('+')) {
-            match = registeredByPhone['+880${entry.normalizedPhone}'];
-            match ??= registeredByPhone['880${entry.normalizedPhone}'];
-            if (match == null && entry.normalizedPhone.startsWith('0')) {
-              final withoutZero = entry.normalizedPhone.substring(1);
-              match = registeredByPhone['+880$withoutZero'];
-              match ??= registeredByPhone['880$withoutZero'];
-            }
+          // Direct match across every stored/typed form of the number.
+          _FirestoreUser? match;
+          for (final key in PhoneNormalizer.matchKeys(entry.normalizedPhone)) {
+            match = registeredByPhone[key];
+            if (match != null) break;
           }
 
           // Try suffix matching (last 10 digits)

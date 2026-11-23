@@ -5,6 +5,7 @@ import 'package:phone_number/phone_number.dart';
 import 'package:livocal/features/auth/views/countries.dart';
 import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
+import 'package:livocal/shared/utils/phone_normalizer.dart';
 
 import '../../../shared/models/user.dart';
 import '../views/verification.dart';
@@ -162,15 +163,23 @@ class LoginController extends StateNotifier<Country> {
   }
 
   void onNextBtnPressed(context) async {
-    String phoneNumberWithCode =
-        '+${state.phoneCode} ${phoneNumberController.text}';
+    // Accept both `01775-290702` and `+8801775290702`: one canonical E.164
+    // value is used for validation, Firebase Auth and the stored Phone.
+    final parts = PhoneNormalizer.parse(
+      countryCode: state.phoneCode,
+      input: phoneNumberController.text,
+    );
+    final String phoneNumberWithCode = parts?.e164 ??
+        '+${state.phoneCode.trim()} ${phoneNumberController.text.trim()}';
 
-    bool isValidPhoneNumber = false;
-    try {
-      isValidPhoneNumber =
-          await PhoneNumberUtil().validate(phoneNumberWithCode);
-    } catch (e, st) {
-      debugPrint('[LoginController] PhoneNumberUtil validate error: $e\n$st');
+    bool isValidPhoneNumber = parts != null;
+    if (isValidPhoneNumber) {
+      try {
+        isValidPhoneNumber = await PhoneNumberUtil().validate(parts.e164);
+      } catch (e, st) {
+        debugPrint('[LoginController] PhoneNumberUtil validate error: $e\n$st');
+        isValidPhoneNumber = false;
+      }
     }
 
     String errorMsg = '';
@@ -256,19 +265,18 @@ class LoginController extends StateNotifier<Country> {
           isPrimary: true,
           onPressed: () {
             Navigator.of(context).pop();
-            final formattedPhoneNumber =
-                '+${state.phoneCode.trim()} ${phoneNumberController.text.trim()}';
+            final String code = parts?.code ?? '+${state.phoneCode.trim()}';
+            final String national = parts?.number ??
+                phoneNumberController.text
+                    .replaceAll(' ', '')
+                    .replaceAll('-', '')
+                    .replaceAll('(', '')
+                    .replaceAll(')', '');
             final phone = Phone(
-              code: '+${state.phoneCode.trim()}',
-              number: ref
-                  .read(loginControllerProvider.notifier)
-                  .phoneNumberController
-                  .text
-                  .replaceAll(' ', '')
-                  .replaceAll('-', '')
-                  .replaceAll('(', '')
-                  .replaceAll(')', ''),
-              formattedNumber: formattedPhoneNumber,
+              code: code,
+              number: national,
+              formattedNumber: parts?.e164 ??
+                  PhoneNormalizer.formatDisplay('$code$national'),
             );
 
             Navigator.of(context).pushAndRemoveUntil(
