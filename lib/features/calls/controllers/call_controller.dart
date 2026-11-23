@@ -66,7 +66,10 @@ class CallControllerState {
     this.geminiState = GeminiLiveState.ready,
     this.isMuted = false,
     this.isSpeakerphoneOn = true,
-    this.isBidirectionalSingleDevice = true,
+    // Two-phone calls must stream translated PCM to the peer over the WebRTC
+    // DataChannel. `true` is the single-device interpreter mode (both speakers
+    // share one phone), which would play the translation locally instead.
+    this.isBidirectionalSingleDevice = false,
     this.elapsedSeconds = 0,
     this.micRmsLevel = 0.0,
     this.transcripts = const [],
