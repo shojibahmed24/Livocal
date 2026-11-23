@@ -101,7 +101,8 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
       backgroundColor:
           isDark ? AppColors.darkSurface : AppColors.lightBackground,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.radiusLg)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppRadius.radiusLg)),
       ),
       builder: (ctx) => SafeArea(
         child: Column(
@@ -109,7 +110,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
           children: [
             ListTile(
               leading: const Icon(Icons.volume_off_rounded),
-              title: const Text('Mute ringtone'),
+              title: Text(AppStrings.tr(ref, 'muteRingtone')),
               onTap: () {
                 Navigator.pop(ctx);
                 _muteRingtone();
@@ -117,7 +118,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
             ),
             ListTile(
               leading: const Icon(Icons.block_rounded, color: AppColors.error),
-              title: const Text('Block caller'),
+              title: Text(AppStrings.tr(ref, 'blockCaller')),
               onTap: () async {
                 Navigator.pop(ctx);
                 await BlockService.blockContact(
@@ -131,7 +132,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
             ListTile(
               leading: const Icon(Icons.report_gmailerrorred_rounded,
                   color: AppColors.error),
-              title: const Text('Report caller'),
+              title: Text(AppStrings.tr(ref, 'reportCaller')),
               onTap: () async {
                 Navigator.pop(ctx);
                 final self = getCurrentUser();
@@ -150,7 +151,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
                 if (mounted) {
                   showSnackBar(
                     context: context,
-                    content: 'Caller reported',
+                    content: AppStrings.tr(ref, 'callerReported'),
                     type: SnacBarType.info,
                   );
                 }
@@ -171,7 +172,8 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
       backgroundColor:
           isDark ? AppColors.darkSurface : AppColors.lightBackground,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.radiusLg)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppRadius.radiusLg)),
       ),
       builder: (ctx) => SafeArea(
         child: Column(
@@ -185,18 +187,21 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
             ),
             ListTile(
               leading: const Icon(Icons.chat_bubble_outline_rounded),
-              title: const Text("Can't talk now"),
-              onTap: () => Navigator.pop(ctx, "Can't talk now"),
+              title: Text(AppStrings.tr(ref, 'cantTalkNow')),
+              onTap: () =>
+                  Navigator.pop(ctx, AppStrings.tr(ref, 'cantTalkNow')),
             ),
             ListTile(
               leading: const Icon(Icons.schedule_rounded),
-              title: const Text('Call me later'),
-              onTap: () => Navigator.pop(ctx, 'Call me later'),
+              title: Text(AppStrings.tr(ref, 'callMeLater')),
+              onTap: () =>
+                  Navigator.pop(ctx, AppStrings.tr(ref, 'callMeLater')),
             ),
             ListTile(
               leading: const Icon(Icons.person_off_outlined),
-              title: const Text('Wrong number'),
-              onTap: () => Navigator.pop(ctx, 'Wrong number'),
+              title: Text(AppStrings.tr(ref, 'wrongNumber')),
+              onTap: () =>
+                  Navigator.pop(ctx, AppStrings.tr(ref, 'wrongNumber')),
             ),
           ],
         ),
@@ -240,7 +245,8 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
     final session = callState.activeSession;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final callerName = session?.peerName ?? 'Incoming Caller';
+    final callerName =
+        session?.peerName ?? AppStrings.tr(ref, 'incomingCaller');
     final callerAvatar = session?.peerAvatar ?? '';
     final callerPhone = session?.peerPhone ?? '';
     final myLang = session?.myLanguage ?? callState.myLanguage;
@@ -251,7 +257,8 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
-        debugPrint('[IncomingCallScreen] Back pressed. Declining incoming call.');
+        debugPrint(
+            '[IncomingCallScreen] Back pressed. Declining incoming call.');
         await _declineCall();
       },
       child: CallScaffold(
@@ -270,15 +277,19 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
               _ringtoneMuted
                   ? Icons.volume_off_rounded
                   : Icons.volume_up_rounded,
-              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.lightTextPrimary,
             ),
           ),
           IconButton(
-            tooltip: 'More options',
+            tooltip: AppStrings.tr(ref, 'moreOptions'),
             onPressed: _showMoreMenu,
             icon: Icon(
               Icons.more_vert_rounded,
-              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.lightTextPrimary,
             ),
           ),
         ],
@@ -370,7 +381,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
                           onTap: () async {
                             final picked = await showUniversalLanguagePicker(
                               context,
-                              title: 'Caller language',
+                              title: AppStrings.tr(ref, 'callerLanguage'),
                               selectedCode: peerLang.code,
                             );
                             if (picked != null && mounted) {
@@ -394,7 +405,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
                           onTap: () async {
                             final picked = await showUniversalLanguagePicker(
                               context,
-                              title: 'Your language',
+                              title: AppStrings.tr(ref, 'yourLanguage'),
                               selectedCode: myLang.code,
                             );
                             if (picked != null && mounted) {
