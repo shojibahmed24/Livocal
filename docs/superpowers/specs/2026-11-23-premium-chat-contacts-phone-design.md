@@ -1,7 +1,7 @@
 # Premium chat, contact discovery, and phone entry — design
 
 Date: 2026-11-23
-Status: approved by owner ("sob issue gula solve koro, tmr recommended gula implement koro")
+Status: approved and implemented on `fix/audit-phase-0-1` (Phases A–D, 2026-11-24)
 
 ## Intent
 
@@ -144,3 +144,15 @@ on the existing per-chat preferences stays unchanged.
 - Exact bloom positions/opacities and the bubble blur amount.
 - Whether the composer shows mic or send by default (keeps current behaviour).
 - Icon choices inside the new shells.
+
+## Implementation notes (2026-11-24)
+
+- Shipped as designed: fonts, `lib/shared/ui/` kit, glass shell on Home/Settings/
+  Contacts, dialer tab, grouped bubbles, aqua translation ribbon, E.164 phone
+  normalisation, contact filters + A–Z rail.
+- Deviations: contact rows use initials/brand-ring avatars from the kit instead of
+  a separate row component; the "Keypad" tab sits beside Calls (owner choice);
+  profile hero uses a brand gradient instead of a photo scrim.
+- Still open: chat-list swipe actions, date grouping, dependency upgrades and a
+  full rebuild of the three large sheets — all deferred until device QA.
+
