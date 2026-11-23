@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="indigo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6E7DFF"/>
+      <stop offset="1" stop-color="#3F4ED8"/>
+    </linearGradient>
+    <linearGradient id="aqua" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22E8DC"/>
+      <stop offset="1" stop-color="#00A79E"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.45" r="0.58">
+      <stop offset="0" stop-color="#5B6CF9" stop-opacity="0.35"/>
+      <stop offset="0.6" stop-color="#00D4C8" stop-opacity="0.09"/>
+      <stop offset="1" stop-color="#00D4C8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1024" height="1024" rx="232" fill="#0A0F1E"/>
+  <rect width="1024" height="1024" rx="232" fill="url(#glow)"/>
+
+  <!-- Back bubble (indigo) -->
+  <path d="M330 306h344a96 96 0 0 1 96 96v168a96 96 0 0 1-96 96H470l-84 74v-74h-56a96 96 0 0 1-96-96V402a96 96 0 0 1 96-96z"
+        fill="url(#indigo)"/>
+
+  <!-- Front bubble (aqua) -->
+  <path d="M470 470h314a86 86 0 0 1 86 86v132a86 86 0 0 1-86 86h-42v66l-76-66H470a86 86 0 0 1-86-86V556a86 86 0 0 1 86-86z"
+        fill="url(#aqua)"/>
+
+  <!-- Soundwave inside front bubble -->
+  <rect x="512" y="556" width="28" height="72" rx="14" fill="#0A0F1E" fill-opacity="0.82"/>
+  <rect x="562" y="524" width="28" height="136" rx="14" fill="#0A0F1E" fill-opacity="0.82"/>
+  <rect x="612" y="556" width="28" height="72" rx="14" fill="#0A0F1E" fill-opacity="0.82"/>
+</svg>

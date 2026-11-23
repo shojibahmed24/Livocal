@@ -252,7 +252,9 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          _isBlocked ? 'Unblock contact' : 'Block contact',
+                          _isBlocked
+                              ? AppStrings.tr(ref, 'unblockContact')
+                              : AppStrings.tr(ref, 'blockContact'),
                           style: TextStyle(
                             color: _isBlocked
                                 ? AppColors.primary
@@ -361,11 +363,14 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                       if (_isBlocked) {
                         final unblock = await showAppDialog<bool>(
                           context: context,
-                          title: 'Unblock to call',
+                          title: AppStrings.tr(ref, 'unblockToCallTitle'),
                           icon: Icons.block_flipped,
                           iconColor: Colors.redAccent,
-                          contentText:
-                              'Unblock ${widget.contactName} to place an audio call.',
+                          contentText: AppStrings.tr(
+                            ref,
+                            'unblockToCallBody',
+                            args: {'name': widget.contactName},
+                          ),
                           actions: [
                             AppDialogAction(
                               label: 'CANCEL',
@@ -680,9 +685,11 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                       color: _isBlocked ? AppColors.primary : Colors.redAccent,
                     ),
                     title: Text(
-                      _isBlocked
-                          ? 'Unblock ${widget.contactName}'
-                          : 'Block ${widget.contactName}',
+                      AppStrings.tr(
+                        ref,
+                        _isBlocked ? 'unblockName' : 'blockName',
+                        args: {'name': widget.contactName},
+                      ),
                       style: TextStyle(
                         color:
                             _isBlocked ? AppColors.primary : Colors.redAccent,
