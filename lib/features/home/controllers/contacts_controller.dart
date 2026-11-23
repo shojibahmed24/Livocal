@@ -11,6 +11,7 @@ import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/shared/utils/phone_normalizer.dart';
 
 final contactsProvider = FutureProvider<List<Contact>>((ref) async {
   if (await isConnected()) {
@@ -61,21 +62,32 @@ class ContactPickerController extends StateNotifier<List<Contact>> {
     ref.read(contactsRepositoryProvider).openContacts();
   }
 
+  Future<bool> requestContactsPermission() async {
+    final granted =
+        await ref.read(contactsRepositoryProvider).requestPermission();
+    if (granted) refreshContactsList();
+    return granted;
+  }
+
   void refreshContactsList() {
     ref.invalidate(contactsProvider);
   }
 
   void pickContact(BuildContext context, User sender, Contact contact) async {
     final fetched = await IsarDb.getUserById(contact.userId!);
+    final parts = PhoneNormalizer.parse(
+      countryCode: '880',
+      input: contact.phoneNumber,
+    );
     final User targetReceiver = fetched ??
         User(
           id: contact.userId!,
           name: contact.displayName,
           avatarUrl: contact.avatarUrl ?? '',
           phone: Phone(
-            code: contact.phoneNumber.startsWith('+') ? '' : '+880',
-            number: contact.phoneNumber,
-            formattedNumber: contact.phoneNumber,
+            code: parts?.code ?? '+880',
+            number: parts?.number ?? contact.phoneNumber,
+            formattedNumber: parts?.e164 ?? contact.phoneNumber,
           ),
           activityStatus: UserActivityStatus.online,
         );

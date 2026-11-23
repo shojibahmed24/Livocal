@@ -10,6 +10,7 @@ import 'package:livocal/shared/models/contact.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
+import 'package:livocal/shared/utils/contact_grouping.dart';
 import 'package:livocal/shared/widgets/search.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/theme.dart';
@@ -211,12 +212,16 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                               children: [
                                 Text(
                                   AppStrings.tr(ref, 'dialPhoneNumber'),
-                                  style: Theme.of(context).custom.textTheme.bold,
+                                  style:
+                                      Theme.of(context).custom.textTheme.bold,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
                                   AppStrings.tr(ref, 'dialPhoneNumberSub'),
-                                  style: Theme.of(context).custom.textTheme.caption,
+                                  style: Theme.of(context)
+                                      .custom
+                                      .textTheme
+                                      .caption,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ],
@@ -260,6 +265,10 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                   ),
                 ],
               ),
+            if (searchQuery.isEmpty &&
+                contactsOnLivocal.isEmpty &&
+                contactsNotOnLivocal.isEmpty)
+              _ContactsEmptyState(ref: ref),
             if (contactsOnLivocal.isNotEmpty)
               ..._buildLivocalContactsList(context, contactsOnLivocal),
             if (contactsNotOnLivocal.isNotEmpty)
@@ -445,9 +454,15 @@ class LocalContactsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final sorted = [...contactsNotOnLivocal]..sort(
+        (a, b) => a.displayName.toLowerCase().compareTo(
+              b.displayName.toLowerCase(),
+            ),
+      );
+
     return Column(
       children: [
-        for (var contact in contactsNotOnLivocal)
+        for (var contact in sorted)
           InkWell(
             onTap: () => showDirectDialSheet(
               context,
@@ -487,25 +502,21 @@ class LocalContactsList extends StatelessWidget {
                       ],
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.phone_forwarded_rounded, size: 20),
-                    tooltip: 'Direct Call / Check Livocal',
-                    color: Theme.of(context).custom.colorTheme.greenColor,
-                    onPressed: () => showDirectDialSheet(
-                      context,
-                      currentUser: user,
-                      initialPhone: contact.phoneNumber,
-                    ),
-                  ),
-                  TextButton(
+                  TextButton.icon(
                     onPressed: () => ref
                         .read(contactPickerControllerProvider.notifier)
                         .sendSms(contact.phoneNumber),
-                    child: Text(
-                      AppStrings.tr(ref, 'invite'),
-                      style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                          color:
-                              Theme.of(context).custom.colorTheme.greenColor),
+                    icon: const Icon(Icons.send_rounded, size: 15),
+                    label: Text(AppStrings.tr(ref, 'invite')),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                     ),
                   ),
                 ],
@@ -531,17 +542,10 @@ class LivocalContactsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sorted = [...contactsOnLivocal]..sort(
-        (a, b) => a.displayName.toLowerCase().compareTo(
-              b.displayName.toLowerCase(),
-            ),
-      );
-    final groups = <String, List<Contact>>{};
-    for (final contact in sorted) {
-      final clean = contact.displayName.trim();
-      final letter = clean.isEmpty ? '#' : clean[0].toUpperCase();
-      groups.putIfAbsent(letter, () => []).add(contact);
-    }
+    final groups = ContactGrouping.byInitial(
+      contactsOnLivocal,
+      nameOf: (contact) => contact.displayName,
+    );
 
     return Column(
       children: [
@@ -769,7 +773,10 @@ class _ContactAvatar extends StatelessWidget {
       final res = '$first$second'.toUpperCase();
       if (res.isNotEmpty) return res;
     }
-    return name.trim().substring(0, name.trim().length.clamp(1, 2)).toUpperCase();
+    return name
+        .trim()
+        .substring(0, name.trim().length.clamp(1, 2))
+        .toUpperCase();
   }
 
   static Color _getAvatarColor(String name) {
@@ -787,3 +794,98 @@ class _ContactAvatar extends StatelessWidget {
   }
 }
 
+/// Shown when the address book produced nothing: either permission was never
+/// granted or the phone genuinely has no contacts. Gives the user a way back
+/// instead of an unexplained empty screen.
+class _ContactsEmptyState extends StatelessWidget {
+  final WidgetRef ref;
+
+  const _ContactsEmptyState({required this.ref});
+
+  Future<void> _allowAccess(BuildContext context) async {
+    final granted = await ref
+        .read(contactPickerControllerProvider.notifier)
+        .requestContactsPermission();
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          AppStrings.tr(
+            ref,
+            granted ? 'contactsPermissionGranted' : 'contactsPermissionDenied',
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor =
+        isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
+    final bodyColor =
+        isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.06),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.22),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: AppColors.brandGradient,
+            ),
+            child: const Icon(
+              Icons.contacts_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            AppStrings.tr(ref, 'contactsPermissionTitle'),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: titleColor,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            AppStrings.tr(ref, 'contactsPermissionBody'),
+            style: TextStyle(fontSize: 13, height: 1.35, color: bodyColor),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () => _allowAccess(context),
+              icon: const Icon(Icons.lock_open_rounded, size: 18),
+              label: Text(AppStrings.tr(ref, 'allowContactsAccess')),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
