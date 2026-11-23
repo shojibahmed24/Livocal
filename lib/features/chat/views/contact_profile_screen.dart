@@ -35,7 +35,8 @@ class ContactProfileScreen extends ConsumerStatefulWidget {
   final String contactName;
 
   @override
-  ConsumerState<ContactProfileScreen> createState() => _ContactProfileScreenState();
+  ConsumerState<ContactProfileScreen> createState() =>
+      _ContactProfileScreenState();
 }
 
 class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
@@ -52,7 +53,9 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
     final chatId = getChatId(widget.self.id, widget.other.id);
     _disappearingTimer =
         SharedPref.instance.getString('chat_disappearing_$chatId') ??
-        SharedPref.instance.getString('contact_disappearing_${widget.other.id}') ?? 'Off';
+            SharedPref.instance
+                .getString('contact_disappearing_${widget.other.id}') ??
+            'Off';
     _loadMediaStats();
     _loadSharedDisappearingSettings(chatId);
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
@@ -67,10 +70,14 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
         if (doc.exists && mounted) {
           final serverMuted = doc.data()?['muted'] == true;
           final untilMs = (doc.data()?['untilMs'] as num?)?.toInt() ?? 0;
-          if (serverMuted && (untilMs == 0 || DateTime.now().millisecondsSinceEpoch < untilMs)) {
+          if (serverMuted &&
+              (untilMs == 0 ||
+                  DateTime.now().millisecondsSinceEpoch < untilMs)) {
             if (!_isMuted) setState(() => _isMuted = true);
-            SharedPref.instance.setBool('contact_muted_${widget.other.id}', true);
-            SharedPref.instance.setInt('contact_muted_until_${widget.other.id}', untilMs);
+            SharedPref.instance
+                .setBool('contact_muted_${widget.other.id}', true);
+            SharedPref.instance
+                .setInt('contact_muted_until_${widget.other.id}', untilMs);
           } else if (_isMuted) {
             MuteService.unmuteContact(widget.other.id);
             setState(() => _isMuted = false);
@@ -82,13 +89,17 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
 
   Future<void> _loadSharedDisappearingSettings(String chatId) async {
     try {
-      final doc = await FirebaseFirestore.instance.collection('chat_settings').doc(chatId).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('chat_settings')
+          .doc(chatId)
+          .get();
       if (doc.exists && doc.data() != null) {
         final val = doc.data()!['disappearingDuration'] as String?;
         if (val != null && val.isNotEmpty && mounted) {
           setState(() => _disappearingTimer = val);
           await SharedPref.instance.setString('chat_disappearing_$chatId', val);
-          await SharedPref.instance.setString('contact_disappearing_${widget.other.id}', val);
+          await SharedPref.instance
+              .setString('contact_disappearing_${widget.other.id}', val);
         }
       }
     } catch (_) {}
@@ -117,7 +128,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? const Color(0xFF16203A) : Colors.white;
-    final scaffoldBg = isDark ? const Color(0xFF121B22) : const Color(0xFFEEF1FA);
+    final scaffoldBg =
+        isDark ? AppColors.darkBackground : AppColors.lightBackground;
 
     return Scaffold(
       backgroundColor: scaffoldBg,
@@ -167,7 +179,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     value: 'share',
                     child: Row(
                       children: [
-                        const Icon(Icons.share_outlined, size: 20, color: Color(0xFF8A96B2)),
+                        const Icon(Icons.share_outlined,
+                            size: 20, color: Color(0xFF8A96B2)),
                         const SizedBox(width: 12),
                         Text(AppStrings.tr(ref, 'shareContact')),
                       ],
@@ -177,7 +190,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     value: 'edit',
                     child: Row(
                       children: [
-                        const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF8A96B2)),
+                        const Icon(Icons.edit_outlined,
+                            size: 20, color: Color(0xFF8A96B2)),
                         const SizedBox(width: 12),
                         Text(AppStrings.tr(ref, 'editContact')),
                       ],
@@ -187,7 +201,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     value: 'view_in_address_book',
                     child: Row(
                       children: [
-                        const Icon(Icons.contacts_outlined, size: 20, color: Color(0xFF8A96B2)),
+                        const Icon(Icons.contacts_outlined,
+                            size: 20, color: Color(0xFF8A96B2)),
                         const SizedBox(width: 12),
                         Text(AppStrings.tr(ref, 'viewInAddressBook')),
                       ],
@@ -197,7 +212,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     value: 'encryption_info',
                     child: Row(
                       children: [
-                        const Icon(Icons.shield_outlined, size: 20, color: Color(0xFF8A96B2)),
+                        const Icon(Icons.shield_outlined,
+                            size: 20, color: Color(0xFF8A96B2)),
                         const SizedBox(width: 12),
                         Text(AppStrings.tr(ref, 'encryptionInfo')),
                       ],
@@ -209,15 +225,20 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     child: Row(
                       children: [
                         Icon(
-                          _isBlocked ? Icons.check_circle_outline : Icons.block_flipped,
+                          _isBlocked
+                              ? Icons.check_circle_outline
+                              : Icons.block_flipped,
                           size: 20,
-                          color: _isBlocked ? AppColors.primary : Colors.redAccent,
+                          color:
+                              _isBlocked ? AppColors.primary : Colors.redAccent,
                         ),
                         const SizedBox(width: 12),
                         Text(
                           _isBlocked ? 'Unblock contact' : 'Block contact',
                           style: TextStyle(
-                            color: _isBlocked ? AppColors.primary : Colors.redAccent,
+                            color: _isBlocked
+                                ? AppColors.primary
+                                : Colors.redAccent,
                           ),
                         ),
                       ],
@@ -227,7 +248,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     value: 'report',
                     child: Row(
                       children: [
-                        const Icon(Icons.thumb_down_outlined, size: 20, color: Colors.redAccent),
+                        const Icon(Icons.thumb_down_outlined,
+                            size: 20, color: Colors.redAccent),
                         const SizedBox(width: 12),
                         Text(
                           AppStrings.tr(ref, 'reportContact'),
@@ -249,7 +271,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                           fit: BoxFit.cover,
                           memCacheWidth: 600,
                           memCacheHeight: 600,
-                          errorWidget: (_, __, ___) => _buildPlaceholderAvatar(isDark),
+                          errorWidget: (_, __, ___) =>
+                              _buildPlaceholderAvatar(isDark),
                         )
                       : _buildPlaceholderAvatar(isDark),
                   Container(
@@ -338,7 +361,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                             if (mounted) {
                               showSnackBar(
                                 context: context,
-                                content: '${widget.contactName} has been unblocked',
+                                content:
+                                    '${widget.contactName} has been unblocked',
                                 type: SnacBarType.info,
                               );
                             }
@@ -346,7 +370,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                             if (mounted) {
                               showSnackBar(
                                 context: context,
-                                content: 'Failed to unblock. Please check connection.',
+                                content:
+                                    'Failed to unblock. Please check connection.',
                                 type: SnacBarType.error,
                               );
                             }
@@ -399,7 +424,9 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? const Color(0xFF8A96B2) : const Color(0xFF5B6785),
+                      color: isDark
+                          ? const Color(0xFF8A96B2)
+                          : const Color(0xFF5B6785),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -419,7 +446,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     ),
                     style: TextStyle(
                       fontSize: 13,
-                      color: widget.other.activityStatus == UserActivityStatus.online
+                      color: widget.other.activityStatus ==
+                              UserActivityStatus.online
                           ? AppColors.primary
                           : Colors.grey,
                     ),
@@ -448,7 +476,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                       Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.message, color: AppColors.primary),
+                            icon: const Icon(Icons.message,
+                                color: AppColors.primary),
                             onPressed: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
@@ -462,7 +491,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                             },
                           ),
                           IconButton(
-                            icon: const Icon(Icons.call, color: AppColors.primary),
+                            icon: const Icon(Icons.call,
+                                color: AppColors.primary),
                             onPressed: () async {
                               await initiateSmartCall(
                                 context,
@@ -489,7 +519,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
             child: Container(
               color: cardBg,
               child: ListTile(
-                leading: const Icon(Icons.photo_library_outlined, color: Color(0xFF8A96B2)),
+                leading: const Icon(Icons.photo_library_outlined,
+                    color: Color(0xFF8A96B2)),
                 title: Text(AppStrings.tr(ref, 'mediaLinksDocs')),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -525,7 +556,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
               child: Column(
                 children: [
                   SwitchListTile(
-                    secondary: const Icon(Icons.notifications_outlined, color: Color(0xFF8A96B2)),
+                    secondary: const Icon(Icons.notifications_outlined,
+                        color: Color(0xFF8A96B2)),
                     title: Text(AppStrings.tr(ref, 'muteNotifications')),
                     subtitle: Text(AppStrings.tr(ref, 'muteDesc')),
                     value: _isMuted,
@@ -553,45 +585,56 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                   ),
                   const Divider(height: 1, indent: 56),
                   ListTile(
-                    leading: const Icon(Icons.music_note_outlined, color: Color(0xFF8A96B2)),
+                    leading: const Icon(Icons.music_note_outlined,
+                        color: Color(0xFF8A96B2)),
                     title: Text(AppStrings.tr(ref, 'customNotifications')),
                     subtitle: Text(
-                      (SharedPref.instance.getBool('custom_notif_enabled_${widget.other.id}') ?? false)
+                      (SharedPref.instance.getBool(
+                                  'custom_notif_enabled_${widget.other.id}') ??
+                              false)
                           ? 'Enabled'
                           : 'Default system tone and vibration',
                       style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
-                    trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                    trailing:
+                        const Icon(Icons.chevron_right, color: Colors.grey),
                     onTap: () {
-                      Navigator.of(context).push(
+                      Navigator.of(context)
+                          .push(
                         MaterialPageRoute(
                           builder: (_) => CustomNotificationsScreen(
                             contact: widget.other,
                             contactName: widget.contactName,
                           ),
                         ),
-                      ).then((_) {
+                      )
+                          .then((_) {
                         if (mounted) setState(() {});
                       });
                     },
                   ),
                   const Divider(height: 1, indent: 56),
                   ListTile(
-                    leading: const Icon(Icons.shield_outlined, color: Color(0xFF8A96B2)),
+                    leading: const Icon(Icons.shield_outlined,
+                        color: Color(0xFF8A96B2)),
                     title: Text(AppStrings.tr(ref, 'encryptionAndSecurity')),
                     subtitle: Text(
                       AppStrings.tr(ref, 'encryptionDesc'),
                       style: const TextStyle(fontSize: 12),
                     ),
-                    trailing: const Icon(Icons.info_outline, color: Color(0xFF8A96B2), size: 20),
+                    trailing: const Icon(Icons.info_outline,
+                        color: Color(0xFF8A96B2), size: 20),
                     onTap: () => _showEncryptionDialog(context),
                   ),
                   const Divider(height: 1, indent: 56),
                   ListTile(
-                    leading: const Icon(Icons.timer_outlined, color: Color(0xFF8A96B2)),
+                    leading: const Icon(Icons.timer_outlined,
+                        color: Color(0xFF8A96B2)),
                     title: const Text('Disappearing messages'),
-                    subtitle: Text(_disappearingTimer, style: const TextStyle(fontSize: 12)),
-                    trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                    subtitle: Text(_disappearingTimer,
+                        style: const TextStyle(fontSize: 12)),
+                    trailing:
+                        const Icon(Icons.chevron_right, color: Colors.grey),
                     onTap: _showDisappearingMessagesDialog,
                   ),
                 ],
@@ -617,14 +660,16 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                           ? 'Unblock ${widget.contactName}'
                           : 'Block ${widget.contactName}',
                       style: TextStyle(
-                        color: _isBlocked ? AppColors.primary : Colors.redAccent,
+                        color:
+                            _isBlocked ? AppColors.primary : Colors.redAccent,
                       ),
                     ),
                     onTap: _toggleBlockStatus,
                   ),
                   const Divider(height: 1, indent: 56),
                   ListTile(
-                    leading: const Icon(Icons.thumb_down_outlined, color: Colors.redAccent),
+                    leading: const Icon(Icons.thumb_down_outlined,
+                        color: Colors.redAccent),
                     title: Text(
                       AppStrings.tr(
                         ref,
@@ -708,7 +753,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.translate_rounded, color: AppColors.primary, size: 48),
+              const Icon(Icons.translate_rounded,
+                  color: AppColors.primary, size: 48),
               const SizedBox(height: 16),
               Text(
                 AppStrings.tr(ref, 'geminiAiLiveTranslation'),
@@ -729,7 +775,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   minimumSize: const Size.fromHeight(46),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24)),
                 ),
                 icon: const Icon(Icons.phone_in_talk),
                 label: Text(
@@ -764,17 +811,22 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
 
   Future<void> _editContact() async {
     try {
-      final hasPermission = await fc.FlutterContacts.requestPermission(readonly: true);
+      final hasPermission =
+          await fc.FlutterContacts.requestPermission(readonly: true);
       fc.Contact? matched;
 
       if (hasPermission) {
-        final digitsOnly = widget.other.phone.getFormattedNumber().replaceAll(RegExp(r'\D'), '');
-        final contacts = await fc.FlutterContacts.getContacts(withProperties: true);
+        final digitsOnly = widget.other.phone
+            .getFormattedNumber()
+            .replaceAll(RegExp(r'\D'), '');
+        final contacts =
+            await fc.FlutterContacts.getContacts(withProperties: true);
 
         for (final c in contacts) {
           for (final p in c.phones) {
             final pClean = p.number.replaceAll(RegExp(r'\D'), '');
-            if (digitsOnly.isNotEmpty && (pClean.contains(digitsOnly) || digitsOnly.contains(pClean))) {
+            if (digitsOnly.isNotEmpty &&
+                (pClean.contains(digitsOnly) || digitsOnly.contains(pClean))) {
               matched = c;
               break;
             }
@@ -806,17 +858,22 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
 
   Future<void> _viewInAddressBook() async {
     try {
-      final hasPermission = await fc.FlutterContacts.requestPermission(readonly: true);
+      final hasPermission =
+          await fc.FlutterContacts.requestPermission(readonly: true);
       fc.Contact? matched;
 
       if (hasPermission) {
-        final digitsOnly = widget.other.phone.getFormattedNumber().replaceAll(RegExp(r'\D'), '');
-        final contacts = await fc.FlutterContacts.getContacts(withProperties: true);
+        final digitsOnly = widget.other.phone
+            .getFormattedNumber()
+            .replaceAll(RegExp(r'\D'), '');
+        final contacts =
+            await fc.FlutterContacts.getContacts(withProperties: true);
 
         for (final c in contacts) {
           for (final p in c.phones) {
             final pClean = p.number.replaceAll(RegExp(r'\D'), '');
-            if (digitsOnly.isNotEmpty && (pClean.contains(digitsOnly) || digitsOnly.contains(pClean))) {
+            if (digitsOnly.isNotEmpty &&
+                (pClean.contains(digitsOnly) || digitsOnly.contains(pClean))) {
               matched = c;
               break;
             }
@@ -898,9 +955,13 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
           if (val != null) {
             setState(() => _disappearingTimer = val);
             final chatId = getChatId(widget.self.id, widget.other.id);
-            SharedPref.instance.setString('contact_disappearing_${widget.other.id}', val);
+            SharedPref.instance
+                .setString('contact_disappearing_${widget.other.id}', val);
             SharedPref.instance.setString('chat_disappearing_$chatId', val);
-            FirebaseFirestore.instance.collection('chat_settings').doc(chatId).set({
+            FirebaseFirestore.instance
+                .collection('chat_settings')
+                .doc(chatId)
+                .set({
               'chatId': chatId,
               'participants': [widget.self.id, widget.other.id],
               'disappearingDuration': val,
@@ -973,7 +1034,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
           if (mounted) {
             showSnackBar(
               context: context,
-              content: 'Failed to unblock ${widget.contactName}. Please check connection.',
+              content:
+                  'Failed to unblock ${widget.contactName}. Please check connection.',
               type: SnacBarType.error,
             );
           }
@@ -1020,7 +1082,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
           if (mounted) {
             showSnackBar(
               context: context,
-              content: 'Failed to block ${widget.contactName}. Please check connection.',
+              content:
+                  'Failed to block ${widget.contactName}. Please check connection.',
               type: SnacBarType.error,
             );
           }
@@ -1180,7 +1243,8 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
               if (mounted) {
                 showSnackBar(
                   context: context,
-                  content: 'Failed to submit report. Please check your network and try again.',
+                  content:
+                      'Failed to submit report. Please check your network and try again.',
                   type: SnacBarType.error,
                 );
               }

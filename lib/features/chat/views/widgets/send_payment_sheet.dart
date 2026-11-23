@@ -756,7 +756,7 @@ class _SendPaymentSheetContentState
                 decoration: BoxDecoration(
                   color: isDark
                       ? const Color(0xFF222E35)
-                      : const Color(0xFFEEF1FA),
+                      : AppColors.lightSurfaceContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -905,7 +905,7 @@ class _SendPaymentSheetContentState
                 decoration: BoxDecoration(
                   color: isDark
                       ? const Color(0xFF222E35)
-                      : const Color(0xFFEEF1FA),
+                      : AppColors.lightSurfaceContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(

@@ -1212,7 +1212,9 @@ class _MessageCardState extends ConsumerState<MessageCard>
         constraints:
             BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.88),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF182229) : const Color(0xFFEEF1FA),
+          color: isDark
+              ? AppColors.darkSurfaceContainer
+              : AppColors.lightSurfaceContainer,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isMissed

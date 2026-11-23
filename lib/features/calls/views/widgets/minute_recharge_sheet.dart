@@ -425,7 +425,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.auto_awesome, color: Color(0xFF06B6D4), size: 14),
+                          const Icon(Icons.auto_awesome, color: AppColors.accent, size: 14),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(

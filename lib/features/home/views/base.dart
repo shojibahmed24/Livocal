@@ -28,6 +28,8 @@ import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/repositories/push_notifications.dart';
 import 'package:livocal/shared/repositories/wallet_repository.dart';
+import 'package:livocal/shared/ui/livocal_app_bar.dart';
+import 'package:livocal/shared/ui/livocal_tabs.dart';
 import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/time_ticker.dart';
@@ -99,9 +101,9 @@ class _HomePageState extends ConsumerState<HomePage>
 
     // Initialize or verify SaaS minute wallet & 14-day 20-min trial
     ref.read(walletRepositoryProvider).initializeOrGetWallet(
-      userId: widget.user.id,
-      phone: widget.user.phoneNumber,
-    );
+          userId: widget.user.id,
+          phone: widget.user.phoneNumber,
+        );
 
     messageListener = firestore.getChatStream(widget.user.id).listen(
       (messages) async {
@@ -149,7 +151,8 @@ class _HomePageState extends ConsumerState<HomePage>
                 message.attachment!.fileName,
               ),
               onDownloadComplete: (filePath) {
-                debugPrint('Auto-download complete for message ${message.id}: $filePath');
+                debugPrint(
+                    'Auto-download complete for message ${message.id}: $filePath');
               },
               onDownloadError: () {
                 debugPrint('Auto-download failed for message ${message.id}');
@@ -163,7 +166,8 @@ class _HomePageState extends ConsumerState<HomePage>
 
         // Only play message notification tone for new messages arriving after app launch
         if (hasIncoming && !isInitialEmission) {
-          RingtoneManager().playMessageNotificationTone(contactId: lastIncomingSenderId);
+          RingtoneManager()
+              .playMessageNotificationTone(contactId: lastIncomingSenderId);
         }
 
         if (nonBlockedMessages.isNotEmpty) {
@@ -215,7 +219,6 @@ class _HomePageState extends ConsumerState<HomePage>
         children: [
           FloatingActionButton(
             tooltip: 'New status',
-            backgroundColor: AppColorsDark.appBarColor,
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -276,27 +279,34 @@ class _HomePageState extends ConsumerState<HomePage>
         .listen((incomingSession) {
       if (incomingSession == null) {
         final current = ref.read(callControllerProvider).activeSession;
-        if (current != null && current.status == CallStateStatus.ringing && current.isIncoming) {
+        if (current != null &&
+            current.status == CallStateStatus.ringing &&
+            current.isIncoming) {
           CallKitService().endAllCalls();
-          ref.read(callControllerProvider.notifier).endCall(recordAsMissed: false);
+          ref
+              .read(callControllerProvider.notifier)
+              .endCall(recordAsMissed: false);
         }
         return;
       }
       if (!mounted) return;
       if (BlockService.isBlocked(incomingSession.callerId)) {
-        debugPrint('[base.dart] Suppressing incoming call from blocked caller: ${incomingSession.callerId}');
+        debugPrint(
+            '[base.dart] Suppressing incoming call from blocked caller: ${incomingSession.callerId}');
         return;
       }
 
       // Complete Mute Suppression: If caller is muted by user, suppress IncomingCallScreen entirely
       final callerId = incomingSession.callerId;
-      final isMuted = SharedPref.isInitialized && MuteService.isContactMuted(callerId);
+      final isMuted =
+          SharedPref.isInitialized && MuteService.isContactMuted(callerId);
       if (isMuted) {
-        debugPrint('[base.dart] Completely suppressing incoming call UI from muted caller: $callerId');
+        debugPrint(
+            '[base.dart] Completely suppressing incoming call UI from muted caller: $callerId');
         ref.read(callControllerProvider.notifier).recordSuppressedMutedCall(
-          self: widget.user,
-          incomingSession: incomingSession,
-        );
+              self: widget.user,
+              incomingSession: incomingSession,
+            );
         return;
       }
       final currentSession = ref.read(callControllerProvider).activeSession;
@@ -368,103 +378,12 @@ class _HomePageState extends ConsumerState<HomePage>
         builder: (context) => ChatPage(
           self: widget.user,
           other: author,
-          otherUserContactName:
-              contact?.displayName ?? (author.name.isNotEmpty ? author.name : author.phone.getFormattedNumber()),
+          otherUserContactName: contact?.displayName ??
+              (author.name.isNotEmpty
+                  ? author.name
+                  : author.phone.getFormattedNumber()),
         ),
       ),
-    );
-  }
-
-  Widget _buildBrandTitle(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Brand Logo Emblem with subtle glow
-        Container(
-          width: 30,
-          height: 30,
-          margin: const EdgeInsets.only(right: 9),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF5B6CF9).withValues(alpha: 0.35),
-                blurRadius: 6,
-                offset: const Offset(0, 1.5),
-              ),
-            ],
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Padding(
-            padding: const EdgeInsets.all(2.0),
-            child: Image.asset(
-              'assets/images/logo.png',
-              fit: BoxFit.contain,
-            ),
-          ),
-        ),
-
-        // Brand Typography: "Li" (White/Light) + "Vocal" (Emerald Green)
-        RichText(
-          text: TextSpan(
-            style: const TextStyle(
-              fontSize: 21,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.3,
-            ),
-            children: [
-              TextSpan(
-                text: 'Li ',
-                style: TextStyle(
-                  color: isDark ? const Color(0xFFEEF1FA) : Colors.white,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const TextSpan(
-                text: 'Vocal',
-                style: TextStyle(
-                  color: Color(0xFF00D4C8),
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(width: 6),
-
-        // Modern "AI" Pill Accent
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF5B6CF9), Color(0xFF00D4C8)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(5),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF00D4C8).withValues(alpha: 0.35),
-                blurRadius: 4,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          child: const Text(
-            'AI',
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 9.5,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.4,
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -475,15 +394,9 @@ class _HomePageState extends ConsumerState<HomePage>
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.darkSurface
-              : AppColors.primary,
-          foregroundColor: Colors.white,
-          scrolledUnderElevation: 0,
-          elevation: 0,
-          iconTheme: const IconThemeData(color: Colors.white),
-          actionsIconTheme: const IconThemeData(color: Colors.white),
+        appBar: livocalAppBar(
+          context,
+          showWordmark: !_isSearching,
           leading: _isSearching
               ? IconButton(
                   tooltip: 'Back',
@@ -500,19 +413,26 @@ class _HomePageState extends ConsumerState<HomePage>
               ? TextField(
                   controller: _searchController,
                   autofocus: true,
-                  style: const TextStyle(color: Colors.white, fontSize: 17),
+                  style: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.lightTextPrimary,
+                    fontSize: 17,
+                  ),
                   cursorColor: colorTheme.greenColor,
                   decoration: InputDecoration(
                     hintText: AppStrings.tr(ref, 'searchChatsHint'),
-                    hintStyle: const TextStyle(
-                      color: Colors.white60,
+                    hintStyle: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary,
                       fontSize: 15,
                     ),
                     border: InputBorder.none,
                   ),
                   onChanged: (_) => setState(() {}),
                 )
-              : _buildBrandTitle(context),
+              : null,
           actions: [
             if (_isSearching) ...[
               IconButton(
@@ -582,7 +502,9 @@ class _HomePageState extends ConsumerState<HomePage>
                     }
                     break;
                   case 'status_privacy':
-                    String privacy = SharedPref.instance.getString('status_privacy') ?? 'contacts';
+                    String privacy =
+                        SharedPref.instance.getString('status_privacy') ??
+                            'contacts';
                     showAppDialog(
                       context: context,
                       title: 'Status privacy',
@@ -593,7 +515,8 @@ class _HomePageState extends ConsumerState<HomePage>
                           onChanged: (val) {
                             if (val != null) {
                               setDlgState(() => privacy = val);
-                              SharedPref.instance.setString('status_privacy', val);
+                              SharedPref.instance
+                                  .setString('status_privacy', val);
                             }
                           },
                           child: const Column(
@@ -602,22 +525,26 @@ class _HomePageState extends ConsumerState<HomePage>
                             children: [
                               Text(
                                 'Who can see my status updates:',
-                                style: TextStyle(color: Colors.grey, fontSize: 13),
+                                style:
+                                    TextStyle(color: Colors.grey, fontSize: 13),
                               ),
                               SizedBox(height: 8),
                               RadioListTile<String>(
                                 title: Text('My contacts'),
-                                subtitle: Text('Share with all contacts in phonebook'),
+                                subtitle: Text(
+                                    'Share with all contacts in phonebook'),
                                 value: 'contacts',
                               ),
                               RadioListTile<String>(
                                 title: Text('My contacts except...'),
-                                subtitle: Text('Hide status from selected contacts'),
+                                subtitle:
+                                    Text('Hide status from selected contacts'),
                                 value: 'except',
                               ),
                               RadioListTile<String>(
                                 title: Text('Only share with...'),
-                                subtitle: Text('Share only with chosen friends'),
+                                subtitle:
+                                    Text('Share only with chosen friends'),
                                 value: 'only',
                               ),
                             ],
@@ -734,64 +661,36 @@ class _HomePageState extends ConsumerState<HomePage>
               },
             ),
           ],
-          bottom: TabBar(
-            controller: _tabController,
-            indicator: const UnderlineTabIndicator(
-              borderSide: BorderSide(
-                width: 3.2,
-                color: Color(0xFF00D4C8),
-              ),
-              borderRadius: BorderRadius.all(Radius.circular(3)),
-              insets: EdgeInsets.symmetric(horizontal: 16),
-            ),
-            indicatorSize: TabBarIndicatorSize.label,
-            labelColor: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF00D4C8)
-                : Colors.white,
-            unselectedLabelColor: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF8A96B2)
-                : Colors.white70,
-            labelStyle: const TextStyle(
-              fontSize: 14.5,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
-            ),
-            unselectedLabelStyle: const TextStyle(
-              fontSize: 14.5,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.3,
-            ),
-            dividerColor: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF22304D)
-                : Colors.white24,
-            dividerHeight: 1.0,
-            tabs: [
-              Tab(
-                text: AppStrings.tr(ref, 'chats').toUpperCase(),
-              ),
-              Tab(
-                text: AppStrings.tr(ref, 'status').toUpperCase(),
-              ),
-              Tab(
-                text: AppStrings.tr(ref, 'calls').toUpperCase(),
-              ),
-            ],
-          ),
         ),
-        body: TabBarView(
-          controller: _tabController,
-          physics: const BouncingScrollPhysics(
-            parent: AlwaysScrollableScrollPhysics(),
-          ),
+        body: Column(
           children: [
-            ChatsTabWithHero(
-              user: widget.user,
-              searchQuery: _isSearching
-                  ? _searchController.text.trim().toLowerCase()
-                  : '',
+            if (!_isSearching)
+              LivocalTabs(
+                controller: _tabController,
+                labels: [
+                  AppStrings.tr(ref, 'chats'),
+                  AppStrings.tr(ref, 'status'),
+                  AppStrings.tr(ref, 'calls'),
+                ],
+              ),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                physics: const BouncingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics(),
+                ),
+                children: [
+                  ChatsTabWithHero(
+                    user: widget.user,
+                    searchQuery: _isSearching
+                        ? _searchController.text.trim().toLowerCase()
+                        : '',
+                  ),
+                  StatusTab(user: widget.user),
+                  CallsTab(user: widget.user),
+                ],
+              ),
             ),
-            StatusTab(user: widget.user),
-            CallsTab(user: widget.user),
           ],
         ),
         floatingActionButton: _floatingButtons[_tabController.index],
@@ -884,8 +783,7 @@ class _AiCallHero extends ConsumerWidget {
               ),
               const Spacer(),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.16),
                   borderRadius: AppRadius.full,
@@ -936,8 +834,7 @@ class _AiCallHero extends ConsumerWidget {
           Row(
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.16),
                   borderRadius: AppRadius.full,
@@ -1035,7 +932,8 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
         if (snapshot.hasError) {
           return Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 48.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 32.0, vertical: 48.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -1065,7 +963,8 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.radiusXl),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
                     ),
                     onPressed: () {
                       setState(() {});
@@ -1113,7 +1012,8 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
         } else if (chats.isEmpty) {
           return Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 48.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 32.0, vertical: 48.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -1157,7 +1057,8 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.radiusXl),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 14),
                       elevation: 2,
                     ),
                     onPressed: () async {
@@ -1197,20 +1098,25 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
               thickness: 0.5,
               indent: 82,
               endIndent: 16,
-              color: isDark ? const Color(0xFF16203A) : const Color(0xFFEEF1FA),
+              color: isDark
+                  ? AppColors.darkSurfaceContainer
+                  : AppColors.lightSurfaceContainer,
             );
           },
           itemBuilder: (context, index) {
             if (index == chats.length) {
               return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(
+                    vertical: 20.0, horizontal: 16.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
                       Icons.lock_rounded,
                       size: 13,
-                      color: isDark ? const Color(0xFF8A96B2) : const Color(0xFF5B6785),
+                      color: isDark
+                          ? const Color(0xFF8A96B2)
+                          : const Color(0xFF5B6785),
                     ),
                     const SizedBox(width: 6),
                     RichText(
@@ -1218,7 +1124,9 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
                       text: TextSpan(
                         style: TextStyle(
                           fontSize: 12.0,
-                          color: isDark ? const Color(0xFF8A96B2) : const Color(0xFF5B6785),
+                          color: isDark
+                              ? const Color(0xFF8A96B2)
+                              : const Color(0xFF5B6785),
                         ),
                         children: const [
                           TextSpan(text: 'Your personal messages are '),
@@ -1385,7 +1293,7 @@ class RecentChatWidget extends StatelessWidget {
 
   List<Color> _getGradientForName(String name) {
     const gradients = [
-      [Color(0xFF5B6CF9), Color(0xFF128C7E)],
+      [Color(0xFF5B6CF9), Color(0xFF00A79E)],
       [Color(0xFF2563EB), Color(0xFF1D4ED8)],
       [Color(0xFF7C3AED), Color(0xFF6D28D9)],
       [Color(0xFFDB2777), Color(0xFFBE185D)],
@@ -1495,8 +1403,8 @@ class RecentChatWidget extends StatelessWidget {
 
   Widget _buildSubtitle(BuildContext context, bool isDark, bool hasUnread) {
     final textColor = hasUnread
-        ? (isDark ? const Color(0xFFE9EDEF) : const Color(0xFF0A0F1E))
-        : (isDark ? const Color(0xFF8A96B2) : const Color(0xFF5B6785));
+        ? (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary)
+        : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary);
 
     String text = msgContent;
     if (text == "\u00A0" || text.isEmpty) {
@@ -1513,21 +1421,24 @@ class RecentChatWidget extends StatelessWidget {
         final isSentByMe = chat.message.senderId == user.id;
         final durStr = CallLogHelper.formatDurationShort(callData.duration);
         if (callData.isMissed) {
-          attachmentIcon = isSentByMe ? Icons.call_missed_outgoing_rounded : Icons.call_missed_rounded;
+          attachmentIcon = isSentByMe
+              ? Icons.call_missed_outgoing_rounded
+              : Icons.call_missed_rounded;
           iconCustomColor = Colors.redAccent;
           attachmentLabel = isSentByMe ? 'মিসড কল' : 'মিসড ভয়েস কল';
         } else {
-          attachmentIcon = isSentByMe ? Icons.call_made_rounded : Icons.call_received_rounded;
-          iconCustomColor = isDark ? Colors.tealAccent : const Color(0xFF5B6CF9);
+          attachmentIcon = isSentByMe
+              ? Icons.call_made_rounded
+              : Icons.call_received_rounded;
+          iconCustomColor =
+              isDark ? Colors.tealAccent : const Color(0xFF5B6CF9);
           attachmentLabel = isSentByMe
               ? (durStr.isNotEmpty ? "ভয়েস কল ($durStr)" : "ভয়েস কল")
               : (durStr.isNotEmpty ? "ইনকামিং কল ($durStr)" : "ইনকামিং কল");
         }
         text = attachmentLabel;
       }
-    } else
-
-    if (chat.message.attachment != null) {
+    } else if (chat.message.attachment != null) {
       switch (chat.message.attachment!.type) {
         case AttachmentType.audio:
           attachmentIcon = Icons.audiotrack_rounded;
@@ -1568,7 +1479,8 @@ class RecentChatWidget extends StatelessWidget {
           Icon(
             attachmentIcon,
             size: 16.0,
-            color: iconCustomColor ?? (isDark ? const Color(0xFF8A96B2) : const Color(0xFF5B6785)),
+            color: iconCustomColor ??
+                (isDark ? const Color(0xFF8A96B2) : const Color(0xFF5B6785)),
           ),
           const SizedBox(width: 4.0),
         ],
@@ -1646,9 +1558,8 @@ class RecentChatWidget extends StatelessWidget {
             fontSize: 16.5,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.2,
-            color: isDark
-                ? const Color(0xFFE9EDEF)
-                : const Color(0xFF0A0F1E),
+            color:
+                isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
           ),
         ),
       ),
@@ -1694,7 +1605,8 @@ class RecentChatWidget extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF00D4C8).withValues(alpha: 0.35),
+                              color: const Color(0xFF00D4C8)
+                                  .withValues(alpha: 0.35),
                               blurRadius: 4,
                               offset: const Offset(0, 1),
                             ),
@@ -1750,9 +1662,7 @@ class RecentChatTime extends StatelessWidget {
             letterSpacing: -0.1,
             color: hasUnread
                 ? const Color(0xFF00D4C8)
-                : (isDark
-                    ? const Color(0xFF8A96B2)
-                    : const Color(0xFF5B6785)),
+                : (isDark ? const Color(0xFF8A96B2) : const Color(0xFF5B6785)),
           ),
         );
       },

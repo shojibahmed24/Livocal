@@ -389,7 +389,7 @@ class _UserProfileCreationPageState
                       decoration: BoxDecoration(
                         color: Theme.of(context).brightness == Brightness.dark
                             ? const Color(0xFF16203A)
-                            : const Color(0xFFEEF1FA),
+                            : AppColors.lightSurfaceContainer,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: colorTheme.greenColor.withValues(alpha: 0.5),

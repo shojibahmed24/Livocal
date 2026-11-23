@@ -271,7 +271,7 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
                           decoration: BoxDecoration(
                             color: isDark
                                 ? const Color(0xFF16203A)
-                                : const Color(0xFFEEF1FA),
+                                : AppColors.lightSurfaceContainer,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(

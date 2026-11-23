@@ -1456,8 +1456,8 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: isDarkTheme
-                            ? const Color(0xFF182229)
-                            : const Color(0xFFE9EDEF),
+                            ? AppColors.darkSurfaceContainer
+                            : AppColors.lightSurfaceContainer,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(

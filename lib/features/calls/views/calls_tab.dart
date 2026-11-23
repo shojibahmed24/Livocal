@@ -81,15 +81,19 @@ class _CallsTabState extends ConsumerState<CallsTab>
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: isExhausted
-                    ? Colors.amber.withValues(alpha: 0.12)
-                    : (isDark
-                        ? (isTrial ? const Color(0xFF0D2820) : const Color(0xFF131F2E))
-                        : (isTrial ? const Color(0xFFE8F5F0) : const Color(0xFFE3F4FD))),
+                    ? AppColors.warning.withValues(alpha: 0.12)
+                    : (isTrial
+                        ? AppColors.primary
+                            .withValues(alpha: isDark ? 0.16 : 0.07)
+                        : AppColors.accent
+                            .withValues(alpha: isDark ? 0.12 : 0.08)),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: isExhausted
-                      ? Colors.amber.withValues(alpha: 0.5)
-                      : (isTrial ? AppColors.primary.withValues(alpha: 0.4) : const Color(0xFF06B6D4).withValues(alpha: 0.4)),
+                      ? AppColors.warning.withValues(alpha: 0.5)
+                      : (isTrial
+                          ? AppColors.primary.withValues(alpha: 0.35)
+                          : AppColors.accent.withValues(alpha: 0.35)),
                   width: 1.2,
                 ),
               ),
@@ -98,13 +102,23 @@ class _CallsTabState extends ConsumerState<CallsTab>
                   Container(
                     padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
-                      color: (isExhausted ? Colors.amber : (isTrial ? AppColors.primary : const Color(0xFF06B6D4)))
+                      color: (isExhausted
+                              ? AppColors.warning
+                              : (isTrial
+                                  ? AppColors.primary
+                                  : AppColors.accent))
                           .withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      isExhausted ? Icons.warning_amber_rounded : (isTrial ? Icons.timer_outlined : Icons.diamond_outlined),
-                      color: isExhausted ? Colors.amber : (isTrial ? AppColors.primary : const Color(0xFF06B6D4)),
+                      isExhausted
+                          ? Icons.warning_amber_rounded
+                          : (isTrial
+                              ? Icons.timer_outlined
+                              : Icons.diamond_outlined),
+                      color: isExhausted
+                          ? AppColors.warning
+                          : (isTrial ? AppColors.primary : AppColors.accent),
                       size: 18,
                     ),
                   ),
@@ -115,10 +129,14 @@ class _CallsTabState extends ConsumerState<CallsTab>
                       children: [
                         Text(
                           isTrial
-                              ? AppStrings.trParams(ref, 'trialRemainingBadge', {'minutes': '${wallet.trialMinutes}'})
+                              ? AppStrings.trParams(ref, 'trialRemainingBadge',
+                                  {'minutes': '${wallet.trialMinutes}'})
                               : (isExhausted
                                   ? AppStrings.tr(ref, 'balanceExhaustedBadge')
-                                  : AppStrings.trParams(ref, 'balanceMinutesBadge', {'minutes': '${wallet.balanceMinutes}'})),
+                                  : AppStrings.trParams(
+                                      ref,
+                                      'balanceMinutesBadge',
+                                      {'minutes': '${wallet.balanceMinutes}'})),
                           style: TextStyle(
                             color: isExhausted
                                 ? Colors.amber[700]
@@ -129,10 +147,13 @@ class _CallsTabState extends ConsumerState<CallsTab>
                         ),
                         Text(
                           isTrial
-                              ? AppStrings.trParams(ref, 'trialDaysLeftNotice', {'days': '${wallet.daysRemainingInTrial}'})
+                              ? AppStrings.trParams(ref, 'trialDaysLeftNotice',
+                                  {'days': '${wallet.daysRemainingInTrial}'})
                               : (isExhausted
-                                  ? AppStrings.tr(ref, 'rechargeForTranslationNotice')
-                                  : AppStrings.tr(ref, 'translationRateNotice')),
+                                  ? AppStrings.tr(
+                                      ref, 'rechargeForTranslationNotice')
+                                  : AppStrings.tr(
+                                      ref, 'translationRateNotice')),
                           style: TextStyle(
                             color: isExhausted
                                 ? Colors.amber[600]
@@ -145,9 +166,11 @@ class _CallsTabState extends ConsumerState<CallsTab>
                   ),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isExhausted ? Colors.amber[700] : AppColors.primary,
+                      backgroundColor:
+                          isExhausted ? Colors.amber[700] : AppColors.primary,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       shape: RoundedRectangleBorder(
@@ -155,10 +178,14 @@ class _CallsTabState extends ConsumerState<CallsTab>
                       ),
                       elevation: 0,
                     ),
-                    onPressed: () => showMinuteRechargeSheet(context, user: widget.user),
+                    onPressed: () =>
+                        showMinuteRechargeSheet(context, user: widget.user),
                     child: Text(
-                      isExhausted ? AppStrings.tr(ref, 'recharge') : AppStrings.tr(ref, 'rechargePlus'),
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                      isExhausted
+                          ? AppStrings.tr(ref, 'recharge')
+                          : AppStrings.tr(ref, 'rechargePlus'),
+                      style: const TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -202,7 +229,8 @@ class _CallsTabState extends ConsumerState<CallsTab>
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primary, width: 1.5),
+                    side:
+                        const BorderSide(color: AppColors.primary, width: 1.5),
                     padding: const EdgeInsets.symmetric(vertical: 13),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -347,9 +375,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
                                 : Icons.call_received_rounded)
                             : Icons.call_made_rounded,
                         size: 15,
-                        color: isMissed
-                            ? Colors.redAccent
-                            : AppColors.primary,
+                        color: isMissed ? Colors.redAccent : AppColors.primary,
                       ),
                       const SizedBox(width: 5),
                       Expanded(

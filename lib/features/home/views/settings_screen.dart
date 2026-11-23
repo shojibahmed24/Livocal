@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,10 +6,14 @@ import 'package:livocal/features/auth/domain/auth_service.dart';
 import 'package:livocal/features/home/views/profile_edit_screen.dart';
 import 'package:livocal/features/settings/views/qr_code_screen.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/ui/livocal_app_bar.dart';
+import 'package:livocal/shared/ui/livocal_avatar.dart';
+import 'package:livocal/shared/ui/livocal_card.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/widgets/settings_row.dart';
 import 'package:livocal/theme/app_colors.dart';
+import 'package:livocal/theme/text_theme.dart';
 import 'package:livocal/theme/theme.dart';
 import 'package:livocal/features/settings/views/account_settings_screen.dart';
 import 'package:livocal/features/settings/views/privacy_settings_screen.dart';
@@ -76,83 +79,84 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     ref.watch(appLocaleProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: isDark ? AppColors.darkSurface : AppColors.primary,
-        foregroundColor: Colors.white,
-        scrolledUnderElevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        actionsIconTheme: const IconThemeData(color: Colors.white),
+      appBar: livocalAppBar(
+        context,
         title: Text(
           AppStrings.tr(ref, 'settings'),
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+          style: TextStyle(
+            fontFamily: CustomTextTheme.display,
+            fontSize: 19,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
+            color:
+                isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
           ),
         ),
       ),
       body: ListView(
         children: [
-          // User Profile Header Tile with Real QR Code Access
-          InkWell(
-            onTap: () async {
-              final updated = await Navigator.push<User>(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ProfileEditScreen(user: _currentUser),
-                ),
-              );
-              if (updated != null && mounted) {
-                setState(() => _currentUser = updated);
-              }
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          // User Profile Header Card with Real QR Code Access
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: LivocalCard(
+              padding: const EdgeInsets.all(14),
+              onTap: () async {
+                final updated = await Navigator.push<User>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ProfileEditScreen(user: _currentUser),
+                  ),
+                );
+                if (updated != null && mounted) {
+                  setState(() => _currentUser = updated);
+                }
+              },
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.primary.withValues(alpha: isDark ? 0.22 : 0.08),
+                  AppColors.accent.withValues(alpha: isDark ? 0.12 : 0.06),
+                ],
+              ),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 32,
-                    backgroundColor: AppColors.primary,
-                    backgroundImage: _currentUser.avatarUrl.isNotEmpty
-                        ? CachedNetworkImageProvider(_currentUser.avatarUrl)
-                        : null,
-                    child: _currentUser.avatarUrl.isEmpty
-                        ? Text(
-                            _currentUser.name.isNotEmpty
-                                ? _currentUser.name[0].toUpperCase()
-                                : '?',
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          )
-                        : null,
+                  LivocalAvatar(
+                    name: _currentUser.name,
+                    imageUrl: _currentUser.avatarUrl,
+                    size: 62,
+                    ring: AvatarRing.brand,
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           _currentUser.name,
-                          style: textTheme.titleLarge.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: textTheme.titleLarge,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Text(
                           _currentUser.phone.getFormattedNumber(),
                           style: textTheme.caption.copyWith(
-                            color: Colors.grey,
+                            color: isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.lightTextSecondary,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           SharedPref.instance.getString('user_about') ??
                               'Hey there! I am using Livocal.',
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.lightTextSecondary,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -160,7 +164,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.qr_code_2_rounded, color: AppColors.primary, size: 28),
+                    icon: const Icon(
+                      Icons.qr_code_2_rounded,
+                      color: AppColors.primary,
+                      size: 28,
+                    ),
                     tooltip: 'View QR Code',
                     onPressed: () {
                       HapticFeedback.lightImpact();
@@ -176,7 +184,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
           ),
-          const Divider(thickness: 0.5, height: 1),
+          const SizedBox(height: 8),
 
           // Section 1: Account & Privacy
           SettingsSectionHeader(title: AppStrings.tr(ref, 'accountAndPrivacy')),
@@ -294,7 +302,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
 
           // Section 4: Support & Community
-          SettingsSectionHeader(title: AppStrings.tr(ref, 'supportAndCommunity')),
+          SettingsSectionHeader(
+              title: AppStrings.tr(ref, 'supportAndCommunity')),
           SettingsRow(
             icon: Icons.help_outline_rounded,
             title: AppStrings.tr(ref, 'help'),

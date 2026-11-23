@@ -9,10 +9,12 @@ import 'package:livocal/features/home/controllers/contacts_controller.dart';
 import 'package:livocal/shared/models/contact.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/ui/livocal_app_bar.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/contact_grouping.dart';
 import 'package:livocal/shared/widgets/search.dart';
 import 'package:livocal/theme/app_colors.dart';
+import 'package:livocal/theme/text_theme.dart';
 import 'package:livocal/theme/theme.dart';
 
 class ContactsPage extends ConsumerStatefulWidget {
@@ -50,18 +52,17 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return ScaffoldWithSearch(
-      appBar: AppBar(
-        elevation: 0.0,
-        scrolledUnderElevation: 0,
-        backgroundColor: isDark ? AppColors.darkSurface : AppColors.primary,
-        foregroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.white),
-        actionsIconTheme: const IconThemeData(color: Colors.white),
+      appBar: livocalAppBar(
+        context,
         title: Text(
           AppStrings.tr(ref, 'selectContact'),
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+          style: TextStyle(
+            fontFamily: CustomTextTheme.display,
+            fontSize: 19,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
+            color:
+                isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
           ),
         ),
         centerTitle: false,

@@ -106,6 +106,7 @@ final _darkColorScheme = ColorScheme.fromSeed(
 final _customTheme = CustomThemeData(isDarkTheme: false);
 final _theme = ThemeData(
   useMaterial3: true,
+  fontFamily: CustomTextTheme.body,
   brightness: Brightness.light,
   colorScheme: _lightColorScheme,
   dialogTheme: const DialogThemeData(
@@ -137,6 +138,7 @@ final _theme = ThemeData(
     backgroundColor: AppColors.primary,
     foregroundColor: Colors.white,
     titleTextStyle: TextStyle(
+      fontFamily: CustomTextTheme.display,
       color: Colors.white,
       fontSize: 20,
       fontWeight: FontWeight.w600,
@@ -182,6 +184,7 @@ final _theme = ThemeData(
 final _customDarkTheme = CustomThemeData(isDarkTheme: true);
 final _darkTheme = ThemeData(
   useMaterial3: true,
+  fontFamily: CustomTextTheme.body,
   brightness: Brightness.dark,
   colorScheme: _darkColorScheme,
   dialogTheme: const DialogThemeData(
@@ -213,6 +216,7 @@ final _darkTheme = ThemeData(
     backgroundColor: AppColors.darkSurface,
     foregroundColor: Colors.white,
     titleTextStyle: TextStyle(
+      fontFamily: CustomTextTheme.display,
       color: Colors.white,
       fontSize: 20,
       fontWeight: FontWeight.w600,

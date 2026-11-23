@@ -127,7 +127,9 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
     final String cleanPhone = parts.e164;
 
     User? resolvedUser = _foundUser;
-    resolvedUser ??= await ref.read(firebaseFirestoreRepositoryProvider).getUserByPhone(cleanPhone);
+    resolvedUser ??= await ref
+        .read(firebaseFirestoreRepositoryProvider)
+        .getUserByPhone(cleanPhone);
 
     final targetUser = resolvedUser ??
         User(
@@ -179,7 +181,9 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
     final String cleanPhone = parts.e164;
 
     User? resolvedUser = _foundUser;
-    resolvedUser ??= await ref.read(firebaseFirestoreRepositoryProvider).getUserByPhone(cleanPhone);
+    resolvedUser ??= await ref
+        .read(firebaseFirestoreRepositoryProvider)
+        .getUserByPhone(cleanPhone);
 
     final targetUser = resolvedUser ??
         User(
@@ -204,7 +208,8 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
         builder: (_) => ChatPage(
           self: widget.currentUser,
           other: targetUser,
-          otherUserContactName: resolvedUser != null ? resolvedUser.name : phone,
+          otherUserContactName:
+              resolvedUser != null ? resolvedUser.name : phone,
         ),
         settings: const RouteSettings(name: 'chat'),
       ),
@@ -215,7 +220,8 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? AppColors.darkSurface : AppColors.lightBackground;
-    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
+    final textColor =
+        isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
     const primaryColor = AppColors.primary;
 
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
@@ -260,7 +266,8 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                     color: primaryColor.withValues(alpha: 0.16),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.dialpad_rounded, color: primaryColor, size: 22),
+                  child: const Icon(Icons.dialpad_rounded,
+                      color: primaryColor, size: 22),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -330,7 +337,9 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                           )
                         : null),
                 filled: true,
-                fillColor: isDark ? AppColors.darkBackground : AppColors.lightSurfaceContainer,
+                fillColor: isDark
+                    ? AppColors.darkBackground
+                    : AppColors.lightSurfaceContainer,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                   borderSide: BorderSide.none,
@@ -346,11 +355,13 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
             // Found user status card
             if (_searchPerformed && _foundUser != null) ...[
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   color: primaryColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: primaryColor.withValues(alpha: 0.35)),
+                  border:
+                      Border.all(color: primaryColor.withValues(alpha: 0.35)),
                 ),
                 child: Row(
                   children: [
@@ -359,7 +370,8 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                       backgroundColor: Colors.black26,
                       backgroundImage: _foundUser!.avatarUrl.isNotEmpty
                           ? CachedNetworkImageProvider(_foundUser!.avatarUrl)
-                          : const AssetImage('assets/images/avatar.png') as ImageProvider,
+                          : const AssetImage('assets/images/avatar.png')
+                              as ImageProvider,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -410,17 +422,22 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                 ),
               ),
               const SizedBox(height: 16),
-            ] else if (_searchPerformed && _foundUser == null && _phoneController.text.trim().length >= 8) ...[
+            ] else if (_searchPerformed &&
+                _foundUser == null &&
+                _phoneController.text.trim().length >= 8) ...[
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   color: Colors.amber.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+                  border:
+                      Border.all(color: Colors.amber.withValues(alpha: 0.4)),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline_rounded, color: Colors.amber, size: 22),
+                    const Icon(Icons.info_outline_rounded,
+                        color: Colors.amber, size: 22),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -441,31 +458,42 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
             Consumer(
               builder: (context, ref, _) {
                 final callState = ref.watch(callControllerProvider);
-                final walletAsync = ref.watch(walletStreamProvider(widget.currentUser.id));
+                final walletAsync =
+                    ref.watch(walletStreamProvider(widget.currentUser.id));
                 final wallet = walletAsync.value ?? UserWallet.noTrial();
-                final isSameLang = callState.myLanguage.code == callState.peerLanguage.code;
+                final isSameLang =
+                    callState.myLanguage.code == callState.peerLanguage.code;
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 16),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: isSameLang
                         ? AppColors.primary.withValues(alpha: 0.1)
-                        : (wallet.hasMinutes ? const Color(0xFF06B6D4).withValues(alpha: 0.1) : Colors.amber.withValues(alpha: 0.1)),
+                        : (wallet.hasMinutes
+                            ? AppColors.accent.withValues(alpha: 0.12)
+                            : AppColors.warning.withValues(alpha: 0.1)),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: isSameLang
                           ? AppColors.primary.withValues(alpha: 0.3)
-                          : (wallet.hasMinutes ? const Color(0xFF06B6D4).withValues(alpha: 0.3) : Colors.amber.withValues(alpha: 0.4)),
+                          : (wallet.hasMinutes
+                              ? AppColors.accent.withValues(alpha: 0.32)
+                              : AppColors.warning.withValues(alpha: 0.4)),
                     ),
                   ),
                   child: Row(
                     children: [
                       Icon(
-                        isSameLang ? Icons.record_voice_over_rounded : Icons.translate_rounded,
+                        isSameLang
+                            ? Icons.record_voice_over_rounded
+                            : Icons.translate_rounded,
                         color: isSameLang
                             ? AppColors.primary
-                            : (wallet.hasMinutes ? const Color(0xFF06B6D4) : Colors.amber),
+                            : (wallet.hasMinutes
+                                ? AppColors.accent
+                                : AppColors.warning),
                         size: 16,
                       ),
                       const SizedBox(width: 8),
@@ -473,13 +501,23 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                         child: Text(
                           isSameLang
                               ? AppStrings.tr(ref, 'freeLocalCallBanner')
-                              : AppStrings.trParams(ref, 'aiTranslateCallBanner', {'minutes': '${wallet.effectiveRemainingMinutes}'}),
+                              : AppStrings.trParams(
+                                  ref, 'aiTranslateCallBanner', {
+                                  'minutes':
+                                      '${wallet.effectiveRemainingMinutes}'
+                                }),
                           style: TextStyle(
                             color: isSameLang
-                                ? (isDark ? Colors.green[200] : Colors.green[800])
+                                ? (isDark
+                                    ? Colors.green[200]
+                                    : Colors.green[800])
                                 : (wallet.hasMinutes
-                                    ? (isDark ? Colors.cyan[200] : Colors.cyan[900])
-                                    : (isDark ? Colors.amber[200] : Colors.amber[900])),
+                                    ? (isDark
+                                        ? Colors.cyan[200]
+                                        : Colors.cyan[900])
+                                    : (isDark
+                                        ? Colors.amber[200]
+                                        : Colors.amber[900])),
                             fontSize: 11.5,
                             fontWeight: FontWeight.w600,
                           ),
@@ -487,7 +525,8 @@ class _DirectDialSheetState extends ConsumerState<DirectDialSheet> {
                       ),
                       if (!isSameLang && !wallet.hasMinutes)
                         InkWell(
-                          onTap: () => showMinuteRechargeSheet(context, user: widget.currentUser),
+                          onTap: () => showMinuteRechargeSheet(context,
+                              user: widget.currentUser),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: Text(

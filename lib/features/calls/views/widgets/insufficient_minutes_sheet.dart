@@ -118,7 +118,9 @@ class InsufficientMinutesSheet extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E2A47) : const Color(0xFFEEF1FA),
+                color: isDark
+                ? AppColors.darkSurfaceContainerHigh
+                : AppColors.lightSurfaceContainer,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(

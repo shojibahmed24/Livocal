@@ -95,3 +95,9 @@ flutter:
     - family: AzeretMono
       fonts:
         - asset: assets/fonts/AzeretMono-Regular.ttf
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope-Variable.ttf
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Variable.ttf
