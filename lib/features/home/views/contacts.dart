@@ -31,6 +31,14 @@ enum _ContactFilter { all, livocal, invite }
 
 class _ContactsPageState extends ConsumerState<ContactsPage> {
   _ContactFilter _filter = _ContactFilter.all;
+  final ScrollController _scrollController = ScrollController();
+  final Map<String, GlobalKey> _sectionKeys = {};
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -177,267 +185,303 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
       searchIconActionIndex: 1,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: ListView(
-          physics: const BouncingScrollPhysics(),
-          shrinkWrap: true,
+        child: Stack(
           children: [
-            if (searchQuery.isEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
-                child: Row(
-                  children: [
-                    PillChip(
-                      label:
-                          '${filters.all} · ${contactsOnLivocal.length + contactsNotOnLivocal.length}',
-                      tone: ChipTone.brand,
-                      filled: _filter == _ContactFilter.all,
-                      onTap: () => setState(() => _filter = _ContactFilter.all),
+            ListView(
+              controller: _scrollController,
+              physics: const BouncingScrollPhysics(),
+              shrinkWrap: true,
+              padding: const EdgeInsets.only(right: 18, bottom: 24),
+              children: [
+                if (searchQuery.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
+                    child: Row(
+                      children: [
+                        PillChip(
+                          label:
+                              '${filters.all} · ${contactsOnLivocal.length + contactsNotOnLivocal.length}',
+                          tone: ChipTone.brand,
+                          filled: _filter == _ContactFilter.all,
+                          onTap: () =>
+                              setState(() => _filter = _ContactFilter.all),
+                        ),
+                        const SizedBox(width: 8),
+                        PillChip(
+                          label:
+                              '${filters.onLivocal} · ${contactsOnLivocal.length}',
+                          tone: ChipTone.accent,
+                          filled: _filter == _ContactFilter.livocal,
+                          onTap: () =>
+                              setState(() => _filter = _ContactFilter.livocal),
+                        ),
+                        const SizedBox(width: 8),
+                        PillChip(
+                          label:
+                              '${filters.invite} · ${contactsNotOnLivocal.length}',
+                          tone: ChipTone.neutral,
+                          filled: _filter == _ContactFilter.invite,
+                          onTap: () =>
+                              setState(() => _filter = _ContactFilter.invite),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    PillChip(
-                      label:
-                          '${filters.onLivocal} · ${contactsOnLivocal.length}',
-                      tone: ChipTone.accent,
-                      filled: _filter == _ContactFilter.livocal,
-                      onTap: () =>
-                          setState(() => _filter = _ContactFilter.livocal),
-                    ),
-                    const SizedBox(width: 8),
-                    PillChip(
-                      label:
-                          '${filters.invite} · ${contactsNotOnLivocal.length}',
-                      tone: ChipTone.neutral,
-                      filled: _filter == _ContactFilter.invite,
-                      onTap: () =>
-                          setState(() => _filter = _ContactFilter.invite),
-                    ),
-                  ],
-                ),
-              ),
-            if (!buildLivocalContactsList &&
-                !buildLocalContactsList &&
-                searchQuery.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12.0),
-                child: Text(
-                  AppStrings.tr(
-                    ref,
-                    'noResultsFor',
-                    args: {'query': searchQuery.trim()},
                   ),
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).custom.textTheme.caption,
-                ),
-              ),
-            if (searchQuery.isEmpty)
-              Column(
-                children: [
-                  InkWell(
-                    onTap: () => showDirectDialSheet(
-                      context,
-                      currentUser: widget.user,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8.0,
+                if (!buildLivocalContactsList &&
+                    !buildLocalContactsList &&
+                    searchQuery.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12.0),
+                    child: Text(
+                      AppStrings.tr(
+                        ref,
+                        'noResultsFor',
+                        args: {'query': searchQuery.trim()},
                       ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: colorTheme.greenColor,
-                            child: const Icon(
-                              Icons.dialpad_rounded,
-                              color: Colors.white,
-                            ),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).custom.textTheme.caption,
+                    ),
+                  ),
+                if (searchQuery.isEmpty)
+                  Column(
+                    children: [
+                      InkWell(
+                        onTap: () => showDirectDialSheet(
+                          context,
+                          currentUser: widget.user,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 8.0,
                           ),
-                          const SizedBox(
-                            width: 18.0,
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: colorTheme.greenColor,
+                                child: const Icon(
+                                  Icons.dialpad_rounded,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(
+                                width: 18.0,
+                              ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      AppStrings.tr(ref, 'dialPhoneNumber'),
+                                      style: Theme.of(context)
+                                          .custom
+                                          .textTheme
+                                          .bold,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      AppStrings.tr(ref, 'dialPhoneNumberSub'),
+                                      style: Theme.of(context)
+                                          .custom
+                                          .textTheme
+                                          .caption,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  AppStrings.tr(ref, 'dialPhoneNumber'),
+                        ),
+                      ),
+                      InkWell(
+                        onTap: ref
+                            .read(contactPickerControllerProvider.notifier)
+                            .createNewContact,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 8.0,
+                          ),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: colorTheme.greenColor,
+                                child: const Icon(
+                                  Icons.person_add,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(
+                                width: 18.0,
+                              ),
+                              Expanded(
+                                child: Text(
+                                  AppStrings.tr(ref, 'newContact'),
                                   style:
                                       Theme.of(context).custom.textTheme.bold,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                Text(
-                                  AppStrings.tr(ref, 'dialPhoneNumberSub'),
-                                  style: Theme.of(context)
-                                      .custom
-                                      .textTheme
-                                      .caption,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                if (searchQuery.isEmpty &&
+                    (!showLivocal || contactsOnLivocal.isEmpty) &&
+                    (!showInvite || contactsNotOnLivocal.isEmpty))
+                  _ContactsEmptyState(ref: ref),
+                if (contactsOnLivocal.isNotEmpty)
+                  ..._buildLivocalContactsList(context, contactsOnLivocal),
+                if (contactsNotOnLivocal.isNotEmpty)
+                  ..._buildLocalContactsList(context, contactsNotOnLivocal),
+                if (searchQuery.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12.0,
+                      horizontal: 16.0,
+                    ),
+                    child: Text(
+                      AppStrings.tr(ref, 'more'),
+                      style: Theme.of(context).custom.textTheme.caption,
+                    ),
+                  ),
+                Column(
+                  children: [
+                    if (searchQuery.isNotEmpty)
+                      InkWell(
+                        onTap: ref
+                            .read(contactPickerControllerProvider.notifier)
+                            .createNewContact,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 8.0,
+                          ),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: colorTheme.appBarColor,
+                                child: Icon(
+                                  Icons.person_add,
+                                  color: colorTheme.iconColor,
+                                ),
+                              ),
+                              const SizedBox(
+                                width: 18.0,
+                              ),
+                              Expanded(
+                                child: Text(
+                                  AppStrings.tr(ref, 'newContact'),
+                                  style:
+                                      Theme.of(context).custom.textTheme.bold,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                              ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    InkWell(
+                      onTap: () => ref
+                          .read(contactPickerControllerProvider.notifier)
+                          .shareInviteLink(
+                            context.findRenderObject() as RenderBox?,
+                          ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 8.0,
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: colorTheme.appBarColor,
+                              child: Icon(
+                                Icons.share,
+                                color: colorTheme.iconColor,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  InkWell(
-                    onTap: ref
-                        .read(contactPickerControllerProvider.notifier)
-                        .createNewContact,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8.0,
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: colorTheme.greenColor,
-                            child: const Icon(
-                              Icons.person_add,
-                              color: Colors.white,
+                            const SizedBox(
+                              width: 18.0,
                             ),
-                          ),
-                          const SizedBox(
-                            width: 18.0,
-                          ),
-                          Expanded(
-                            child: Text(
-                              AppStrings.tr(ref, 'newContact'),
-                              style: Theme.of(context).custom.textTheme.bold,
-                              overflow: TextOverflow.ellipsis,
+                            Expanded(
+                              child: Text(
+                                AppStrings.tr(ref, 'shareInviteLink'),
+                                style: Theme.of(context).custom.textTheme.bold,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            if (searchQuery.isEmpty &&
-                (!showLivocal || contactsOnLivocal.isEmpty) &&
-                (!showInvite || contactsNotOnLivocal.isEmpty))
-              _ContactsEmptyState(ref: ref),
-            if (contactsOnLivocal.isNotEmpty)
-              ..._buildLivocalContactsList(context, contactsOnLivocal),
-            if (contactsNotOnLivocal.isNotEmpty)
-              ..._buildLocalContactsList(context, contactsNotOnLivocal),
-            if (searchQuery.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 12.0,
-                  horizontal: 16.0,
-                ),
-                child: Text(
-                  AppStrings.tr(ref, 'more'),
-                  style: Theme.of(context).custom.textTheme.caption,
-                ),
-              ),
-            Column(
-              children: [
-                if (searchQuery.isNotEmpty)
-                  InkWell(
-                    onTap: ref
-                        .read(contactPickerControllerProvider.notifier)
-                        .createNewContact,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8.0,
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: colorTheme.appBarColor,
-                            child: Icon(
-                              Icons.person_add,
-                              color: colorTheme.iconColor,
+                    InkWell(
+                      onTap: ref
+                          .read(contactPickerControllerProvider.notifier)
+                          .showHelp,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 8.0,
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: colorTheme.appBarColor,
+                              child: Icon(
+                                Icons.question_mark,
+                                color: colorTheme.iconColor,
+                              ),
                             ),
-                          ),
-                          const SizedBox(
-                            width: 18.0,
-                          ),
-                          Expanded(
-                            child: Text(
-                              AppStrings.tr(ref, 'newContact'),
-                              style: Theme.of(context).custom.textTheme.bold,
-                              overflow: TextOverflow.ellipsis,
+                            const SizedBox(
+                              width: 18.0,
                             ),
-                          ),
-                        ],
+                            Expanded(
+                              child: Text(
+                                AppStrings.tr(ref, 'contactsHelp'),
+                                style: Theme.of(context).custom.textTheme.bold,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                InkWell(
-                  onTap: () => ref
-                      .read(contactPickerControllerProvider.notifier)
-                      .shareInviteLink(
-                        context.findRenderObject() as RenderBox?,
-                      ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 8.0,
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: colorTheme.appBarColor,
-                          child: Icon(
-                            Icons.share,
-                            color: colorTheme.iconColor,
-                          ),
-                        ),
-                        const SizedBox(
-                          width: 18.0,
-                        ),
-                        Expanded(
-                          child: Text(
-                            AppStrings.tr(ref, 'shareInviteLink'),
-                            style: Theme.of(context).custom.textTheme.bold,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                InkWell(
-                  onTap: ref
-                      .read(contactPickerControllerProvider.notifier)
-                      .showHelp,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 8.0,
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: colorTheme.appBarColor,
-                          child: Icon(
-                            Icons.question_mark,
-                            color: colorTheme.iconColor,
-                          ),
-                        ),
-                        const SizedBox(
-                          width: 18.0,
-                        ),
-                        Expanded(
-                          child: Text(
-                            AppStrings.tr(ref, 'contactsHelp'),
-                            style: Theme.of(context).custom.textTheme.bold,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  ],
                 ),
               ],
             ),
+            if (searchQuery.isEmpty &&
+                showLivocal &&
+                contactsOnLivocal.isNotEmpty)
+              Positioned(
+                right: 0,
+                top: 8,
+                bottom: 8,
+                child: _AlphabetRail(
+                  letters: ContactGrouping.byInitial(
+                    contactsOnLivocal,
+                    nameOf: (c) => c.displayName,
+                  ).keys.toList(),
+                  onLetter: _jumpToSection,
+                ),
+              ),
           ],
         ),
       ),
+    );
+  }
+
+  void _jumpToSection(String letter) {
+    final ctx = _sectionKeys[letter]?.currentContext;
+    if (ctx == null) return;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: const Duration(milliseconds: 220),
+      alignment: 0.02,
     );
   }
 
@@ -459,6 +503,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
       LivocalContactsList(
         user: widget.user,
         contactsOnLivocal: contactsOnLivocal,
+        sectionKeys: _sectionKeys,
         ref: ref,
       )
     ];
@@ -579,12 +624,14 @@ class LocalContactsList extends StatelessWidget {
 class LivocalContactsList extends StatelessWidget {
   final User user;
   final List<Contact> contactsOnLivocal;
+  final Map<String, GlobalKey> sectionKeys;
   final WidgetRef ref;
 
   const LivocalContactsList({
     super.key,
     required this.user,
     required this.contactsOnLivocal,
+    required this.sectionKeys,
     required this.ref,
   });
 
@@ -598,7 +645,13 @@ class LivocalContactsList extends StatelessWidget {
     return Column(
       children: [
         for (final entry in groups.entries) ...[
-          _ContactSectionHeader(letter: entry.key, count: entry.value.length),
+          KeyedSubtree(
+            key: sectionKeys.putIfAbsent(entry.key, () => GlobalKey()),
+            child: _ContactSectionHeader(
+              letter: entry.key,
+              count: entry.value.length,
+            ),
+          ),
           for (final contact in entry.value)
             _LivocalContactRow(
               user: user,
@@ -874,6 +927,57 @@ class _ContactsEmptyState extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Slim A–Z rail on the right edge: tap a letter to jump to that section.
+class _AlphabetRail extends StatelessWidget {
+  final List<String> letters;
+  final ValueChanged<String> onLetter;
+
+  const _AlphabetRail({required this.letters, required this.onLetter});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Center(
+      child: Container(
+        width: 26,
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.white.withValues(alpha: 0.88),
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : AppColors.lightDivider,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final letter in letters)
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => onLetter(letter),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 1),
+                  child: Text(
+                    letter,
+                    style: const TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

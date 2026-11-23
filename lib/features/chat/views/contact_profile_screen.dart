@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:livocal/features/calls/views/widgets/different_language_call_sheet.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
@@ -12,12 +11,14 @@ import 'package:livocal/features/settings/services/block_service.dart';
 import 'package:livocal/shared/models/messages.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/ui/livocal_avatar.dart';
 import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/services/mute_service.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
+import 'package:livocal/theme/text_theme.dart';
 import 'package:flutter_contacts/flutter_contacts.dart' as fc;
 import 'package:share_plus/share_plus.dart';
 import 'package:livocal/theme/color_theme.dart';
@@ -136,22 +137,39 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 320.0,
+            expandedHeight: 268.0,
             pinned: true,
             scrolledUnderElevation: 0,
-            backgroundColor: isDark ? AppColors.darkSurface : AppColors.primary,
+            backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+            foregroundColor:
+                isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              icon: Icon(
+                Icons.arrow_back,
+                color: isDark
+                    ? AppColors.darkTextPrimary
+                    : AppColors.lightTextPrimary,
+              ),
               onPressed: () => Navigator.pop(context),
             ),
             actions: [
               IconButton(
-                icon: const Icon(Icons.share, color: Colors.white),
+                icon: Icon(
+                  Icons.share,
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.lightTextPrimary,
+                ),
                 tooltip: AppStrings.tr(ref, 'shareContact'),
                 onPressed: _shareContact,
               ),
               PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert, color: Colors.white),
+                icon: Icon(
+                  Icons.more_vert,
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.lightTextPrimary,
+                ),
                 onSelected: (value) {
                   switch (value) {
                     case 'share':
@@ -262,45 +280,49 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  widget.other.avatarUrl.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: widget.other.avatarUrl,
-                          fit: BoxFit.cover,
-                          memCacheWidth: 600,
-                          memCacheHeight: 600,
-                          errorWidget: (_, __, ___) =>
-                              _buildPlaceholderAvatar(isDark),
-                        )
-                      : _buildPlaceholderAvatar(isDark),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.black.withValues(alpha: 0.4),
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.75),
-                        ],
-                      ),
-                    ),
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: isDark
+                        ? const [
+                            Color(0xFF1E2A47),
+                            AppColors.darkSurface,
+                            AppColors.darkBackground,
+                          ]
+                        : [
+                            AppColors.primary.withValues(alpha: 0.16),
+                            AppColors.accent.withValues(alpha: 0.10),
+                            Colors.white,
+                          ],
                   ),
-                  Positioned(
-                    bottom: 20,
-                    left: 20,
-                    right: 20,
+                ),
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(22, 40, 22, 18),
                     child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        LivocalAvatar(
+                          name: widget.contactName,
+                          imageUrl: widget.other.avatarUrl,
+                          size: 92,
+                          ring: AvatarRing.brand,
+                        ),
+                        const SizedBox(height: 14),
                         Text(
                           widget.contactName,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            fontFamily: CustomTextTheme.display,
                             fontSize: 24,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.3,
+                            color: isDark
+                                ? AppColors.darkTextPrimary
+                                : AppColors.lightTextPrimary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -309,14 +331,16 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                         Text(
                           widget.other.phone.getFormattedNumber(),
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.85),
-                            fontSize: 16,
+                            fontSize: 14.5,
+                            color: isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.lightTextSecondary,
                           ),
                         ),
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -687,19 +711,6 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
 
           const SliverToBoxAdapter(child: SizedBox(height: 40)),
         ],
-      ),
-    );
-  }
-
-  Widget _buildPlaceholderAvatar(bool isDark) {
-    return Container(
-      color: isDark ? const Color(0xFF22304D) : const Color(0xFFDFE5E7),
-      child: Center(
-        child: Icon(
-          Icons.person,
-          size: 120,
-          color: isDark ? const Color(0xFF6B7B82) : const Color(0xFFCFD4D6),
-        ),
       ),
     );
   }

@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,6 +8,7 @@ import 'package:livocal/features/status/services/status_service.dart';
 import 'package:livocal/features/status/views/status_view_screen.dart';
 import 'package:livocal/features/status/views/text_status_composer_screen.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/ui/livocal_avatar.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
@@ -129,7 +129,8 @@ class _StatusTabState extends ConsumerState<StatusTab>
           ? AppColors.darkSurface
           : AppColors.lightBackground,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.radiusLg)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppRadius.radiusLg)),
       ),
       builder: (ctx) => SafeArea(
         child: Wrap(
@@ -143,7 +144,8 @@ class _StatusTabState extends ConsumerState<StatusTab>
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library, color: AppColors.primary),
+              leading:
+                  const Icon(Icons.photo_library, color: AppColors.primary),
               title: Text(AppStrings.tr(ref, 'chooseFromGallery')),
               onTap: () {
                 Navigator.pop(ctx);
@@ -180,34 +182,12 @@ class _StatusTabState extends ConsumerState<StatusTab>
     required bool isDark,
     double radius = 25,
   }) {
-    final ringColor = isViewed
-        ? (isDark ? Colors.white38 : Colors.grey.shade400)
-        : AppColors.primary;
-    final borderWidth = isViewed ? 2.0 : 2.5;
-
-    return Container(
-      padding: const EdgeInsets.all(2.5),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: ringColor, width: borderWidth),
-      ),
-      child: CircleAvatar(
-        radius: radius,
-        backgroundColor: const Color(0xFF16203A),
-        backgroundImage: avatarUrl.isNotEmpty
-            ? CachedNetworkImageProvider(avatarUrl)
-            : null,
-        child: avatarUrl.isEmpty
-            ? Text(
-                name.isNotEmpty ? name[0].toUpperCase() : '?',
-                style: TextStyle(
-                  fontSize: radius * 0.8,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              )
-            : null,
-      ),
+    // Unviewed updates get the brand status ring; viewed ones go quiet.
+    return LivocalAvatar(
+      name: name,
+      imageUrl: avatarUrl,
+      size: radius * 2,
+      ring: isViewed ? AvatarRing.none : AvatarRing.status,
     );
   }
 
@@ -273,7 +253,8 @@ class _StatusTabState extends ConsumerState<StatusTab>
           StreamBuilder<StatusModel?>(
             stream: StatusService.getMyStatusStream(widget.user.id),
             builder: (context, snapshot) {
-              final myStatus = snapshot.data ?? StatusService.getMyLocalStatus();
+              final myStatus =
+                  snapshot.data ?? StatusService.getMyLocalStatus();
 
               return ListTile(
                 contentPadding:
@@ -284,7 +265,8 @@ class _StatusTabState extends ConsumerState<StatusTab>
                       await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => StatusViewScreen.single(status: myStatus),
+                          builder: (_) =>
+                              StatusViewScreen.single(status: myStatus),
                         ),
                       );
                       if (mounted) setState(() {});
@@ -312,7 +294,8 @@ class _StatusTabState extends ConsumerState<StatusTab>
                               color: primaryColor,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: Theme.of(context).scaffoldBackgroundColor,
+                                color:
+                                    Theme.of(context).scaffoldBackgroundColor,
                                 width: 2,
                               ),
                             ),
@@ -328,7 +311,8 @@ class _StatusTabState extends ConsumerState<StatusTab>
                 ),
                 title: Text(
                   AppStrings.tr(ref, 'myStatus'),
-                  style: textTheme.titleMedium.copyWith(fontWeight: FontWeight.bold),
+                  style: textTheme.titleMedium
+                      .copyWith(fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(
                   myStatus != null
@@ -358,8 +342,8 @@ class _StatusTabState extends ConsumerState<StatusTab>
                                     await Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) =>
-                                            StatusViewScreen.single(status: myStatus),
+                                        builder: (_) => StatusViewScreen.single(
+                                            status: myStatus),
                                       ),
                                     );
                                     if (mounted) setState(() {});
@@ -367,7 +351,8 @@ class _StatusTabState extends ConsumerState<StatusTab>
                                 ),
                                 ListTile(
                                   leading: const Icon(Icons.add),
-                                  title: Text(AppStrings.tr(ref, 'addNewStatus')),
+                                  title:
+                                      Text(AppStrings.tr(ref, 'addNewStatus')),
                                   onTap: () {
                                     Navigator.pop(ctx);
                                     _showAddStatusOptions();
@@ -384,7 +369,8 @@ class _StatusTabState extends ConsumerState<StatusTab>
                     await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => StatusViewScreen.single(status: myStatus),
+                        builder: (_) =>
+                            StatusViewScreen.single(status: myStatus),
                       ),
                     );
                     if (mounted) setState(() {});
@@ -403,7 +389,8 @@ class _StatusTabState extends ConsumerState<StatusTab>
               // 1. Shimmer Skeleton while loading (avoids "No recent updates" flash!)
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -425,7 +412,8 @@ class _StatusTabState extends ConsumerState<StatusTab>
               // 2. Error state with Retry button
               if (snapshot.hasError) {
                 return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
                   child: Center(
                     child: Column(
                       children: [
@@ -463,7 +451,8 @@ class _StatusTabState extends ConsumerState<StatusTab>
                       isDark,
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 40, horizontal: 24),
                       child: Column(
                         children: [
                           Icon(
@@ -577,7 +566,8 @@ class _StatusTabState extends ConsumerState<StatusTab>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.privacy_tip_outlined, size: 13, color: Colors.grey),
+                const Icon(Icons.privacy_tip_outlined,
+                    size: 13, color: Colors.grey),
                 const SizedBox(width: 6),
                 Text(
                   AppStrings.tr(ref, 'statusPrivacyNote'),
@@ -592,4 +582,3 @@ class _StatusTabState extends ConsumerState<StatusTab>
     );
   }
 }
-

@@ -71,6 +71,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  Widget _group({required String title, required List<Widget> rows}) {
+    final children = <Widget>[];
+    for (var i = 0; i < rows.length; i++) {
+      if (i > 0) {
+        children.add(
+          Divider(
+            height: 1,
+            thickness: 0.6,
+            indent: 66,
+            color: Theme.of(context).dividerColor,
+          ),
+        );
+      }
+      children.add(rows[i]);
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        LivocalSectionHeader(
+          title: title.toUpperCase(),
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
+        ),
+        LivocalCard(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.zero,
+          child: Column(children: children),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).custom.textTheme;
@@ -187,155 +218,174 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 8),
 
           // Section 1: Account & Privacy
-          SettingsSectionHeader(title: AppStrings.tr(ref, 'accountAndPrivacy')),
-          SettingsRow(
-            icon: Icons.key_rounded,
-            title: AppStrings.tr(ref, 'account'),
-            subtitle: AppStrings.tr(ref, 'accountSub'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => AccountSettingsScreen(user: _currentUser),
-                ),
-              );
-            },
-          ),
-          SettingsRow(
-            icon: Icons.lock_outline_rounded,
-            title: AppStrings.tr(ref, 'privacy'),
-            subtitle: AppStrings.tr(ref, 'privacySub'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const PrivacySettingsScreen(),
-                ),
-              );
-            },
-          ),
-          SettingsRow(
-            icon: Icons.account_balance_wallet_outlined,
-            title: 'Payment Receiving Accounts',
-            subtitle: 'Binance Pay, USDT TRC-20/BEP-20, bKash & Nagad',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => PaymentSettingsScreen(user: _currentUser),
-                ),
-              );
-            },
+          _group(
+            title: AppStrings.tr(ref, 'accountAndPrivacy'),
+            rows: [
+              SettingsRow(
+                icon: Icons.key_rounded,
+                title: AppStrings.tr(ref, 'account'),
+                subtitle: AppStrings.tr(ref, 'accountSub'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AccountSettingsScreen(user: _currentUser),
+                    ),
+                  );
+                },
+              ),
+              SettingsRow(
+                icon: Icons.lock_outline_rounded,
+                title: AppStrings.tr(ref, 'privacy'),
+                subtitle: AppStrings.tr(ref, 'privacySub'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PrivacySettingsScreen(),
+                    ),
+                  );
+                },
+              ),
+              SettingsRow(
+                icon: Icons.account_balance_wallet_outlined,
+                title: 'Payment Receiving Accounts',
+                subtitle: 'Binance Pay, USDT TRC-20/BEP-20, bKash & Nagad',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PaymentSettingsScreen(user: _currentUser),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
 
           // Section 2: Preferences
-          SettingsSectionHeader(title: AppStrings.tr(ref, 'preferences')),
-          SettingsRow(
-            icon: Icons.palette_outlined,
-            title: AppStrings.tr(ref, 'chatsAndTheme'),
-            subtitle:
-                '${ref.watch(themeModeProvider).name.toUpperCase()}, ${AppStrings.tr(ref, 'chatsAndThemeSub')}',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const ChatSettingsScreen(),
-                ),
-              );
-            },
-          ),
-          SettingsRow(
-            icon: Icons.notifications_none_rounded,
-            title: AppStrings.tr(ref, 'notifications'),
-            subtitle: AppStrings.tr(ref, 'notificationsSub'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const NotificationsSettingsScreen(),
-                ),
-              );
-            },
-          ),
-          SettingsRow(
-            icon: Icons.data_usage_rounded,
-            title: AppStrings.tr(ref, 'storage'),
-            subtitle: AppStrings.tr(ref, 'storageSub'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const StorageSettingsScreen(),
-                ),
-              );
-            },
-          ),
-          SettingsRow(
-            icon: Icons.language_rounded,
-            title: AppStrings.tr(ref, 'appLanguage'),
-            subtitle: AppStrings.tr(ref, 'appLanguageSub'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const AppLanguageScreen(),
-                ),
-              );
-            },
+          _group(
+            title: AppStrings.tr(ref, 'preferences'),
+            rows: [
+              SettingsRow(
+                icon: Icons.palette_outlined,
+                title: AppStrings.tr(ref, 'chatsAndTheme'),
+                subtitle:
+                    '${ref.watch(themeModeProvider).name.toUpperCase()}, ${AppStrings.tr(ref, 'chatsAndThemeSub')}',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ChatSettingsScreen(),
+                    ),
+                  );
+                },
+              ),
+              SettingsRow(
+                icon: Icons.notifications_none_rounded,
+                title: AppStrings.tr(ref, 'notifications'),
+                subtitle: AppStrings.tr(ref, 'notificationsSub'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const NotificationsSettingsScreen(),
+                    ),
+                  );
+                },
+              ),
+              SettingsRow(
+                icon: Icons.data_usage_rounded,
+                title: AppStrings.tr(ref, 'storage'),
+                subtitle: AppStrings.tr(ref, 'storageSub'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const StorageSettingsScreen(),
+                    ),
+                  );
+                },
+              ),
+              SettingsRow(
+                icon: Icons.language_rounded,
+                title: AppStrings.tr(ref, 'appLanguage'),
+                subtitle: AppStrings.tr(ref, 'appLanguageSub'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const AppLanguageScreen(),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
 
           // Section 3: Advanced & AI Engine
-          SettingsSectionHeader(title: AppStrings.tr(ref, 'advancedAiEngine')),
-          SettingsRow(
-            icon: Icons.auto_awesome_rounded,
-            title: AppStrings.tr(ref, 'geminiVoiceEngine'),
-            subtitle: AppStrings.tr(ref, 'geminiVoiceEngineSub'),
-            iconColor: const Color(0xFF53BDEC),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const VoicePersonaScreen(),
-                ),
-              );
-            },
+          _group(
+            title: AppStrings.tr(ref, 'advancedAiEngine'),
+            rows: [
+              SettingsRow(
+                icon: Icons.auto_awesome_rounded,
+                title: AppStrings.tr(ref, 'geminiVoiceEngine'),
+                subtitle: AppStrings.tr(ref, 'geminiVoiceEngineSub'),
+                iconColor: const Color(0xFF53BDEC),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const VoicePersonaScreen(),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
 
           // Section 4: Support & Community
-          SettingsSectionHeader(
-              title: AppStrings.tr(ref, 'supportAndCommunity')),
-          SettingsRow(
-            icon: Icons.help_outline_rounded,
-            title: AppStrings.tr(ref, 'help'),
-            subtitle: AppStrings.tr(ref, 'helpSub'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const HelpSettingsScreen(),
-                ),
-              );
-            },
-          ),
-          SettingsRow(
-            icon: Icons.people_outline_rounded,
-            title: AppStrings.tr(ref, 'inviteFriend'),
-            subtitle: AppStrings.tr(ref, 'inviteFriendSub'),
-            onTap: () {
-              Share.share(
-                'Join me on Livocal — the next-generation chat app with live speech-to-speech AI voice translation! Download here: https://github.com/shojibahmed24/Livocal',
-              );
-            },
+          _group(
+            title: AppStrings.tr(ref, 'supportAndCommunity'),
+            rows: [
+              SettingsRow(
+                icon: Icons.help_outline_rounded,
+                title: AppStrings.tr(ref, 'help'),
+                subtitle: AppStrings.tr(ref, 'helpSub'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const HelpSettingsScreen(),
+                    ),
+                  );
+                },
+              ),
+              SettingsRow(
+                icon: Icons.people_outline_rounded,
+                title: AppStrings.tr(ref, 'inviteFriend'),
+                subtitle: AppStrings.tr(ref, 'inviteFriendSub'),
+                onTap: () {
+                  Share.share(
+                    'Join me on Livocal — the next-generation chat app with live speech-to-speech AI voice translation! Download here: https://github.com/shojibahmed24/Livocal',
+                  );
+                },
+              ),
+            ],
           ),
 
           // Section 5: Session
-          SettingsSectionHeader(title: AppStrings.tr(ref, 'session')),
-          SettingsRow(
-            icon: Icons.logout_rounded,
-            title: AppStrings.tr(ref, 'logout'),
-            subtitle: AppStrings.tr(ref, 'logoutSub'),
-            isDestructive: true,
-            onTap: _showLogoutDialog,
+          _group(
+            title: AppStrings.tr(ref, 'session'),
+            rows: [
+              SettingsRow(
+                icon: Icons.logout_rounded,
+                title: AppStrings.tr(ref, 'logout'),
+                subtitle: AppStrings.tr(ref, 'logoutSub'),
+                isDestructive: true,
+                onTap: _showLogoutDialog,
+              ),
+            ],
           ),
 
           const SizedBox(height: 24),

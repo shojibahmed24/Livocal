@@ -1,5 +1,4 @@
 import 'package:livocal/features/calls/views/widgets/different_language_call_sheet.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/calls/controllers/call_controller.dart';
@@ -11,9 +10,14 @@ import 'package:livocal/features/home/views/contacts.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/models/user_wallet.dart';
 import 'package:livocal/shared/repositories/wallet_repository.dart';
+import 'package:livocal/shared/ui/livocal_avatar.dart';
+import 'package:livocal/shared/ui/pill_chip.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
+import 'package:livocal/shared/utils/call_filter_strings.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/theme.dart';
+
+enum _CallFilter { all, missed, translated }
 
 class CallsTab extends ConsumerStatefulWidget {
   final User user;
@@ -31,6 +35,8 @@ class _CallsTabState extends ConsumerState<CallsTab>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
+
+  _CallFilter _filter = _CallFilter.all;
 
   String _formatCallTime(DateTime time) {
     final now = DateTime.now();
@@ -64,6 +70,16 @@ class _CallsTabState extends ConsumerState<CallsTab>
     final colorTheme = customTheme.colorTheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final history = callState.callHistory;
+    final visibleHistory = history.where((record) {
+      switch (_filter) {
+        case _CallFilter.all:
+          return true;
+        case _CallFilter.missed:
+          return record.isMissed;
+        case _CallFilter.translated:
+          return record.isTranslatedCall;
+      }
+    }).toList();
 
     return ListView(
       padding: const EdgeInsets.only(bottom: 92),
@@ -257,6 +273,43 @@ class _CallsTabState extends ConsumerState<CallsTab>
           ),
         ),
 
+        // Filter chips
+        Builder(
+          builder: (context) {
+            final filters =
+                CallFilterStrings.of(ref.watch(appLocaleProvider).languageCode);
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Row(
+                children: [
+                  PillChip(
+                    label: filters.all,
+                    tone: ChipTone.brand,
+                    filled: _filter == _CallFilter.all,
+                    onTap: () => setState(() => _filter = _CallFilter.all),
+                  ),
+                  const SizedBox(width: 8),
+                  PillChip(
+                    label: filters.missed,
+                    tone: ChipTone.danger,
+                    filled: _filter == _CallFilter.missed,
+                    onTap: () => setState(() => _filter = _CallFilter.missed),
+                  ),
+                  const SizedBox(width: 8),
+                  PillChip(
+                    label: filters.translated,
+                    icon: Icons.translate_rounded,
+                    tone: ChipTone.accent,
+                    filled: _filter == _CallFilter.translated,
+                    onTap: () =>
+                        setState(() => _filter = _CallFilter.translated),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+
         // Section Header
         Padding(
           padding: const EdgeInsets.fromLTRB(18, 12, 18, 6),
@@ -270,7 +323,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
           ),
         ),
 
-        if (history.isEmpty)
+        if (visibleHistory.isEmpty)
           Padding(
             padding: const EdgeInsets.all(32.0),
             child: Center(
@@ -282,7 +335,7 @@ class _CallsTabState extends ConsumerState<CallsTab>
             ),
           )
         else
-          ...history.map((record) {
+          ...visibleHistory.map((record) {
             final isMissed = record.isMissed;
             final pairBadge = CallLanguageRegistry.formatPairBadge(
               record.myLangCode,
@@ -341,15 +394,10 @@ class _CallsTabState extends ConsumerState<CallsTab>
                     ),
                   );
                 },
-                child: CircleAvatar(
-                  radius: 24,
-                  backgroundColor: const Color(0xFF16203A),
-                  backgroundImage: record.peerAvatar.isNotEmpty
-                      ? CachedNetworkImageProvider(record.peerAvatar)
-                      : null,
-                  child: record.peerAvatar.isEmpty
-                      ? const Icon(Icons.person, color: Colors.white70)
-                      : null,
+                child: LivocalAvatar(
+                  name: record.peerName,
+                  imageUrl: record.peerAvatar,
+                  size: 48,
                 ),
               ),
               title: Text(
@@ -393,43 +441,16 @@ class _CallsTabState extends ConsumerState<CallsTab>
                   ),
                   if (record.isTranslatedCall) ...[
                     const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '🌐 $pairBadge',
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                    PillChip(
+                      label: pairBadge,
+                      icon: Icons.translate_rounded,
+                      tone: ChipTone.accent,
                     ),
                   ] else ...[
                     const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.teal.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        AppStrings.tr(ref, 'freeCall'),
-                        style: const TextStyle(
-                          color: Colors.teal,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                    PillChip(
+                      label: AppStrings.tr(ref, 'freeCall'),
+                      tone: ChipTone.success,
                     ),
                   ],
                 ],
