@@ -30,6 +30,10 @@ services:
         sync: false
       - key: TURN_SECRET
         sync: false
+      - key: TURN_USERNAME
+        sync: false
+      - key: TURN_CREDENTIAL
+        sync: false
       - key: ADMIN_SECRET
         sync: false
       - key: SUPER_ADMIN_UID

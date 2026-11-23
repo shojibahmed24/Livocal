@@ -269,7 +269,11 @@ app.get('/health', (req, res) => {
     service: 'Livocal Live Relay Gateway',
     uptime: Math.round(process.uptime()),
     hasApiKey: Boolean(GEMINI_API_KEY),
-    hasTurn: Boolean(process.env.TURN_URL && process.env.TURN_SECRET),
+    hasTurn: Boolean(
+      process.env.TURN_URL &&
+        (process.env.TURN_SECRET ||
+          (process.env.TURN_USERNAME && process.env.TURN_CREDENTIAL))
+    ),
     liveModel: DEFAULT_MODEL,
     textModel: TEXT_MODEL,
     privacyRoute: true,
