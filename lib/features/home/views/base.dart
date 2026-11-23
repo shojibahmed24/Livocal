@@ -201,7 +201,7 @@ class _HomePageState extends ConsumerState<HomePage>
 
     _floatingButtons = [
       FloatingActionButton(
-        tooltip: 'New chat',
+        tooltip: AppStrings.tr(ref, 'newChatTooltip'),
         onPressed: () async {
           if (!await hasPermission(Permission.contacts)) return;
           if (!mounted) return;
@@ -220,7 +220,7 @@ class _HomePageState extends ConsumerState<HomePage>
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           FloatingActionButton(
-            tooltip: 'New status',
+            tooltip: AppStrings.tr(ref, 'newStatusTooltip'),
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -256,7 +256,7 @@ class _HomePageState extends ConsumerState<HomePage>
         ],
       ),
       FloatingActionButton(
-        tooltip: 'New call',
+        tooltip: AppStrings.tr(ref, 'newCallTooltip'),
         onPressed: () async {
           if (!await hasPermission(Permission.contacts)) return;
           if (!mounted) return;
@@ -497,7 +497,7 @@ class _HomePageState extends ConsumerState<HomePage>
                     if (context.mounted) {
                       showSnackBar(
                         context: context,
-                        content: 'Call log cleared',
+                        content: AppStrings.tr(ref, 'callLogCleared'),
                         type: SnacBarType.info,
                       );
                       setState(() {});
@@ -509,7 +509,7 @@ class _HomePageState extends ConsumerState<HomePage>
                             'contacts';
                     showAppDialog(
                       context: context,
-                      title: 'Status privacy',
+                      title: AppStrings.tr(ref, 'statusPrivacy'),
                       icon: Icons.lock_outline_rounded,
                       content: StatefulBuilder(
                         builder: (ctx, setDlgState) => RadioGroup<String>(
@@ -521,32 +521,34 @@ class _HomePageState extends ConsumerState<HomePage>
                                   .setString('status_privacy', val);
                             }
                           },
-                          child: const Column(
+                          child: Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Who can see my status updates:',
+                                AppStrings.tr(ref, 'statusPrivacyWhoCanSee'),
                                 style:
                                     TextStyle(color: Colors.grey, fontSize: 13),
                               ),
                               SizedBox(height: 8),
                               RadioListTile<String>(
-                                title: Text('My contacts'),
+                                title: Text(AppStrings.tr(ref, 'myContacts')),
                                 subtitle: Text(
-                                    'Share with all contacts in phonebook'),
+                                    AppStrings.tr(ref, 'shareWithAllContacts')),
                                 value: 'contacts',
                               ),
                               RadioListTile<String>(
-                                title: Text('My contacts except...'),
-                                subtitle:
-                                    Text('Hide status from selected contacts'),
+                                title: Text(
+                                    AppStrings.tr(ref, 'myContactsExcept')),
+                                subtitle: Text(AppStrings.tr(
+                                    ref, 'hideStatusFromSelected')),
                                 value: 'except',
                               ),
                               RadioListTile<String>(
-                                title: Text('Only share with...'),
-                                subtitle:
-                                    Text('Share only with chosen friends'),
+                                title:
+                                    Text(AppStrings.tr(ref, 'onlyShareWith')),
+                                subtitle: Text(
+                                    AppStrings.tr(ref, 'shareOnlyWithChosen')),
                                 value: 'only',
                               ),
                             ],
@@ -555,7 +557,7 @@ class _HomePageState extends ConsumerState<HomePage>
                       ),
                       actions: [
                         AppDialogAction(
-                          label: 'DONE',
+                          label: AppStrings.tr(ref, 'doneLabel'),
                           isPrimary: true,
                           onPressed: () => Navigator.pop(context),
                         ),

@@ -287,17 +287,20 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             },
           ),
           IconButton(
-            tooltip: 'Voice Call',
+            tooltip: AppStrings.tr(ref, 'voiceCall'),
             onPressed: recordingState == RecordingState.notRecording
                 ? () async {
                     if (BlockService.isBlocked(other.id)) {
                       final unblock = await showAppDialog<bool>(
                         context: context,
-                        title: 'Unblock to call',
+                        title: AppStrings.tr(ref, 'unblockToCallTitle'),
                         icon: Icons.block_flipped,
                         iconColor: Colors.redAccent,
-                        contentText:
-                            'Unblock ${widget.otherUserContactName} to place a call.',
+                        contentText: AppStrings.tr(
+                          ref,
+                          'unblockToCallBody',
+                          args: {'name': widget.otherUserContactName},
+                        ),
                         actions: [
                           AppDialogAction(
                             label: 'CANCEL',
@@ -381,8 +384,8 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                 case 'clear_chat':
                   final confirmed = await showAppDialog<bool>(
                     context: context,
-                    title: 'Clear this chat?',
-                    contentText: 'Messages will be cleared from this device.',
+                    title: AppStrings.tr(ref, 'clearChatTitle'),
+                    contentText: AppStrings.tr(ref, 'clearChatBody'),
                     icon: Icons.delete_sweep_outlined,
                     iconColor: Colors.redAccent,
                     actions: [
@@ -391,7 +394,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                         onPressed: () => Navigator.pop(context, false),
                       ),
                       AppDialogAction(
-                        label: 'CLEAR CHAT',
+                        label: AppStrings.tr(ref, 'clearChatAction'),
                         isDestructive: true,
                         onPressed: () => Navigator.pop(context, true),
                       ),
@@ -403,7 +406,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                     if (context.mounted) {
                       showSnackBar(
                         context: context,
-                        content: 'Chat cleared',
+                        content: AppStrings.tr(ref, 'chatCleared'),
                         type: SnacBarType.info,
                       );
                     }
@@ -427,7 +430,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                     String selectedOpt = 'Always';
                     final confirmed = await showAppDialog<bool>(
                       context: context,
-                      title: 'Mute notifications',
+                      title: AppStrings.tr(ref, 'muteNotifications'),
                       icon: Icons.volume_off_rounded,
                       iconColor: AppColors.primary,
                       content: RadioGroup<String>(
@@ -440,7 +443,16 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                           children: options
                               .map(
                                 (opt) => RadioListTile<String>(
-                                  title: Text(opt),
+                                  title: Text(
+                                    AppStrings.tr(
+                                      ref,
+                                      switch (opt) {
+                                        '8 hours' => 'mute8Hours',
+                                        '1 week' => 'mute1Week',
+                                        _ => 'muteAlways',
+                                      },
+                                    ),
+                                  ),
                                   value: opt,
                                 ),
                               )
@@ -468,7 +480,20 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                         setState(() {});
                         showSnackBar(
                           context: context,
-                          content: 'Notifications muted ($selectedOpt)',
+                          content: AppStrings.tr(
+                            ref,
+                            'notificationsMuted',
+                            args: {
+                              'duration': AppStrings.tr(
+                                ref,
+                                switch (selectedOpt) {
+                                  '8 hours' => 'mute8Hours',
+                                  '1 week' => 'mute1Week',
+                                  _ => 'muteAlways',
+                                },
+                              ),
+                            },
+                          ),
                           type: SnacBarType.info,
                         );
                       }
@@ -1563,9 +1588,8 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
             context: context,
             icon: Icons.lock_outline_rounded,
             iconColor: AppColors.primary,
-            title: 'Private & Secure Messaging',
-            contentText:
-                'Your messages and media are protected with zero-trust authenticated access control and TLS encryption. Voice calls stream securely via DTLS-SRTP with ephemeral Gemini Live AI translation.',
+            title: AppStrings.tr(ref, 'secureMessagingTitle'),
+            contentText: AppStrings.tr(ref, 'secureMessagingBody'),
             actions: [
               AppDialogAction(
                 label: 'OK',
