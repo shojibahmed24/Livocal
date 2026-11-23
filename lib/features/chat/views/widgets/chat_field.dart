@@ -24,14 +24,30 @@ class ChatField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorTheme = Theme.of(context).custom.colorTheme;
-    final enterIsSend = SharedPref.instance.getBool('chat_enter_is_send') ?? false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final enterIsSend =
+        SharedPref.instance.getBool('chat_enter_is_send') ?? false;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 0),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24.0),
-        color: Theme.of(context).brightness == Brightness.dark
-            ? colorTheme.appBarColor
-            : colorTheme.backgroundColor,
+        borderRadius: BorderRadius.circular(22.0),
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.07)
+            : Colors.white.withValues(alpha: 0.94),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.10)
+              : const Color(0xFFE2E7F4),
+        ),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.05),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -49,7 +65,8 @@ class ChatField extends StatelessWidget {
               controller: textController,
               focusNode: focusNode,
               textCapitalization: TextCapitalization.sentences,
-              textInputAction: enterIsSend ? TextInputAction.send : TextInputAction.newline,
+              textInputAction:
+                  enterIsSend ? TextInputAction.send : TextInputAction.newline,
               onSubmitted: enterIsSend ? onSubmitted : null,
               maxLines: enterIsSend ? 1 : 6,
               minLines: 1,

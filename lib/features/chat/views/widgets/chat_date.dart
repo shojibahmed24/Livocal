@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:livocal/theme/theme.dart';
+import 'package:livocal/theme/app_colors.dart';
 
 class ChatDate extends StatelessWidget {
   const ChatDate({
@@ -13,28 +13,34 @@ class ChatDate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    bool isDarkTheme = Theme.of(context).brightness == Brightness.dark;
-    int transparency = shouldBeTransparent ? 200 : 255;
+    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    final alpha = shouldBeTransparent ? 0.55 : 0.85;
     return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        color: isDarkTheme
-            ? Color.fromARGB(transparency, 24, 34, 40)
-            : Color.fromARGB(transparency, 233, 232, 232),
-      ),
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 10),
       padding: const EdgeInsets.symmetric(
-        vertical: 4,
-        horizontal: 24,
+        vertical: 5,
+        horizontal: 14,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: isDarkTheme
+            ? Colors.white.withValues(alpha: 0.06 * alpha * 2)
+            : Colors.white.withValues(alpha: alpha),
+        border: Border.all(
+          color: isDarkTheme
+              ? Colors.white.withValues(alpha: 0.09)
+              : const Color(0xFFE2E7F4),
+        ),
       ),
       child: Text(
         date,
         style: TextStyle(
           color: isDarkTheme
-              ? Theme.of(context).custom.colorTheme.iconColor
-              : Colors.black54,
+              ? AppColors.darkTextSecondary
+              : AppColors.lightTextSecondary,
           fontWeight: FontWeight.w600,
-          fontSize: 12,
+          fontSize: 11.5,
+          letterSpacing: 0.2,
         ),
       ),
     );

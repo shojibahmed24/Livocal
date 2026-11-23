@@ -26,6 +26,7 @@ import 'package:livocal/shared/models/contact.dart';
 import 'package:livocal/shared/repositories/push_notifications.dart';
 import '../../models/attachement.dart';
 import '../attachment_viewer.dart';
+import 'chat_bubble_style.dart';
 
 class MessageCard extends ConsumerStatefulWidget {
   const MessageCard({
@@ -33,11 +34,18 @@ class MessageCard extends ConsumerStatefulWidget {
     required this.message,
     required this.currentUserId,
     this.special = false,
+    this.isLastInGroup = true,
     this.onTapReplyQuote,
   });
 
   final Message message;
+
+  /// True for the oldest bubble of a consecutive run by the same sender
+  /// (top of the group): only it gets fully rounded top corners.
   final bool special;
+
+  /// True for the newest bubble of a run (bottom of the group).
+  final bool isLastInGroup;
   final String currentUserId;
   final ValueChanged<String>? onTapReplyQuote;
 
@@ -52,7 +60,8 @@ class _MessageCardState extends ConsumerState<MessageCard>
   late final Animation<Offset> _slideAnim;
   String? _translatedContent;
   bool _isTranslating = false;
-  static final Map<String, Stream<DocumentSnapshot<Map<String, dynamic>>>> _p2pDocStreams = {};
+  static final Map<String, Stream<DocumentSnapshot<Map<String, dynamic>>>>
+      _p2pDocStreams = {};
   static final List<String> _streamKeysOrder = [];
   static const int _maxCachedStreams = 25;
 
@@ -132,8 +141,7 @@ class _MessageCardState extends ConsumerState<MessageCard>
           : widget.message.senderId;
 
       final targetLangCode =
-          SharedPref.instance.getString('chat_trans_${peerId}_my_lang') ??
-              'bn';
+          SharedPref.instance.getString('chat_trans_${peerId}_my_lang') ?? 'bn';
       final targetLang = CallLanguageRegistry.allLanguages.firstWhere(
         (l) => l.code == targetLangCode,
         orElse: () => CallLanguageRegistry.allLanguages[0],
@@ -215,7 +223,8 @@ class _MessageCardState extends ConsumerState<MessageCard>
                 ),
                 if (!isDeleted)
                   ListTile(
-                    leading: const Icon(Icons.reply_rounded, color: AppColors.primary),
+                    leading: const Icon(Icons.reply_rounded,
+                        color: AppColors.primary),
                     title: Text(AppStrings.tr(ref, 'replyAction')),
                     onTap: () {
                       Navigator.pop(ctx);
@@ -226,7 +235,8 @@ class _MessageCardState extends ConsumerState<MessageCard>
                   ),
                 if (!isDeleted && !widget.message.content.startsWith('💰'))
                   ListTile(
-                    leading: Icon(Icons.forward_rounded, color: colorTheme.iconColor),
+                    leading: Icon(Icons.forward_rounded,
+                        color: colorTheme.iconColor),
                     title: Text(AppStrings.tr(ref, 'forwardAction')),
                     onTap: () {
                       Navigator.pop(ctx);
@@ -235,10 +245,12 @@ class _MessageCardState extends ConsumerState<MessageCard>
                   ),
                 if (!isDeleted && widget.message.content.isNotEmpty)
                   ListTile(
-                    leading: Icon(Icons.copy_rounded, color: colorTheme.iconColor),
+                    leading:
+                        Icon(Icons.copy_rounded, color: colorTheme.iconColor),
                     title: Text(AppStrings.tr(ref, 'copyTextAction')),
                     onTap: () {
-                      Clipboard.setData(ClipboardData(text: widget.message.content));
+                      Clipboard.setData(
+                          ClipboardData(text: widget.message.content));
                       Navigator.pop(ctx);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -278,12 +290,17 @@ class _MessageCardState extends ConsumerState<MessageCard>
                 if (!isDeleted)
                   Builder(
                     builder: (context) {
-                      final starred = SharedPref.instance.getStringList('starred_message_ids') ?? [];
+                      final starred = SharedPref.instance
+                              .getStringList('starred_message_ids') ??
+                          [];
                       final isStarred = starred.contains(widget.message.id);
                       return ListTile(
                         leading: Icon(
-                          isStarred ? Icons.star_rounded : Icons.star_border_rounded,
-                          color: isStarred ? Colors.amber : colorTheme.iconColor,
+                          isStarred
+                              ? Icons.star_rounded
+                              : Icons.star_border_rounded,
+                          color:
+                              isStarred ? Colors.amber : colorTheme.iconColor,
                         ),
                         title: Text(
                           AppStrings.tr(
@@ -293,13 +310,16 @@ class _MessageCardState extends ConsumerState<MessageCard>
                         ),
                         onTap: () async {
                           Navigator.pop(ctx);
-                          final list = SharedPref.instance.getStringList('starred_message_ids') ?? [];
+                          final list = SharedPref.instance
+                                  .getStringList('starred_message_ids') ??
+                              [];
                           if (isStarred) {
                             list.remove(widget.message.id);
                           } else {
                             list.add(widget.message.id);
                           }
-                          await SharedPref.instance.setStringList('starred_message_ids', list);
+                          await SharedPref.instance
+                              .setStringList('starred_message_ids', list);
                           if (mounted) setState(() {});
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -372,7 +392,8 @@ class _MessageCardState extends ConsumerState<MessageCard>
                     },
                   ),
                 ListTile(
-                  leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                  leading:
+                      const Icon(Icons.delete_outline, color: Colors.redAccent),
                   title: Text(AppStrings.tr(ref, 'deleteForMe')),
                   onTap: () async {
                     Navigator.pop(ctx);
@@ -391,7 +412,8 @@ class _MessageCardState extends ConsumerState<MessageCard>
                 ),
                 if (isSender && widget.message.status == MessageStatus.pending)
                   ListTile(
-                    leading: const Icon(Icons.refresh_rounded, color: Colors.green),
+                    leading:
+                        const Icon(Icons.refresh_rounded, color: Colors.green),
                     title: Text(AppStrings.tr(ref, 'resendMessage')),
                     onTap: () async {
                       Navigator.pop(ctx);
@@ -401,8 +423,11 @@ class _MessageCardState extends ConsumerState<MessageCard>
                             .doc(widget.message.receiverId)
                             .collection('messages')
                             .doc(widget.message.id)
-                            .set(widget.message.copyWith(status: MessageStatus.sent).toMap());
-                        await IsarDb.updateMessage(widget.message.id, status: MessageStatus.sent);
+                            .set(widget.message
+                                .copyWith(status: MessageStatus.sent)
+                                .toMap());
+                        await IsarDb.updateMessage(widget.message.id,
+                            status: MessageStatus.sent);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
@@ -429,7 +454,8 @@ class _MessageCardState extends ConsumerState<MessageCard>
                   ),
                 if (isSender && !isDeleted)
                   ListTile(
-                    leading: const Icon(Icons.delete_forever, color: Colors.red),
+                    leading:
+                        const Icon(Icons.delete_forever, color: Colors.red),
                     title: Text(
                       AppStrings.tr(ref, 'deleteForEveryone'),
                       style: const TextStyle(color: Colors.red),
@@ -497,10 +523,12 @@ class _MessageCardState extends ConsumerState<MessageCard>
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
                       child: Row(
                         children: [
-                          const Icon(Icons.forward_rounded, color: AppColors.primary),
+                          const Icon(Icons.forward_rounded,
+                              color: AppColors.primary),
                           const SizedBox(width: 8),
                           Text(
                             AppStrings.tr(ref, 'forwardMessageTo'),
@@ -541,14 +569,18 @@ class _MessageCardState extends ConsumerState<MessageCard>
                             final contact = contacts[index];
                             return ListTile(
                               leading: CircleAvatar(
-                                backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                                backgroundImage: (contact.avatarUrl != null && contact.avatarUrl!.isNotEmpty)
+                                backgroundColor:
+                                    AppColors.primary.withValues(alpha: 0.15),
+                                backgroundImage: (contact.avatarUrl != null &&
+                                        contact.avatarUrl!.isNotEmpty)
                                     ? NetworkImage(contact.avatarUrl!)
                                     : null,
-                                child: (contact.avatarUrl == null || contact.avatarUrl!.isEmpty)
+                                child: (contact.avatarUrl == null ||
+                                        contact.avatarUrl!.isEmpty)
                                     ? Text(
                                         contact.displayName.isNotEmpty
-                                            ? contact.displayName[0].toUpperCase()
+                                            ? contact.displayName[0]
+                                                .toUpperCase()
                                             : '?',
                                         style: const TextStyle(
                                           color: AppColors.primary,
@@ -559,16 +591,20 @@ class _MessageCardState extends ConsumerState<MessageCard>
                               ),
                               title: Text(
                                 contact.displayName,
-                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600),
                               ),
                               subtitle: Text(
                                 contact.phoneNumber,
-                                style: const TextStyle(fontSize: 13, color: Colors.grey),
+                                style: const TextStyle(
+                                    fontSize: 13, color: Colors.grey),
                               ),
-                              trailing: const Icon(Icons.send_rounded, color: AppColors.primary, size: 20),
+                              trailing: const Icon(Icons.send_rounded,
+                                  color: AppColors.primary, size: 20),
                               onTap: () async {
                                 Navigator.pop(sheetCtx);
-                                await _confirmAndForward(context, contact, message);
+                                await _confirmAndForward(
+                                    context, contact, message);
                               },
                             );
                           },
@@ -620,7 +656,8 @@ class _MessageCardState extends ConsumerState<MessageCard>
     if (confirmed != true) return;
 
     try {
-      final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? widget.currentUserId;
+      final currentUserId =
+          FirebaseAuth.instance.currentUser?.uid ?? widget.currentUserId;
       final targetUserId = targetContact.userId ?? targetContact.phoneNumber;
 
       final forwarded = Message(
@@ -720,7 +757,9 @@ class _MessageCardState extends ConsumerState<MessageCard>
     final matchId = RegExp(r'\[id:([a-zA-Z0-9_-]+)\]').firstMatch(mainLine);
     if (matchId != null) {
       recordId = matchId.group(1)!.trim();
-    } else if (refId.startsWith('p2p_pay_') || refId.startsWith('p2p_min_') || refId.startsWith('p2p_idem_')) {
+    } else if (refId.startsWith('p2p_pay_') ||
+        refId.startsWith('p2p_min_') ||
+        refId.startsWith('p2p_idem_')) {
       recordId = refId;
     }
 
@@ -884,9 +923,17 @@ class _MessageCardState extends ConsumerState<MessageCard>
     // If Firebase isn't initialized (e.g. unit tests):
     if (Firebase.apps.isEmpty) {
       return _buildBadgeChip(
-        label: isWallet ? 'PAID' : (recordId.isNotEmpty ? 'VERIFIED' : 'PENDING VERIFICATION'),
-        icon: isWallet ? Icons.check_circle_rounded : (recordId.isNotEmpty ? Icons.verified_rounded : Icons.schedule_rounded),
-        color: isWallet || recordId.isNotEmpty ? AppColors.success : const Color(0xFFFF9800),
+        label: isWallet
+            ? 'PAID'
+            : (recordId.isNotEmpty ? 'VERIFIED' : 'PENDING VERIFICATION'),
+        icon: isWallet
+            ? Icons.check_circle_rounded
+            : (recordId.isNotEmpty
+                ? Icons.verified_rounded
+                : Icons.schedule_rounded),
+        color: isWallet || recordId.isNotEmpty
+            ? AppColors.success
+            : const Color(0xFFFF9800),
       );
     }
 
@@ -913,7 +960,8 @@ class _MessageCardState extends ConsumerState<MessageCard>
           );
         }
 
-        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
           return _buildBadgeChip(
             label: isWallet ? 'PROCESSING' : 'PENDING',
             icon: Icons.hourglass_empty_rounded,
@@ -935,11 +983,15 @@ class _MessageCardState extends ConsumerState<MessageCard>
 
         // Security Guard: Cryptographic/Data Binding
         // Verify that the record actually belongs to the sender and recipient of this message!
-        final recordSender = (data['senderId'] ?? data['fromUserId'])?.toString();
-        final recordRecipient = (data['recipientId'] ?? data['toUserId'])?.toString();
+        final recordSender =
+            (data['senderId'] ?? data['fromUserId'])?.toString();
+        final recordRecipient =
+            (data['recipientId'] ?? data['toUserId'])?.toString();
 
-        final isParticipantsBound = (recordSender == expectedSenderId && recordRecipient == expectedRecipientId) ||
-            (recordSender == expectedRecipientId && recordRecipient == expectedSenderId);
+        final isParticipantsBound = (recordSender == expectedSenderId &&
+                recordRecipient == expectedRecipientId) ||
+            (recordSender == expectedRecipientId &&
+                recordRecipient == expectedSenderId);
 
         if (!isParticipantsBound) {
           // Spoofed/copied [id:...] token from another user's transaction!
@@ -951,7 +1003,8 @@ class _MessageCardState extends ConsumerState<MessageCard>
         }
 
         // Single-Use Binding Guard: Prevent token reuse across different messages
-        final boundMsgId = (data['boundMessageId'] ?? data['messageId'])?.toString();
+        final boundMsgId =
+            (data['boundMessageId'] ?? data['messageId'])?.toString();
         if (boundMsgId != null &&
             boundMsgId.isNotEmpty &&
             boundMsgId != widget.message.id) {
@@ -965,16 +1018,20 @@ class _MessageCardState extends ConsumerState<MessageCard>
 
         // Amount Verification Guard:
         if (expectedAmount.isNotEmpty) {
-          final msgNum = double.tryParse(expectedAmount.replaceAll(RegExp(r'[^0-9.]'), ''));
+          final msgNum = double.tryParse(
+              expectedAmount.replaceAll(RegExp(r'[^0-9.]'), ''));
           if (msgNum != null) {
             bool amountMatches = false;
             if (isWallet) {
               // For Livocal Wallet transfers: record may store minutes (e.g. 70 mins = $10)
               // or usdAmount/amount ($10.00).
               final rawMinutes = (data['minutes'] ?? '').toString();
-              final docMinutes = double.tryParse(rawMinutes.replaceAll(RegExp(r'[^0-9.]'), ''));
-              final rawUsd = (data['usdAmount'] ?? data['amount'] ?? '').toString();
-              final docUsd = double.tryParse(rawUsd.replaceAll(RegExp(r'[^0-9.]'), ''));
+              final docMinutes = double.tryParse(
+                  rawMinutes.replaceAll(RegExp(r'[^0-9.]'), ''));
+              final rawUsd =
+                  (data['usdAmount'] ?? data['amount'] ?? '').toString();
+              final docUsd =
+                  double.tryParse(rawUsd.replaceAll(RegExp(r'[^0-9.]'), ''));
 
               if (docUsd != null && (docUsd - msgNum).abs() <= 0.15) {
                 amountMatches = true;
@@ -982,15 +1039,18 @@ class _MessageCardState extends ConsumerState<MessageCard>
                 // Check if msgNum matches direct minutes (e.g. $70 vs 70 mins)
                 // OR 1 USD ~ 7 minutes conversion (e.g. $10 vs 70 mins => 70 / 7 = 10)
                 final convertedUsd = docMinutes / 7.0;
-                if ((docMinutes - msgNum).abs() <= 0.05 || (convertedUsd - msgNum).abs() <= 0.15) {
+                if ((docMinutes - msgNum).abs() <= 0.05 ||
+                    (convertedUsd - msgNum).abs() <= 0.15) {
                   amountMatches = true;
                 }
               }
             } else {
               // For MFS / Crypto payments:
-              final rawDocAmount = (data['amount'] ?? data['bdtAmount'])?.toString();
+              final rawDocAmount =
+                  (data['amount'] ?? data['bdtAmount'])?.toString();
               if (rawDocAmount != null && rawDocAmount.isNotEmpty) {
-                final docNum = double.tryParse(rawDocAmount.replaceAll(RegExp(r'[^0-9.]'), ''));
+                final docNum = double.tryParse(
+                    rawDocAmount.replaceAll(RegExp(r'[^0-9.]'), ''));
                 if (docNum != null && (docNum - msgNum).abs() <= 0.05) {
                   amountMatches = true;
                 }
@@ -1013,7 +1073,8 @@ class _MessageCardState extends ConsumerState<MessageCard>
           }
         }
 
-        final rawStatus = (data['status'] as String? ?? 'pending').toLowerCase();
+        final rawStatus =
+            (data['status'] as String? ?? 'pending').toLowerCase();
 
         if (isWallet) {
           if (rawStatus == 'completed') {
@@ -1101,7 +1162,8 @@ class _MessageCardState extends ConsumerState<MessageCard>
     );
   }
 
-  Widget _buildCallLogBubble(BuildContext context, bool isSentMessageCard, bool isDark) {
+  Widget _buildCallLogBubble(
+      BuildContext context, bool isSentMessageCard, bool isDark) {
     final data = CallLogHelper.parse(widget.message.content);
     if (data == null) return const SizedBox.shrink();
 
@@ -1147,14 +1209,17 @@ class _MessageCardState extends ConsumerState<MessageCard>
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.88),
+        constraints:
+            BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.88),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF182229) : const Color(0xFFEEF1FA),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isMissed
                 ? Colors.redAccent.withValues(alpha: 0.3)
-                : (isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.06)),
+                : (isDark
+                    ? Colors.white12
+                    : Colors.black.withValues(alpha: 0.06)),
           ),
           boxShadow: [
             BoxShadow(
@@ -1202,7 +1267,8 @@ class _MessageCardState extends ConsumerState<MessageCard>
                       if (data.isTranslated) ...[
                         const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 5, vertical: 1),
                           decoration: BoxDecoration(
                             color: AppColors.primary.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(4),
@@ -1258,7 +1324,8 @@ class _MessageCardState extends ConsumerState<MessageCard>
   }) {
     final rawContent = widget.message.content;
     final replyTo = widget.message.replyTo;
-    final isLegacyQuote = replyTo == null && rawContent.startsWith('💬 Replying to @');
+    final isLegacyQuote =
+        replyTo == null && rawContent.startsWith('💬 Replying to @');
     String legacyQuoteHeader = '';
     String actualText = rawContent;
 
@@ -1270,7 +1337,8 @@ class _MessageCardState extends ConsumerState<MessageCard>
       }
     }
 
-    final fontSizePref = SharedPref.instance.getString('chat_font_size') ?? 'Medium';
+    final fontSizePref =
+        SharedPref.instance.getString('chat_font_size') ?? 'Medium';
     final double dynamicFontSize = fontSizePref == 'Small'
         ? 14.0
         : (fontSizePref == 'Large' ? 18.5 : 16.0);
@@ -1288,7 +1356,8 @@ class _MessageCardState extends ConsumerState<MessageCard>
             },
             child: Container(
               margin: const EdgeInsets.only(bottom: 6.0),
-              padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
               decoration: BoxDecoration(
                 color: isDark
                     ? Colors.black.withValues(alpha: 0.28)
@@ -1396,14 +1465,12 @@ class _MessageCardState extends ConsumerState<MessageCard>
           const SizedBox(height: 4),
           Container(
             margin: const EdgeInsets.only(top: 2, bottom: 2),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.fromLTRB(9, 6, 9, 7),
             decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.black.withValues(alpha: 0.04),
-              borderRadius: BorderRadius.circular(6),
-              border: const Border(
-                left: BorderSide(color: AppColors.primary, width: 2.5),
+              color: AppColors.accent.withValues(alpha: isDark ? 0.14 : 0.10),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: AppColors.accent.withValues(alpha: 0.32),
               ),
             ),
             child: Column(
@@ -1415,8 +1482,8 @@ class _MessageCardState extends ConsumerState<MessageCard>
                   children: [
                     const Icon(
                       Icons.translate_rounded,
-                      size: 10,
-                      color: AppColors.primary,
+                      size: 11,
+                      color: AppColors.accent,
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -1424,18 +1491,18 @@ class _MessageCardState extends ConsumerState<MessageCard>
                       style: const TextStyle(
                         fontSize: 9.5,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                        letterSpacing: 0.2,
+                        color: AppColors.accent,
+                        letterSpacing: 0.6,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
                   _translatedContent!,
                   style: TextStyle(
                     fontSize: 13.5,
-                    fontStyle: FontStyle.italic,
+                    height: 1.3,
                     color: isDark
                         ? AppColors.darkTextPrimary
                         : AppColors.lightTextPrimary,
@@ -1462,7 +1529,8 @@ class _MessageCardState extends ConsumerState<MessageCard>
     }
     final colorTheme = Theme.of(context).custom.colorTheme;
     final size = MediaQuery.of(context).size;
-    final hasAttachment = !widget.message.isDeleted && widget.message.attachment != null;
+    final hasAttachment =
+        !widget.message.isDeleted && widget.message.attachment != null;
     final attachmentType = widget.message.attachment?.type;
     final messageHasText = widget.message.content.isNotEmpty;
 
@@ -1512,239 +1580,239 @@ class _MessageCardState extends ConsumerState<MessageCard>
       child: SlideTransition(
         position: _slideAnim,
         child: GestureDetector(
-          onLongPress: () => _showMessageActionSheet(context, isSentMessageCard),
+          onLongPress: () =>
+              _showMessageActionSheet(context, isSentMessageCard),
           child: Align(
-            alignment:
-                isSentMessageCard ? Alignment.centerRight : Alignment.centerLeft,
-            child: ClipPath(
-              clipper: widget.special
-                  ? TriangleClipper(isSender: isSentMessageCard)
-                  : null,
-              child: Container(
-                constraints: BoxConstraints(
-                  minHeight: 34,
-                  minWidth: widget.special ? (isSentMessageCard ? 98 : 76) : 60,
-                  maxWidth: hasImageOrVideo
-                      ? width
-                      : size.width * 0.80 + (widget.special ? 10 : 0),
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.only(
-                    topLeft: widget.special && !isSentMessageCard
-                        ? AppRadius.rXs
-                        : AppRadius.rMd,
-                    topRight: widget.special && isSentMessageCard
-                        ? AppRadius.rXs
-                        : AppRadius.rMd,
-                    bottomLeft: AppRadius.rMd,
-                    bottomRight: AppRadius.rMd,
-                  ),
-                  color: isSentMessageCard
-                      ? (isDark
-                          ? AppColors.darkOutgoingBubble
-                          : AppColors.lightOutgoingBubble)
-                      : (isDark
-                          ? AppColors.darkIncomingBubble
-                          : AppColors.lightIncomingBubble),
-                ),
-                margin: EdgeInsets.only(
-                  bottom: 3.0,
-                  top: widget.special ? 6.0 : 0,
-                  left: widget.special ? 6 : 16.0,
-                  right: widget.special ? 6 : 16.0,
-                ),
-                padding: hasAttachment
-                    ? attachmentType == AttachmentType.audio && !messageHasText
-                        ? EdgeInsets.only(
-                            left: isSentMessageCard ? 8 : (widget.special ? 18 : 8),
-                            right: isSentMessageCard ? (widget.special ? 10 : 0) : 0,
-                          )
-                        : EdgeInsets.only(
-                            top: 4.0,
-                            bottom: 4.0,
-                            left: widget.special && !isSentMessageCard ? 14.0 : 4.0,
-                            right: widget.special && isSentMessageCard ? 14.0 : 4.0,
-                          )
-                    : EdgeInsets.only(
-                        left: 10,
-                        right: widget.special && isSentMessageCard ? 16 : 10,
-                        top: 4,
-                        bottom: 6,
-                      ),
-                child: Stack(
-                  alignment: Alignment.centerLeft,
-                  children: [
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (hasAttachment) ...[
-                          ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxHeight:
-                                  height < width ? 0.65 * width : double.infinity,
-                            ),
-                            child: AttachmentPreview(
-                              message: widget.message,
-                              width: width,
-                              height: height,
-                            ),
+            alignment: isSentMessageCard
+                ? Alignment.centerRight
+                : Alignment.centerLeft,
+            child: Container(
+              constraints: BoxConstraints(
+                minHeight: 34,
+                minWidth: widget.special ? (isSentMessageCard ? 98 : 76) : 60,
+                maxWidth: hasImageOrVideo
+                    ? width
+                    : size.width * 0.80 + (widget.special ? 10 : 0),
+              ),
+              decoration: ChatBubbleStyle.decoration(
+                context,
+                isMe: isSentMessageCard,
+                isFirstOfRun: widget.special,
+                isLastOfRun: widget.isLastInGroup,
+              ),
+              margin: const EdgeInsets.only(
+                bottom: 3.0,
+                top: 3.0,
+                left: 12.0,
+                right: 12.0,
+              ),
+              padding: hasAttachment
+                  ? attachmentType == AttachmentType.audio && !messageHasText
+                      ? EdgeInsets.only(
+                          left:
+                              isSentMessageCard ? 8 : (widget.special ? 18 : 8),
+                          right:
+                              isSentMessageCard ? (widget.special ? 10 : 0) : 0,
+                        )
+                      : EdgeInsets.only(
+                          top: 4.0,
+                          bottom: 4.0,
+                          left:
+                              widget.special && !isSentMessageCard ? 14.0 : 4.0,
+                          right:
+                              widget.special && isSentMessageCard ? 14.0 : 4.0,
+                        )
+                  : EdgeInsets.only(
+                      left: 10,
+                      right: widget.special && isSentMessageCard ? 16 : 10,
+                      top: 4,
+                      bottom: 6,
+                    ),
+              child: Stack(
+                alignment: Alignment.centerLeft,
+                children: [
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (hasAttachment) ...[
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight:
+                                height < width ? 0.65 * width : double.infinity,
                           ),
-                        ],
-                        if (messageHasText || isDeleted) ...[
-                          Padding(
-                            padding: hasAttachment
-                                ? const EdgeInsets.only(left: 4.0, top: 4.0)
-                                : widget.special && !isSentMessageCard
-                                    ? EdgeInsets.only(
-                                        left: 10,
-                                        top: 4,
-                                        bottom: biggerFont
-                                            ? 12
-                                            : padding == 0
-                                                ? 14.0
-                                                : 0,
-                                      )
-                                    : EdgeInsets.only(
-                                        top: 2.0,
-                                        bottom: biggerFont
-                                            ? (Platform.isAndroid ? 16.0 : 12.0)
-                                            : padding == 0
-                                                ? 14.0
-                                                : 0,
-                                      ),
-                            child: isDeleted
-                                ? Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.block_rounded,
-                                        size: 15,
+                          child: AttachmentPreview(
+                            message: widget.message,
+                            width: width,
+                            height: height,
+                          ),
+                        ),
+                      ],
+                      if (messageHasText || isDeleted) ...[
+                        Padding(
+                          padding: hasAttachment
+                              ? const EdgeInsets.only(left: 4.0, top: 4.0)
+                              : widget.special && !isSentMessageCard
+                                  ? EdgeInsets.only(
+                                      left: 10,
+                                      top: 4,
+                                      bottom: biggerFont
+                                          ? 12
+                                          : padding == 0
+                                              ? 14.0
+                                              : 0,
+                                    )
+                                  : EdgeInsets.only(
+                                      top: 2.0,
+                                      bottom: biggerFont
+                                          ? (Platform.isAndroid ? 16.0 : 12.0)
+                                          : padding == 0
+                                              ? 14.0
+                                              : 0,
+                                    ),
+                          child: isDeleted
+                              ? Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.block_rounded,
+                                      size: 15,
+                                      color: isDark
+                                          ? AppColors.darkTextSecondary
+                                          : AppColors.lightTextSecondary,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${AppStrings.tr(ref, 'deletedMessagePlaceholder')} $textPadding',
+                                      textWidthBasis:
+                                          TextWidthBasis.longestLine,
+                                      style: TextStyle(
+                                        fontSize: 14.5,
+                                        fontStyle: FontStyle.italic,
                                         color: isDark
                                             ? AppColors.darkTextSecondary
                                             : AppColors.lightTextSecondary,
                                       ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '${AppStrings.tr(ref, 'deletedMessagePlaceholder')} $textPadding',
-                                        textWidthBasis:
-                                            TextWidthBasis.longestLine,
-                                        style: TextStyle(
-                                          fontSize: 14.5,
-                                          fontStyle: FontStyle.italic,
-                                          color: isDark
-                                              ? AppColors.darkTextSecondary
-                                              : AppColors.lightTextSecondary,
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                : widget.message.content.startsWith('💰 Payment sent:')
-                                    ? _buildPaymentCard(context, isDark, isSentMessageCard)
-                                    : _buildMessageTextContent(
-                                        context: context,
-                                        isDark: isDark,
-                                        biggerFont: biggerFont,
-                                        textPadding: textPadding,
-                                        colorTheme: colorTheme,
-                                      ),
-                          )
-                        ],
-                      ],
-                    ),
-                    Positioned(
-                      right: widget.special && isSentMessageCard && (messageHasText || isDeleted)
-                          ? -6
-                          : 0,
-                      bottom: -1,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(6),
-                          boxShadow: [
-                            if (!messageHasText &&
-                                !isDeleted &&
-                                (attachmentType != AttachmentType.document &&
-                                    attachmentType != AttachmentType.audio &&
-                                    attachmentType != AttachmentType.voice)) ...[
-                              const BoxShadow(
-                                color: Color.fromARGB(174, 1, 4, 21),
-                                blurRadius: 20,
-                              )
-                            ],
-                          ],
-                        ),
-                        margin: !messageHasText &&
-                                hasAttachment &&
-                                attachmentType != AttachmentType.audio
-                            ? const EdgeInsets.all(4.0)
-                            : null,
-                        padding: !messageHasText &&
-                                hasAttachment &&
-                                attachmentType != AttachmentType.audio
-                            ? const EdgeInsets.symmetric(
-                                horizontal: 4.0,
-                                vertical: 2.0,
-                              )
-                            : null,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            if (showTimeStamp) ...[
-                              Text(
-                                formattedTimestamp(
-                                  widget.message.timestamp,
-                                  true,
-                                  Platform.isIOS,
-                                ),
-                                style: Theme.of(context)
-                                    .custom
-                                    .textTheme
-                                    .caption
-                                    .copyWith(
-                                      fontSize: 11,
-                                      color: (messageHasText || isDeleted)
-                                          ? (isDark
-                                              ? AppColors.darkTextSecondary
-                                              : AppColors.lightTextSecondary)
-                                          : Colors.white,
                                     ),
-                              ),
-                              if (SharedPref.instance.getStringList('starred_message_ids')?.contains(widget.message.id) == true) ...[
-                                const SizedBox(width: 3.0),
-                                const Icon(
-                                  Icons.star_rounded,
-                                  size: 13,
-                                  color: Colors.amber,
-                                ),
-                              ],
-                            ],
-                            if (isSentMessageCard) ...[
-                              const SizedBox(
-                                width: 2.0,
-                              ),
-                              Image.asset(
-                                'assets/images/${widget.message.status.value}.png',
-                                color: widget.message.status.value != 'SEEN'
-                                    ? ((messageHasText || isDeleted)
-                                        ? (isDark
-                                            ? AppColors.darkTextSecondary
-                                            : AppColors.lightTextSecondary)
-                                        : (isDark
-                                            ? Colors.white
-                                            : AppColors.lightTextSecondary))
-                                    : null,
-                                width: 14.0,
-                              ),
-                            ],
-                            if (widget.special &&
-                                isSentMessageCard &&
-                                (messageHasText || isDeleted)) ...[const SizedBox(width: 9)],
+                                  ],
+                                )
+                              : widget.message.content
+                                      .startsWith('💰 Payment sent:')
+                                  ? _buildPaymentCard(
+                                      context, isDark, isSentMessageCard)
+                                  : _buildMessageTextContent(
+                                      context: context,
+                                      isDark: isDark,
+                                      biggerFont: biggerFont,
+                                      textPadding: textPadding,
+                                      colorTheme: colorTheme,
+                                    ),
+                        )
+                      ],
+                    ],
+                  ),
+                  Positioned(
+                    right: widget.special &&
+                            isSentMessageCard &&
+                            (messageHasText || isDeleted)
+                        ? -6
+                        : 0,
+                    bottom: -1,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(6),
+                        boxShadow: [
+                          if (!messageHasText &&
+                              !isDeleted &&
+                              (attachmentType != AttachmentType.document &&
+                                  attachmentType != AttachmentType.audio &&
+                                  attachmentType != AttachmentType.voice)) ...[
+                            const BoxShadow(
+                              color: Color.fromARGB(174, 1, 4, 21),
+                              blurRadius: 20,
+                            )
                           ],
-                        ),
+                        ],
                       ),
-                    )
-                  ],
-                ),
+                      margin: !messageHasText &&
+                              hasAttachment &&
+                              attachmentType != AttachmentType.audio
+                          ? const EdgeInsets.all(4.0)
+                          : null,
+                      padding: !messageHasText &&
+                              hasAttachment &&
+                              attachmentType != AttachmentType.audio
+                          ? const EdgeInsets.symmetric(
+                              horizontal: 4.0,
+                              vertical: 2.0,
+                            )
+                          : null,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          if (showTimeStamp) ...[
+                            Text(
+                              formattedTimestamp(
+                                widget.message.timestamp,
+                                true,
+                                Platform.isIOS,
+                              ),
+                              style: Theme.of(context)
+                                  .custom
+                                  .textTheme
+                                  .caption
+                                  .copyWith(
+                                    fontSize: 11,
+                                    color: (messageHasText || isDeleted)
+                                        ? (isSentMessageCard && isDark
+                                            ? Colors.white
+                                                .withValues(alpha: 0.72)
+                                            : (isDark
+                                                ? AppColors.darkTextSecondary
+                                                : AppColors.lightTextSecondary))
+                                        : Colors.white,
+                                  ),
+                            ),
+                            if (SharedPref.instance
+                                    .getStringList('starred_message_ids')
+                                    ?.contains(widget.message.id) ==
+                                true) ...[
+                              const SizedBox(width: 3.0),
+                              const Icon(
+                                Icons.star_rounded,
+                                size: 13,
+                                color: Colors.amber,
+                              ),
+                            ],
+                          ],
+                          if (isSentMessageCard) ...[
+                            const SizedBox(
+                              width: 2.0,
+                            ),
+                            Image.asset(
+                              'assets/images/${widget.message.status.value}.png',
+                              color: widget.message.status.value != 'SEEN'
+                                  ? ((messageHasText || isDeleted)
+                                      ? (isDark
+                                          ? AppColors.darkTextSecondary
+                                          : AppColors.lightTextSecondary)
+                                      : (isDark
+                                          ? Colors.white
+                                          : AppColors.lightTextSecondary))
+                                  : null,
+                              width: 14.0,
+                            ),
+                          ],
+                          if (widget.special &&
+                              isSentMessageCard &&
+                              (messageHasText || isDeleted)) ...[
+                            const SizedBox(width: 9)
+                          ],
+                        ],
+                      ),
+                    ),
+                  )
+                ],
               ),
             ),
           ),
@@ -1752,36 +1820,4 @@ class _MessageCardState extends ConsumerState<MessageCard>
       ),
     );
   }
-}
-
-class TriangleClipper extends CustomClipper<Path> {
-  final bool isSender;
-
-  TriangleClipper({required this.isSender});
-
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    if (isSender) {
-      path.lineTo(size.width, 0);
-      path.lineTo(size.width, 4);
-      path.lineTo(size.width - 16, 16);
-      path.lineTo(size.width - 16, size.height - 10);
-      path.quadraticBezierTo(
-          size.width - 16, size.height - 2, size.width - 36, size.height);
-      path.lineTo(0, size.height);
-    } else {
-      path.lineTo(0, 4);
-      path.lineTo(16, 16);
-      path.lineTo(16, size.height - 10);
-      path.quadraticBezierTo(16, size.height - 2, 36, size.height);
-      path.lineTo(size.width, size.height);
-      path.lineTo(size.width, 0);
-    }
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => true;
 }

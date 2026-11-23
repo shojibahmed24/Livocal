@@ -14,6 +14,7 @@ import 'package:visibility_detector/visibility_detector.dart';
 import 'package:livocal/features/chat/controllers/chat_controller.dart';
 import 'package:livocal/features/chat/models/message.dart';
 import 'package:livocal/features/chat/views/widgets/attachment_picker.dart';
+import 'package:livocal/features/chat/views/widgets/chat_backdrop.dart';
 import 'package:livocal/features/chat/views/widgets/chat_date.dart';
 import 'package:livocal/features/chat/views/widgets/chat_field.dart';
 import 'package:livocal/features/chat/views/widgets/chat_mic.dart';
@@ -97,17 +98,21 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       chatControllerProvider.select((chatState) => chatState.recordingState),
     );
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final appBarBg = isDark ? AppColors.darkSurface : AppColors.primary;
+    final appBarBg = isDark
+        ? AppColors.darkSurface.withValues(alpha: 0.88)
+        : Colors.white.withValues(alpha: 0.92);
+    final appBarFg =
+        isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
         backgroundColor: appBarBg,
-        foregroundColor: Colors.white,
+        foregroundColor: appBarFg,
         scrolledUnderElevation: 0,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        actionsIconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: appBarFg),
+        actionsIconTheme: IconThemeData(color: appBarFg),
         titleSpacing: 0.0,
         title: InkWell(
           borderRadius: BorderRadius.circular(8),
@@ -126,11 +131,19 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 2.0),
             child: Row(
               children: [
-                CircleAvatar(
-                  maxRadius: 18,
-                  backgroundImage: other.avatarUrl.isNotEmpty
-                      ? CachedNetworkImageProvider(other.avatarUrl)
-                      : const AssetImage('assets/images/avatar.png') as ImageProvider,
+                Container(
+                  padding: const EdgeInsets.all(1.5),
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: AppColors.brandGradient,
+                  ),
+                  child: CircleAvatar(
+                    maxRadius: 18,
+                    backgroundImage: other.avatarUrl.isNotEmpty
+                        ? CachedNetworkImageProvider(other.avatarUrl)
+                        : const AssetImage('assets/images/avatar.png')
+                            as ImageProvider,
+                  ),
                 ),
                 const SizedBox(
                   width: 8.0,
@@ -146,8 +159,12 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                           Flexible(
                             child: Text(
                               widget.otherUserContactName,
-                              style: Theme.of(context).custom.textTheme.titleMedium.copyWith(
-                                    color: Colors.white,
+                              style: Theme.of(context)
+                                  .custom
+                                  .textTheme
+                                  .titleMedium
+                                  .copyWith(
+                                    color: appBarFg,
                                     fontWeight: FontWeight.w600,
                                   ),
                               overflow: TextOverflow.ellipsis,
@@ -173,12 +190,32 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                           }
 
                           return snapshot.data!.value == 'Online'
-                              ? Text(
-                                  AppStrings.tr(ref, 'online'),
-                                  style: Theme.of(context).custom.textTheme.caption.copyWith(
-                                        color: Colors.white.withValues(alpha: 0.85),
-                                        fontSize: 12,
+                              ? Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: const BoxDecoration(
+                                        color: AppColors.accent,
+                                        shape: BoxShape.circle,
                                       ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      AppStrings.tr(ref, 'online'),
+                                      style: Theme.of(context)
+                                          .custom
+                                          .textTheme
+                                          .caption
+                                          .copyWith(
+                                            color: appBarFg.withValues(
+                                              alpha: 0.65,
+                                            ),
+                                            fontSize: 12,
+                                          ),
+                                    ),
+                                  ],
                                 )
                               : const SizedBox.shrink();
                         },
@@ -194,10 +231,10 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         leading: IconButton(
           onPressed: () =>
               ref.read(chatControllerProvider.notifier).navigateToHome(context),
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back,
             size: 24,
-            color: Colors.white,
+            color: appBarFg,
           ),
         ),
         actions: [
@@ -281,7 +318,8 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                           if (context.mounted) {
                             showSnackBar(
                               context: context,
-                              content: 'Failed to unblock. Please check connection.',
+                              content:
+                                  'Failed to unblock. Please check connection.',
                               type: SnacBarType.error,
                             );
                           }
@@ -492,124 +530,134 @@ class _ChatPageState extends ConsumerState<ChatPage> {
               ),
             );
           } else {
-            bgDecoration = BoxDecoration(
-              image: DecorationImage(
-                image: Theme.of(context).themedImage('chat_bg.png'),
-                fit: BoxFit.cover,
-              ),
-            );
+            // Default wallpaper: Livocal's own gradient backdrop instead of the
+            // WhatsApp-style doodle image.
+            bgDecoration = const BoxDecoration(color: Colors.transparent);
           }
 
-          return Container(
-            decoration: bgDecoration,
-            child: Column(
-          children: [
-            Expanded(
-              child: Platform.isIOS
-                  ? GestureDetector(
-                      onTap: () {
-                        SystemChannels.textInput.invokeMethod(
-                          "TextInput.hide",
-                        );
-                        ref
-                            .read(chatControllerProvider.notifier)
-                            .setShowEmojiPicker(false);
-                      },
-                      child: const ChatStream(),
-                    )
-                  : const ChatStream(),
-            ),
-            const SizedBox(
-              height: 4.0,
-            ),
-            Builder(
-              builder: (context) {
-                final isBlocked = BlockService.isBlocked(other.id);
-                if (isBlocked) {
-                  final isDark = Theme.of(context).brightness == Brightness.dark;
-                  return Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF16203A) : Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: InkWell(
-                      onTap: () async {
-                        final unblock = await showAppDialog<bool>(
-                          context: context,
-                          title: 'Unblock ${widget.otherUserContactName}?',
-                          icon: Icons.lock_open_rounded,
-                          iconColor: AppColors.primary,
-                          contentText:
-                              'Unblocked contacts will be able to send you messages and call you.',
-                          actions: [
-                            AppDialogAction(
-                              label: 'CANCEL',
-                              onPressed: () => Navigator.pop(context, false),
-                            ),
-                            AppDialogAction(
-                              label: 'UNBLOCK',
-                              isPrimary: true,
-                              onPressed: () => Navigator.pop(context, true),
-                            ),
-                          ],
-                        );
-                        if (unblock == true && context.mounted) {
-                          try {
-                            await BlockService.unblockContact(other.id);
-                            setState(() {});
-                          } catch (e) {
-                            if (context.mounted) {
-                              showSnackBar(
-                                context: context,
-                                content: 'Failed to unblock. Please check connection.',
-                                type: SnacBarType.error,
+          return ChatBackdrop(
+            child: Container(
+              decoration: bgDecoration,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Platform.isIOS
+                        ? GestureDetector(
+                            onTap: () {
+                              SystemChannels.textInput.invokeMethod(
+                                "TextInput.hide",
                               );
-                            }
-                          }
-                        }
-                      },
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.block, size: 18, color: Colors.redAccent),
-                          const SizedBox(width: 8),
-                          Text(
-                            AppStrings.tr(ref, 'blockedTapToUnblock'),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: isDark ? Colors.white70 : Colors.black87,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13.5,
+                              ref
+                                  .read(chatControllerProvider.notifier)
+                                  .setShowEmojiPicker(false);
+                            },
+                            child: const ChatStream(),
+                          )
+                        : const ChatStream(),
+                  ),
+                  const SizedBox(
+                    height: 4.0,
+                  ),
+                  Builder(
+                    builder: (context) {
+                      final isBlocked = BlockService.isBlocked(other.id);
+                      if (isBlocked) {
+                        final isDark =
+                            Theme.of(context).brightness == Brightness.dark;
+                        return Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 14, horizontal: 16),
+                          decoration: BoxDecoration(
+                            color:
+                                isDark ? const Color(0xFF16203A) : Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.08),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: InkWell(
+                            onTap: () async {
+                              final unblock = await showAppDialog<bool>(
+                                context: context,
+                                title:
+                                    'Unblock ${widget.otherUserContactName}?',
+                                icon: Icons.lock_open_rounded,
+                                iconColor: AppColors.primary,
+                                contentText:
+                                    'Unblocked contacts will be able to send you messages and call you.',
+                                actions: [
+                                  AppDialogAction(
+                                    label: 'CANCEL',
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                  ),
+                                  AppDialogAction(
+                                    label: 'UNBLOCK',
+                                    isPrimary: true,
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
+                                  ),
+                                ],
+                              );
+                              if (unblock == true && context.mounted) {
+                                try {
+                                  await BlockService.unblockContact(other.id);
+                                  setState(() {});
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    showSnackBar(
+                                      context: context,
+                                      content:
+                                          'Failed to unblock. Please check connection.',
+                                      type: SnacBarType.error,
+                                    );
+                                  }
+                                }
+                              }
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.block,
+                                    size: 18, color: Colors.redAccent),
+                                const SizedBox(width: 8),
+                                Text(
+                                  AppStrings.tr(ref, 'blockedTapToUnblock'),
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? Colors.white70
+                                        : Colors.black87,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13.5,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-                return ChatInputContainer(
-                  self: self,
-                  other: other,
-                  otherUserContactName: widget.otherUserContactName,
-                );
-              },
+                        );
+                      }
+                      return ChatInputContainer(
+                        self: self,
+                        other: other,
+                        otherUserContactName: widget.otherUserContactName,
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
-      );
-    },
-  ),
-);
+          );
+        },
+      ),
+    );
   }
 }
 
@@ -696,7 +744,9 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
     final gestureInset = math.max(systemBottomPadding, systemViewPaddingBottom);
     final dynamicBottomPadding = isKeyboardVisible
         ? 6.0
-        : (gestureInset > 0 ? gestureInset + 4.0 : (Platform.isAndroid ? 10.0 : 24.0));
+        : (gestureInset > 0
+            ? gestureInset + 4.0
+            : (Platform.isAndroid ? 10.0 : 24.0));
 
     return Theme(
       data: Theme.of(context).copyWith(
@@ -729,27 +779,19 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
                       Theme.of(context).brightness == Brightness.dark,
                     ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                    padding: const EdgeInsets.fromLTRB(8.0, 2.0, 8.0, 8.0),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(24.0),
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? colorTheme.appBarColor
-                                  : colorTheme.backgroundColor,
-                            ),
-                            child: recordingState == RecordingState.notRecording
-                                ? _buildChatField(
-                                    showEmojiPicker,
-                                    context,
-                                    hideElements,
-                                    colorTheme,
-                                  )
-                                : const VoiceRecorderField(),
-                          ),
+                          child: recordingState == RecordingState.notRecording
+                              ? _buildChatField(
+                                  showEmojiPicker,
+                                  context,
+                                  hideElements,
+                                  colorTheme,
+                                )
+                              : const VoiceRecorderField(),
                         ),
                         const SizedBox(
                           width: 4.0,
@@ -766,12 +808,25 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
                                         widget.other,
                                       );
                                 },
-                                child: CircleAvatar(
-                                  radius: 24,
-                                  backgroundColor: colorTheme.greenColor,
+                                child: Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: AppColors.brandGradient,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.primary
+                                            .withValues(alpha: 0.32),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
                                   child: const Icon(
-                                    Icons.send,
+                                    Icons.send_rounded,
                                     color: Colors.white,
+                                    size: 21,
                                   ),
                                 ),
                               )
@@ -908,26 +963,33 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
                   self: widget.self,
                   other: widget.other,
                   contactName: widget.otherUserContactName,
-                  onPaymentConfirmed: (amount, note, [method, txId, paymentRecordId, clientMessageId]) {
-                    final methodStr =
-                        (method != null && method.isNotEmpty) ? ' via $method' : '';
-                    final refStr =
-                        (txId != null && txId.isNotEmpty) ? ' (Ref: $txId)' : '';
+                  onPaymentConfirmed: (amount, note,
+                      [method, txId, paymentRecordId, clientMessageId]) {
+                    final methodStr = (method != null && method.isNotEmpty)
+                        ? ' via $method'
+                        : '';
+                    final refStr = (txId != null && txId.isNotEmpty)
+                        ? ' (Ref: $txId)'
+                        : '';
                     final idStr =
-                        (paymentRecordId != null && paymentRecordId.isNotEmpty) ? ' [id:$paymentRecordId]' : '';
+                        (paymentRecordId != null && paymentRecordId.isNotEmpty)
+                            ? ' [id:$paymentRecordId]'
+                            : '';
                     final noteStr = note.isNotEmpty ? '\nNote: $note' : '';
                     final paymentMsg =
                         '💰 Payment sent: \$amount$methodStr$refStr$idStr$noteStr';
-                    ref.read(chatControllerProvider.notifier).sendMessageNoAttachments(
-                      Message(
-                        id: clientMessageId ?? const Uuid().v4(),
-                        content: paymentMsg,
-                        status: MessageStatus.pending,
-                        senderId: widget.self.id,
-                        receiverId: widget.other.id,
-                        timestamp: Timestamp.now(),
-                      ),
-                    );
+                    ref
+                        .read(chatControllerProvider.notifier)
+                        .sendMessageNoAttachments(
+                          Message(
+                            id: clientMessageId ?? const Uuid().v4(),
+                            content: paymentMsg,
+                            status: MessageStatus.pending,
+                            senderId: widget.self.id,
+                            receiverId: widget.other.id,
+                            timestamp: Timestamp.now(),
+                          ),
+                        );
                   },
                 );
               },
@@ -1069,8 +1131,9 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
       _isLoadingMore = true;
       _messageLimit += 50;
       setState(() {
-        IsarDb.purgeDisappearingMessages(forChatId: chatId, forContactId: other.id);
-    messageStream = IsarDb.getChatStream(chatId, limit: _messageLimit);
+        IsarDb.purgeDisappearingMessages(
+            forChatId: chatId, forContactId: other.id);
+        messageStream = IsarDb.getChatStream(chatId, limit: _messageLimit);
       });
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted) _isLoadingMore = false;
@@ -1098,8 +1161,10 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
         final val = snapshot.data()!['disappearingDuration'] as String?;
         if (val != null && val.isNotEmpty) {
           SharedPref.instance.setString('chat_disappearing_$chatId', val);
-          SharedPref.instance.setString('contact_disappearing_${other.id}', val);
-          IsarDb.purgeDisappearingMessages(forChatId: chatId, forContactId: other.id);
+          SharedPref.instance
+              .setString('contact_disappearing_${other.id}', val);
+          IsarDb.purgeDisappearingMessages(
+              forChatId: chatId, forContactId: other.id);
           if (mounted) setState(() {});
         }
       }
@@ -1177,7 +1242,8 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
   void markAsSeen(Message message) {
     if (message.senderId == self.id) return;
     if (message.status == MessageStatus.seen) return;
-    final readReceiptsEnabled = SharedPref.instance.getBool('privacy_read_receipts') ?? true;
+    final readReceiptsEnabled =
+        SharedPref.instance.getBool('privacy_read_receipts') ?? true;
     if (!readReceiptsEnabled) {
       IsarDb.updateMessage(message.id, status: MessageStatus.seen);
       return;
@@ -1203,7 +1269,8 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
         }
 
         final rawMessages = snapshot.data!;
-        final disappearingTimer = SharedPref.instance.getString('chat_disappearing_$chatId') ??
+        final disappearingTimer = SharedPref.instance
+                .getString('chat_disappearing_$chatId') ??
             SharedPref.instance.getString('contact_disappearing_${other.id}') ??
             SharedPref.instance.getString('privacy_disappearing') ??
             'Off';
@@ -1217,7 +1284,8 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
         }
 
         final now = DateTime.now();
-        final cutoff = expiryDuration != null ? now.subtract(expiryDuration) : null;
+        final cutoff =
+            expiryDuration != null ? now.subtract(expiryDuration) : null;
         final List<Message> messages = rawMessages.where((m) {
           if (m.senderId != self.id && BlockService.isBlocked(m.senderId)) {
             return false;
@@ -1302,7 +1370,8 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.radiusXl),
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.radiusXl),
                           ),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 20,
@@ -1311,7 +1380,9 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
                         ),
                         onPressed: () {
                           HapticFeedback.lightImpact();
-                          ref.read(chatControllerProvider.notifier).sendMessageNoAttachments(
+                          ref
+                              .read(chatControllerProvider.notifier)
+                              .sendMessageNoAttachments(
                                 Message(
                                   id: const Uuid().v4(),
                                   content: 'Hello! 👋',
@@ -1379,8 +1450,10 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
                 if (disappearingTimer != 'Off')
                   SliverToBoxAdapter(
                     child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 32, vertical: 6),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 32, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: isDarkTheme
                             ? const Color(0xFF182229)
@@ -1391,7 +1464,8 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
                         mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.timer_outlined, size: 14, color: Color(0xFF8A96B2)),
+                          const Icon(Icons.timer_outlined,
+                              size: 14, color: Color(0xFF8A96B2)),
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
@@ -1435,6 +1509,9 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
     final isFirstMsg = index == messages.length - 1;
     final isSpecial =
         isFirstMsg || messages[index].senderId != messages[index + 1].senderId;
+    // Newest bubble of a consecutive run by the same sender (bottom of group).
+    final isLastInGroup =
+        index == 0 || messages[index].senderId != messages[index - 1].senderId;
     final currMsgDate = dateFromTimestamp(messages[index].timestamp);
     final showDate = isFirstMsg ||
         currMsgDate != dateFromTimestamp(messages[index + 1].timestamp);
@@ -1464,6 +1541,7 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
               message: message,
               currentUserId: self.id,
               special: isSpecial,
+              isLastInGroup: isLastInGroup,
               onTapReplyQuote: (targetId) => _jumpToMessage(targetId, messages),
             ),
           ),
@@ -1503,9 +1581,8 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.radiusMd),
-            color: isDarkTheme
-                ? const Color(0xFF182228)
-                : const Color(0xFFFFF9E6),
+            color:
+                isDarkTheme ? const Color(0xFF182228) : const Color(0xFFFFF9E6),
             border: Border.all(
               color: isDarkTheme
                   ? const Color(0xFF22304D)
