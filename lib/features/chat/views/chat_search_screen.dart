@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:livocal/features/chat/models/message.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/ui/pill_chip.dart';
 import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
@@ -84,38 +85,25 @@ class _ChatSearchScreenState extends State<ChatSearchScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (_query.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Text(
-                  AppStrings.get('searchInChat', langCode),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: textSecondary, fontSize: 14),
-                ),
-              ),
+            return EmptyState(
+              icon: Icons.search_rounded,
+              title: AppStrings.get('searchInChat', langCode),
             );
           }
 
           final results = snapshot.data!.where((message) {
             final content = message.content.toLowerCase();
-            final fileName =
-                (message.attachment?.fileName ?? '').toLowerCase();
+            final fileName = (message.attachment?.fileName ?? '').toLowerCase();
             return content.contains(_query) || fileName.contains(_query);
           }).toList();
 
           if (results.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Text(
-                  AppStrings.get(
-                    'noResultsFor',
-                    langCode,
-                    args: {'query': _query},
-                  ),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: textSecondary, fontSize: 14),
-                ),
+            return EmptyState(
+              icon: Icons.search_off_rounded,
+              title: AppStrings.get(
+                'noResultsFor',
+                langCode,
+                args: {'query': _query},
               ),
             );
           }
@@ -130,8 +118,8 @@ class _ChatSearchScreenState extends State<ChatSearchScreen> {
             itemBuilder: (context, index) {
               final message = results[index];
               final isMe = message.senderId == widget.self.id;
-              final time =
-                  DateFormat('dd MMM, HH:mm').format(message.timestamp.toDate());
+              final time = DateFormat('dd MMM, HH:mm')
+                  .format(message.timestamp.toDate());
               final preview = message.attachment != null &&
                       (message.attachment?.fileName ?? '').isNotEmpty
                   ? message.attachment!.fileName
@@ -139,12 +127,9 @@ class _ChatSearchScreenState extends State<ChatSearchScreen> {
 
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundColor:
-                      AppColors.primary.withValues(alpha: 0.12),
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.12),
                   child: Icon(
-                    isMe
-                        ? Icons.person_rounded
-                        : Icons.person_outline_rounded,
+                    isMe ? Icons.person_rounded : Icons.person_outline_rounded,
                     color: AppColors.primary,
                   ),
                 ),

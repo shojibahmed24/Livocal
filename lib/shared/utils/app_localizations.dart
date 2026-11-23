@@ -41,17 +41,21 @@ class AppStrings {
       'account': "Account",
       'accountAndPrivacy': "Account & Privacy",
       'accountManagement': "Account Management",
-      'accountReportSubmitted': "Account report request submitted. Ready within 24 hours.",
-      'accountSub': "Security notifications, two-step verification, change number",
+      'accountReportSubmitted':
+          "Account report request submitted. Ready within 24 hours.",
+      'accountSub':
+          "Security notifications, two-step verification, change number",
       'advancedAiEngine': "Voice & Translation",
       'allMedia': "All media",
       'appDatabaseIsar': "• App Database (Isar): ",
       'appInfo': "App info",
-      'appInfoDesc': "Real-Time AI Voice Translation & Secure Messaging powered by WebRTC, Gemini Multimodal Live API, and Flutter.",
+      'appInfoDesc':
+          "Real-Time AI Voice Translation & Secure Messaging powered by WebRTC, Gemini Multimodal Live API, and Flutter.",
       'appLanguage': "App language",
       'appLanguageSub': "English, বাংলা, हिन्दी, العربية...",
       'biometricCancelled': "Biometric verification cancelled.",
-      'biometricNotSupported': "Biometric authentication is not supported on this device.",
+      'biometricNotSupported':
+          "Biometric authentication is not supported on this device.",
       'blockedContacts': "Blocked contacts",
       'blockedContactsCount': "0 contacts",
       'cacheClearedSnack': "Media cache cleared successfully",
@@ -66,8 +70,10 @@ class AppStrings {
       'callsHeader': "Calls",
       'cancel': "Cancel",
       'changeNumber': "Change number",
-      'changeNumberDesc': "Migrating your account to a new phone number will transfer all your account info, settings, and encryption keys.",
-      'changeNumberDialogContent': "Migrating your account to a new phone number will transfer all your account info, settings, and encryption keys.",
+      'changeNumberDesc':
+          "Migrating your account to a new phone number will transfer all your account info, settings, and encryption keys.",
+      'changeNumberDialogContent':
+          "Migrating your account to a new phone number will transfer all your account info, settings, and encryption keys.",
       'chats': "CHATS",
       'chatsAndTheme': "Chats & Theme",
       'chatsAndThemeSub': "Wallpapers, theme, chat history",
@@ -76,17 +82,21 @@ class AppStrings {
       'chooseTheme': "Choose Theme",
       'classicBellPreset': "Classic Bell",
       'clearCache': "Clear Media Cache",
-      'clearCacheDialogDesc': "This will delete temporary audio files and cached voice notes. Local chat text will not be affected.",
+      'clearCacheDialogDesc':
+          "This will delete temporary audio files and cached voice notes. Local chat text will not be affected.",
       'clearCacheDialogTitle': "Clear Media Cache?",
       'clearCacheSub': "Delete downloaded cached audio and voice notes",
       'clearCallLog': "Clear call log",
       'close': "CLOSE",
       'confirm': "CONFIRM",
       'confirmDisable': "CONFIRM DISABLE",
-      'confirmFingerprintDisable': "Confirm your biometric credential to disable lock",
-      'confirmFingerprintEnable': "Confirm your fingerprint or biometric credential to enable lock",
+      'confirmFingerprintDisable':
+          "Confirm your biometric credential to disable lock",
+      'confirmFingerprintEnable':
+          "Confirm your fingerprint or biometric credential to enable lock",
       'contactSupport': "Contact Support",
-      'contactSupportDesc': "Tell us how we can help you. Describe your issue or suggestion:",
+      'contactSupportDesc':
+          "Tell us how we can help you. Describe your issue or suggestion:",
       'contactSupportSub': "Questions? Need help? Chat with our team",
       'contacts': "Contacts",
       'conversationTones': "Conversation tones",
@@ -104,14 +114,16 @@ class AppStrings {
       'defaultText': "Default",
       'delete': "DELETE",
       'deleteAccountBullet1': "• Delete your account info and profile photo",
-      'deleteAccountBullet2': "• Delete all local message history from this device",
+      'deleteAccountBullet2':
+          "• Delete all local message history from this device",
       'deleteAccountBullet3': "• Remove you from your contacts’ Livocal lists",
       'deleteAccountButton': "DELETE ACCOUNT",
       'deleteAccountDesc': "Deleting your account will:",
       'deleteAccountDialogTitle': "Delete this account?",
       'deleteAccountTitle': "Delete this account?",
       'deleteAccountWarning1': "Delete your account info and profile photo",
-      'deleteAccountWarning2': "Delete all local message history from this device",
+      'deleteAccountWarning2':
+          "Delete all local message history from this device",
       'deleteAccountWarning3': "Remove you from your contacts’ Livocal lists",
       'deleteAccountWarningTitle': "Deleting your account will:",
       'deleteMyAccount': "Delete my account",
@@ -124,21 +136,28 @@ class AppStrings {
       'enablePin': "ENABLE PIN",
       'enableTwoStep': "Enable Two-Step Verification",
       'enabled': "Enabled",
-      'enterCurrentPin': "Enter your current 6-digit PIN to confirm disabling Two-Step Verification:",
+      'enterCurrentPin':
+          "Enter your current 6-digit PIN to confirm disabling Two-Step Verification:",
       'enterMessageError': "Please enter a message before submitting.",
-      'enterNewPin': "Enter a 6-digit PIN which will be required to access and secure your Livocal account:",
+      'enterNewPin':
+          "Enter a 6-digit PIN which will be required to access and secure your Livocal account:",
       'enterValid6DigitPin': "Please enter a valid 6-digit PIN",
       'everyone': "Everyone",
-      'faqApiKeyA': "Go to Settings > Gemini Live Voice Translation. You can enter your personal Gemini API key from Google AI Studio, select your preferred voice (Puck, Charon, Kore, Fenrir, Aoede), and save securely.",
+      'faqApiKeyA':
+          "Go to Settings > Gemini Live Voice Translation. You can enter your personal Gemini API key from Google AI Studio, select your preferred voice (Puck, Charon, Kore, Fenrir, Aoede), and save securely.",
       'faqApiKeyQ': "How do I configure my Gemini API Key?",
-      'faqContactsA': "Tap the floating action button on the home screen to open Contacts. You can tap any contact registered on Livocal to chat or call immediately, or tap \"Invite\" to send an SMS invitation.",
+      'faqContactsA':
+          "Tap the floating action button on the home screen to open Contacts. You can tap any contact registered on Livocal to chat or call immediately, or tap \"Invite\" to send an SMS invitation.",
       'faqContactsQ': "How do I add or invite contacts?",
-      'faqLiveTranslationA': "During a voice call, Livocal streams raw audio via WebRTC. When AI translation is toggled on, speech is streamed to the Gemini Multimodal Live API which translates bidirectional speech with sub-second latency.",
+      'faqLiveTranslationA':
+          "During a voice call, Livocal streams raw audio via WebRTC. When AI translation is toggled on, speech is streamed to the Gemini Multimodal Live API which translates bidirectional speech with sub-second latency.",
       'faqLiveTranslationQ': "How does Real-Time AI Live Translation work?",
-      'faqSecurityA': "Yes! All WebRTC audio streams use DTLS-SRTP encryption, and all chat messages are authenticated with zero-trust Firestore security rules.",
+      'faqSecurityA':
+          "Yes! All WebRTC audio streams use DTLS-SRTP encryption, and all chat messages are authenticated with zero-trust Firestore security rules.",
       'faqSecurityQ': "Are my voice calls and messages encrypted?",
       'faqTitle': "Frequently Asked Questions",
-      'feedbackSentSuccess': "Thank you! Your feedback has been sent to the Livocal engineering team.",
+      'feedbackSentSuccess':
+          "Thank you! Your feedback has been sent to the Livocal engineering team.",
       'fingerprintAuthReason': "Please authenticate to unlock Livocal",
       'fingerprintLock': "Fingerprint lock",
       'fingerprintLockDisabled': "Fingerprint lock disabled",
@@ -146,20 +165,23 @@ class AppStrings {
       'fingerprintLockSub': "Require biometric authentication to open Livocal",
       'from': "from",
       'geminiVoiceEngine': "AI Voice Persona",
-      'geminiVoiceEngineSub': "Select preferred voice for live audio translation",
+      'geminiVoiceEngineSub':
+          "Select preferred voice for live audio translation",
       'help': "Help",
       'helpCentre': "Help Centre",
       'helpCentreSub': "FAQs, user guides, troubleshooting",
       'helpSub': "Help centre, contact us, terms & privacy policy",
       'highPriorityNotif': "High priority notifications",
-      'highPriorityNotifSub': "Show previews of notifications at the top of the screen",
+      'highPriorityNotifSub':
+          "Show previews of notifications at the top of the screen",
       'hours24': "24 hours",
       'iUnderstand': "I UNDERSTAND",
       'incorrectPin': "Incorrect PIN. Verification failed.",
       'inviteFriend': "Invite a friend",
       'inviteFriendSub': "Share Livocal with contacts & family",
       'inviteLinkCopied': "Invite link copied to clipboard",
-      'languageNote': "Changing language updates all UI screens, notifications, dialogs and voice call prompts instantly.",
+      'languageNote':
+          "Changing language updates all UI screens, notifications, dialogs and voice call prompts instantly.",
       'lastSeenAndOnline': "Last seen and online",
       'legalAndInfo': "Legal & Info",
       'light': "Light",
@@ -168,7 +190,8 @@ class AppStrings {
       'livocalHarmonyPreset': "Livocal Harmony (Default)",
       'localDatabase': "Local Database & Chats",
       'logout': "Log out",
-      'logoutDialogContent': "Are you sure you want to log out? Local data and credentials will be cleared.",
+      'logoutDialogContent':
+          "Are you sure you want to log out? Local data and credentials will be cleared.",
       'logoutDialogTitle': "Log out of Livocal?",
       'logoutSub': "Clear local credentials and sign out",
       'manageStorage': "Manage storage",
@@ -205,17 +228,21 @@ class AppStrings {
       'privacySub': "Block contacts, disappearing messages, biometric lock",
       'profilePhoto': "Profile photo",
       'qrCode': "QR Code",
-      'qrCodeDesc': "Your QR code is private. If you share it with someone, they can scan it to add you on Livocal.",
+      'qrCodeDesc':
+          "Your QR code is private. If you share it with someone, they can scan it to add you on Livocal.",
       'reactionNotif': "Reaction notifications",
-      'reactionNotifSub': "Show notifications for reactions to messages you send",
+      'reactionNotifSub':
+          "Show notifications for reactions to messages you send",
       'reactionNotifications': "Reaction notifications",
-      'reactionNotificationsSub': "Show notifications for reactions to messages you send",
+      'reactionNotificationsSub':
+          "Show notifications for reactions to messages you send",
       'readReceipts': "Read receipts",
       'readReceiptsSub': "If turned off, you won\\",
       'received': "received",
       'receivedTraffic': "• Received: ",
       'requestAccountInfo': "Request account info",
-      'requestAccountInfoSub': "Request a report of your account info and settings",
+      'requestAccountInfoSub':
+          "Request a report of your account info and settings",
       'resetNotifications': "Reset notification settings",
       'resetNotificationsSuccess': "Notification settings reset to defaults",
       'resetUsage': "RESET USAGE",
@@ -227,7 +254,8 @@ class AppStrings {
       'securityAndAppLock': "Security & App Lock",
       'securityAppLockHeader': "Security & App Lock",
       'securityNotifications': "Security notifications",
-      'securityNotificationsSub': "Show security notifications when encryption keys change for any contact.",
+      'securityNotificationsSub':
+          "Show security notifications when encryption keys change for any contact.",
       'sent': "sent",
       'sentTraffic': "• Sent: ",
       'session': "Session",
@@ -251,23 +279,29 @@ class AppStrings {
       'toneUpdatedSuccess': "updated",
       'totalAppFootprint': "Total App Footprint: ",
       'totalTraffic': "• Total Traffic: ",
-      'twoStepDialogDisableDesc': "Enter your current 6-digit PIN to confirm disabling Two-Step Verification:",
+      'twoStepDialogDisableDesc':
+          "Enter your current 6-digit PIN to confirm disabling Two-Step Verification:",
       'twoStepDialogDisableTitle': "Disable Two-Step Verification",
-      'twoStepDialogEnableDesc': "Enter a 6-digit PIN which will be required to access and secure your Livocal account:",
+      'twoStepDialogEnableDesc':
+          "Enter a 6-digit PIN which will be required to access and secure your Livocal account:",
       'twoStepDialogEnableTitle': "Enable Two-Step Verification",
       'twoStepDisabledSnack': "Two-step verification disabled",
       'twoStepDisabledSub': "Disabled (Set up a 6-digit PIN)",
       'twoStepDisabledSuccess': "Two-step verification disabled",
-      'twoStepEnabledSnack': "Two-step verification PIN saved in secure storage",
+      'twoStepEnabledSnack':
+          "Two-step verification PIN saved in secure storage",
       'twoStepEnabledSub': "Enabled (PIN protection active)",
-      'twoStepSavedSuccess': "Two-step verification PIN saved in secure storage",
+      'twoStepSavedSuccess':
+          "Two-step verification PIN saved in secure storage",
       'twoStepVerification': "Two-step verification",
       'typeMessage': "Message",
       'typeYourMessage': "Type your message here...",
       'useHighPriority': "Use high priority notifications",
-      'useHighPrioritySub': "Show previews of notifications at the top of the screen",
+      'useHighPrioritySub':
+          "Show previews of notifications at the top of the screen",
       'useLessDataCalls': "Use less data for calls",
-      'useLessDataCallsSub': "Optimizes voice audio bitrate for low-bandwidth cellular networks",
+      'useLessDataCallsSub':
+          "Optimizes voice audio bitrate for low-bandwidth cellular networks",
       'version': "Version 1.0.0 (Production Ready)",
       'vibrate': "Vibrate",
       'vibrateDefault': "Default",
@@ -287,26 +321,32 @@ class AppStrings {
       'failedToSendFeedback': "Failed to send feedback",
       'listenVoice': "Listen Voice",
       'liveAudioTranslationVoice': "Live Audio Translation Voice",
-      'liveAudioTranslationVoiceDesc': "Select which voice persona speaks translated speech to you during live phone and VoIP calls.",
+      'liveAudioTranslationVoiceDesc':
+          "Select which voice persona speaks translated speech to you during live phone and VoIP calls.",
       'livocalContact': "Livocal Contact",
-      'privacyPrinciplesBody': "Livocal values your privacy:\n\n1. Private Encryption: Your 1-on-1 calls and messages are strictly protected.\n\n2. Gemini Live Translation: Voice streams are processed in ephemeral secure memory during active calls and are never stored or trained on.\n\n3. Zero Phonebook Harvesting: Contact matching occurs via cryptographic hash lookups without uploading your unhashed address book.",
+      'privacyPrinciplesBody':
+          "Livocal values your privacy:\n\n1. Private Encryption: Your 1-on-1 calls and messages are strictly protected.\n\n2. Gemini Live Translation: Voice streams are processed in ephemeral secure memory during active calls and are never stored or trained on.\n\n3. Zero Phonebook Harvesting: Contact matching occurs via cryptographic hash lookups without uploading your unhashed address book.",
       'selectedVoice': "Selected Voice",
-      'shareQrInviteText': "Connect with me on Livocal: {link}\nDownload the app to chat and make live translated voice calls!",
+      'shareQrInviteText':
+          "Connect with me on Livocal: {link}\nDownload the app to chat and make live translated voice calls!",
       'stopPreview': "Stop Preview",
       'tapToSelect': "Tap to select",
-      'voicePreferenceSavedNotice': "Your preferred voice persona is securely saved on your device and applied automatically to all live translated calls.",
+      'voicePreferenceSavedNotice':
+          "Your preferred voice persona is securely saved on your device and applied automatically to all live translated calls.",
       'voicePreviewOffline': "Voice preview is unavailable offline.",
       'voiceSetSuccess': "Set \"{voiceId}\" as your live translation voice",
       'trialRemainingBadge': "⏱️ Trial: {minutes} mins left",
       'balanceExhaustedBadge': "⚠️ Balance Exhausted (0 mins)",
       'balanceMinutesBadge': "💎 Balance: {minutes} mins",
       'trialDaysLeftNotice': "{days} days left • Free local calls",
-      'rechargeForTranslationNotice': "Recharge for translation calls • Free local calls",
+      'rechargeForTranslationNotice':
+          "Recharge for translation calls • Free local calls",
       'translationRateNotice': "AI translation 1 min/min • Free local calls",
       'recharge': "Recharge",
       'rechargePlus': "+ Recharge",
       'geminiLiveVoiceTranslation': "Gemini 3.5 Live Voice Translation",
-      'universalLanguagePairSub': "{count}+ Languages • Universal Any-to-Any Pair",
+      'universalLanguagePairSub':
+          "{count}+ Languages • Universal Any-to-Any Pair",
       'myLanguageLabel': "MY LANGUAGE (SPEAK & HEAR)",
       'peerLanguageLabel': "PEER LANGUAGE (SPEAK & HEAR)",
       'selectYourLanguage': "Select Your Language",
@@ -316,26 +356,35 @@ class AppStrings {
       'noRecentCalls': "No recent calls yet. Tap a contact or dial above.",
       'directCallByNumber': "Direct Call / Chat by Number",
       'directDialSubtitle': "Enter any phone number to call or chat directly",
-      'freeLocalCallBanner': "🗣️ Free Local Call (Same Language - No minutes deducted)",
-      'aiTranslateCallBanner': "🤖 AI Translated Call (1 min/min) • Balance: {minutes} mins",
+      'freeLocalCallBanner':
+          "🗣️ Free Local Call (Same Language - No minutes deducted)",
+      'aiTranslateCallBanner':
+          "🤖 AI Translated Call (1 min/min) • Balance: {minutes} mins",
       'voiceCallAi': "Voice Call (AI)",
       'messageAction': "Message",
       'voiceMinutesRecharge': "Voice Minutes Recharge",
-      'talkToInternationalClients': "Speak with international clients in any language",
+      'talkToInternationalClients':
+          "Speak with international clients in any language",
       'currentBalanceText': "Current Balance: {minutes} mins",
       'trialBadgeText': "Trial: {minutes} mins",
-      'trialValidityText': "Free trial validity left: {days} days (Paid balance: {paid} mins)",
-      'paidBalanceLifetimeText': "Paid balance never expires (Lifetime validity)",
-      'sameLanguageFreeRule': "🗣️ Same language local calls 100% free (No minutes deducted)",
+      'trialValidityText':
+          "Free trial validity left: {days} days (Paid balance: {paid} mins)",
+      'paidBalanceLifetimeText':
+          "Paid balance never expires (Lifetime validity)",
+      'sameLanguageFreeRule':
+          "🗣️ Same language local calls 100% free (No minutes deducted)",
       'geminiAiRateRule': "🤖 Gemini 3.5 Live AI translated calls: 1 min/min",
       'selectMinutePack': "Select Minute Pack",
       'starterPackTitle': "Starter Pack (60 Mins)",
-      'starterPackDesc': "For quick client interviews & initial briefs (~৳20/min)",
+      'starterPackDesc':
+          "For quick client interviews & initial briefs (~৳20/min)",
       'proPackTitle': "Freelancer Pro (180 Mins)",
-      'proPackDesc': "Weekly project meetings & regular calls (~৳16.6/min, 17% savings)",
+      'proPackDesc':
+          "Weekly project meetings & regular calls (~৳16.6/min, 17% savings)",
       'popularBadge': "⭐ POPULAR",
       'agencyPackTitle': "Agency Pack (500 Mins)",
-      'agencyPackDesc': "For agency teams & heavy international calls (~৳14.4/min, 28% savings)",
+      'agencyPackDesc':
+          "For agency teams & heavy international calls (~৳14.4/min, 28% savings)",
       'bestValueBadge': "💎 BEST VALUE",
       'paymentMethod': "Payment Method",
       'bdtLocal': "৳ BDT Local",
@@ -352,12 +401,16 @@ class AppStrings {
       'retryTooltip': "Retry",
       'bkashMerchantNumber': "bKash / Nagad Personal / Merchant Number:",
       'binancePayOfficialId': "Livocal Official Binance Pay ID:",
-      'cryptoOfficialDepositAddress': "Livocal Official {network} Deposit Address:",
+      'cryptoOfficialDepositAddress':
+          "Livocal Official {network} Deposit Address:",
       'copyBtn': "Copy",
       'copiedToClipboardSnack': "Address/number {text} copied to clipboard!",
-      'paymentInstructionBkash': "1. Send Money or make payment of ৳{amount} from your bKash or Nagad app.\n2. After successful transaction, enter your sender number and TrxID below:",
-      'paymentInstructionBinance': "1. In the Binance app, go to Pay > Send to Binance ID and send {amount} USDT.\n2. After sending, enter your Binance ID and Pay Order ID below:",
-      'paymentInstructionCrypto': "1. Send {amount} USDT ({network}) from your crypto wallet.\n2. After the transaction, enter your sender wallet address and TxHash below:",
+      'paymentInstructionBkash':
+          "1. Send Money or make payment of ৳{amount} from your bKash or Nagad app.\n2. After successful transaction, enter your sender number and TrxID below:",
+      'paymentInstructionBinance':
+          "1. In the Binance app, go to Pay > Send to Binance ID and send {amount} USDT.\n2. After sending, enter your Binance ID and Pay Order ID below:",
+      'paymentInstructionCrypto':
+          "1. Send {amount} USDT ({network}) from your crypto wallet.\n2. After the transaction, enter your sender wallet address and TxHash below:",
       'senderNumberInputLabel': "Your Sender Phone Number (Sender Number)",
       'binancePayIdInputLabel': "Your Binance Pay ID or Email",
       'senderAddressInputLabel': "Your Sender Wallet Address (Sender Address)",
@@ -366,25 +419,34 @@ class AppStrings {
       'txHashInputLabel': "Blockchain TxHash (Transaction Hash)",
       'submitPaymentBdt': "Submit ৳{amount} Payment Verification",
       'submitPaymentUsdt': "Submit \${amount} USDT Payment Verification",
-      'waitForDepositAccountSnack': "Please wait or refresh until deposit account loads from server.",
+      'waitForDepositAccountSnack':
+          "Please wait or refresh until deposit account loads from server.",
       'enterSenderPhoneSnack': "Please enter your sender phone number.",
       'enterBinancePayIdSnack': "Please enter your Binance Pay ID or email.",
-      'enterSenderCryptoAddressSnack': "Please enter your sender crypto wallet address.",
+      'enterSenderCryptoAddressSnack':
+          "Please enter your sender crypto wallet address.",
       'enterTxHashSnack': "Please enter Blockchain TxHash.",
       'enterTrxIdSnack': "Please enter Transaction ID (TrxID / Order ID).",
-      'trc20AddressLengthError': "TRC-20 wallet address must start with 'T' and be 34 characters long.",
-      'bep20AddressLengthError': "BEP-20 wallet address must start with '0x' and be 42 characters long.",
-      'invalidTxHashError': "Please enter a valid 64-character Blockchain TxHash.",
-      'paymentSubmittedSuccess': "Payment request submitted! Minutes will be added upon admin approval.",
+      'trc20AddressLengthError':
+          "TRC-20 wallet address must start with 'T' and be 34 characters long.",
+      'bep20AddressLengthError':
+          "BEP-20 wallet address must start with '0x' and be 42 characters long.",
+      'invalidTxHashError':
+          "Please enter a valid 64-character Blockchain TxHash.",
+      'paymentSubmittedSuccess':
+          "Payment request submitted! Minutes will be added upon admin approval.",
       'paymentFailedSnack': "Could not submit payment request.",
       'minutesExhaustedTitle': "Minutes Exhausted",
-      'minutesExhaustedSub': "Minute balance required for AI live translated calls",
-      'sameLanguageFreeNotice': "Regular calls in the same language are 100% free! Minutes are only used for real-time AI translation between different languages.",
+      'minutesExhaustedSub':
+          "Minute balance required for AI live translated calls",
+      'sameLanguageFreeNotice':
+          "Regular calls in the same language are 100% free! Minutes are only used for real-time AI translation between different languages.",
       'starterBundleMinutes': "60 Minutes",
       'proBundleMinutes': "180 Minutes",
       'buyMinutes': "Buy Minutes",
       'callFreeNoAi': "Call Free (No AI Translation)",
-      'minutesExhaustedAlert': "Your minutes are exhausted. Please recharge to continue the conversation.",
+      'minutesExhaustedAlert':
+          "Your minutes are exhausted. Please recharge to continue the conversation.",
       'muteBtn': "Mute",
       'unmuteBtn': "Unmute",
       'speakerBtn': "Speaker",
@@ -399,7 +461,8 @@ class AppStrings {
       'clearChat': "Clear chat",
       'blockedTapToUnblock': "You blocked this contact. Tap to unblock.",
       'sayHelloTo': "Say hello to {name}",
-      'noMessagesYet': "No messages here yet. Send a greeting or voice note to begin the conversation.",
+      'noMessagesYet':
+          "No messages here yet. Send a greeting or voice note to begin the conversation.",
       'sayHello': "Say hello!",
       'disappearingMessagesOn': "Disappearing messages are on ({timer})",
       'takePhoto': "Take a photo",
@@ -407,12 +470,15 @@ class AppStrings {
       'textStatus': "Text status",
       'viewStatus': "View status",
       'addNewStatus': "Add new status",
-      'languageAppliedLocally': "Language applied locally (cloud sync offline).",
-      'failedToInitiateCall': "Failed to initiate call. Please check your network connection.",
+      'languageAppliedLocally':
+          "Language applied locally (cloud sync offline).",
+      'failedToInitiateCall':
+          "Failed to initiate call. Please check your network connection.",
       'searchChatsHint': "Search chats, messages...",
       'paymentReceivingAccounts': "Payment Receiving Accounts",
       'p2pPaymentSettings': "P2P Payment Settings",
-      'p2pPaymentSettingsDesc': "Configure the accounts where other users can transfer money and cryptocurrency to you in chats. Ensure your TRC-20 and BEP-20 addresses are accurate.",
+      'p2pPaymentSettingsDesc':
+          "Configure the accounts where other users can transfer money and cryptocurrency to you in chats. Ensure your TRC-20 and BEP-20 addresses are accurate.",
       'cryptocurrencyAndBinance': "Cryptocurrency & Binance",
       'mobileFinancialServices': "Mobile Financial Services (MFS)",
       'binancePayIdLabel': "Binance Pay ID / Binance Email",
@@ -425,10 +491,12 @@ class AppStrings {
       'checkConnectionRetry': "Please check your connection and tap retry.",
       'noChatsMatching': "No chats found matching \"{query}\"",
       'noConversationsYet': "No conversations yet",
-      'startChattingDesc': "Start chatting with your contacts with real-time translation and voice calls.",
+      'startChattingDesc':
+          "Start chatting with your contacts with real-time translation and voice calls.",
       'startNewChat': "Start new chat",
       'noMatchesFound': "No matches found",
-      'languagePreferenceSavedLocally': "Language preference saved locally (cloud sync offline).",
+      'languagePreferenceSavedLocally':
+          "Language preference saved locally (cloud sync offline).",
       'selectYourSpokenLanguage': "Select Your Spoken Language",
       'camera': "Camera",
       'gallery': "Gallery",
@@ -438,9 +506,11 @@ class AppStrings {
       'phoneLabel': "Phone",
       'unstarAll': "Unstar all",
       'defaultDoodleWallpaper': "Livocal Gradient (default)",
-      'nameVisibilityHint': "This is not your username or pin. This name will be visible to your Livocal contacts.",
+      'nameVisibilityHint':
+          "This is not your username or pin. This name will be visible to your Livocal contacts.",
       'noStarredMessages': "No starred messages",
-      'starredEmptyHint': "Tap and hold on any message in a chat to star it, so you can easily find it later.",
+      'starredEmptyHint':
+          "Tap and hold on any message in a chat to star it, so you can easily find it later.",
       'display': "Display",
       'chatWallpaper': "Chat Wallpaper",
       'wallpaperResetDefault': "Wallpaper reset to default",
@@ -465,12 +535,15 @@ class AppStrings {
       'invite': "INVITE",
       'selectContactToBlock': "Select contact to block",
       'noContactsToBlock': "No contacts available to block",
-      'blockedContactsDesc': "Blocked contacts will no longer be able to call you or send you messages.",
+      'blockedContactsDesc':
+          "Blocked contacts will no longer be able to call you or send you messages.",
       'tapToUnblock': "Tap a contact to unblock them.",
       'unblock': "Unblock",
       'failedToLoadMedia': "Failed to load media",
-      'voicePreviewSavedLocally': "Language preference saved locally; cloud sync offline.",
-      'voicePreviewUnavailable': "Voice preview temporarily unavailable. Please check internet connection.",
+      'voicePreviewSavedLocally':
+          "Language preference saved locally; cloud sync offline.",
+      'voicePreviewUnavailable':
+          "Voice preview temporarily unavailable. Please check internet connection.",
       'decline': "Decline",
       'tapToAnswer': "Tap to Answer",
       'aiCall': "AI Call",
@@ -487,10 +560,14 @@ class AppStrings {
       'zeroMinutesNotConnected': "0 minutes (not connected)",
       'zeroMinutesNormalCall': "0 minutes (normal call)",
       'minutesDeducted': "{minutes} minutes deducted",
-      'missedIncomingMessage': "You missed an incoming call. You can call back or send a message.",
-      'missedOutgoingMessage': "The other side did not answer. Please try again in a moment.",
-      'translatedCallSuccessMessage': "🌐 Your conversation with live AI voice translation completed successfully. Thank you for using Livocal!",
-      'normalCallSuccessMessage': "Your conversation completed successfully. Thanks for the great talk!",
+      'missedIncomingMessage':
+          "You missed an incoming call. You can call back or send a message.",
+      'missedOutgoingMessage':
+          "The other side did not answer. Please try again in a moment.",
+      'translatedCallSuccessMessage':
+          "🌐 Your conversation with live AI voice translation completed successfully. Thank you for using Livocal!",
+      'normalCallSuccessMessage':
+          "Your conversation completed successfully. Thanks for the great talk!",
       'missedCall': "Missed call",
       'missedVoiceCall': "Missed voice call",
       'declinedCall': "Declined call",
@@ -501,14 +578,18 @@ class AppStrings {
       'incomingVoiceCall': "Incoming voice call",
       'noAnswer': "No answer",
       'talkedFor': "Talked for {duration}",
-      'languagesSupported': "{count}+ Gemini Live Languages Supported (Any-to-Any)",
+      'languagesSupported':
+          "{count}+ Gemini Live Languages Supported (Any-to-Any)",
       'popularLanguages': "POPULAR LANGUAGES",
       'aiInterpreterVoicePreferences': "AI Interpreter Voice & Preferences",
-      'aiVoicePrefsDesc': "Customize how translated speech sounds during calls. The AI automatically detects languages in real-time.",
+      'aiVoicePrefsDesc':
+          "Customize how translated speech sounds during calls. The AI automatically detects languages in real-time.",
       'zeroTrustRelayActive': "Zero-Trust Cloud AI Relay Active",
-      'zeroTrustRelayDesc': "Live API keys and audio pipelines are securely managed on the backend server.",
+      'zeroTrustRelayDesc':
+          "Live API keys and audio pipelines are securely managed on the backend server.",
       'selectAiInterpreterVoice': "Select AI Interpreter Voice",
-      'selectAiVoiceDesc': "Choose the synthetic voice profile used when speaking translated audio to you.",
+      'selectAiVoiceDesc':
+          "Choose the synthetic voice profile used when speaking translated audio to you.",
       'saveVoicePreference': "Save Voice Preference",
       'differentLanguageDetected': "Different Language Detected",
       'youSpeak': "You Speak",
@@ -516,7 +597,8 @@ class AppStrings {
       'callWithAiTranslation': "Call with AI Voice Translation",
       'directVoiceCallFree': "Direct Voice Call (Free)",
       'registeredLivocalUser': "Registered Livocal User ({phone})",
-      'directCallRings': "Direct call will ring on this phone if Livocal is installed.",
+      'directCallRings':
+          "Direct call will ring on this phone if Livocal is installed.",
       'agreeAndContinue': "Agree and continue",
       'shareContact': "Share contact",
       'editContact': "Edit contact",
@@ -531,11 +613,13 @@ class AppStrings {
       'muteDesc': "Silence alerts for new messages from this contact",
       'customNotifications': "Custom notifications",
       'encryptionAndSecurity': "Encryption & Security",
-      'encryptionDesc': "Messages and calls use secure TLS/SRTP transport and ephemeral translation",
+      'encryptionDesc':
+          "Messages and calls use secure TLS/SRTP transport and ephemeral translation",
       'reportContactName': "Report {name}",
       'geminiAiLiveTranslation': "Gemini AI Live Translation",
       'startTranslatedVoiceCall': "Start Translated Voice Call",
-      'reportForwardWarning': "The last 5 messages from this contact will be forwarded to Livocal for security review. The contact will not be notified.",
+      'reportForwardWarning':
+          "The last 5 messages from this contact will be forwarded to Livocal for security review. The contact will not be notified.",
       'reasonForReport': "Reason for report:",
       'blockContactClearMessages': "Block contact and clear messages",
       'inChatAiTranslation': "In-Chat AI Live Translation",
@@ -543,35 +627,44 @@ class AppStrings {
       'languagePreferences': "Language Preferences",
       'myLanguage': "My Language",
       'autoTranslateIncoming': "Auto-translate incoming messages",
-      'autoTranslateIncomingDesc': "Automatically displays translations below received messages",
+      'autoTranslateIncomingDesc':
+          "Automatically displays translations below received messages",
       'liveVoiceNoteTranscription': "Live Voice Note Transcription",
-      'liveVoiceNoteDesc': "Transcribe and translate incoming audio voice messages",
+      'liveVoiceNoteDesc':
+          "Transcribe and translate incoming audio voice messages",
       'testRealtimeTranslation': "Test Realtime Translation",
       'translate': "Translate",
       'saveApplySettings': "Save & Apply Settings",
       'inChatTranslationEnabled': "In-Chat Live Translation Enabled",
       'inChatTranslationDisabled': "In-Chat Live Translation Disabled",
-      'translationSettingsApplied': "Translation settings applied: {my} ⇄ {peer}",
-      'inChatTranslationDisabledFor': "In-Chat Live Translation Disabled for {name}",
+      'translationSettingsApplied':
+          "Translation settings applied: {my} ⇄ {peer}",
+      'inChatTranslationDisabledFor':
+          "In-Chat Live Translation Disabled for {name}",
       'sendPaymentTo': "Send Payment to {name}",
       'selectPaymentMethod': "Select Payment Method",
       'livocalInAppWallet': "Livocal In-App Wallet",
-      'walletBalanceTransfer': "Balance: {available} mins (transfers {needed} mins)",
+      'walletBalanceTransfer':
+          "Balance: {available} mins (transfers {needed} mins)",
       'bkashNagadMfs': "bKash / Nagad MFS (Direct Send)",
       'cryptoBinanceUsdt': "Crypto (Binance Pay / USDT)",
       'shortByMinutes': "Short by {minutes} mins to complete this transfer.",
-      'liveRateSummary': "Live Rate: \$1.00 ≈ {rate} BDT  |  Total: {total} BDT",
+      'liveRateSummary':
+          "Live Rate: \$1.00 ≈ {rate} BDT  |  Total: {total} BDT",
       'paste': "PASTE",
       'confirmPayment': "Confirm Payment: {amount}",
       'welcomeBadge1': "NEXT-GEN CONNECT",
       'welcomeTitle1': "Welcome to Livocal",
-      'welcomeDesc1': "Ultra-fast, private messaging and crystal-clear voice communication engineered for seamless daily connectivity.",
+      'welcomeDesc1':
+          "Ultra-fast, private messaging and crystal-clear voice communication engineered for seamless daily connectivity.",
       'welcomeBadge2': "GEMINI LIVE AI",
       'welcomeTitle2': "Real-Time Voice Translation",
-      'welcomeDesc2': "Break language barriers in real-time. Speak in বাংলা or English with sub-second bidirectional live audio translation during calls.",
+      'welcomeDesc2':
+          "Break language barriers in real-time. Speak in বাংলা or English with sub-second bidirectional live audio translation during calls.",
       'welcomeBadge3': "PRIVACY BY DESIGN",
       'welcomeTitle3': "Private & Secure by Default",
-      'welcomeDesc3': "DTLS-SRTP encrypted voice streams, protected personal data, zero address-book harvesting, and biometric app lock.",
+      'welcomeDesc3':
+          "DTLS-SRTP encrypted voice streams, protected personal data, zero address-book harvesting, and biometric app lock.",
       'enterPhoneNumber': "Enter your phone number",
       'carrierCharges': "Carrier charges may apply.",
       'next': "Next",
@@ -614,8 +707,10 @@ class AppStrings {
       'myStatus': "My status",
       'couldNotLoadStatus': "Couldn't load status updates",
       'noRecentUpdates': "No recent updates",
-      'statusUpdatesDesc': "Status updates from your contacts will appear here. They disappear after 24 hours.",
-      'statusPrivacyNote': "Your status updates are protected by your privacy settings",
+      'statusUpdatesDesc':
+          "Status updates from your contacts will appear here. They disappear after 24 hours.",
+      'statusPrivacyNote':
+          "Your status updates are protected by your privacy settings",
       'messageHint': "Message",
       'recentUpdates': "Recent updates",
       'aiTranslatedVoiceCall': "Livocal AI translated call",
@@ -636,20 +731,27 @@ class AppStrings {
       'unpinMessage': "Unpin message",
       'pinnedMessages': "Pinned messages",
       'noPinnedMessages': "No pinned messages",
-      'callWarningRemainingMinutes': "⚠️ Warning: You have only {minutes} minutes remaining.",
-      'callTerminatedExhausted': "🛑 Your minutes are exhausted. Call is ending.",
-      'callTranslationActiveNotice': "{myEmoji} {myName} ⇄ {peerEmoji} {peerName} Real-time voice translation active. Speak in any language!",
+      'callWarningRemainingMinutes':
+          "⚠️ Warning: You have only {minutes} minutes remaining.",
+      'callTerminatedExhausted':
+          "🛑 Your minutes are exhausted. Call is ending.",
+      'callTranslationActiveNotice':
+          "{myEmoji} {myName} ⇄ {peerEmoji} {peerName} Real-time voice translation active. Speak in any language!",
       'dialPhoneNumber': "Dial Phone Number",
       'dialPhoneNumberSub': "Enter number to call or chat directly",
-      'realtimeTranslationActive': "{langA} ⇄ {langB} real-time translation activated",
-      'sameLanguageDirectCallNotice': "Both users speak the same language ({lang}). Talk directly in your natural voice without AI translation.",
+      'realtimeTranslationActive':
+          "{langA} ⇄ {langB} real-time translation activated",
+      'sameLanguageDirectCallNotice':
+          "Both users speak the same language ({lang}). Talk directly in your natural voice without AI translation.",
       'directVoiceCallActiveNotice': "Direct voice call active.",
-      'aiUnavailableDirectFallback': "AI interpreter unavailable. Connected via direct voice call.",
+      'aiUnavailableDirectFallback':
+          "AI interpreter unavailable. Connected via direct voice call.",
       'starterPackPriceText': "1,200 BDT (\$9.99)",
       'proPackPriceText': "3,000 BDT (\$24.99)",
       'bdtAmount': "{amount} BDT",
       'callContinuingDirectVoiceDesc': "Call continuing as direct voice.",
-      'callerMinutesExhaustedDirectVoiceDesc': "Caller's translation minutes exhausted. Switched to direct voice.",
+      'callerMinutesExhaustedDirectVoiceDesc':
+          "Caller's translation minutes exhausted. Switched to direct voice.",
       'rechargeNowBtn': "Recharge",
     },
     'bn': {
@@ -658,13 +760,15 @@ class AppStrings {
       'account': "অ্যাকাউন্ট",
       'accountAndPrivacy': "অ্যাকাউন্ট ও প্রাইভেসি",
       'accountManagement': "অ্যাকাউন্ট ব্যবস্থাপনা",
-      'accountReportSubmitted': "অ্যাকাউন্ট রিপোর্টের আবেদন জমা হয়েছে। ২৪ ঘণ্টার মধ্যে প্রস্তুত হবে।",
+      'accountReportSubmitted':
+          "অ্যাকাউন্ট রিপোর্টের আবেদন জমা হয়েছে। ২৪ ঘণ্টার মধ্যে প্রস্তুত হবে।",
       'accountSub': "নিরাপত্তা বিজ্ঞপ্তি, দ্বি-ধাপ যাচাইকরণ, নম্বর পরিবর্তন",
       'advancedAiEngine': "ভয়েস ও অনুবাদ",
       'allMedia': "সমস্ত মিডিয়া",
       'appDatabaseIsar': "• অ্যাপ ডাটাবেস (Isar): ",
       'appInfo': "অ্যাপ পরিচিতি",
-      'appInfoDesc': "WebRTC এবং জেমিনি লাইভ এআই চালিত রিয়েল-টাইম ভয়েস অনুবাদ ও নিরাপদ মেসেজিং প্ল্যাটফর্ম।",
+      'appInfoDesc':
+          "WebRTC এবং জেমিনি লাইভ এআই চালিত রিয়েল-টাইম ভয়েস অনুবাদ ও নিরাপদ মেসেজিং প্ল্যাটফর্ম।",
       'appLanguage': "অ্যাপের ভাষা",
       'appLanguageSub': "ইংরেজি, বাংলা, হিন্দি, আরবি...",
       'biometricCancelled': "বায়োমেট্রিক যাচাই বাতিল করা হয়েছে।",
@@ -683,8 +787,10 @@ class AppStrings {
       'callsHeader': "কলসমূহ",
       'cancel': "বাতিল",
       'changeNumber': "নম্বর পরিবর্তন",
-      'changeNumberDesc': "নতুন ফোন নম্বরে অ্যাকাউন্ট স্থানান্তর করলে আপনার সমস্ত তথ্য, সেটিংস ও কী মাইগ্রেট হবে।",
-      'changeNumberDialogContent': "নতুন নম্বরে অ্যাকাউন্ট স্থানান্তর করলে আপনার সকল সেটিংস ও তথ্য স্থানান্তরিত হবে।",
+      'changeNumberDesc':
+          "নতুন ফোন নম্বরে অ্যাকাউন্ট স্থানান্তর করলে আপনার সমস্ত তথ্য, সেটিংস ও কী মাইগ্রেট হবে।",
+      'changeNumberDialogContent':
+          "নতুন নম্বরে অ্যাকাউন্ট স্থানান্তর করলে আপনার সকল সেটিংস ও তথ্য স্থানান্তরিত হবে।",
       'chats': "চ্যাট",
       'chatsAndTheme': "চ্যাট ও থিম",
       'chatsAndThemeSub': "ওয়ালপেপার, থিম, চ্যাট হিস্ট্রি",
@@ -693,17 +799,21 @@ class AppStrings {
       'chooseTheme': "থিম নির্বাচন করুন",
       'classicBellPreset': "ক্লাসিক বেল",
       'clearCache': "মিডিয়া ক্যাশ পরিষ্কার করুন",
-      'clearCacheDialogDesc': "এটি অস্থায়ী অডিও ফাইল ও ক্যাশ মুছে ফেলবে। আপনার আসল চ্যাট টেক্সট অক্ষত থাকবে।",
+      'clearCacheDialogDesc':
+          "এটি অস্থায়ী অডিও ফাইল ও ক্যাশ মুছে ফেলবে। আপনার আসল চ্যাট টেক্সট অক্ষত থাকবে।",
       'clearCacheDialogTitle': "মিডিয়া ক্যাশ পরিষ্কার করবেন?",
       'clearCacheSub': "ডাউনলোড করা ক্যাশড অডিও ও ভয়েস নোট মুছুন",
       'clearCallLog': "কল লগ মুছুন",
       'close': "বন্ধ করুন",
       'confirm': "নিশ্চিত করুন",
       'confirmDisable': "নিশ্চিত বন্ধ করুন",
-      'confirmFingerprintDisable': "লক নিষ্ক্রিয় করতে বায়োমেট্রিক নিশ্চিত করুন",
-      'confirmFingerprintEnable': "ফিঙ্গারপ্রিন্ট লক সক্রিয় করতে বায়োমেট্রিক নিশ্চিত করুন",
+      'confirmFingerprintDisable':
+          "লক নিষ্ক্রিয় করতে বায়োমেট্রিক নিশ্চিত করুন",
+      'confirmFingerprintEnable':
+          "ফিঙ্গারপ্রিন্ট লক সক্রিয় করতে বায়োমেট্রিক নিশ্চিত করুন",
       'contactSupport': "সাপোর্টে যোগাযোগ করুন",
-      'contactSupportDesc': "আমরা কীভাবে সাহায্য করতে পারি? আপনার সমস্যা বা পরামর্শ লিখুন:",
+      'contactSupportDesc':
+          "আমরা কীভাবে সাহায্য করতে পারি? আপনার সমস্যা বা পরামর্শ লিখুন:",
       'contactSupportSub': "প্রশ্ন বা সমস্যা? আমাদের দলের সাথে কথা বলুন",
       'contacts': "পরিচিতি",
       'conversationTones': "কথোপকথন টোন",
@@ -720,16 +830,20 @@ class AppStrings {
       'defaultMessageTimer': "মেসেজ মোছার ডিফল্ট সময়",
       'defaultText': "ডিফল্ট",
       'delete': "মুছুন",
-      'deleteAccountBullet1': "• আপনার অ্যাকাউন্টের তথ্য ও প্রোফাইল ছবি মুছে যাবে",
-      'deleteAccountBullet2': "• এই ডিভাইস থেকে সকল লোকাল চ্যাট হিস্ট্রি মুছে যাবে",
-      'deleteAccountBullet3': "• বন্ধুদের লিভোকাল তালিকা থেকে আপনাকে সরিয়ে দেওয়া হবে",
+      'deleteAccountBullet1':
+          "• আপনার অ্যাকাউন্টের তথ্য ও প্রোফাইল ছবি মুছে যাবে",
+      'deleteAccountBullet2':
+          "• এই ডিভাইস থেকে সকল লোকাল চ্যাট হিস্ট্রি মুছে যাবে",
+      'deleteAccountBullet3':
+          "• বন্ধুদের লিভোকাল তালিকা থেকে আপনাকে সরিয়ে দেওয়া হবে",
       'deleteAccountButton': "অ্যাকাউন্ট মুছুন",
       'deleteAccountDesc': "আপনার অ্যাকাউন্ট মুছে দিলে:",
       'deleteAccountDialogTitle': "এই অ্যাকাউন্ট মুছে ফেলবেন?",
       'deleteAccountTitle': "এই অ্যাকাউন্ট মুছে ফেলবেন?",
       'deleteAccountWarning1': "আপনার অ্যাকাউন্ট তথ্য ও প্রোফাইল ছবি মুছে যাবে",
       'deleteAccountWarning2': "এই ডিভাইসের সমস্ত চ্যাট হিস্ট্রি মুছে যাবে",
-      'deleteAccountWarning3': "পরিচিতিদের লিভোকাল তালিকা থেকে আপনি অপসারিত হবেন",
+      'deleteAccountWarning3':
+          "পরিচিতিদের লিভোকাল তালিকা থেকে আপনি অপসারিত হবেন",
       'deleteAccountWarningTitle': "অ্যাকাউন্ট মুছলে:",
       'deleteMyAccount': "আমার অ্যাকাউন্ট মুছুন",
       'deleteMyAccountSub': "স্থায়ীভাবে আপনার অ্যাকাউন্ট ও ডেটা অপসারণ করুন",
@@ -741,21 +855,28 @@ class AppStrings {
       'enablePin': "পিন সক্রিয় করুন",
       'enableTwoStep': "দ্বি-ধাপ যাচাইকরণ সক্রিয় করুন",
       'enabled': "সক্রিয়",
-      'enterCurrentPin': "দ্বি-ধাপ যাচাইকরণ নিষ্ক্রিয় করতে বর্তমান ৬ ডিজিটের পিন লিখুন:",
+      'enterCurrentPin':
+          "দ্বি-ধাপ যাচাইকরণ নিষ্ক্রিয় করতে বর্তমান ৬ ডিজিটের পিন লিখুন:",
       'enterMessageError': "জমা দেওয়ার আগে অনুগ্রহ করে বার্তা লিখুন।",
-      'enterNewPin': "আপনার লিভোকাল অ্যাকাউন্ট সুরক্ষিত রাখতে একটি ৬ ডিজিটের পিন লিখুন:",
+      'enterNewPin':
+          "আপনার লিভোকাল অ্যাকাউন্ট সুরক্ষিত রাখতে একটি ৬ ডিজিটের পিন লিখুন:",
       'enterValid6DigitPin': "দয়া করে একটি সঠিক ৬ ডিজিটের পিন লিখুন",
       'everyone': "সকলে",
-      'faqApiKeyA': "সেটিংস > জেমিনি লাইভ অপশনে গিয়ে গুগল এআই স্টুডিওর কি যুক্ত করতে ও পছন্দের ভয়েস নির্বাচন করতে পারেন।",
+      'faqApiKeyA':
+          "সেটিংস > জেমিনি লাইভ অপশনে গিয়ে গুগল এআই স্টুডিওর কি যুক্ত করতে ও পছন্দের ভয়েস নির্বাচন করতে পারেন।",
       'faqApiKeyQ': "কীভাবে জেমিনি এপিআই কি কনফিগার করবেন?",
-      'faqContactsA': "কন্টাক্টস বাটনে ট্যাপ করে লিভোকাল ব্যবহারকারীদের কল করতে পারেন অথবা এসএমএসের মাধ্যমে আমন্ত্রণ জানাতে পারেন।",
+      'faqContactsA':
+          "কন্টাক্টস বাটনে ট্যাপ করে লিভোকাল ব্যবহারকারীদের কল করতে পারেন অথবা এসএমএসের মাধ্যমে আমন্ত্রণ জানাতে পারেন।",
       'faqContactsQ': "কীভাবে পরিচিতি যোগ বা আমন্ত্রণ জানাবেন?",
-      'faqLiveTranslationA': "কলের সময় WebRTC-এর মাধ্যমে অডিও স্ট্রিম হয় এবং জেমিনি লাইভ এআই তাৎক্ষণিক দ্বিমুখী অনুবাদ সম্পন্ন করে।",
+      'faqLiveTranslationA':
+          "কলের সময় WebRTC-এর মাধ্যমে অডিও স্ট্রিম হয় এবং জেমিনি লাইভ এআই তাৎক্ষণিক দ্বিমুখী অনুবাদ সম্পন্ন করে।",
       'faqLiveTranslationQ': "রিয়েল-টাইম এআই লাইভ অনুবাদ কীভাবে কাজ করে?",
-      'faqSecurityA': "হ্যাঁ! প্রতিটি অডিও কল DTLS-SRTP এনক্রিপ্ট করা এবং মেসেজ ফায়ারস্টোর সিকিউরিটি রুলস দ্বারা সুরক্ষিত।",
+      'faqSecurityA':
+          "হ্যাঁ! প্রতিটি অডিও কল DTLS-SRTP এনক্রিপ্ট করা এবং মেসেজ ফায়ারস্টোর সিকিউরিটি রুলস দ্বারা সুরক্ষিত।",
       'faqSecurityQ': "আমার ভয়েস কল এবং মেসেজ কি সুরক্ষিত?",
       'faqTitle': "সাধারণ জিজ্ঞাসা (FAQ)",
-      'feedbackSentSuccess': "ধন্যবাদ! আপনার বার্তা লিভোকাল ইঞ্জিনিয়ারিং টিমে পাঠানো হয়েছে।",
+      'feedbackSentSuccess':
+          "ধন্যবাদ! আপনার বার্তা লিভোকাল ইঞ্জিনিয়ারিং টিমে পাঠানো হয়েছে।",
       'fingerprintAuthReason': "লিভোকাল আনলক করতে ফিঙ্গারপ্রিন্ট দিন",
       'fingerprintLock': "ফিঙ্গারপ্রিন্ট লক",
       'fingerprintLockDisabled': "ফিঙ্গারপ্রিন্ট লক নিষ্ক্রিয় করা হয়েছে",
@@ -763,7 +884,8 @@ class AppStrings {
       'fingerprintLockSub': "লিভোকাল খুলতে বায়োমেট্রিক অথেনটিকেশন আবশ্যক",
       'from': "উৎস",
       'geminiVoiceEngine': "এআই ভয়েস পার্সোনা",
-      'geminiVoiceEngineSub': "লাইভ অডিও অনুবাদের জন্য পছন্দের কণ্ঠ নির্বাচন করুন",
+      'geminiVoiceEngineSub':
+          "লাইভ অডিও অনুবাদের জন্য পছন্দের কণ্ঠ নির্বাচন করুন",
       'help': "সহায়তা",
       'helpCentre': "সাহায্য কেন্দ্র",
       'helpCentreSub': "প্রশ্নোত্তর, ব্যবহার নির্দেশিকা ও সমাধান",
@@ -776,7 +898,8 @@ class AppStrings {
       'inviteFriend': "বন্ধুকে আমন্ত্রণ জানান",
       'inviteFriendSub': "পরিচিত ও পরিবারের সাথে লিভোকাল শেয়ার করুন",
       'inviteLinkCopied': "আমন্ত্রণ লিঙ্ক ক্লিপবোর্ডে কপি করা হয়েছে",
-      'languageNote': "ভাষা পরিবর্তন করলে সমস্ত স্ক্রিন, নোটিফিকেশন, ডায়ালগ ও ভয়েস কল প্রম্পট সাথে সাথে আপডেট হবে।",
+      'languageNote':
+          "ভাষা পরিবর্তন করলে সমস্ত স্ক্রিন, নোটিফিকেশন, ডায়ালগ ও ভয়েস কল প্রম্পট সাথে সাথে আপডেট হবে।",
       'lastSeenAndOnline': "সর্বশেষ সক্রিয় ও অনলাইন",
       'legalAndInfo': "আইনি ও নীতিমালা",
       'light': "লাইট",
@@ -785,7 +908,8 @@ class AppStrings {
       'livocalHarmonyPreset': "লিভোকাল হারমনি (ডিফল্ট)",
       'localDatabase': "লোকাল ডাটাবেজ ও চ্যাট",
       'logout': "লগ আউট",
-      'logoutDialogContent': "আপনি কি নিশ্চিত যে লগ আউট করতে চান? স্থানীয় ডেটা ও লগইন তথ্য মুছে যাবে।",
+      'logoutDialogContent':
+          "আপনি কি নিশ্চিত যে লগ আউট করতে চান? স্থানীয় ডেটা ও লগইন তথ্য মুছে যাবে।",
       'logoutDialogTitle': "লিভোকাল থেকে লগ আউট করবেন?",
       'logoutSub': "স্থানীয় তথ্য মুছে সাইন আউট করুন",
       'manageStorage': "স্টোরেজ পরিচালনা",
@@ -822,17 +946,20 @@ class AppStrings {
       'privacySub': "পরিচিতি ব্লক, স্বয়ংক্রিয় মুছে যাওয়া মেসেজ, বায়োমেট্রিক লক",
       'profilePhoto': "প্রোফাইল ছবি",
       'qrCode': "কিউআর কোড",
-      'qrCodeDesc': "আপনার কিউআর কোডটি ব্যক্তিগত। এটি শেয়ার করলে যে কেউ আপনাকে লিভোকালে যুক্ত করতে পারবে।",
+      'qrCodeDesc':
+          "আপনার কিউআর কোডটি ব্যক্তিগত। এটি শেয়ার করলে যে কেউ আপনাকে লিভোকালে যুক্ত করতে পারবে।",
       'reactionNotif': "প্রতিক্রিয়া বিজ্ঞপ্তি",
       'reactionNotifSub': "আপনার মেসেজে প্রতিক্রিয়া জানানো হলে নোটিফিকেশন পান",
       'reactionNotifications': "প্রতিক্রিয়া বিজ্ঞপ্তি",
-      'reactionNotificationsSub': "আপনার পাঠানো মেসেজে রিঅ্যাকশন এলে বিজ্ঞপ্তি দেখান",
+      'reactionNotificationsSub':
+          "আপনার পাঠানো মেসেজে রিঅ্যাকশন এলে বিজ্ঞপ্তি দেখান",
       'readReceipts': "পঠিত রসিদ (নীল টিক)",
       'readReceiptsSub': "বন্ধ রাখলে আপনি নীল টিক পাঠাতে বা দেখতে পারবেন না।",
       'received': "গ্রহণ করা হয়েছে",
       'receivedTraffic': "• গ্রহণ করা হয়েছে: ",
       'requestAccountInfo': "অ্যাকাউন্ট তথ্যের অনুরোধ",
-      'requestAccountInfoSub': "আপনার অ্যাকাউন্ট তথ্য ও সেটিংসের একটি রিপোর্টের অনুরোধ করুন",
+      'requestAccountInfoSub':
+          "আপনার অ্যাকাউন্ট তথ্য ও সেটিংসের একটি রিপোর্টের অনুরোধ করুন",
       'resetNotifications': "নোটিফিকেশন সেটিংস রিসেট করুন",
       'resetNotificationsSuccess': "নোটিফিকেশন সেটিংস ডিফল্টে রিসেট করা হয়েছে",
       'resetUsage': "রিসেট করুন",
@@ -844,7 +971,8 @@ class AppStrings {
       'securityAndAppLock': "নিরাপত্তা ও অ্যাপ লক",
       'securityAppLockHeader': "নিরাপত্তা ও অ্যাপ লক",
       'securityNotifications': "নিরাপত্তা বিজ্ঞপ্তি",
-      'securityNotificationsSub': "কোনো পরিচিতির এনক্রিপশন কী পরিবর্তিত হলে নিরাপত্তা বিজ্ঞপ্তি দেখান।",
+      'securityNotificationsSub':
+          "কোনো পরিচিতির এনক্রিপশন কী পরিবর্তিত হলে নিরাপত্তা বিজ্ঞপ্তি দেখান।",
       'sent': "পাঠানো হয়েছে",
       'sentTraffic': "• পাঠানো হয়েছে: ",
       'session': "সেশন",
@@ -868,9 +996,11 @@ class AppStrings {
       'toneUpdatedSuccess': "আপডেট হয়েছে",
       'totalAppFootprint': "মোট অ্যাপ সাইজ: ",
       'totalTraffic': "• মোট ট্রাফিক: ",
-      'twoStepDialogDisableDesc': "দ্বি-ধাপ যাচাইকরণ বন্ধ করতে বর্তমান ৬-সংখ্যার পিনটি লিখুন:",
+      'twoStepDialogDisableDesc':
+          "দ্বি-ধাপ যাচাইকরণ বন্ধ করতে বর্তমান ৬-সংখ্যার পিনটি লিখুন:",
       'twoStepDialogDisableTitle': "দ্বি-ধাপ যাচাইকরণ বন্ধ করুন",
-      'twoStepDialogEnableDesc': "আপনার লিভোকাল অ্যাকাউন্ট সুরক্ষিত রাখতে একটি ৬-সংখ্যার পিন লিখুন:",
+      'twoStepDialogEnableDesc':
+          "আপনার লিভোকাল অ্যাকাউন্ট সুরক্ষিত রাখতে একটি ৬-সংখ্যার পিন লিখুন:",
       'twoStepDialogEnableTitle': "দ্বি-ধাপ যাচাইকরণ চালু করুন",
       'twoStepDisabledSnack': "দ্বি-ধাপ যাচাইকরণ বন্ধ করা হয়েছে",
       'twoStepDisabledSub': "নিষ্ক্রিয় (একটি ৬-সংখ্যার পিন সেট করুন)",
@@ -884,7 +1014,8 @@ class AppStrings {
       'useHighPriority': "উচ্চ অগ্রাধিকার বিজ্ঞপ্তি ব্যবহার করুন",
       'useHighPrioritySub': "স্ক্রিনের শীর্ষে বিজ্ঞপ্তির প্রিভিউ দেখান",
       'useLessDataCalls': "কলের জন্য কম ডেটা ব্যবহার",
-      'useLessDataCallsSub': "কম ব্যান্ডউইথ নেটওয়ার্কের জন্য অডিও বিটরেট অপটিমাইজ করে",
+      'useLessDataCallsSub':
+          "কম ব্যান্ডউইথ নেটওয়ার্কের জন্য অডিও বিটরেট অপটিমাইজ করে",
       'version': "ভার্সন ১.০.০ (প্রোডাকশন রেডি)",
       'vibrate': "ভাইব্রেশন",
       'vibrateDefault': "ডিফল্ট",
@@ -904,55 +1035,73 @@ class AppStrings {
       'failedToSendFeedback': "মতামত পাঠাতে ব্যর্থ হয়েছে",
       'listenVoice': "ভয়েস শুনুন",
       'liveAudioTranslationVoice': "লাইভ কল অনুবাদ ভয়েস",
-      'liveAudioTranslationVoiceDesc': "কল করার সময় অন্য পক্ষের অনুবাদ কোন ভয়েসে শুনতে চান তা সিলেক্ট করুন। নির্বাচিত ভয়েসটি সরাসরি আউটপুট স্পিচে ব্যবহার হবে।",
+      'liveAudioTranslationVoiceDesc':
+          "কল করার সময় অন্য পক্ষের অনুবাদ কোন ভয়েসে শুনতে চান তা সিলেক্ট করুন। নির্বাচিত ভয়েসটি সরাসরি আউটপুট স্পিচে ব্যবহার হবে।",
       'livocalContact': "Livocal কন্টাক্ট",
-      'privacyPrinciplesBody': "Livocal আপনার গোপনীয়তাকে সর্বোচ্চ অগ্রাধিকার দেয়:\n\n১. ব্যক্তিগত এনক্রিপশন: আপনার প্রতিটি ব্যক্তিগত কল ও চ্যাট মেসেজ সম্পূর্ণরূপে সুরক্ষিত।\n\n২. জেমিনি লাইভ অনুবাদ: লাইভ ভয়েস অনুবাদ শুধুমাত্র সক্রিয় কলের সময় ক্ষণস্থায়ী সুরক্ষিত মেমরিতে প্রক্রিয়া করা হয়, কখনোই এটি স্থায়ীভাবে রেকর্ড বা এআই প্রশিক্ষণে ব্যবহৃত হয় না।\n\n৩. সুরক্ষিত কন্টাক্ট ম্যাচিং: আপনার সম্পূর্ণ ফোনবুক সার্ভারে আপলোড না করে ক্রিপ্টোগ্রাফিক হ্যাশ লুকআপের মাধ্যমে নিবন্ধিত ব্যবহারকারী শনাক্ত করা হয়।",
+      'privacyPrinciplesBody':
+          "Livocal আপনার গোপনীয়তাকে সর্বোচ্চ অগ্রাধিকার দেয়:\n\n১. ব্যক্তিগত এনক্রিপশন: আপনার প্রতিটি ব্যক্তিগত কল ও চ্যাট মেসেজ সম্পূর্ণরূপে সুরক্ষিত।\n\n২. জেমিনি লাইভ অনুবাদ: লাইভ ভয়েস অনুবাদ শুধুমাত্র সক্রিয় কলের সময় ক্ষণস্থায়ী সুরক্ষিত মেমরিতে প্রক্রিয়া করা হয়, কখনোই এটি স্থায়ীভাবে রেকর্ড বা এআই প্রশিক্ষণে ব্যবহৃত হয় না।\n\n৩. সুরক্ষিত কন্টাক্ট ম্যাচিং: আপনার সম্পূর্ণ ফোনবুক সার্ভারে আপলোড না করে ক্রিপ্টোগ্রাফিক হ্যাশ লুকআপের মাধ্যমে নিবন্ধিত ব্যবহারকারী শনাক্ত করা হয়।",
       'selectedVoice': "নির্বাচিত ভয়েস",
-      'shareQrInviteText': "Livocal-এ আমার সাথে যুক্ত হোন: {link}\nচ্যাট এবং লাইভ অনুবাদিত ভয়েস কল করতে অ্যাপটি ডাউনলোড করুন!",
+      'shareQrInviteText':
+          "Livocal-এ আমার সাথে যুক্ত হোন: {link}\nচ্যাট এবং লাইভ অনুবাদিত ভয়েস কল করতে অ্যাপটি ডাউনলোড করুন!",
       'stopPreview': "বন্ধ করুন",
       'tapToSelect': "সিলেক্ট করতে চাপুন",
-      'voicePreferenceSavedNotice': "আপনার ভয়েস পছন্দটি স্বয়ংক্রিয়ভাবে সংরক্ষিত থাকে এবং প্রতিটি লাইভ কলে প্রয়োগ করা হয়।",
+      'voicePreferenceSavedNotice':
+          "আপনার ভয়েস পছন্দটি স্বয়ংক্রিয়ভাবে সংরক্ষিত থাকে এবং প্রতিটি লাইভ কলে প্রয়োগ করা হয়।",
       'voicePreviewOffline': "অফলাইনে ভয়েস প্রিভিউ অনুপলব্ধ।",
-      'voiceSetSuccess': "লাইভ অনুবাদ ভয়েস হিসেবে \"{voiceId}\" সেট করা হয়েছে",
+      'voiceSetSuccess':
+          "লাইভ অনুবাদ ভয়েস হিসেবে \"{voiceId}\" সেট করা হয়েছে",
       'trialRemainingBadge': "⏱️ ট্রায়াল: {minutes} মিনিট বাকি",
       'balanceExhaustedBadge': "⚠️ ব্যালেন্স শেষ (০ মিনিট)",
       'balanceMinutesBadge': "💎 ব্যালেন্স: {minutes} মিনিট",
       'trialDaysLeftNotice': "{days} দিন অবশিষ্ট • লোকাল কল ফ্রি",
-      'rechargeForTranslationNotice': "অনুবাদ কলের জন্য রিচার্জ করুন • লোকাল কল ফ্রি",
-      'translationRateNotice': "অনুবাদিত কল প্রতি মিনিটে ১ মিনিট • লোকাল কল ফ্রি",
+      'rechargeForTranslationNotice':
+          "অনুবাদ কলের জন্য রিচার্জ করুন • লোকাল কল ফ্রি",
+      'translationRateNotice':
+          "অনুবাদিত কল প্রতি মিনিটে ১ মিনিট • লোকাল কল ফ্রি",
       'recharge': "রিচার্জ",
       'rechargePlus': "+ রিচার্জ",
       'geminiLiveVoiceTranslation': "Gemini 3.5 লাইভ ভয়েস অনুবাদ",
-      'universalLanguagePairSub': "{count}+ ভাষা • যেকোনো ভাষা থেকে যেকোনো ভাষায়",
+      'universalLanguagePairSub':
+          "{count}+ ভাষা • যেকোনো ভাষা থেকে যেকোনো ভাষায়",
       'myLanguageLabel': "আমার ভাষা (বলুন ও শুনুন)",
       'peerLanguageLabel': "অপরপক্ষের ভাষা (বলুন ও শুনুন)",
       'selectYourLanguage': "আপনার ভাষা নির্বাচন করুন",
       'selectPeerLanguage': "অপরপক্ষের ভাষা নির্বাচন করুন",
       'dialNumber': "ডায়াল করুন",
       'recentCallsHeader': "সাম্প্রতিক অনুবাদিত ও ভয়েস কল",
-      'noRecentCalls': "কোনো সাম্প্রতিক কল নেই। উপরে কোনো নম্বর ডায়াল করুন বা যোগাযোগ তালিকা দেখুন।",
+      'noRecentCalls':
+          "কোনো সাম্প্রতিক কল নেই। উপরে কোনো নম্বর ডায়াল করুন বা যোগাযোগ তালিকা দেখুন।",
       'directCallByNumber': "সরাসরি নম্বর দিয়ে কল বা চ্যাট",
       'directDialSubtitle': "যেকোনো ফোন নম্বর লিখে সরাসরি কল বা চ্যাট করুন",
-      'freeLocalCallBanner': "🗣️ ফ্রি লোকাল কল (Same Language - কোনো মিনিট কাটবে না)",
-      'aiTranslateCallBanner': "🤖 AI অনুবাদ কল (১ মি./মি.) • ব্যালেন্স: {minutes} মি.",
+      'freeLocalCallBanner':
+          "🗣️ ফ্রি লোকাল কল (Same Language - কোনো মিনিট কাটবে না)",
+      'aiTranslateCallBanner':
+          "🤖 AI অনুবাদ কল (১ মি./মি.) • ব্যালেন্স: {minutes} মি.",
       'voiceCallAi': "ভয়েস কল (AI)",
       'messageAction': "মেসেজ",
       'voiceMinutesRecharge': "মিনিট রিচার্জ (Voice Minutes)",
-      'talkToInternationalClients': "আন্তর্জাতিক ক্লায়েন্টদের সাথে কথা বলুন যেকোনো ভাষায়",
+      'talkToInternationalClients':
+          "আন্তর্জাতিক ক্লায়েন্টদের সাথে কথা বলুন যেকোনো ভাষায়",
       'currentBalanceText': "বর্তমান ব্যালেন্স: {minutes} মিনিট",
       'trialBadgeText': "ট্রায়াল: {minutes} মি.",
-      'trialValidityText': "ফ্রি ট্রায়ালের মেয়াদ বাকি: {days} দিন (পেইড ব্যালেন্স: {paid} মি.)",
-      'paidBalanceLifetimeText': "পেইড ব্যালেন্স কখনো মেয়াদোত্তীর্ণ হয় না (Lifetime validity)",
-      'sameLanguageFreeRule': "🗣️ একই ভাষার লোকাল কল ১০০% ফ্রি (কোনো মিনিট কাটবে না)",
+      'trialValidityText':
+          "ফ্রি ট্রায়ালের মেয়াদ বাকি: {days} দিন (পেইড ব্যালেন্স: {paid} মি.)",
+      'paidBalanceLifetimeText':
+          "পেইড ব্যালেন্স কখনো মেয়াদোত্তীর্ণ হয় না (Lifetime validity)",
+      'sameLanguageFreeRule':
+          "🗣️ একই ভাষার লোকাল কল ১০০% ফ্রি (কোনো মিনিট কাটবে না)",
       'geminiAiRateRule': "🤖 Gemini 3.5 Live AI অনুবাদিত কল: ১ মিনিট/মিনিট",
       'selectMinutePack': "প্যাকেজ নির্বাচন করুন (Select Minute Pack)",
       'starterPackTitle': "স্টার্টার প্যাক (Starter Pack)",
-      'starterPackDesc': "দ্রুত ক্লায়েন্ট ইন্টারভিউ ও প্রাথমিক ব্রিফের জন্য (~৳২০/মি.)",
+      'starterPackDesc':
+          "দ্রুত ক্লায়েন্ট ইন্টারভিউ ও প্রাথমিক ব্রিফের জন্য (~৳২০/মি.)",
       'proPackTitle': "ফ্রিল্যান্সার প্রো (Freelancer Pro)",
-      'proPackDesc': "সাপ্তাহিক প্রজেক্ট মিটিং ও নিয়মিত ফ্রিল্যান্সিং (~৳১৬.৬/মি., ১৭% সাশ্রয়)",
+      'proPackDesc':
+          "সাপ্তাহিক প্রজেক্ট মিটিং ও নিয়মিত ফ্রিল্যান্সিং (~৳১৬.৬/মি., ১৭% সাশ্রয়)",
       'popularBadge': "⭐ সেরা পছন্দ (POPULAR)",
       'agencyPackTitle': "এজেন্সি প্যাক (Agency / Heavy Pack)",
-      'agencyPackDesc': "এজেন্সি টিম ও দীর্ঘ আন্তর্জাতিক কলের জন্য (~৳১৪.৪/মি., ২৮% সাশ্রয়)",
+      'agencyPackDesc':
+          "এজেন্সি টিম ও দীর্ঘ আন্তর্জাতিক কলের জন্য (~৳১৪.৪/মি., ২৮% সাশ্রয়)",
       'bestValueBadge': "💎 সর্বোচ্চ ভ্যালু (BEST VALUE)",
       'paymentMethod': "পেমেন্ট মাধ্যম (Payment Method)",
       'bdtLocal': "৳ BDT লোকাল",
@@ -969,39 +1118,54 @@ class AppStrings {
       'retryTooltip': "পুনরায় চেষ্টা করুন",
       'bkashMerchantNumber': "bKash / Nagad পার্সোনাল / মার্চেন্ট নম্বর:",
       'binancePayOfficialId': "Livocal অফিসিয়াল Binance Pay ID:",
-      'cryptoOfficialDepositAddress': "Livocal অফিসিয়াল {network} ডিপোজিট অ্যাড্রেস:",
+      'cryptoOfficialDepositAddress':
+          "Livocal অফিসিয়াল {network} ডিপোজিট অ্যাড্রেস:",
       'copyBtn': "কপি করুন",
-      'copiedToClipboardSnack': "অ্যাড্রেস/নম্বর {text} ক্লিপবোর্ডে কপি করা হয়েছে!",
-      'paymentInstructionBkash': "১. আপনার bKash বা Nagad অ্যাপ থেকে Send Money বা পেমেন্ট করুন ৳{amount}।\n২. সফল ট্রানজেকশনের পর নিচের ঘরে আপনার প্রেরক নম্বর ও TrxID লিখুন:",
-      'paymentInstructionBinance': "১. Binance অ্যাপে Pay > Send to Binance ID-তে {amount} USDT পাঠান।\n২. সফল পাঠানোর পর আপনার Binance ID ও Pay Order ID নিচে লিখুন:",
-      'paymentInstructionCrypto': "১. আপনার ক্রিপ্টো ওয়ালেট থেকে {amount} USDT ({network}) পাঠান।\n২. ট্রানজেকশনের পর আপনার প্রেরক ওয়ালেট অ্যাড্রেস ও TxHash নিচে লিখুন:",
+      'copiedToClipboardSnack':
+          "অ্যাড্রেস/নম্বর {text} ক্লিপবোর্ডে কপি করা হয়েছে!",
+      'paymentInstructionBkash':
+          "১. আপনার bKash বা Nagad অ্যাপ থেকে Send Money বা পেমেন্ট করুন ৳{amount}।\n২. সফল ট্রানজেকশনের পর নিচের ঘরে আপনার প্রেরক নম্বর ও TrxID লিখুন:",
+      'paymentInstructionBinance':
+          "১. Binance অ্যাপে Pay > Send to Binance ID-তে {amount} USDT পাঠান।\n২. সফল পাঠানোর পর আপনার Binance ID ও Pay Order ID নিচে লিখুন:",
+      'paymentInstructionCrypto':
+          "১. আপনার ক্রিপ্টো ওয়ালেট থেকে {amount} USDT ({network}) পাঠান।\n২. ট্রানজেকশনের পর আপনার প্রেরক ওয়ালেট অ্যাড্রেস ও TxHash নিচে লিখুন:",
       'senderNumberInputLabel': "আপনার টাকা পাঠানোর ফোন নম্বর (Sender Number)",
       'binancePayIdInputLabel': "আপনার Binance Pay ID বা ইমেইল",
-      'senderAddressInputLabel': "আপনার প্রেরক ওয়ালেট অ্যাড্রেস (Sender Address)",
+      'senderAddressInputLabel':
+          "আপনার প্রেরক ওয়ালেট অ্যাড্রেস (Sender Address)",
       'trxIdInputLabel': "bKash / Nagad TrxID (Transaction ID)",
       'binancePayOrderIdInputLabel': "Binance Pay Order ID / Transaction ID",
       'txHashInputLabel': "Blockchain TxHash (Transaction Hash)",
       'submitPaymentBdt': "৳{amount} পেমেন্ট ভেরিফিকেশন জমা দিন",
       'submitPaymentUsdt': "\${amount} USDT পেমেন্ট ভেরিফিকেশন জমা দিন",
-      'waitForDepositAccountSnack': "সার্ভার থেকে ডিপোজিট অ্যাকাউন্ট লোড হওয়া পর্যন্ত অপেক্ষা করুন বা রিফ্রেশ করুন।",
+      'waitForDepositAccountSnack':
+          "সার্ভার থেকে ডিপোজিট অ্যাকাউন্ট লোড হওয়া পর্যন্ত অপেক্ষা করুন বা রিফ্রেশ করুন।",
       'enterSenderPhoneSnack': "অনুগ্রহ করে টাকা পাঠানোর ফোন নম্বরটি লিখুন।",
-      'enterBinancePayIdSnack': "অনুগ্রহ করে আপনার Binance Pay ID বা ইমেইল লিখুন।",
-      'enterSenderCryptoAddressSnack': "অনুগ্রহ করে আপনার প্রেরক ক্রিপ্টো ওয়ালেট অ্যাড্রেস লিখুন।",
+      'enterBinancePayIdSnack':
+          "অনুগ্রহ করে আপনার Binance Pay ID বা ইমেইল লিখুন।",
+      'enterSenderCryptoAddressSnack':
+          "অনুগ্রহ করে আপনার প্রেরক ক্রিপ্টো ওয়ালেট অ্যাড্রেস লিখুন।",
       'enterTxHashSnack': "অনুগ্রহ করে Blockchain TxHash লিখুন।",
-      'enterTrxIdSnack': "অনুগ্রহ করে ট্রানজেকশন আইডি (TrxID / Order ID) লিখুন।",
-      'trc20AddressLengthError': "TRC-20 ওয়ালেট অ্যাড্রেস অবশ্যই T দিয়ে শুরু হতে হবে এবং ৩৪ অক্ষরের হতে হবে।",
-      'bep20AddressLengthError': "BEP-20 ওয়ালেট অ্যাড্রেস অবশ্যই 0x দিয়ে শুরু হতে হবে এবং ৪২ অক্ষরের হতে হবে।",
+      'enterTrxIdSnack':
+          "অনুগ্রহ করে ট্রানজেকশন আইডি (TrxID / Order ID) লিখুন।",
+      'trc20AddressLengthError':
+          "TRC-20 ওয়ালেট অ্যাড্রেস অবশ্যই T দিয়ে শুরু হতে হবে এবং ৩৪ অক্ষরের হতে হবে।",
+      'bep20AddressLengthError':
+          "BEP-20 ওয়ালেট অ্যাড্রেস অবশ্যই 0x দিয়ে শুরু হতে হবে এবং ৪২ অক্ষরের হতে হবে।",
       'invalidTxHashError': "সঠিক ৬৪ অক্ষরের Blockchain TxHash লিখুন।",
-      'paymentSubmittedSuccess': "পেমেন্ট রিকোয়েস্ট সফলভাবে জমা হয়েছে! অ্যাডমিন অনুমোদন করলেই মিনিট যোগ হবে।",
+      'paymentSubmittedSuccess':
+          "পেমেন্ট রিকোয়েস্ট সফলভাবে জমা হয়েছে! অ্যাডমিন অনুমোদন করলেই মিনিট যোগ হবে।",
       'paymentFailedSnack': "পেমেন্ট রিকোয়েস্ট জমা দেওয়া যায়নি।",
       'minutesExhaustedTitle': "অনুবাদ মিনিট শেষ",
       'minutesExhaustedSub': "AI লাইভ অনুবাদ কলের জন্য মিনিট ব্যালেন্স প্রয়োজন",
-      'sameLanguageFreeNotice': "একই ভাষার সাধারণ কল সম্পূর্ণ ফ্রি! শুধুমাত্র ভিন্ন ভাষার রিয়েল-টাইম AI অনুবাদের ক্ষেত্রে মিনিট প্রযোজ্য।",
+      'sameLanguageFreeNotice':
+          "একই ভাষার সাধারণ কল সম্পূর্ণ ফ্রি! শুধুমাত্র ভিন্ন ভাষার রিয়েল-টাইম AI অনুবাদের ক্ষেত্রে মিনিট প্রযোজ্য।",
       'starterBundleMinutes': "৬০ মিনিট",
       'proBundleMinutes': "১৮০ মিনিট",
       'buyMinutes': "মিনিট রিচার্জ করুন",
       'callFreeNoAi': "অনুবাদ ছাড়া ফ্রি কল করুন",
-      'minutesExhaustedAlert': "আপনার মিনিট শেষ হয়ে গেছে। কথা চালিয়ে যেতে রিচার্জ করুন।",
+      'minutesExhaustedAlert':
+          "আপনার মিনিট শেষ হয়ে গেছে। কথা চালিয়ে যেতে রিচার্জ করুন।",
       'muteBtn': "মিউট",
       'unmuteBtn': "আনমিউট",
       'speakerBtn': "স্পিকার",
@@ -1014,9 +1178,11 @@ class AppStrings {
       'muteNotifications': "নোটিফিকেশন মিউট করুন",
       'unmuteNotifications': "নোটিফিকেশন আনমিউট করুন",
       'clearChat': "চ্যাট মুছুন",
-      'blockedTapToUnblock': "আপনি এই যোগাযোগকে ব্লক করেছেন। আনব্লক করতে ট্যাপ করুন।",
+      'blockedTapToUnblock':
+          "আপনি এই যোগাযোগকে ব্লক করেছেন। আনব্লক করতে ট্যাপ করুন।",
       'sayHelloTo': "{name}-কে নমস্কার বলুন",
-      'noMessagesYet': "এখনো কোনো বার্তা নেই। কথোপকথন শুরু করতে শুভেচ্ছা বা ভয়েস নোট পাঠান।",
+      'noMessagesYet':
+          "এখনো কোনো বার্তা নেই। কথোপকথন শুরু করতে শুভেচ্ছা বা ভয়েস নোট পাঠান।",
       'sayHello': "নমস্কার বলুন!",
       'disappearingMessagesOn': "ডিসঅ্যাপিয়ারিং মেসেজ চালু আছে ({timer})",
       'takePhoto': "ছবি তুলুন",
@@ -1024,12 +1190,15 @@ class AppStrings {
       'textStatus': "টেক্সট স্ট্যাটাস",
       'viewStatus': "স্ট্যাটাস দেখুন",
       'addNewStatus': "নতুন স্ট্যাটাস দিন",
-      'languageAppliedLocally': "ভাষা লোকালি প্রয়োগ হয়েছে (ক্লাউড সিঙ্ক অফলাইন)।",
-      'failedToInitiateCall': "কল শুরু করা যায়নি। আপনার নেটওয়ার্ক সংযোগ পরীক্ষা করুন।",
+      'languageAppliedLocally':
+          "ভাষা লোকালি প্রয়োগ হয়েছে (ক্লাউড সিঙ্ক অফলাইন)।",
+      'failedToInitiateCall':
+          "কল শুরু করা যায়নি। আপনার নেটওয়ার্ক সংযোগ পরীক্ষা করুন।",
       'searchChatsHint': "চ্যাট, বার্তা খুঁজুন...",
       'paymentReceivingAccounts': "পেমেন্ট গ্রহণের অ্যাকাউন্ট",
       'p2pPaymentSettings': "P2P পেমেন্ট সেটিংস",
-      'p2pPaymentSettingsDesc': "চ্যাটে অন্য ব্যবহারকারীরা আপনাকে টাকা ও ক্রিপ্টোকারেন্সি পাঠাতে পারে এমন অ্যাকাউন্টগুলো কনফিগার করুন। আপনার TRC-20 ও BEP-20 ঠিকানা সঠিক আছে নিশ্চিত করুন।",
+      'p2pPaymentSettingsDesc':
+          "চ্যাটে অন্য ব্যবহারকারীরা আপনাকে টাকা ও ক্রিপ্টোকারেন্সি পাঠাতে পারে এমন অ্যাকাউন্টগুলো কনফিগার করুন। আপনার TRC-20 ও BEP-20 ঠিকানা সঠিক আছে নিশ্চিত করুন।",
       'cryptocurrencyAndBinance': "ক্রিপ্টোকারেন্সি ও Binance",
       'mobileFinancialServices': "মোবাইল ফাইন্যান্সিয়াল সার্ভিস (MFS)",
       'binancePayIdLabel': "Binance Pay ID / Binance ইমেইল",
@@ -1040,12 +1209,15 @@ class AppStrings {
       'savePaymentAccounts': "পেমেন্ট অ্যাকাউন্ট সংরক্ষণ করুন",
       'couldNotLoadChats': "চ্যাট লোড করা যায়নি",
       'checkConnectionRetry': "আপনার সংযোগ পরীক্ষা করুন এবং আবার চেষ্টা করুন।",
-      'noChatsMatching': "\"{query}\"-এর সাথে মিলে এমন কোনো চ্যাট পাওয়া যায়নি",
+      'noChatsMatching':
+          "\"{query}\"-এর সাথে মিলে এমন কোনো চ্যাট পাওয়া যায়নি",
       'noConversationsYet': "এখনো কোনো কথোপকথন নেই",
-      'startChattingDesc': "রিয়েল-টাইম অনুবাদ ও ভয়েস কলসহ আপনার পরিচিতদের সাথে চ্যাট শুরু করুন।",
+      'startChattingDesc':
+          "রিয়েল-টাইম অনুবাদ ও ভয়েস কলসহ আপনার পরিচিতদের সাথে চ্যাট শুরু করুন।",
       'startNewChat': "নতুন চ্যাট শুরু করুন",
       'noMatchesFound': "কোনো মিল পাওয়া যায়নি",
-      'languagePreferenceSavedLocally': "ভাষা পছন্দ লোকালি সংরক্ষিত হয়েছে (ক্লাউড সিঙ্ক অফলাইন)।",
+      'languagePreferenceSavedLocally':
+          "ভাষা পছন্দ লোকালি সংরক্ষিত হয়েছে (ক্লাউড সিঙ্ক অফলাইন)।",
       'selectYourSpokenLanguage': "আপনার কথ্য ভাষা নির্বাচন করুন",
       'camera': "ক্যামেরা",
       'gallery': "গ্যালারি",
@@ -1055,9 +1227,11 @@ class AppStrings {
       'phoneLabel': "ফোন",
       'unstarAll': "সব আনস্টার করুন",
       'defaultDoodleWallpaper': "Livocal গ্রেডিয়েন্ট (ডিফল্ট)",
-      'nameVisibilityHint': "এটি আপনার ইউজারনেম বা পিন নয়। এই নাম আপনার Livocal পরিচিতদের কাছে দেখা যাবে।",
+      'nameVisibilityHint':
+          "এটি আপনার ইউজারনেম বা পিন নয়। এই নাম আপনার Livocal পরিচিতদের কাছে দেখা যাবে।",
       'noStarredMessages': "কোনো স্টার্ড বার্তা নেই",
-      'starredEmptyHint': "পরে সহজে খুঁজে পেতে চ্যাটে যেকোনো বার্তায় চেপে ধরে স্টার করুন।",
+      'starredEmptyHint':
+          "পরে সহজে খুঁজে পেতে চ্যাটে যেকোনো বার্তায় চেপে ধরে স্টার করুন।",
       'display': "ডিসপ্লে",
       'chatWallpaper': "চ্যাট ওয়ালপেপার",
       'wallpaperResetDefault': "ওয়ালপেপার ডিফল্টে রিসেট হয়েছে",
@@ -1082,12 +1256,15 @@ class AppStrings {
       'invite': "আমন্ত্রণ",
       'selectContactToBlock': "ব্লক করার জন্য যোগাযোগ নির্বাচন করুন",
       'noContactsToBlock': "ব্লক করার মতো কোনো যোগাযোগ নেই",
-      'blockedContactsDesc': "ব্লক করা যোগাযোগ আর আপনাকে কল বা বার্তা পাঠাতে পারবে না।",
+      'blockedContactsDesc':
+          "ব্লক করা যোগাযোগ আর আপনাকে কল বা বার্তা পাঠাতে পারবে না।",
       'tapToUnblock': "আনব্লক করতে যোগাযোগে ট্যাপ করুন।",
       'unblock': "আনব্লক",
       'failedToLoadMedia': "মিডিয়া লোড করা যায়নি",
-      'voicePreviewSavedLocally': "ভাষা পছন্দ লোকালি সংরক্ষিত; ক্লাউড সিঙ্ক অফলাইন।",
-      'voicePreviewUnavailable': "ভয়েস প্রিভিউ সাময়িকভাবে পাওয়া যাচ্ছে না। ইন্টারনেট সংযোগ পরীক্ষা করুন।",
+      'voicePreviewSavedLocally':
+          "ভাষা পছন্দ লোকালি সংরক্ষিত; ক্লাউড সিঙ্ক অফলাইন।",
+      'voicePreviewUnavailable':
+          "ভয়েস প্রিভিউ সাময়িকভাবে পাওয়া যাচ্ছে না। ইন্টারনেট সংযোগ পরীক্ষা করুন।",
       'decline': "প্রত্যাখ্যান",
       'tapToAnswer': "উত্তর দিতে ট্যাপ করুন",
       'aiCall': "এআই কল",
@@ -1104,10 +1281,14 @@ class AppStrings {
       'zeroMinutesNotConnected': "০ মিনিট (সংযোগ হয়নি)",
       'zeroMinutesNormalCall': "০ মিনিট (সাধারণ কল)",
       'minutesDeducted': "{minutes} মিনিট কর্তন",
-      'missedIncomingMessage': "আপনি একটি ইনকামিং কল মিস করেছেন। চাইলে এখন কল ব্যাক করতে পারেন বা মেসেজ পাঠাতে পারেন।",
-      'missedOutgoingMessage': "অপর প্রান্ত থেকে কলের উত্তর মেলেনি। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।",
-      'translatedCallSuccessMessage': "🌐 লাইভ এআই ভয়েস অনুবাদ সহ আপনার কথোপকথনটি সফলভাবে সম্পন্ন হয়েছে। Livocal ব্যবহার করার জন্য ধন্যবাদ!",
-      'normalCallSuccessMessage': "আপনার কথোপকথনটি সফলভাবে সম্পন্ন হয়েছে। চমৎকার আলাপের জন্য ধন্যবাদ!",
+      'missedIncomingMessage':
+          "আপনি একটি ইনকামিং কল মিস করেছেন। চাইলে এখন কল ব্যাক করতে পারেন বা মেসেজ পাঠাতে পারেন।",
+      'missedOutgoingMessage':
+          "অপর প্রান্ত থেকে কলের উত্তর মেলেনি। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।",
+      'translatedCallSuccessMessage':
+          "🌐 লাইভ এআই ভয়েস অনুবাদ সহ আপনার কথোপকথনটি সফলভাবে সম্পন্ন হয়েছে। Livocal ব্যবহার করার জন্য ধন্যবাদ!",
+      'normalCallSuccessMessage':
+          "আপনার কথোপকথনটি সফলভাবে সম্পন্ন হয়েছে। চমৎকার আলাপের জন্য ধন্যবাদ!",
       'missedCall': "মিসড কল",
       'missedVoiceCall': "মিসড ভয়েস কল",
       'declinedCall': "প্রত্যাখ্যাত কল",
@@ -1118,14 +1299,18 @@ class AppStrings {
       'incomingVoiceCall': "ইনকামিং ভয়েস কল",
       'noAnswer': "কোনো উত্তর নেই",
       'talkedFor': "কথা হয়েছে: {duration}",
-      'languagesSupported': "{count}+ জেমিনি লাইভ ভাষা সমর্থিত (যেকোনো থেকে যেকোনো)",
+      'languagesSupported':
+          "{count}+ জেমিনি লাইভ ভাষা সমর্থিত (যেকোনো থেকে যেকোনো)",
       'popularLanguages': "জনপ্রিয় ভাষা",
       'aiInterpreterVoicePreferences': "এআই ইন্টারপ্রেটার ভয়েস ও পছন্দ",
-      'aiVoicePrefsDesc': "কলে অনূদিত কণ্ঠ কেমন শোনাবে তা কাস্টমাইজ করুন। এআই রিয়েল-টাইমে ভাষা স্বয়ংক্রিয়ভাবে শনাক্ত করে।",
+      'aiVoicePrefsDesc':
+          "কলে অনূদিত কণ্ঠ কেমন শোনাবে তা কাস্টমাইজ করুন। এআই রিয়েল-টাইমে ভাষা স্বয়ংক্রিয়ভাবে শনাক্ত করে।",
       'zeroTrustRelayActive': "জিরো-ট্রাস্ট ক্লাউড এআই রিলে সক্রিয়",
-      'zeroTrustRelayDesc': "লাইভ API কী ও অডিও পাইপলাইন ব্যাকএন্ড সার্ভারে নিরাপদে পরিচালিত হয়।",
+      'zeroTrustRelayDesc':
+          "লাইভ API কী ও অডিও পাইপলাইন ব্যাকএন্ড সার্ভারে নিরাপদে পরিচালিত হয়।",
       'selectAiInterpreterVoice': "এআই ইন্টারপ্রেটার ভয়েস নির্বাচন করুন",
-      'selectAiVoiceDesc': "আপনাকে অনূদিত অডিও শোনানোর সময় যে সিন্থেটিক ভয়েস ব্যবহার হবে তা বেছে নিন।",
+      'selectAiVoiceDesc':
+          "আপনাকে অনূদিত অডিও শোনানোর সময় যে সিন্থেটিক ভয়েস ব্যবহার হবে তা বেছে নিন।",
       'saveVoicePreference': "ভয়েস পছন্দ সংরক্ষণ করুন",
       'differentLanguageDetected': "ভিন্ন ভাষা শনাক্ত হয়েছে",
       'youSpeak': "আপনি বলবেন",
@@ -1148,11 +1333,13 @@ class AppStrings {
       'muteDesc': "এই যোগাযোগের নতুন বার্তার অ্যালার্ট বন্ধ করুন",
       'customNotifications': "কাস্টম নোটিফিকেশন",
       'encryptionAndSecurity': "এনক্রিপশন ও নিরাপত্তা",
-      'encryptionDesc': "বার্তা ও কল নিরাপদ TLS/SRTP ট্রান্সপোর্ট এবং ক্ষণস্থায়ী অনুবাদ ব্যবহার করে",
+      'encryptionDesc':
+          "বার্তা ও কল নিরাপদ TLS/SRTP ট্রান্সপোর্ট এবং ক্ষণস্থায়ী অনুবাদ ব্যবহার করে",
       'reportContactName': "{name}-কে রিপোর্ট করুন",
       'geminiAiLiveTranslation': "জেমিনি এআই লাইভ অনুবাদ",
       'startTranslatedVoiceCall': "অনূদিত ভয়েস কল শুরু করুন",
-      'reportForwardWarning': "এই যোগাযোগের শেষ ৫টি বার্তা নিরাপত্তা পর্যালোচনার জন্য Livocal-এ পাঠানো হবে। যোগাযোগকে জানানো হবে না।",
+      'reportForwardWarning':
+          "এই যোগাযোগের শেষ ৫টি বার্তা নিরাপত্তা পর্যালোচনার জন্য Livocal-এ পাঠানো হবে। যোগাযোগকে জানানো হবে না।",
       'reasonForReport': "রিপোর্টের কারণ:",
       'blockContactClearMessages': "যোগাযোগ ব্লক করে বার্তা মুছুন",
       'inChatAiTranslation': "চ্যাটে এআই লাইভ অনুবাদ",
@@ -1160,7 +1347,8 @@ class AppStrings {
       'languagePreferences': "ভাষা পছন্দ",
       'myLanguage': "আমার ভাষা",
       'autoTranslateIncoming': "আগত বার্তা স্বয়ংক্রিয়ভাবে অনুবাদ করুন",
-      'autoTranslateIncomingDesc': "প্রাপ্ত বার্তার নিচে স্বয়ংক্রিয়ভাবে অনুবাদ দেখায়",
+      'autoTranslateIncomingDesc':
+          "প্রাপ্ত বার্তার নিচে স্বয়ংক্রিয়ভাবে অনুবাদ দেখায়",
       'liveVoiceNoteTranscription': "লাইভ ভয়েস নোট ট্রান্সক্রিপশন",
       'liveVoiceNoteDesc': "আগত অডিও ভয়েস বার্তা ট্রান্সক্রাইব ও অনুবাদ করুন",
       'testRealtimeTranslation': "রিয়েল-টাইম অনুবাদ পরীক্ষা করুন",
@@ -1168,12 +1356,14 @@ class AppStrings {
       'saveApplySettings': "সংরক্ষণ ও প্রয়োগ করুন",
       'inChatTranslationEnabled': "চ্যাটে লাইভ অনুবাদ চালু",
       'inChatTranslationDisabled': "চ্যাটে লাইভ অনুবাদ বন্ধ",
-      'translationSettingsApplied': "অনুবাদ সেটিংস প্রয়োগ হয়েছে: {my} ⇄ {peer}",
+      'translationSettingsApplied':
+          "অনুবাদ সেটিংস প্রয়োগ হয়েছে: {my} ⇄ {peer}",
       'inChatTranslationDisabledFor': "{name}-এর জন্য চ্যাটে লাইভ অনুবাদ বন্ধ",
       'sendPaymentTo': "{name}-কে পেমেন্ট পাঠান",
       'selectPaymentMethod': "পেমেন্ট পদ্ধতি নির্বাচন করুন",
       'livocalInAppWallet': "Livocal ইন-অ্যাপ ওয়ালেট",
-      'walletBalanceTransfer': "ব্যালেন্স: {available} মিনিট ({needed} মিনিট ট্রান্সফার হবে)",
+      'walletBalanceTransfer':
+          "ব্যালেন্স: {available} মিনিট ({needed} মিনিট ট্রান্সফার হবে)",
       'bkashNagadMfs': "bKash / Nagad MFS (সরাসরি পাঠান)",
       'cryptoBinanceUsdt': "ক্রিপ্টো (Binance Pay / USDT)",
       'shortByMinutes': "এই ট্রান্সফারের জন্য {minutes} মিনিট কম আছে।",
@@ -1182,13 +1372,16 @@ class AppStrings {
       'confirmPayment': "পেমেন্ট নিশ্চিত করুন: {amount}",
       'welcomeBadge1': "নেক্সট-জেন কানেক্ট",
       'welcomeTitle1': "Livocal-এ স্বাগতম",
-      'welcomeDesc1': "দৈনন্দিন নিরবচ্ছিন্ন সংযোগের জন্য অতি-দ্রুত, ব্যক্তিগত মেসেজিং ও স্পষ্ট ভয়েস যোগাযোগ।",
+      'welcomeDesc1':
+          "দৈনন্দিন নিরবচ্ছিন্ন সংযোগের জন্য অতি-দ্রুত, ব্যক্তিগত মেসেজিং ও স্পষ্ট ভয়েস যোগাযোগ।",
       'welcomeBadge2': "জেমিনি লাইভ এআই",
       'welcomeTitle2': "রিয়েল-টাইম ভয়েস অনুবাদ",
-      'welcomeDesc2': "রিয়েল-টাইমে ভাষার বাধা ভাঙুন। কলে বাংলা বা ইংরেজিতে সাব-সেকেন্ড দ্বিমুখী লাইভ অডিও অনুবাদ নিয়ে কথা বলুন।",
+      'welcomeDesc2':
+          "রিয়েল-টাইমে ভাষার বাধা ভাঙুন। কলে বাংলা বা ইংরেজিতে সাব-সেকেন্ড দ্বিমুখী লাইভ অডিও অনুবাদ নিয়ে কথা বলুন।",
       'welcomeBadge3': "প্রাইভেসি বাই ডিজাইন",
       'welcomeTitle3': "ডিফল্টভাবেই ব্যক্তিগত ও নিরাপদ",
-      'welcomeDesc3': "DTLS-SRTP এনক্রিপ্টেড ভয়েস স্ট্রিম, সুরক্ষিত ব্যক্তিগত তথ্য, শূন্য অ্যাড্রেস-বুক হার্ভেস্টিং এবং বায়োমেট্রিক অ্যাপ লক।",
+      'welcomeDesc3':
+          "DTLS-SRTP এনক্রিপ্টেড ভয়েস স্ট্রিম, সুরক্ষিত ব্যক্তিগত তথ্য, শূন্য অ্যাড্রেস-বুক হার্ভেস্টিং এবং বায়োমেট্রিক অ্যাপ লক।",
       'enterPhoneNumber': "আপনার ফোন নম্বর লিখুন",
       'carrierCharges': "ক্যারিয়ার চার্জ প্রযোজ্য হতে পারে।",
       'next': "পরবর্তী",
@@ -1231,8 +1424,10 @@ class AppStrings {
       'myStatus': "আমার স্ট্যাটাস",
       'couldNotLoadStatus': "স্ট্যাটাস আপডেট লোড করা যায়নি",
       'noRecentUpdates': "সাম্প্রতিক কোনো আপডেট নেই",
-      'statusUpdatesDesc': "আপনার পরিচিতদের স্ট্যাটাস আপডেট এখানে দেখা যাবে। ২৪ ঘণ্টা পর সেগুলো মুছে যাবে।",
-      'statusPrivacyNote': "আপনার স্ট্যাটাস আপডেট আপনার প্রাইভেসি সেটিংস দ্বারা সুরক্ষিত",
+      'statusUpdatesDesc':
+          "আপনার পরিচিতদের স্ট্যাটাস আপডেট এখানে দেখা যাবে। ২৪ ঘণ্টা পর সেগুলো মুছে যাবে।",
+      'statusPrivacyNote':
+          "আপনার স্ট্যাটাস আপডেট আপনার প্রাইভেসি সেটিংস দ্বারা সুরক্ষিত",
       'messageHint': "বার্তা",
       'recentUpdates': "সাম্প্রতিক আপডেট",
       'aiTranslatedVoiceCall': "Livocal এআই অনূদিত কল",
@@ -1253,20 +1448,27 @@ class AppStrings {
       'unpinMessage': "পিন সরান",
       'pinnedMessages': "পিন করা বার্তা",
       'noPinnedMessages': "কোনো পিন করা বার্তা নেই",
-      'callWarningRemainingMinutes': "⚠️ সতর্কবার্তা: আপনার অ্যাকাউন্টে আর মাত্র {minutes} মিনিট বাকি আছে।",
-      'callTerminatedExhausted': "🛑 আপনার মিনিট শেষ হয়ে গেছে। কলটি সমাপ্ত করা হচ্ছে।",
-      'callTranslationActiveNotice': "{myEmoji} {myName} ⇄ {peerEmoji} {peerName} রিয়েল-টাইম ভয়েস ট্রান্সলেশন চালু হয়েছে। যেকোনো ভাষায় কথা বলুন!",
+      'callWarningRemainingMinutes':
+          "⚠️ সতর্কবার্তা: আপনার অ্যাকাউন্টে আর মাত্র {minutes} মিনিট বাকি আছে।",
+      'callTerminatedExhausted':
+          "🛑 আপনার মিনিট শেষ হয়ে গেছে। কলটি সমাপ্ত করা হচ্ছে।",
+      'callTranslationActiveNotice':
+          "{myEmoji} {myName} ⇄ {peerEmoji} {peerName} রিয়েল-টাইম ভয়েস ট্রান্সলেশন চালু হয়েছে। যেকোনো ভাষায় কথা বলুন!",
       'dialPhoneNumber': "সরাসরি নম্বর ডায়াল করুন",
       'dialPhoneNumberSub': "সরাসরি কল বা চ্যাট করতে নম্বর লিখুন",
-      'realtimeTranslationActive': "{langA} ⇄ {langB} রিয়েল-টাইম অনুবাদ সক্রিয় করা হয়েছে",
-      'sameLanguageDirectCallNotice': "উভয় ব্যবহারকারীর ভাষা একই ({lang})। সরাসরি আসল কণ্ঠে কোনো ট্রান্সলেশন ছাড়াই কথা বলুন।",
+      'realtimeTranslationActive':
+          "{langA} ⇄ {langB} রিয়েল-টাইম অনুবাদ সক্রিয় করা হয়েছে",
+      'sameLanguageDirectCallNotice':
+          "উভয় ব্যবহারকারীর ভাষা একই ({lang})। সরাসরি আসল কণ্ঠে কোনো ট্রান্সলেশন ছাড়াই কথা বলুন।",
       'directVoiceCallActiveNotice': "সরাসরি ভয়েস কল সক্রিয় রয়েছে।",
-      'aiUnavailableDirectFallback': "এআই ইন্টারপ্রেটার অনুপলব্ধ। সরাসরি ভয়েস কলে সংযুক্ত করা হয়েছে।",
+      'aiUnavailableDirectFallback':
+          "এআই ইন্টারপ্রেটার অনুপলব্ধ। সরাসরি ভয়েস কলে সংযুক্ত করা হয়েছে।",
       'starterPackPriceText': "৳১,২০০ (\$৯.৯৯)",
       'proPackPriceText': "৳৩,০০০ (\$২৪.৯৯)",
       'bdtAmount': "৳{amount}",
       'callContinuingDirectVoiceDesc': "সরাসরি ভয়েস কল চালু আছে।",
-      'callerMinutesExhaustedDirectVoiceDesc': "কলার এর অনুবাদ মিনিট শেষ হয়ে গেছে। সরাসরি ভয়েস কলে পরিবর্তন করা হয়েছে।",
+      'callerMinutesExhaustedDirectVoiceDesc':
+          "কলার এর অনুবাদ মিনিট শেষ হয়ে গেছে। সরাসরি ভয়েস কলে পরিবর্তন করা হয়েছে।",
       'rechargeNowBtn': "রিচার্জ",
     },
     'hi': {
@@ -1275,13 +1477,15 @@ class AppStrings {
       'account': "अकाउंट",
       'accountAndPrivacy': "अकाउंट और गोपनीयता",
       'accountManagement': "अकाउंट प्रबंधन",
-      'accountReportSubmitted': "खाता रिपोर्ट का अनुरोध दर्ज किया गया। २४ घंटे में तैयार होगा।",
+      'accountReportSubmitted':
+          "खाता रिपोर्ट का अनुरोध दर्ज किया गया। २४ घंटे में तैयार होगा।",
       'accountSub': "सुरक्षा सूचनाएं, दो-चरणीय सत्यापन, नंबर बदलें",
       'advancedAiEngine': "आवाज और अनुवाद",
       'allMedia': "सभी मीडिया",
       'appDatabaseIsar': "• ऐप डेटाबेस (Isar): ",
       'appInfo': "ऐप जानकारी",
-      'appInfoDesc': "WebRTC और Gemini AI द्वारा संचालित रियल-टाइम वॉयस अनुवाद और मैसेजिंग।",
+      'appInfoDesc':
+          "WebRTC और Gemini AI द्वारा संचालित रियल-टाइम वॉयस अनुवाद और मैसेजिंग।",
       'appLanguage': "ऐप की भाषा",
       'appLanguageSub': "English, বাংলা, हिन्दी, العربية...",
       'biometricCancelled': "बायोमेट्रिक सत्यापन रद्द किया गया।",
@@ -1300,8 +1504,10 @@ class AppStrings {
       'callsHeader': "कॉल",
       'cancel': "रद्द करें",
       'changeNumber': "नंबर बदलें",
-      'changeNumberDesc': "नए फ़ोन नंबर पर स्थानांतरित करने से आपकी सभी जानकारी, सेटिंग्स और कुंजियां स्थानांतरित हो जाएंगी।",
-      'changeNumberDialogContent': "नंबर बदलने से आपकी सभी सेटिंग्स और डेटा नए नंबर पर ट्रांसफर हो जाएगा।",
+      'changeNumberDesc':
+          "नए फ़ोन नंबर पर स्थानांतरित करने से आपकी सभी जानकारी, सेटिंग्स और कुंजियां स्थानांतरित हो जाएंगी।",
+      'changeNumberDialogContent':
+          "नंबर बदलने से आपकी सभी सेटिंग्स और डेटा नए नंबर पर ट्रांसफर हो जाएगा।",
       'chats': "चैट",
       'chatsAndTheme': "चैट और थीम",
       'chatsAndThemeSub': "वॉलपेपर, थीम, चैट इतिहास",
@@ -1310,21 +1516,26 @@ class AppStrings {
       'chooseTheme': "थीम चुनें",
       'classicBellPreset': "क्लासिक बेल",
       'clearCache': "मीडिया कैश साफ़ करें",
-      'clearCacheDialogDesc': "यह अस्थायी ऑडियो और कैश को हटा देगा। आपका स्थानीय चैट पाठ प्रभावित नहीं होगा।",
+      'clearCacheDialogDesc':
+          "यह अस्थायी ऑडियो और कैश को हटा देगा। आपका स्थानीय चैट पाठ प्रभावित नहीं होगा।",
       'clearCacheDialogTitle': "मीडिया कैश साफ़ करें?",
       'clearCacheSub': "डाउनलोड किए गए ऑडियो और वॉयस नोट्स हटाएं",
       'clearCallLog': "कॉल लॉग साफ़ करें",
       'close': "बंद करें",
       'confirm': "पुष्टि करें",
       'confirmDisable': "अक्षम करने की पुष्टि करें",
-      'confirmFingerprintDisable': "लॉक अक्षम करने के लिए बायोमेट्रिक की पुष्टि करें",
-      'confirmFingerprintEnable': "लॉक सक्षम करने के लिए बायोमेट्रिक की पुष्टि करें",
+      'confirmFingerprintDisable':
+          "लॉक अक्षम करने के लिए बायोमेट्रिक की पुष्टि करें",
+      'confirmFingerprintEnable':
+          "लॉक सक्षम करने के लिए बायोमेट्रिक की पुष्टि करें",
       'contactSupport': "सहायता से संपर्क करें",
-      'contactSupportDesc': "बताएं कि हम आपकी कैसे मदद कर सकते हैं। अपनी समस्या या सुझाव लिखें:",
+      'contactSupportDesc':
+          "बताएं कि हम आपकी कैसे मदद कर सकते हैं। अपनी समस्या या सुझाव लिखें:",
       'contactSupportSub': "प्रश्न या सहायता चाहिए? हमारी टीम से बात करें",
       'contacts': "संपर्क",
       'conversationTones': "बातचीत टोन",
-      'conversationTonesSub': "आने वाले और जाने वाले संदेशों के लिए ध्वनि बजाएं।",
+      'conversationTonesSub':
+          "आने वाले और जाने वाले संदेशों के लिए ध्वनि बजाएं।",
       'copyLink': "लिंक कॉपी करें",
       'crystalPopPreset': "क्रिस्टल पॉप",
       'currentNumber': "वर्तमान: ",
@@ -1346,7 +1557,8 @@ class AppStrings {
       'deleteAccountTitle': "यह खाता हटाएं?",
       'deleteAccountWarning1': "आपकी खाता जानकारी और प्रोफ़ाइल फ़ोटो हट जाएगी",
       'deleteAccountWarning2': "इस डिवाइस से सभी स्थानीय संदेश इतिहास हट जाएगा",
-      'deleteAccountWarning3': "आप अपने संपर्कों की लिवोकल सूची से हटा दिए जाएंगे",
+      'deleteAccountWarning3':
+          "आप अपने संपर्कों की लिवोकल सूची से हटा दिए जाएंगे",
       'deleteAccountWarningTitle': "अपना खाता हटाने से:",
       'deleteMyAccount': "मेरा अकाउंट हटाएं",
       'deleteMyAccountSub': "स्थायी रूप से अपना खाता और डेटा हटाएं",
@@ -1358,26 +1570,34 @@ class AppStrings {
       'enablePin': "पिन सक्षम करें",
       'enableTwoStep': "दो-चरणीय सत्यापन सक्षम करें",
       'enabled': "सक्रिय",
-      'enterCurrentPin': "सत्यापन अक्षम करने के लिए वर्तमान ६-अंकों का पिन दर्ज करें:",
+      'enterCurrentPin':
+          "सत्यापन अक्षम करने के लिए वर्तमान ६-अंकों का पिन दर्ज करें:",
       'enterMessageError': "कृपया सबमिट करने से पहले संदेश दर्ज करें।",
-      'enterNewPin': "खाते को सुरक्षित रखने के लिए ६-अंकों का नया पिन दर्ज करें:",
+      'enterNewPin':
+          "खाते को सुरक्षित रखने के लिए ६-अंकों का नया पिन दर्ज करें:",
       'enterValid6DigitPin': "कृपया मान्य ६-अंकों का पिन दर्ज करें",
       'everyone': "सभी",
-      'faqApiKeyA': "सेटिंग्स में जाकर अपनी Gemini API key दर्ज करें और पसंदीदा आवाज चुनें।",
+      'faqApiKeyA':
+          "सेटिंग्स में जाकर अपनी Gemini API key दर्ज करें और पसंदीदा आवाज चुनें।",
       'faqApiKeyQ': "Gemini API Key कैसे सेट करें?",
-      'faqContactsA': "संपर्क सूची खोलकर सीधे कॉल करें या एसएमएस द्वारा आमंत्रित करें।",
+      'faqContactsA':
+          "संपर्क सूची खोलकर सीधे कॉल करें या एसएमएस द्वारा आमंत्रित करें।",
       'faqContactsQ': "संपर्क कैसे जोड़ें या आमंत्रित करें?",
-      'faqLiveTranslationA': "कॉल के दौरान आवाज WebRTC और Gemini Multimodal Live API द्वारा तुरंत अनुवादित की जाती है।",
+      'faqLiveTranslationA':
+          "कॉल के दौरान आवाज WebRTC और Gemini Multimodal Live API द्वारा तुरंत अनुवादित की जाती है।",
       'faqLiveTranslationQ': "रियल-टाइम एआई लाइव अनुवाद कैसे काम करता है?",
-      'faqSecurityA': "हाँ! सभी ऑडियो कॉल DTLS-SRTP एन्क्रिप्टेड हैं और संदेश सुरक्षित नियमों से संरक्षित हैं।",
+      'faqSecurityA':
+          "हाँ! सभी ऑडियो कॉल DTLS-SRTP एन्क्रिप्टेड हैं और संदेश सुरक्षित नियमों से संरक्षित हैं।",
       'faqSecurityQ': "क्या मेरी कॉल और संदेश सुरक्षित हैं?",
       'faqTitle': "अक्सर पूछे जाने वाले प्रश्न (FAQ)",
-      'feedbackSentSuccess': "धन्यवाद! आपकी प्रतिक्रिया लिवोकल इंजीनियरिंग टीम को भेज दी गई है।",
+      'feedbackSentSuccess':
+          "धन्यवाद! आपकी प्रतिक्रिया लिवोकल इंजीनियरिंग टीम को भेज दी गई है।",
       'fingerprintAuthReason': "लिवोकल अनलॉक करने के लिए प्रमाणित करें",
       'fingerprintLock': "फ़िंगरप्रिंट लॉक",
       'fingerprintLockDisabled': "फ़िंगरप्रिंट लॉक अक्षम किया गया",
       'fingerprintLockEnabled': "फ़िंगरप्रिंट लॉक सक्षम किया गया",
-      'fingerprintLockSub': "लिवोकल खोलने के लिए बायोमेट्रिक प्रमाणीकरण आवश्यक है",
+      'fingerprintLockSub':
+          "लिवोकल खोलने के लिए बायोमेट्रिक प्रमाणीकरण आवश्यक है",
       'from': "स्रोत",
       'geminiVoiceEngine': "एआई वॉयस व्यक्तित्व",
       'geminiVoiceEngineSub': "लाइव ऑडियो अनुवाद के लिए पसंदीदा आवाज चुनें",
@@ -1386,14 +1606,16 @@ class AppStrings {
       'helpCentreSub': "अक्सर पूछे जाने वाले प्रश्न और गाइड",
       'helpSub': "सहायता केंद्र, संपर्क करें, नियम और गोपनीयता नीति",
       'highPriorityNotif': "उच्च प्राथमिकता सूचनाएं",
-      'highPriorityNotifSub': "स्क्रीन के शीर्ष पर सूचनाओं का पूर्वावलोकन दिखाएं",
+      'highPriorityNotifSub':
+          "स्क्रीन के शीर्ष पर सूचनाओं का पूर्वावलोकन दिखाएं",
       'hours24': "24 घंटे",
       'iUnderstand': "मैं समझ गया",
       'incorrectPin': "गलत पिन। सत्यापन विफल रहा।",
       'inviteFriend': "मित्र को आमंत्रित करें",
       'inviteFriendSub': "संपर्कों और परिवार के साथ लिवोकल साझा करें",
       'inviteLinkCopied': "आमंत्रण लिंक क्लिपबोर्ड पर कॉपी किया गया",
-      'languageNote': "भाषा बदलने से सभी स्क्रीन, सूचनाएं, संवाद और वॉयस कॉल तुरंत अपडेट हो जाते हैं।",
+      'languageNote':
+          "भाषा बदलने से सभी स्क्रीन, सूचनाएं, संवाद और वॉयस कॉल तुरंत अपडेट हो जाते हैं।",
       'lastSeenAndOnline': "अंतिम बार देखा गया और ऑनलाइन",
       'legalAndInfo': "कानूनी और नीतियां",
       'light': "लाइट",
@@ -1402,7 +1624,8 @@ class AppStrings {
       'livocalHarmonyPreset': "लिवोकल हार्मनी (डिफ़ॉल्ट)",
       'localDatabase': "स्थानीय डेटाबेस और चैट",
       'logout': "लॉग आउट",
-      'logoutDialogContent': "क्या आप वाकई लॉग आउट करना चाहते हैं? स्थानीय डेटा और क्रेडेंशियल साफ़ हो जाएंगे।",
+      'logoutDialogContent':
+          "क्या आप वाकई लॉग आउट करना चाहते हैं? स्थानीय डेटा और क्रेडेंशियल साफ़ हो जाएंगे।",
       'logoutDialogTitle': "लिवोकल से लॉग आउट करें?",
       'logoutSub': "स्थानीय क्रेडेंशियल साफ़ करें और साइन आउट करें",
       'manageStorage': "स्टोरेज प्रबंधित करें",
@@ -1439,17 +1662,22 @@ class AppStrings {
       'privacySub': "संपर्क ब्लॉक करें, गायब होने वाले संदेश, बायोमेट्रिक लॉक",
       'profilePhoto': "प्रोफ़ाइल फ़ोटो",
       'qrCode': "क्यूआर कोड",
-      'qrCodeDesc': "आपका क्यूआर कोड निजी है। यदि आप इसे साझा करते हैं, तो कोई भी आपको जोड़ सकता है।",
+      'qrCodeDesc':
+          "आपका क्यूआर कोड निजी है। यदि आप इसे साझा करते हैं, तो कोई भी आपको जोड़ सकता है।",
       'reactionNotif': "प्रतिक्रिया सूचनाएं",
-      'reactionNotifSub': "आपके द्वारा भेजे गए संदेशों पर प्रतिक्रियाओं के लिए सूचनाएं दिखाएं",
+      'reactionNotifSub':
+          "आपके द्वारा भेजे गए संदेशों पर प्रतिक्रियाओं के लिए सूचनाएं दिखाएं",
       'reactionNotifications': "प्रतिक्रिया सूचनाएं",
-      'reactionNotificationsSub': "आपके संदेशों पर प्रतिक्रिया मिलने पर सूचना दिखाएं",
+      'reactionNotificationsSub':
+          "आपके संदेशों पर प्रतिक्रिया मिलने पर सूचना दिखाएं",
       'readReceipts': "पठन रसीदें (नीले टिक)",
-      'readReceiptsSub': "यदि बंद है, तो आप पठन रसीदें नहीं भेजेंगे या प्राप्त नहीं करेंगे।",
+      'readReceiptsSub':
+          "यदि बंद है, तो आप पठन रसीदें नहीं भेजेंगे या प्राप्त नहीं करेंगे।",
       'received': "प्राप्त हुआ",
       'receivedTraffic': "• प्राप्त हुआ: ",
       'requestAccountInfo': "अकाउंट जानकारी का अनुरोध करें",
-      'requestAccountInfoSub': "अपनी खाता जानकारी और सेटिंग्स की रिपोर्ट का अनुरोध करें",
+      'requestAccountInfoSub':
+          "अपनी खाता जानकारी और सेटिंग्स की रिपोर्ट का अनुरोध करें",
       'resetNotifications': "सूचना सेटिंग्स रीसेट करें",
       'resetNotificationsSuccess': "सूचना सेटिंग्स डिफ़ॉल्ट पर रीसेट की गईं",
       'resetUsage': "रीसेट करें",
@@ -1461,7 +1689,8 @@ class AppStrings {
       'securityAndAppLock': "सुरक्षा और ऐप लॉक",
       'securityAppLockHeader': "सुरक्षा और ऐप लॉक",
       'securityNotifications': "सुरक्षा सूचनाएं",
-      'securityNotificationsSub': "किसी भी संपर्क के लिए एन्क्रिप्शन कुंजी बदलने पर सुरक्षा सूचनाएं दिखाएं।",
+      'securityNotificationsSub':
+          "किसी भी संपर्क के लिए एन्क्रिप्शन कुंजी बदलने पर सुरक्षा सूचनाएं दिखाएं।",
       'sent': "भेजा गया",
       'sentTraffic': "• भेजा गया: ",
       'session': "सत्र",
@@ -1485,9 +1714,11 @@ class AppStrings {
       'toneUpdatedSuccess': "अपडेट किया गया",
       'totalAppFootprint': "कुल ऐप आकार: ",
       'totalTraffic': "• कुल ट्रैफ़िक: ",
-      'twoStepDialogDisableDesc': "दो-चरणीय सत्यापन अक्षम करने के लिए अपना वर्तमान 6-अंकीय पिन दर्ज करें:",
+      'twoStepDialogDisableDesc':
+          "दो-चरणीय सत्यापन अक्षम करने के लिए अपना वर्तमान 6-अंकीय पिन दर्ज करें:",
       'twoStepDialogDisableTitle': "दो-चरणीय सत्यापन अक्षम करें",
-      'twoStepDialogEnableDesc': "अपने लिवोकल खाते को सुरक्षित करने के लिए 6-अंकीय पिन दर्ज करें:",
+      'twoStepDialogEnableDesc':
+          "अपने लिवोकल खाते को सुरक्षित करने के लिए 6-अंकीय पिन दर्ज करें:",
       'twoStepDialogEnableTitle': "दो-चरणीय सत्यापन सक्षम करें",
       'twoStepDisabledSnack': "दो-चरणीय सत्यापन अक्षम किया गया",
       'twoStepDisabledSub': "निष्क्रिय (6-अंकीय पिन सेट करें)",
@@ -1501,7 +1732,8 @@ class AppStrings {
       'useHighPriority': "उच्च प्राथमिकता सूचनाओं का उपयोग करें",
       'useHighPrioritySub': "स्क्रीन के शीर्ष पर सूचना पूर्वावलोकन दिखाएं",
       'useLessDataCalls': "कॉल के लिए कम डेटा उपयोग करें",
-      'useLessDataCallsSub': "कम बैंडविड्थ नेटवर्क के लिए वॉयस बिटरेट अनुकूलित करता है",
+      'useLessDataCallsSub':
+          "कम बैंडविड्थ नेटवर्क के लिए वॉयस बिटरेट अनुकूलित करता है",
       'version': "संस्करण 1.0.0 (उत्पादन तैयार)",
       'vibrate': "कंपन",
       'vibrateDefault': "डिफ़ॉल्ट",
@@ -1521,55 +1753,73 @@ class AppStrings {
       'failedToSendFeedback': "प्रतिक्रिया भेजने में विफल",
       'listenVoice': "आवाज सुनें",
       'liveAudioTranslationVoice': "लाइव ऑडियो अनुवाद वॉयस",
-      'liveAudioTranslationVoiceDesc': "चुनें कि लाइव फोन और वीओआईपी कॉल के दौरान कौन सी वॉयस पर्सोना आपको अनुवादित भाषण सुनाएगी।",
+      'liveAudioTranslationVoiceDesc':
+          "चुनें कि लाइव फोन और वीओआईपी कॉल के दौरान कौन सी वॉयस पर्सोना आपको अनुवादित भाषण सुनाएगी।",
       'livocalContact': "Livocal संपर्क",
-      'privacyPrinciplesBody': "Livocal आपकी गोपनीयता को प्राथमिकता देता है:\n\n1. निजी एन्क्रिप्शन: आपके व्यक्तिगत कॉल और संदेश पूरी तरह से सुरक्षित हैं।\n\n2. जेमिनी लाइव अनुवाद: सक्रिय कॉल के दौरान आवाज केवल अस्थायी सुरक्षित मेमोरी में प्रोसेस की जाती है, इसे कभी भी रिकॉर्ड या एआई प्रशिक्षण के लिए संग्रहीत नहीं किया जाता है।\n\n3. सुरक्षित संपर्क मिलान: आपके फोनबुक को सर्वर पर अपलोड किए बिना क्रिप्टोग्राफिक हैश द्वारा उपयोगकर्ताओं की पहचान की जाती है।",
+      'privacyPrinciplesBody':
+          "Livocal आपकी गोपनीयता को प्राथमिकता देता है:\n\n1. निजी एन्क्रिप्शन: आपके व्यक्तिगत कॉल और संदेश पूरी तरह से सुरक्षित हैं।\n\n2. जेमिनी लाइव अनुवाद: सक्रिय कॉल के दौरान आवाज केवल अस्थायी सुरक्षित मेमोरी में प्रोसेस की जाती है, इसे कभी भी रिकॉर्ड या एआई प्रशिक्षण के लिए संग्रहीत नहीं किया जाता है।\n\n3. सुरक्षित संपर्क मिलान: आपके फोनबुक को सर्वर पर अपलोड किए बिना क्रिप्टोग्राफिक हैश द्वारा उपयोगकर्ताओं की पहचान की जाती है।",
       'selectedVoice': "चयनित आवाज",
-      'shareQrInviteText': "Livocal पर मुझसे जुड़ें: {link}\nचैट करने और लाइव अनुवादित वॉयस कॉल करने के लिए ऐप डाउनलोड करें!",
+      'shareQrInviteText':
+          "Livocal पर मुझसे जुड़ें: {link}\nचैट करने और लाइव अनुवादित वॉयस कॉल करने के लिए ऐप डाउनलोड करें!",
       'stopPreview': "पूर्वावलोकन रोकें",
       'tapToSelect': "चुनने के लिए टैप करें",
-      'voicePreferenceSavedNotice': "आपकी पसंदीदा वॉयस पर्सोना आपके डिवाइस पर सुरक्षित रूप से सहेजी जाती है और सभी लाइव अनुवादित कॉलों पर स्वचालित रूप से लागू होती है।",
+      'voicePreferenceSavedNotice':
+          "आपकी पसंदीदा वॉयस पर्सोना आपके डिवाइस पर सुरक्षित रूप से सहेजी जाती है और सभी लाइव अनुवादित कॉलों पर स्वचालित रूप से लागू होती है।",
       'voicePreviewOffline': "वॉयस पूर्वावलोकन ऑफ़लाइन अनुपलब्ध है।",
-      'voiceSetSuccess': "लाइव अनुवाद वॉयस के रूप में \"{voiceId}\" सेट किया गया",
+      'voiceSetSuccess':
+          "लाइव अनुवाद वॉयस के रूप में \"{voiceId}\" सेट किया गया",
       'trialRemainingBadge': "⏱️ ट्रायल: {minutes} मिनट शेष",
       'balanceExhaustedBadge': "⚠️ बैलेंस समाप्त (0 मिनट)",
       'balanceMinutesBadge': "💎 बैलेंस: {minutes} मिनट",
       'trialDaysLeftNotice': "{days} दिन शेष • लोकल कॉल मुफ्त",
-      'rechargeForTranslationNotice': "अनुवाद कॉल के लिए रिचार्ज करें • लोकल कॉल मुफ्त",
+      'rechargeForTranslationNotice':
+          "अनुवाद कॉल के लिए रिचार्ज करें • लोकल कॉल मुफ्त",
       'translationRateNotice': "अनुवादित कॉल 1 मि./मिनट • लोकल कॉल मुफ्त",
       'recharge': "रिचार्ज",
       'rechargePlus': "+ रिचार्ज",
       'geminiLiveVoiceTranslation': "Gemini 3.5 लाइव वॉइस ट्रांसलेशन",
-      'universalLanguagePairSub': "{count}+ भाषाएं • किसी भी भाषा से किसी भी भाषा में",
+      'universalLanguagePairSub':
+          "{count}+ भाषाएं • किसी भी भाषा से किसी भी भाषा में",
       'myLanguageLabel': "मेरी भाषा (बोलें और सुनें)",
       'peerLanguageLabel': "सामने वाले की भाषा (बोलें और सुनें)",
       'selectYourLanguage': "अपनी भाषा चुनें",
       'selectPeerLanguage': "सामने वाले की भाषा चुनें",
       'dialNumber': "नंबर डायल करें",
       'recentCallsHeader': "हालिया अनुवादित और वॉइस कॉल",
-      'noRecentCalls': "अभी कोई हालिया कॉल नहीं है। ऊपर कोई नंबर डायल करें या संपर्क चुनें।",
+      'noRecentCalls':
+          "अभी कोई हालिया कॉल नहीं है। ऊपर कोई नंबर डायल करें या संपर्क चुनें।",
       'directCallByNumber': "नंबर द्वारा सीधा कॉल या चैट",
-      'directDialSubtitle': "सीधे कॉल या चैट करने के लिए कोई भी फोन नंबर दर्ज करें",
-      'freeLocalCallBanner': "🗣️ मुफ्त लोकल कॉल (समान भाषा - कोई मिनट नहीं कटेगा)",
-      'aiTranslateCallBanner': "🤖 AI अनुवाद कॉल (1 मि./मिनट) • बैलेंस: {minutes} मि.",
+      'directDialSubtitle':
+          "सीधे कॉल या चैट करने के लिए कोई भी फोन नंबर दर्ज करें",
+      'freeLocalCallBanner':
+          "🗣️ मुफ्त लोकल कॉल (समान भाषा - कोई मिनट नहीं कटेगा)",
+      'aiTranslateCallBanner':
+          "🤖 AI अनुवाद कॉल (1 मि./मिनट) • बैलेंस: {minutes} मि.",
       'voiceCallAi': "वॉइस कॉल (AI)",
       'messageAction': "मैसेज",
       'voiceMinutesRecharge': "वॉइस मिनट रिचार्ज",
-      'talkToInternationalClients': "किसी भी भाषा में अंतर्राष्ट्रीय ग्राहकों से बात करें",
+      'talkToInternationalClients':
+          "किसी भी भाषा में अंतर्राष्ट्रीय ग्राहकों से बात करें",
       'currentBalanceText': "वर्तमान बैलेंस: {minutes} मिनट",
       'trialBadgeText': "ट्रायल: {minutes} मि.",
-      'trialValidityText': "मुफ्त ट्रायल की वैधता शेष: {days} दिन (सशुल्क बैलेंस: {paid} मि.)",
-      'paidBalanceLifetimeText': "सशुल्क बैलेंस कभी समाप्त नहीं होता (आजीवन वैधता)",
-      'sameLanguageFreeRule': "🗣️ समान भाषा में लोकल कॉल 100% मुफ्त (कोई मिनट नहीं कटेगा)",
+      'trialValidityText':
+          "मुफ्त ट्रायल की वैधता शेष: {days} दिन (सशुल्क बैलेंस: {paid} मि.)",
+      'paidBalanceLifetimeText':
+          "सशुल्क बैलेंस कभी समाप्त नहीं होता (आजीवन वैधता)",
+      'sameLanguageFreeRule':
+          "🗣️ समान भाषा में लोकल कॉल 100% मुफ्त (कोई मिनट नहीं कटेगा)",
       'geminiAiRateRule': "🤖 Gemini 3.5 Live AI अनुवादিত कॉल: 1 मिनट/मिनट",
       'selectMinutePack': "पैकेज चुनें (Select Minute Pack)",
       'starterPackTitle': "स्टार्टर पैक (Starter Pack)",
-      'starterPackDesc': "त्वरित क्लाइंट इंटरव्यू और संक्षिप्त चर्चा के लिए (~৳20/मि.)",
+      'starterPackDesc':
+          "त्वरित क्लाइंट इंटरव्यू और संक्षिप्त चर्चा के लिए (~৳20/मि.)",
       'proPackTitle': "फ्रीलांसर प्रो (Freelancer Pro)",
-      'proPackDesc': "साप्ताहिक प्रोजेक्ट मीटिंग और नियमित कॉल (~৳16.6/मि., 17% बचत)",
+      'proPackDesc':
+          "साप्ताहिक प्रोजेक्ट मीटिंग और नियमित कॉल (~৳16.6/मि., 17% बचत)",
       'popularBadge': "⭐ सबसे लोकप्रिय (POPULAR)",
       'agencyPackTitle': "এजेंसी पैक (Agency / Heavy Pack)",
-      'agencyPackDesc': "एजेंसी टीमों और भारी अंतरराष्ट्रीय कॉलों के लिए (~৳14.4/मि., 28% बचत)",
+      'agencyPackDesc':
+          "एजेंसी टीमों और भारी अंतरराष्ट्रीय कॉलों के लिए (~৳14.4/मि., 28% बचत)",
       'bestValueBadge': "💎 सर्वश्रेष्ठ मूल्य (BEST VALUE)",
       'paymentMethod': "भुगतान का माध्यम (Payment Method)",
       'bdtLocal': "৳ BDT स्थानीय",
@@ -1589,9 +1839,12 @@ class AppStrings {
       'cryptoOfficialDepositAddress': "Livocal आधिकारिक {network} डिपॉजिट पता:",
       'copyBtn': "कॉपी करें",
       'copiedToClipboardSnack': "पता/नंबर {text} क्लिपबोर्ड पर कॉपी किया गया!",
-      'paymentInstructionBkash': "1. अपने bKash या Nagad ऐप से ৳{amount} भेजें या भुगतान करें।\n2. सफल लेनदेन के बाद, नीचे अपना प्रेषक नंबर और TrxID दर्ज करें:",
-      'paymentInstructionBinance': "1. Binance ऐप में Pay > Send to Binance ID पर जाएं और {amount} USDT भेजें।\n2. सफल भुगतान के बाद, अपनी Binance ID और Pay Order ID नीचे दर्ज करें:",
-      'paymentInstructionCrypto': "1. अपने क्रिप्टो वॉलेट से {amount} USDT ({network}) भेजें।\n2. लेनदेन के बाद, अपना प्रेषक वॉलेट पता और TxHash नीचे दर्ज करें:",
+      'paymentInstructionBkash':
+          "1. अपने bKash या Nagad ऐप से ৳{amount} भेजें या भुगतान करें।\n2. सफल लेनदेन के बाद, नीचे अपना प्रेषक नंबर और TrxID दर्ज करें:",
+      'paymentInstructionBinance':
+          "1. Binance ऐप में Pay > Send to Binance ID पर जाएं और {amount} USDT भेजें।\n2. सफल भुगतान के बाद, अपनी Binance ID और Pay Order ID नीचे दर्ज करें:",
+      'paymentInstructionCrypto':
+          "1. अपने क्रिप्टो वॉलेट से {amount} USDT ({network}) भेजें।\n2. लेनदेन के बाद, अपना प्रेषक वॉलेट पता और TxHash नीचे दर्ज करें:",
       'senderNumberInputLabel': "आपका भेजने वाला फोन नंबर (Sender Number)",
       'binancePayIdInputLabel': "आपकी Binance Pay ID या ईमेल",
       'senderAddressInputLabel': "आपका प्रेषक वॉलेट पता (Sender Address)",
@@ -1600,25 +1853,33 @@ class AppStrings {
       'txHashInputLabel': "ब्लॉकचेन TxHash (Transaction Hash)",
       'submitPaymentBdt': "৳{amount} भुगतान सत्यापन सबमिट करें",
       'submitPaymentUsdt': "\${amount} USDT भुगतान सत्यापन सबमिट करें",
-      'waitForDepositAccountSnack': "कृपया सर्वर से डिपॉजिट खाता लोड होने तक प्रतीक्षा करें या रीफ्रेश करें।",
+      'waitForDepositAccountSnack':
+          "कृपया सर्वर से डिपॉजिट खाता लोड होने तक प्रतीक्षा करें या रीफ्रेश करें।",
       'enterSenderPhoneSnack': "कृपया अपना भेजने वाला फोन नंबर दर्ज करें।",
       'enterBinancePayIdSnack': "कृपया अपनी Binance Pay ID या ईमेल दर्ज करें।",
-      'enterSenderCryptoAddressSnack': "कृपया अपना प्रेषक क्रिप्टो वॉलेट पता दर्ज करें।",
+      'enterSenderCryptoAddressSnack':
+          "कृपया अपना प्रेषक क्रिप्टो वॉलेट पता दर्ज करें।",
       'enterTxHashSnack': "कृपया ब्लॉकचेन TxHash दर्ज करें।",
       'enterTrxIdSnack': "कृपया ट्रांजेक्शन आईडी (TrxID / Order ID) दर्ज करें।",
-      'trc20AddressLengthError': "TRC-20 वॉलेट पता 'T' से शुरू होना चाहिए और 34 अक्षरों का होना चाहिए।",
-      'bep20AddressLengthError': "BEP-20 वॉलेट पता '0x' से शुरू होना चाहिए और 42 अक्षरों का होना चाहिए।",
-      'invalidTxHashError': "कृपया एक वैध 64-वर्ण का ब्लॉकचेन TxHash दर्ज करें।",
-      'paymentSubmittedSuccess': "भुगतान अनुरोध सफलतापूर्वक सबमिट हो गया! व्यवस्थापक अनुमोदन पर मिनट जोड़ दिए जाएंगे।",
+      'trc20AddressLengthError':
+          "TRC-20 वॉलेट पता 'T' से शुरू होना चाहिए और 34 अक्षरों का होना चाहिए।",
+      'bep20AddressLengthError':
+          "BEP-20 वॉलेट पता '0x' से शुरू होना चाहिए और 42 अक्षरों का होना चाहिए।",
+      'invalidTxHashError':
+          "कृपया एक वैध 64-वर्ण का ब्लॉकचेन TxHash दर्ज करें।",
+      'paymentSubmittedSuccess':
+          "भुगतान अनुरोध सफलतापूर्वक सबमिट हो गया! व्यवस्थापक अनुमोदन पर मिनट जोड़ दिए जाएंगे।",
       'paymentFailedSnack': "भुगतान अनुरोध सबमिट नहीं किया जा सका।",
       'minutesExhaustedTitle': "अनुवाद मिनट समाप्त",
       'minutesExhaustedSub': "AI लाइव अनुवाद कॉल के लिए मिनट बैलेंस आवश्यक है",
-      'sameLanguageFreeNotice': "समान भाषा में सामान्य कॉल पूरी तरह मुफ्त हैं! केवल विभिन्न भाषाओं के बीच रीयल-टाइम AI अनुवाद के लिए मिनट उपयोग किए जाते हैं।",
+      'sameLanguageFreeNotice':
+          "समान भाषा में सामान्य कॉल पूरी तरह मुफ्त हैं! केवल विभिन्न भाषाओं के बीच रीयल-टाइम AI अनुवाद के लिए मिनट उपयोग किए जाते हैं।",
       'starterBundleMinutes': "60 मिनट",
       'proBundleMinutes': "180 मिनट",
       'buyMinutes': "मिनट खरीदें",
       'callFreeNoAi': "मुफ्त कॉल करें (बिना अनुवाद)",
-      'minutesExhaustedAlert': "आपके मिनट समाप्त हो गए हैं। बातचीत जारी रखने के लिए कृपया रिचार्ज करें।",
+      'minutesExhaustedAlert':
+          "आपके मिनट समाप्त हो गए हैं। बातचीत जारी रखने के लिए कृपया रिचार्ज करें।",
       'muteBtn': "म्यूट",
       'unmuteBtn': "अनम्यूट",
       'speakerBtn': "स्पीकर",
@@ -1631,9 +1892,11 @@ class AppStrings {
       'muteNotifications': "सूचनाएँ म्यूट करें",
       'unmuteNotifications': "सूचनाएँ अनम्यूट करें",
       'clearChat': "चैट साफ़ करें",
-      'blockedTapToUnblock': "आपने इस संपर्क को ब्लॉक किया है। अनब्लॉक करने के लिए टैप करें।",
+      'blockedTapToUnblock':
+          "आपने इस संपर्क को ब्लॉक किया है। अनब्लॉक करने के लिए टैप करें।",
       'sayHelloTo': "{name} को नमस्ते कहें",
-      'noMessagesYet': "अभी कोई संदेश नहीं है। बातचीत शुरू करने के लिए नमस्ते या वॉइस नोट भेजें।",
+      'noMessagesYet':
+          "अभी कोई संदेश नहीं है। बातचीत शुरू करने के लिए नमस्ते या वॉइस नोट भेजें।",
       'sayHello': "नमस्ते कहें!",
       'disappearingMessagesOn': "डिसएपियरिंग संदेश चालू हैं ({timer})",
       'takePhoto': "फ़ोटो लें",
@@ -1641,12 +1904,15 @@ class AppStrings {
       'textStatus': "टेक्स्ट स्टेटस",
       'viewStatus': "स्टेटस देखें",
       'addNewStatus': "नया स्टेटस जोड़ें",
-      'languageAppliedLocally': "भाषा स्थानीय रूप से लागू हुई (क्लाउड सिंक ऑफ़लाइन)।",
-      'failedToInitiateCall': "कॉल शुरू नहीं हो सकी। कृपया अपना नेटवर्क कनेक्शन जाँचें।",
+      'languageAppliedLocally':
+          "भाषा स्थानीय रूप से लागू हुई (क्लाउड सिंक ऑफ़लाइन)।",
+      'failedToInitiateCall':
+          "कॉल शुरू नहीं हो सकी। कृपया अपना नेटवर्क कनेक्शन जाँचें।",
       'searchChatsHint': "चैट, संदेश खोजें...",
       'paymentReceivingAccounts': "भुगतान प्राप्त करने वाले खाते",
       'p2pPaymentSettings': "P2P भुगतान सेटिंग्स",
-      'p2pPaymentSettingsDesc': "चैट में अन्य उपयोगकर्ता आपको पैसे और क्रिप्टोकरेंसी भेज सकें, ऐसे खाते कॉन्फ़िगर करें। सुनिश्चित करें कि आपके TRC-20 और BEP-20 पते सही हैं।",
+      'p2pPaymentSettingsDesc':
+          "चैट में अन्य उपयोगकर्ता आपको पैसे और क्रिप्टोकरेंसी भेज सकें, ऐसे खाते कॉन्फ़िगर करें। सुनिश्चित करें कि आपके TRC-20 और BEP-20 पते सही हैं।",
       'cryptocurrencyAndBinance': "क्रिप्टोकरेंसी और Binance",
       'mobileFinancialServices': "मोबाइल वित्तीय सेवाएँ (MFS)",
       'binancePayIdLabel': "Binance Pay ID / Binance ईमेल",
@@ -1656,13 +1922,16 @@ class AppStrings {
       'nagadPersonalLabel': "Nagad व्यक्तिगत नंबर",
       'savePaymentAccounts': "भुगतान खाते सहेजें",
       'couldNotLoadChats': "चैट लोड नहीं हो सकीं",
-      'checkConnectionRetry': "कृपया अपना कनेक्शन जाँचें और फिर से प्रयास करें।",
+      'checkConnectionRetry':
+          "कृपया अपना कनेक्शन जाँचें और फिर से प्रयास करें।",
       'noChatsMatching': "\"{query}\" से मेल खाती कोई चैट नहीं मिली",
       'noConversationsYet': "अभी कोई बातचीत नहीं",
-      'startChattingDesc': "रीयल-टाइम अनुवाद और वॉइस कॉल के साथ अपने संपर्कों से चैट शुरू करें।",
+      'startChattingDesc':
+          "रीयल-टाइम अनुवाद और वॉइस कॉल के साथ अपने संपर्कों से चैट शुरू करें।",
       'startNewChat': "नई चैट शुरू करें",
       'noMatchesFound': "कोई मेल नहीं मिला",
-      'languagePreferenceSavedLocally': "भाषा प्राथमिकता स्थानीय रूप से सहेजी गई (क्लाउड सिंक ऑफ़लाइन)।",
+      'languagePreferenceSavedLocally':
+          "भाषा प्राथमिकता स्थानीय रूप से सहेजी गई (क्लाउड सिंक ऑफ़लाइन)।",
       'selectYourSpokenLanguage': "अपनी बोली जाने वाली भाषा चुनें",
       'camera': "कैमरा",
       'gallery': "गैलरी",
@@ -1672,9 +1941,11 @@ class AppStrings {
       'phoneLabel': "फ़ोन",
       'unstarAll': "सभी अनस्टार करें",
       'defaultDoodleWallpaper': "Livocal ग्रेडिएंट (डिफ़ॉल्ट)",
-      'nameVisibilityHint': "यह आपका उपयोगकर्ता नाम या पिन नहीं है। यह नाम आपके Livocal संपर्कों को दिखाई देगा।",
+      'nameVisibilityHint':
+          "यह आपका उपयोगकर्ता नाम या पिन नहीं है। यह नाम आपके Livocal संपर्कों को दिखाई देगा।",
       'noStarredMessages': "कोई स्टार किया गया संदेश नहीं",
-      'starredEmptyHint': "बाद में आसानी से खोजने के लिए चैट में किसी भी संदेश को दबाकर स्टार करें।",
+      'starredEmptyHint':
+          "बाद में आसानी से खोजने के लिए चैट में किसी भी संदेश को दबाकर स्टार करें।",
       'display': "डिस्प्ले",
       'chatWallpaper': "चैट वॉलपेपर",
       'wallpaperResetDefault': "वॉलपेपर डिफ़ॉल्ट पर रीसेट हो गया",
@@ -1699,12 +1970,15 @@ class AppStrings {
       'invite': "आमंत्रित करें",
       'selectContactToBlock': "ब्लॉक करने के लिए संपर्क चुनें",
       'noContactsToBlock': "ब्लॉक करने के लिए कोई संपर्क नहीं",
-      'blockedContactsDesc': "ब्लॉक किए गए संपर्क अब आपको कॉल या संदेश नहीं भेज पाएँगे।",
+      'blockedContactsDesc':
+          "ब्लॉक किए गए संपर्क अब आपको कॉल या संदेश नहीं भेज पाएँगे।",
       'tapToUnblock': "अनब्लॉक करने के लिए संपर्क पर टैप करें।",
       'unblock': "अनब्लॉक",
       'failedToLoadMedia': "मीडिया लोड नहीं हो सका",
-      'voicePreviewSavedLocally': "भाषा प्राथमिकता स्थानीय रूप से सहेजी गई; क्लाउड सिंक ऑफ़लाइन।",
-      'voicePreviewUnavailable': "वॉइस प्रीव्यू अस्थायी रूप से उपलब्ध नहीं है। कृपया इंटरनेट कनेक्शन जाँचें।",
+      'voicePreviewSavedLocally':
+          "भाषा प्राथमिकता स्थानीय रूप से सहेजी गई; क्लाउड सिंक ऑफ़लाइन।",
+      'voicePreviewUnavailable':
+          "वॉइस प्रीव्यू अस्थायी रूप से उपलब्ध नहीं है। कृपया इंटरनेट कनेक्शन जाँचें।",
       'decline': "अस्वीकार करें",
       'tapToAnswer': "उत्तर देने के लिए टैप करें",
       'aiCall': "AI कॉल",
@@ -1721,10 +1995,14 @@ class AppStrings {
       'zeroMinutesNotConnected': "0 मिनट (कनेक्ट नहीं हुआ)",
       'zeroMinutesNormalCall': "0 मिनट (सामान्य कॉल)",
       'minutesDeducted': "{minutes} मिनट काटे गए",
-      'missedIncomingMessage': "आपने एक इनकमिंग कॉल मिस की। आप वापस कॉल कर सकते हैं या संदेश भेज सकते हैं।",
-      'missedOutgoingMessage': "दूसरी ओर से उत्तर नहीं आया। कृपया थोड़ी देर बाद फिर प्रयास करें।",
-      'translatedCallSuccessMessage': "🌐 लाइव AI वॉइस अनुवाद के साथ आपकी बातचीत सफलतापूर्वक पूरी हुई। Livocal का उपयोग करने के लिए धन्यवाद!",
-      'normalCallSuccessMessage': "आपकी बातचीत सफलतापूर्वक पूरी हुई। बेहतरीन बातचीत के लिए धन्यवाद!",
+      'missedIncomingMessage':
+          "आपने एक इनकमिंग कॉल मिस की। आप वापस कॉल कर सकते हैं या संदेश भेज सकते हैं।",
+      'missedOutgoingMessage':
+          "दूसरी ओर से उत्तर नहीं आया। कृपया थोड़ी देर बाद फिर प्रयास करें।",
+      'translatedCallSuccessMessage':
+          "🌐 लाइव AI वॉइस अनुवाद के साथ आपकी बातचीत सफलतापूर्वक पूरी हुई। Livocal का उपयोग करने के लिए धन्यवाद!",
+      'normalCallSuccessMessage':
+          "आपकी बातचीत सफलतापूर्वक पूरी हुई। बेहतरीन बातचीत के लिए धन्यवाद!",
       'missedCall': "मिस्ड कॉल",
       'missedVoiceCall': "मिस्ड वॉइस कॉल",
       'declinedCall': "अस्वीकृत कॉल",
@@ -1735,14 +2013,18 @@ class AppStrings {
       'incomingVoiceCall': "इनकमिंग वॉइस कॉल",
       'noAnswer': "कोई उत्तर नहीं",
       'talkedFor': "{duration} तक बात हुई",
-      'languagesSupported': "{count}+ Gemini Live भाषाएँ समर्थित (किसी से किसी में)",
+      'languagesSupported':
+          "{count}+ Gemini Live भाषाएँ समर्थित (किसी से किसी में)",
       'popularLanguages': "लोकप्रिय भाषाएँ",
       'aiInterpreterVoicePreferences': "AI इंटरप्रेटर वॉइस और प्राथमिकताएँ",
-      'aiVoicePrefsDesc': "कॉल के दौरान अनुवादित आवाज़ कैसी सुनाई दे, इसे अनुकूलित करें। AI वास्तविक समय में भाषाएँ स्वतः पहचानता है।",
+      'aiVoicePrefsDesc':
+          "कॉल के दौरान अनुवादित आवाज़ कैसी सुनाई दे, इसे अनुकूलित करें। AI वास्तविक समय में भाषाएँ स्वतः पहचानता है।",
       'zeroTrustRelayActive': "ज़ीरो-ट्रस्ट क्लाउड AI रिले सक्रिय",
-      'zeroTrustRelayDesc': "लाइव API कुंजियाँ और ऑडियो पाइपलाइन बैकएंड सर्वर पर सुरक्षित रूप से प्रबंधित होती हैं।",
+      'zeroTrustRelayDesc':
+          "लाइव API कुंजियाँ और ऑडियो पाइपलाइन बैकएंड सर्वर पर सुरक्षित रूप से प्रबंधित होती हैं।",
       'selectAiInterpreterVoice': "AI इंटरप्रेटर वॉइस चुनें",
-      'selectAiVoiceDesc': "अनुवादित ऑडियो सुनाते समय उपयोग होने वाली सिंथेटिक आवाज़ चुनें।",
+      'selectAiVoiceDesc':
+          "अनुवादित ऑडियो सुनाते समय उपयोग होने वाली सिंथेटिक आवाज़ चुनें।",
       'saveVoicePreference': "वॉइस प्राथमिकता सहेजें",
       'differentLanguageDetected': "अलग भाषा पाई गई",
       'youSpeak': "आप बोलेंगे",
@@ -1765,11 +2047,13 @@ class AppStrings {
       'muteDesc': "इस संपर्क के नए संदेशों के अलर्ट बंद करें",
       'customNotifications': "कस्टम सूचनाएँ",
       'encryptionAndSecurity': "एन्क्रिप्शन और सुरक्षा",
-      'encryptionDesc': "संदेश और कॉल सुरक्षित TLS/SRTP ट्रांसपोर्ट और अस्थायी अनुवाद का उपयोग करते हैं",
+      'encryptionDesc':
+          "संदेश और कॉल सुरक्षित TLS/SRTP ट्रांसपोर्ट और अस्थायी अनुवाद का उपयोग करते हैं",
       'reportContactName': "{name} की रिपोर्ट करें",
       'geminiAiLiveTranslation': "Gemini AI लाइव अनुवाद",
       'startTranslatedVoiceCall': "अनुवादित वॉइस कॉल शुरू करें",
-      'reportForwardWarning': "इस संपर्क के अंतिम 5 संदेश सुरक्षा समीक्षा के लिए Livocal को भेजे जाएँगे। संपर्क को सूचित नहीं किया जाएगा।",
+      'reportForwardWarning':
+          "इस संपर्क के अंतिम 5 संदेश सुरक्षा समीक्षा के लिए Livocal को भेजे जाएँगे। संपर्क को सूचित नहीं किया जाएगा।",
       'reasonForReport': "रिपोर्ट का कारण:",
       'blockContactClearMessages': "संपर्क ब्लॉक करें और संदेश साफ़ करें",
       'inChatAiTranslation': "चैट में AI लाइव अनुवाद",
@@ -1777,9 +2061,11 @@ class AppStrings {
       'languagePreferences': "भाषा प्राथमिकताएँ",
       'myLanguage': "मेरी भाषा",
       'autoTranslateIncoming': "आने वाले संदेशों का स्वतः अनुवाद करें",
-      'autoTranslateIncomingDesc': "प्राप्त संदेशों के नीचे स्वतः अनुवाद दिखाता है",
+      'autoTranslateIncomingDesc':
+          "प्राप्त संदेशों के नीचे स्वतः अनुवाद दिखाता है",
       'liveVoiceNoteTranscription': "लाइव वॉइस नोट ट्रांसक्रिप्शन",
-      'liveVoiceNoteDesc': "आने वाले ऑडियो वॉइस संदेशों को ट्रांसक्राइब और अनुवाद करें",
+      'liveVoiceNoteDesc':
+          "आने वाले ऑडियो वॉइस संदेशों को ट्रांसक्राइब और अनुवाद करें",
       'testRealtimeTranslation': "रीयल-टाइम अनुवाद परखें",
       'translate': "अनुवाद करें",
       'saveApplySettings': "सहेजें और लागू करें",
@@ -1790,7 +2076,8 @@ class AppStrings {
       'sendPaymentTo': "{name} को भुगतान भेजें",
       'selectPaymentMethod': "भुगतान विधि चुनें",
       'livocalInAppWallet': "Livocal इन-ऐप वॉलेट",
-      'walletBalanceTransfer': "बैलेंस: {available} मिनट ({needed} मिनट ट्रांसफर होंगे)",
+      'walletBalanceTransfer':
+          "बैलेंस: {available} मिनट ({needed} मिनट ट्रांसफर होंगे)",
       'bkashNagadMfs': "bKash / Nagad MFS (सीधे भेजें)",
       'cryptoBinanceUsdt': "क्रिप्टो (Binance Pay / USDT)",
       'shortByMinutes': "इस ट्रांसफर के लिए {minutes} मिनट कम हैं।",
@@ -1799,13 +2086,16 @@ class AppStrings {
       'confirmPayment': "भुगतान की पुष्टि करें: {amount}",
       'welcomeBadge1': "नेक्स्ट-जेन कनेक्ट",
       'welcomeTitle1': "Livocal में आपका स्वागत है",
-      'welcomeDesc1': "रोज़मर्रा की निर्बाध कनेक्टिविटी के लिए अल्ट्रा-फास्ट, निजी मैसेजिंग और स्पष्ट वॉइस संचार।",
+      'welcomeDesc1':
+          "रोज़मर्रा की निर्बाध कनेक्टिविटी के लिए अल्ट्रा-फास्ट, निजी मैसेजिंग और स्पष्ट वॉइस संचार।",
       'welcomeBadge2': "Gemini Live AI",
       'welcomeTitle2': "रीयल-टाइम वॉइस अनुवाद",
-      'welcomeDesc2': "रीयल-टाइम में भाषा की बाधाएँ तोड़ें। कॉल के दौरान उप-सेकंड द्विदिश लाइव ऑडियो अनुवाद के साथ बांग्ला या अंग्रेज़ी में बोलें।",
+      'welcomeDesc2':
+          "रीयल-टाइम में भाषा की बाधाएँ तोड़ें। कॉल के दौरान उप-सेकंड द्विदिश लाइव ऑडियो अनुवाद के साथ बांग्ला या अंग्रेज़ी में बोलें।",
       'welcomeBadge3': "प्राइवेसी बाय डिज़ाइन",
       'welcomeTitle3': "डिफ़ॉल्ट रूप से निजी और सुरक्षित",
-      'welcomeDesc3': "DTLS-SRTP एन्क्रिप्टेड वॉइस स्ट्रीम, सुरक्षित व्यक्तिगत डेटा, शून्य एड्रेस-बुक हार्वेस्टिंग और बायोमेट्रिक ऐप लॉक।",
+      'welcomeDesc3':
+          "DTLS-SRTP एन्क्रिप्टेड वॉइस स्ट्रीम, सुरक्षित व्यक्तिगत डेटा, शून्य एड्रेस-बुक हार्वेस्टिंग और बायोमेट्रिक ऐप लॉक।",
       'enterPhoneNumber': "अपना फ़ोन नंबर दर्ज करें",
       'carrierCharges': "कैरियर शुल्क लागू हो सकते हैं।",
       'next': "आगे",
@@ -1848,8 +2138,10 @@ class AppStrings {
       'myStatus': "मेरा स्टेटस",
       'couldNotLoadStatus': "स्टेटस अपडेट लोड नहीं हो सके",
       'noRecentUpdates': "कोई हालिया अपडेट नहीं",
-      'statusUpdatesDesc': "आपके संपर्कों के स्टेटस अपडेट यहाँ दिखेंगे। वे 24 घंटे बाद गायब हो जाते हैं।",
-      'statusPrivacyNote': "आपके स्टेटस अपडेट आपकी प्राइवेसी सेटिंग्स से सुरक्षित हैं",
+      'statusUpdatesDesc':
+          "आपके संपर्कों के स्टेटस अपडेट यहाँ दिखेंगे। वे 24 घंटे बाद गायब हो जाते हैं।",
+      'statusPrivacyNote':
+          "आपके स्टेटस अपडेट आपकी प्राइवेसी सेटिंग्स से सुरक्षित हैं",
       'messageHint': "संदेश",
       'recentUpdates': "हालिया अपडेट",
       'aiTranslatedVoiceCall': "Livocal AI अनुवादित कॉल",
@@ -1870,20 +2162,27 @@ class AppStrings {
       'unpinMessage': "पिन हटाएँ",
       'pinnedMessages': "पिन किए गए संदेश",
       'noPinnedMessages': "कोई पिन किया गया संदेश नहीं",
-      'callWarningRemainingMinutes': "⚠️ चेतावनी: आपके खाते में केवल {minutes} मिनट शेष हैं।",
-      'callTerminatedExhausted': "🛑 आपके मिनट समाप्त हो गए हैं। कॉल समाप्त की जा रही है।",
-      'callTranslationActiveNotice': "{myEmoji} {myName} ⇄ {peerEmoji} {peerName} रीयल-टाइम वॉइस ट्रांसलेशन सक्रिय है। किसी भी भाषा में बोलें!",
+      'callWarningRemainingMinutes':
+          "⚠️ चेतावनी: आपके खाते में केवल {minutes} मिनट शेष हैं।",
+      'callTerminatedExhausted':
+          "🛑 आपके मिनट समाप्त हो गए हैं। कॉल समाप्त की जा रही है।",
+      'callTranslationActiveNotice':
+          "{myEmoji} {myName} ⇄ {peerEmoji} {peerName} रीयल-टाइम वॉइस ट्रांसलेशन सक्रिय है। किसी भी भाषा में बोलें!",
       'dialPhoneNumber': "फोन नंबर डायल करें",
       'dialPhoneNumberSub': "सीधे कॉल या चैट करने के लिए नंबर दर्ज करें",
-      'realtimeTranslationActive': "{langA} ⇄ {langB} रीयल-टाइम अनुवाद सक्रिय किया गया",
-      'sameLanguageDirectCallNotice': "दोनों उपयोगकर्ताओं की भाषा एक ही है ({lang})। बिना अनुवाद के सीधे अपनी स्वाभाविक आवाज में बात करें।",
+      'realtimeTranslationActive':
+          "{langA} ⇄ {langB} रीयल-टाइम अनुवाद सक्रिय किया गया",
+      'sameLanguageDirectCallNotice':
+          "दोनों उपयोगकर्ताओं की भाषा एक ही है ({lang})। बिना अनुवाद के सीधे अपनी स्वाभाविक आवाज में बात करें।",
       'directVoiceCallActiveNotice': "सीधी वॉयस कॉल सक्रिय है।",
-      'aiUnavailableDirectFallback': "एआई अनुवादक अनुपलब्ध है। सीधी वॉयस कॉल से कनेक्ट किया गया।",
+      'aiUnavailableDirectFallback':
+          "एआई अनुवादक अनुपलब्ध है। सीधी वॉयस कॉल से कनेक्ट किया गया।",
       'starterPackPriceText': "1,200 BDT (\$9.99)",
       'proPackPriceText': "3,000 BDT (\$24.99)",
       'bdtAmount': "{amount} BDT",
       'callContinuingDirectVoiceDesc': "सीधी वॉइस कॉल जारी है।",
-      'callerMinutesExhaustedDirectVoiceDesc': "कॉलर के अनुवाद मिनट समाप्त हो गए हैं। सीधी वॉइस कॉल पर स्विच किया गया।",
+      'callerMinutesExhaustedDirectVoiceDesc':
+          "कॉलर के अनुवाद मिनट समाप्त हो गए हैं। सीधी वॉइस कॉल पर स्विच किया गया।",
       'rechargeNowBtn': "रिचार्ज",
     },
     'ar': {
@@ -1892,13 +2191,15 @@ class AppStrings {
       'account': "الحساب",
       'accountAndPrivacy': "الحساب والخصوصية",
       'accountManagement': "إدارة الحساب",
-      'accountReportSubmitted': "تم تقديم طلب تقرير الحساب. سيكون جاهزاً خلال 24 ساعة.",
+      'accountReportSubmitted':
+          "تم تقديم طلب تقرير الحساب. سيكون جاهزاً خلال 24 ساعة.",
       'accountSub': "إشعارات الأمان، التحقق بخطوتين، تغيير الرقم",
       'advancedAiEngine': "الصوت والترجمة",
       'allMedia': "جميع الوسائط",
       'appDatabaseIsar': "• قاعدة بيانات التطبيق (Isar): ",
       'appInfo': "معلومات التطبيق",
-      'appInfoDesc': "ترجمة صوتية حية بالذكاء الاصطناعي ومراسلة آمنة بتقنية WebRTC وGemini.",
+      'appInfoDesc':
+          "ترجمة صوتية حية بالذكاء الاصطناعي ومراسلة آمنة بتقنية WebRTC وGemini.",
       'appLanguage': "لغة التطبيق",
       'appLanguageSub': "English, বাংলা, हिन्दी, العربية...",
       'biometricCancelled': "تم إلغاء التحقق البيومتري.",
@@ -1917,8 +2218,10 @@ class AppStrings {
       'callsHeader': "المكالمات",
       'cancel': "إلغاء",
       'changeNumber': "تغيير الرقم",
-      'changeNumberDesc': "سيؤدي تغيير رقم الهاتف إلى نقل جميع معلومات حسابك وإعداداتك.",
-      'changeNumberDialogContent': "نقل حسابك لرقم جديد سينقل جميع بياناتك وإعداداتك بأمان.",
+      'changeNumberDesc':
+          "سيؤدي تغيير رقم الهاتف إلى نقل جميع معلومات حسابك وإعداداتك.",
+      'changeNumberDialogContent':
+          "نقل حسابك لرقم جديد سينقل جميع بياناتك وإعداداتك بأمان.",
       'chats': "الدردشات",
       'chatsAndTheme': "الدردشات والمظهر",
       'chatsAndThemeSub': "خلفيات الشاشة، المظهر، سجل الدردشة",
@@ -1927,7 +2230,8 @@ class AppStrings {
       'chooseTheme': "اختر المظهر",
       'classicBellPreset': "جرس كلاسيكي",
       'clearCache': "مسح التخزين المؤقت",
-      'clearCacheDialogDesc': "سيؤدي هذا إلى مسح الملفات الصوتية المؤقتة مع الحفاظ على نصوص الرسائل.",
+      'clearCacheDialogDesc':
+          "سيؤدي هذا إلى مسح الملفات الصوتية المؤقتة مع الحفاظ على نصوص الرسائل.",
       'clearCacheDialogTitle': "مسح ذاكرة التخزين المؤقت للوسائط؟",
       'clearCacheSub': "حذف الرسائل الصوتية والملفات المؤقتة المحملة",
       'clearCallLog': "مسح سجل المكالمات",
@@ -1980,13 +2284,18 @@ class AppStrings {
       'enterNewPin': "أدخل رقم تعريف شخصي لحماية وتأمين حسابك:",
       'enterValid6DigitPin': "يرجى إدخال رقم تعريف شخصي صالح مكون من 6 أرقام",
       'everyone': "الجميع",
-      'faqApiKeyA': "انتقل للإعدادات وأدخل مفتاح API الخاص بك من Google AI Studio واختر الصوت المفضل.",
+      'faqApiKeyA':
+          "انتقل للإعدادات وأدخل مفتاح API الخاص بك من Google AI Studio واختر الصوت المفضل.",
       'faqApiKeyQ': "كيف يمكنني تكوين مفتاح Gemini API الخاص بي؟",
-      'faqContactsA': "اضغط على زر جهات الاتصال للاتصال فوراً أو أرسل دعوة عبر رسالة نصية.",
+      'faqContactsA':
+          "اضغط على زر جهات الاتصال للاتصال فوراً أو أرسل دعوة عبر رسالة نصية.",
       'faqContactsQ': "كيف أضيف جهات اتصال أو أدعوها؟",
-      'faqLiveTranslationA': "أثناء المكالمة، يتم دفق الصوت عبر WebRTC وتترجمه تقنية Gemini Live فورياً.",
-      'faqLiveTranslationQ': "كيف تعمل الترجمة الصوتية الفورية بالذكاء الاصطناعي؟",
-      'faqSecurityA': "نعم! المكالمات مشفرة بـ DTLS-SRTP والرسائل محمية بقواعد أمان صارمة.",
+      'faqLiveTranslationA':
+          "أثناء المكالمة، يتم دفق الصوت عبر WebRTC وتترجمه تقنية Gemini Live فورياً.",
+      'faqLiveTranslationQ':
+          "كيف تعمل الترجمة الصوتية الفورية بالذكاء الاصطناعي؟",
+      'faqSecurityA':
+          "نعم! المكالمات مشفرة بـ DTLS-SRTP والرسائل محمية بقواعد أمان صارمة.",
       'faqSecurityQ': "هل مكالماتي ورسائلي مشفرة؟",
       'faqTitle': "الأسئلة الشائعة (FAQ)",
       'feedbackSentSuccess': "شكراً لك! تم إرسال ملاحظاتك إلى فريق الهندسة.",
@@ -2010,7 +2319,8 @@ class AppStrings {
       'inviteFriend': "دعوة صديق",
       'inviteFriendSub': "شارك ليفوكال مع جهات الاتصال والعائلة",
       'inviteLinkCopied': "تم نسخ رابط الدعوة إلى الحافظة",
-      'languageNote': "تغيير اللغة يحدّث فورياً جميع الشاشات والإشعارات والمكالمات الصوتية.",
+      'languageNote':
+          "تغيير اللغة يحدّث فورياً جميع الشاشات والإشعارات والمكالمات الصوتية.",
       'lastSeenAndOnline': "آخر ظهور والمتصل الآن",
       'legalAndInfo': "الشؤون القانونية والمعلومات",
       'light': "فاتح",
@@ -2019,7 +2329,8 @@ class AppStrings {
       'livocalHarmonyPreset': "ليفنس ليفوكال (افتراضي)",
       'localDatabase': "قاعدة البيانات المحلية والدردشات",
       'logout': "تسجيل الخروج",
-      'logoutDialogContent': "هل أنت متأكد أنك تريد تسجيل الخروج؟ سيتم مسح البيانات المحلية.",
+      'logoutDialogContent':
+          "هل أنت متأكد أنك تريد تسجيل الخروج؟ سيتم مسح البيانات المحلية.",
       'logoutDialogTitle': "تسجيل الخروج من ليفوكال؟",
       'logoutSub': "مسح بيانات الاعتماد المحلية وتسجيل الخروج",
       'manageStorage': "إدارة التخزين",
@@ -2056,13 +2367,15 @@ class AppStrings {
       'privacySub': "حظر جهات الاتصال، الرسائل ذاتية الاختفاء، القفل الحيوي",
       'profilePhoto': "الصورة الشخصية",
       'qrCode': "رمز QR",
-      'qrCodeDesc': "رمز QR الخاص بك خاص. إذا شاركته، يمكن للآخرين مسحه لإضافتك على ليفوكال.",
+      'qrCodeDesc':
+          "رمز QR الخاص بك خاص. إذا شاركته، يمكن للآخرين مسحه لإضافتك على ليفوكال.",
       'reactionNotif': "إشعارات التفاعلات",
       'reactionNotifSub': "إظهار إشعارات للتفاعلات مع الرسائل التي ترسلها",
       'reactionNotifications': "إشعارات التفاعلات",
       'reactionNotificationsSub': "إظهار إشعارات عند التفاعل مع رسائلك",
       'readReceipts': "مؤشرات قراءة الرسائل (العلامات الزرقاء)",
-      'readReceiptsSub': "في حال إيقافها، لن تتمكن من إرسال أو استقبال مؤشرات القراءة.",
+      'readReceiptsSub':
+          "في حال إيقافها، لن تتمكن من إرسال أو استقبال مؤشرات القراءة.",
       'received': "مُستلم",
       'receivedTraffic': "• مُستلم: ",
       'requestAccountInfo': "طلب معلومات الحساب",
@@ -2078,7 +2391,8 @@ class AppStrings {
       'securityAndAppLock': "الأمان وقفل التطبيق",
       'securityAppLockHeader': "الأمان وقفل التطبيق",
       'securityNotifications': "إشعارات الأمان",
-      'securityNotificationsSub': "إظهار إشعارات الأمان عند تغيير مفاتيح التشفير لأي جهة اتصال.",
+      'securityNotificationsSub':
+          "إظهار إشعارات الأمان عند تغيير مفاتيح التشفير لأي جهة اتصال.",
       'sent': "مُرسل",
       'sentTraffic': "• مُرسل: ",
       'session': "الجلسة",
@@ -2102,9 +2416,11 @@ class AppStrings {
       'toneUpdatedSuccess': "تم التحديث",
       'totalAppFootprint': "إجمالي حجم التطبيق: ",
       'totalTraffic': "• إجمالي حركة البيانات: ",
-      'twoStepDialogDisableDesc': "أدخل رمز PIN الحالي لتأكيد تعطيل التحقق بخطوتين:",
+      'twoStepDialogDisableDesc':
+          "أدخل رمز PIN الحالي لتأكيد تعطيل التحقق بخطوتين:",
       'twoStepDialogDisableTitle': "تعطيل التحقق بخطوتين",
-      'twoStepDialogEnableDesc': "أدخل رمز PIN مكون من 6 أرقام لحماية حسابك في ليفوكال:",
+      'twoStepDialogEnableDesc':
+          "أدخل رمز PIN مكون من 6 أرقام لحماية حسابك في ليفوكال:",
       'twoStepDialogEnableTitle': "تمكين التحقق بخطوتين",
       'twoStepDisabledSnack': "تم تعطيل التحقق بخطوتين",
       'twoStepDisabledSub': "معطل (قم بتعيين رمز PIN مكون من 6 أرقام)",
@@ -2138,22 +2454,28 @@ class AppStrings {
       'failedToSendFeedback': "فشل إرسال التعليقات",
       'listenVoice': "استمع للصوت",
       'liveAudioTranslationVoice': "صوت الترجمة الصوتية المباشرة",
-      'liveAudioTranslationVoiceDesc': "حدد شخصية الصوت التي تتحدث إليك بالكلام المترجم أثناء المكالمات الهاتفية ومكالمات VoIP المباشرة.",
+      'liveAudioTranslationVoiceDesc':
+          "حدد شخصية الصوت التي تتحدث إليك بالكلام المترجم أثناء المكالمات الهاتفية ومكالمات VoIP المباشرة.",
       'livocalContact': "جهة اتصال Livocal",
-      'privacyPrinciplesBody': "تولي Livocal أهمية قصوى لخصوصيتك:\n\n1. التشفير الخاص: مكالماتك ورسائلك الشخصية محمية تمامًا وبشكل صارم.\n\n2. ترجمة Gemini المباشرة: تتم معالجة تدفقات الصوت في ذاكرة مؤقتة آمنة أثناء المكالمات النشطة ولا يتم تخزينها أو تدريب الذكاء الاصطناعي عليها أبدًا.\n\n3. عدم جمع جهات الاتصال: تتم مطابقة جهات الاتصال عبر بحث التجزئة المشفرة دون تحميل دفتر العناوين الخاص بك.",
+      'privacyPrinciplesBody':
+          "تولي Livocal أهمية قصوى لخصوصيتك:\n\n1. التشفير الخاص: مكالماتك ورسائلك الشخصية محمية تمامًا وبشكل صارم.\n\n2. ترجمة Gemini المباشرة: تتم معالجة تدفقات الصوت في ذاكرة مؤقتة آمنة أثناء المكالمات النشطة ولا يتم تخزينها أو تدريب الذكاء الاصطناعي عليها أبدًا.\n\n3. عدم جمع جهات الاتصال: تتم مطابقة جهات الاتصال عبر بحث التجزئة المشفرة دون تحميل دفتر العناوين الخاص بك.",
       'selectedVoice': "الصوت المحدد",
-      'shareQrInviteText': "تواصل معي على Livocal: {link}\nقم بتنزيل التطبيق للدردشة وإجراء مكالمات صوتية مترجمة مباشرة!",
+      'shareQrInviteText':
+          "تواصل معي على Livocal: {link}\nقم بتنزيل التطبيق للدردشة وإجراء مكالمات صوتية مترجمة مباشرة!",
       'stopPreview': "إيقاف المعاينة",
       'tapToSelect': "انقر للتحديد",
-      'voicePreferenceSavedNotice': "يتم حفظ شخصية الصوت المفضلة لديك بأمان على جهازك وتطبيقها تلقائيًا على جميع المكالمات المترجمة المباشرة.",
+      'voicePreferenceSavedNotice':
+          "يتم حفظ شخصية الصوت المفضلة لديك بأمان على جهازك وتطبيقها تلقائيًا على جميع المكالمات المترجمة المباشرة.",
       'voicePreviewOffline': "معاينة الصوت غير متاحة في وضع عدم الاتصال.",
       'voiceSetSuccess': "تم تعيين \"{voiceId}\" كصوت للترجمة المباشرة",
       'trialRemainingBadge': "⏱️ تجريبي: تبقى {minutes} دقيقة",
       'balanceExhaustedBadge': "⚠️ نفد الرصيد (0 دقيقة)",
       'balanceMinutesBadge': "💎 الرصيد: {minutes} دقيقة",
       'trialDaysLeftNotice': "تبقى {days} يوم • مكالمات محلية مجانية",
-      'rechargeForTranslationNotice': "اشحن لمكالمات الترجمة • مكالمات محلية مجانية",
-      'translationRateNotice': "الترجمة الذكية 1 د/دقيقة • مكالمات محلية مجانية",
+      'rechargeForTranslationNotice':
+          "اشحن لمكالمات الترجمة • مكالمات محلية مجانية",
+      'translationRateNotice':
+          "الترجمة الذكية 1 د/دقيقة • مكالمات محلية مجانية",
       'recharge': "شحن",
       'rechargePlus': "+ شحن",
       'geminiLiveVoiceTranslation': "ترجمة صوتية حية Gemini 3.5",
@@ -2164,26 +2486,33 @@ class AppStrings {
       'selectPeerLanguage': "اختر لغة الطرف الآخر",
       'dialNumber': "طلب رقم",
       'recentCallsHeader': "المكالمات الأخيرة المترجمة والصوتية",
-      'noRecentCalls': "لا توجد مكالمات حديثة بعد. اطلب رقماً أو اختر جهة اتصال أعلاه.",
+      'noRecentCalls':
+          "لا توجد مكالمات حديثة بعد. اطلب رقماً أو اختر جهة اتصال أعلاه.",
       'directCallByNumber': "اتصال أو دردشة مباشرة بالرقم",
       'directDialSubtitle': "أدخل أي رقم هاتف للاتصال أو الدردشة مباشرة",
-      'freeLocalCallBanner': "🗣️ مكالمة محلية مجانية (نفس اللغة - بدون خصم دقائق)",
-      'aiTranslateCallBanner': "🤖 مكالمة ترجمة ذكية (1 د/د) • الرصيد: {minutes} د",
+      'freeLocalCallBanner':
+          "🗣️ مكالمة محلية مجانية (نفس اللغة - بدون خصم دقائق)",
+      'aiTranslateCallBanner':
+          "🤖 مكالمة ترجمة ذكية (1 د/د) • الرصيد: {minutes} د",
       'voiceCallAi': "مكالمة صوتية (AI)",
       'messageAction': "رسالة",
       'voiceMinutesRecharge': "شحن دقائق الصوت",
       'talkToInternationalClients': "تحدث مع العملاء الدوليين بأي لغة",
       'currentBalanceText': "الرصيد الحالي: {minutes} دقيقة",
       'trialBadgeText': "تجريبي: {minutes} د",
-      'trialValidityText': "صلاحية الفترة التجريبية المتبقية: {days} يوم (الرصيد المدفوع: {paid} د)",
-      'paidBalanceLifetimeText': "الرصيد المدفوع لا تنتهي صلاحيته أبداً (صلاحية مدى الحياة)",
-      'sameLanguageFreeRule': "🗣️ المكالمات المحلية بنفس اللغة مجانية 100% (بدون خصم دقائق)",
+      'trialValidityText':
+          "صلاحية الفترة التجريبية المتبقية: {days} يوم (الرصيد المدفوع: {paid} د)",
+      'paidBalanceLifetimeText':
+          "الرصيد المدفوع لا تنتهي صلاحيته أبداً (صلاحية مدى الحياة)",
+      'sameLanguageFreeRule':
+          "🗣️ المكالمات المحلية بنفس اللغة مجانية 100% (بدون خصم دقائق)",
       'geminiAiRateRule': "🤖 مكالمات الترجمة بالذكاء الاصطناعي: 1 دقيقة/دقيقة",
       'selectMinutePack': "اختر باقة الدقائق",
       'starterPackTitle': "باقة المبتدئين (60 دقيقة)",
       'starterPackDesc': "للمقابلات السريعة والموجزات الأولية (~৳20/د)",
       'proPackTitle': "المحترف المستقل (180 دقيقة)",
-      'proPackDesc': "لاجتماعات المشاريع الأسبوعية والمكالمات المنتظمة (توفير 17%)",
+      'proPackDesc':
+          "لاجتماعات المشاريع الأسبوعية والمكالمات المنتظمة (توفير 17%)",
       'popularBadge': "⭐ الأكثر شعبية (POPULAR)",
       'agencyPackTitle': "باقة الوكالات (500 دقيقة)",
       'agencyPackDesc': "لفرق الوكالات والمكالمات الدولية المكثفة (توفير 28%)",
@@ -2203,34 +2532,48 @@ class AppStrings {
       'retryTooltip': "إعادة المحاولة",
       'bkashMerchantNumber': "رقم bKash / Nagad الشخصي / التاجر:",
       'binancePayOfficialId': "معرف Binance Pay الرسمي لـ Livocal:",
-      'cryptoOfficialDepositAddress': "عنوان إيداع {network} الرسمي لـ Livocal:",
+      'cryptoOfficialDepositAddress':
+          "عنوان إيداع {network} الرسمي لـ Livocal:",
       'copyBtn': "نسخ",
       'copiedToClipboardSnack': "تم نسخ العنوان/الرقم {text} إلى الحافظة!",
-      'paymentInstructionBkash': "1. أرسل أموالاً أو ادفع ৳{amount} من تطبيق bKash أو Nagad الخاص بك.\n2. بعد نجاح المعاملة، أدخل رقم المرسل ومعرف المعاملة أدناه:",
-      'paymentInstructionBinance': "1. في تطبيق Binance، انتقل إلى Pay > Send to Binance ID وأرسل {amount} USDT.\n2. بعد الإرسال، أدخل معرف Binance ومعرف الطلب أدناه:",
-      'paymentInstructionCrypto': "1. أرسل {amount} USDT ({network}) من محفظتك المشفرة.\n2. بعد المعاملة، أدخل عنوان محفظة المرسل ومعرف المعاملة TxHash أدناه:",
+      'paymentInstructionBkash':
+          "1. أرسل أموالاً أو ادفع ৳{amount} من تطبيق bKash أو Nagad الخاص بك.\n2. بعد نجاح المعاملة، أدخل رقم المرسل ومعرف المعاملة أدناه:",
+      'paymentInstructionBinance':
+          "1. في تطبيق Binance، انتقل إلى Pay > Send to Binance ID وأرسل {amount} USDT.\n2. بعد الإرسال، أدخل معرف Binance ومعرف الطلب أدناه:",
+      'paymentInstructionCrypto':
+          "1. أرسل {amount} USDT ({network}) من محفظتك المشفرة.\n2. بعد المعاملة، أدخل عنوان محفظة المرسل ومعرف المعاملة TxHash أدناه:",
       'senderNumberInputLabel': "رقم هاتف المرسل الخاص بك",
-      'binancePayIdInputLabel': "معرف Binance Pay أو البريد الإلكتروني الخاص بك",
+      'binancePayIdInputLabel':
+          "معرف Binance Pay أو البريد الإلكتروني الخاص بك",
       'senderAddressInputLabel': "عنوان محفظة المرسل الخاص بك",
       'trxIdInputLabel': "معرف المعاملة bKash / Nagad (TrxID)",
       'binancePayOrderIdInputLabel': "معرف طلب Binance Pay / معرف المعاملة",
       'txHashInputLabel': "معرف معاملة البلوكشين (TxHash)",
       'submitPaymentBdt': "إرسال تأكيد دفع ৳{amount}",
       'submitPaymentUsdt': "إرسال تأكيد دفع \${amount} USDT",
-      'waitForDepositAccountSnack': "يرجى الانتظار أو التحديث حتى يتم تحميل حساب الإيداع من الخادم.",
+      'waitForDepositAccountSnack':
+          "يرجى الانتظار أو التحديث حتى يتم تحميل حساب الإيداع من الخادم.",
       'enterSenderPhoneSnack': "يرجى إدخال رقم هاتف المرسل الخاص بك.",
-      'enterBinancePayIdSnack': "يرجى إدخال معرف Binance Pay أو بريدك الإلكتروني.",
-      'enterSenderCryptoAddressSnack': "يرجى إدخال عنوان محفظة العملات المشفرة للمرسل.",
+      'enterBinancePayIdSnack':
+          "يرجى إدخال معرف Binance Pay أو بريدك الإلكتروني.",
+      'enterSenderCryptoAddressSnack':
+          "يرجى إدخال عنوان محفظة العملات المشفرة للمرسل.",
       'enterTxHashSnack': "يرجى إدخال معرف المعاملة Blockchain TxHash.",
       'enterTrxIdSnack': "يرجى إدخال معرف المعاملة (TrxID / Order ID).",
-      'trc20AddressLengthError': "يجب أن يبدأ عنوان محفظة TRC-20 بـ 'T' وأن يتكون من 34 حرفاً.",
-      'bep20AddressLengthError': "يجب أن يبدأ عنوان محفظة BEP-20 بـ '0x' وأن يتكون من 42 حرفاً.",
-      'invalidTxHashError': "يرجى إدخال معرف معاملة بلوكشين صالح مكون من 64 حرفاً.",
-      'paymentSubmittedSuccess': "تم إرسال طلب الدفع بنجاح! ستتم إضافة الدقائق بعد موافقة المسؤول.",
+      'trc20AddressLengthError':
+          "يجب أن يبدأ عنوان محفظة TRC-20 بـ 'T' وأن يتكون من 34 حرفاً.",
+      'bep20AddressLengthError':
+          "يجب أن يبدأ عنوان محفظة BEP-20 بـ '0x' وأن يتكون من 42 حرفاً.",
+      'invalidTxHashError':
+          "يرجى إدخال معرف معاملة بلوكشين صالح مكون من 64 حرفاً.",
+      'paymentSubmittedSuccess':
+          "تم إرسال طلب الدفع بنجاح! ستتم إضافة الدقائق بعد موافقة المسؤول.",
       'paymentFailedSnack': "تعذر إرسال طلب الدفع.",
       'minutesExhaustedTitle': "نفدت دقائق الترجمة",
-      'minutesExhaustedSub': "رصيد الدقائق مطلوب لمكالمات الترجمة المباشرة بالذكاء الاصطناعي",
-      'sameLanguageFreeNotice': "المكالمات العادية بنفس اللغة مجانية 100%! تُستخدم الدقائق فقط للترجمة المباشرة بين اللغات المختلفة.",
+      'minutesExhaustedSub':
+          "رصيد الدقائق مطلوب لمكالمات الترجمة المباشرة بالذكاء الاصطناعي",
+      'sameLanguageFreeNotice':
+          "المكالمات العادية بنفس اللغة مجانية 100%! تُستخدم الدقائق فقط للترجمة المباشرة بين اللغات المختلفة.",
       'starterBundleMinutes': "60 دقيقة",
       'proBundleMinutes': "180 دقيقة",
       'buyMinutes': "شراء دقائق",
@@ -2250,7 +2593,8 @@ class AppStrings {
       'clearChat': "مسح الدردشة",
       'blockedTapToUnblock': "لقد حظرت جهة الاتصال هذه. اضغط لإلغاء الحظر.",
       'sayHelloTo': "قل مرحباً لـ {name}",
-      'noMessagesYet': "لا توجد رسائل بعد. أرسل تحية أو رسالة صوتية لبدء المحادثة.",
+      'noMessagesYet':
+          "لا توجد رسائل بعد. أرسل تحية أو رسالة صوتية لبدء المحادثة.",
       'sayHello': "قل مرحباً!",
       'disappearingMessagesOn': "الرسائل المختفية مفعّلة ({timer})",
       'takePhoto': "التقط صورة",
@@ -2258,12 +2602,14 @@ class AppStrings {
       'textStatus': "حالة نصية",
       'viewStatus': "عرض الحالة",
       'addNewStatus': "إضافة حالة جديدة",
-      'languageAppliedLocally': "تم تطبيق اللغة محلياً (مزامنة السحابة غير متصلة).",
+      'languageAppliedLocally':
+          "تم تطبيق اللغة محلياً (مزامنة السحابة غير متصلة).",
       'failedToInitiateCall': "تعذر بدء المكالمة. يرجى التحقق من اتصال الشبكة.",
       'searchChatsHint': "ابحث في الدردشات والرسائل...",
       'paymentReceivingAccounts': "حسابات استلام المدفوعات",
       'p2pPaymentSettings': "إعدادات الدفع P2P",
-      'p2pPaymentSettingsDesc': "قم بإعداد الحسابات التي يمكن للمستخدمين الآخرين تحويل الأموال والعملات المشفرة إليها في الدردشات. تأكد من صحة عناوين TRC-20 وBEP-20.",
+      'p2pPaymentSettingsDesc':
+          "قم بإعداد الحسابات التي يمكن للمستخدمين الآخرين تحويل الأموال والعملات المشفرة إليها في الدردشات. تأكد من صحة عناوين TRC-20 وBEP-20.",
       'cryptocurrencyAndBinance': "العملات المشفرة وBinance",
       'mobileFinancialServices': "الخدمات المالية عبر الهاتف المحمول (MFS)",
       'binancePayIdLabel': "Binance Pay ID / بريد Binance",
@@ -2276,10 +2622,12 @@ class AppStrings {
       'checkConnectionRetry': "يرجى التحقق من اتصالك والمحاولة مرة أخرى.",
       'noChatsMatching': "لا توجد دردشات مطابقة لـ \"{query}\"",
       'noConversationsYet': "لا توجد محادثات بعد",
-      'startChattingDesc': "ابدأ الدردشة مع جهات اتصالك مع الترجمة الفورية والمكالمات الصوتية.",
+      'startChattingDesc':
+          "ابدأ الدردشة مع جهات اتصالك مع الترجمة الفورية والمكالمات الصوتية.",
       'startNewChat': "بدء دردشة جديدة",
       'noMatchesFound': "لا توجد نتائج مطابقة",
-      'languagePreferenceSavedLocally': "تم حفظ تفضيل اللغة محلياً (مزامنة السحابة غير متصلة).",
+      'languagePreferenceSavedLocally':
+          "تم حفظ تفضيل اللغة محلياً (مزامنة السحابة غير متصلة).",
       'selectYourSpokenLanguage': "اختر لغتك المنطوقة",
       'camera': "الكاميرا",
       'gallery': "المعرض",
@@ -2289,9 +2637,11 @@ class AppStrings {
       'phoneLabel': "الهاتف",
       'unstarAll': "إلغاء تمييز الكل",
       'defaultDoodleWallpaper': "تدرّج Livocal (افتراضي)",
-      'nameVisibilityHint': "هذا ليس اسم المستخدم أو رمز PIN الخاص بك. سيظهر هذا الاسم لجهات اتصالك على Livocal.",
+      'nameVisibilityHint':
+          "هذا ليس اسم المستخدم أو رمز PIN الخاص بك. سيظهر هذا الاسم لجهات اتصالك على Livocal.",
       'noStarredMessages': "لا توجد رسائل مميزة",
-      'starredEmptyHint': "اضغط مع الاستمرار على أي رسالة في الدردشة لتمييزها بنجمة لتجدها بسهولة لاحقاً.",
+      'starredEmptyHint':
+          "اضغط مع الاستمرار على أي رسالة في الدردشة لتمييزها بنجمة لتجدها بسهولة لاحقاً.",
       'display': "العرض",
       'chatWallpaper': "خلفية الدردشة",
       'wallpaperResetDefault': "تمت إعادة تعيين الخلفية إلى الافتراضي",
@@ -2316,12 +2666,15 @@ class AppStrings {
       'invite': "دعوة",
       'selectContactToBlock': "اختر جهة اتصال لحظرها",
       'noContactsToBlock': "لا توجد جهات اتصال متاحة للحظر",
-      'blockedContactsDesc': "لن تتمكن جهات الاتصال المحظورة من الاتصال بك أو إرسال رسائل إليك.",
+      'blockedContactsDesc':
+          "لن تتمكن جهات الاتصال المحظورة من الاتصال بك أو إرسال رسائل إليك.",
       'tapToUnblock': "اضغط على جهة اتصال لإلغاء حظرها.",
       'unblock': "إلغاء الحظر",
       'failedToLoadMedia': "تعذر تحميل الوسائط",
-      'voicePreviewSavedLocally': "تم حفظ تفضيل اللغة محلياً؛ مزامنة السحابة غير متصلة.",
-      'voicePreviewUnavailable': "معاينة الصوت غير متاحة مؤقتاً. يرجى التحقق من اتصال الإنترنت.",
+      'voicePreviewSavedLocally':
+          "تم حفظ تفضيل اللغة محلياً؛ مزامنة السحابة غير متصلة.",
+      'voicePreviewUnavailable':
+          "معاينة الصوت غير متاحة مؤقتاً. يرجى التحقق من اتصال الإنترنت.",
       'decline': "رفض",
       'tapToAnswer': "اضغط للرد",
       'aiCall': "مكالمة AI",
@@ -2338,10 +2691,14 @@ class AppStrings {
       'zeroMinutesNotConnected': "0 دقيقة (لم يتم الاتصال)",
       'zeroMinutesNormalCall': "0 دقيقة (مكالمة عادية)",
       'minutesDeducted': "تم خصم {minutes} دقيقة",
-      'missedIncomingMessage': "لقد فاتتك مكالمة واردة. يمكنك الاتصال مرة أخرى أو إرسال رسالة.",
-      'missedOutgoingMessage': "لم يرد الطرف الآخر. يرجى المحاولة مرة أخرى بعد قليل.",
-      'translatedCallSuccessMessage': "🌐 اكتملت محادثتك مع الترجمة الصوتية الفورية بالذكاء الاصطناعي بنجاح. شكراً لاستخدامك Livocal!",
-      'normalCallSuccessMessage': "اكتملت محادثتك بنجاح. شكراً على المحادثة الرائعة!",
+      'missedIncomingMessage':
+          "لقد فاتتك مكالمة واردة. يمكنك الاتصال مرة أخرى أو إرسال رسالة.",
+      'missedOutgoingMessage':
+          "لم يرد الطرف الآخر. يرجى المحاولة مرة أخرى بعد قليل.",
+      'translatedCallSuccessMessage':
+          "🌐 اكتملت محادثتك مع الترجمة الصوتية الفورية بالذكاء الاصطناعي بنجاح. شكراً لاستخدامك Livocal!",
+      'normalCallSuccessMessage':
+          "اكتملت محادثتك بنجاح. شكراً على المحادثة الرائعة!",
       'missedCall': "مكالمة فائتة",
       'missedVoiceCall': "مكالمة صوتية فائتة",
       'declinedCall': "مكالمة مرفوضة",
@@ -2355,11 +2712,14 @@ class AppStrings {
       'languagesSupported': "{count}+ لغة مدعومة في Gemini Live (أي إلى أي)",
       'popularLanguages': "اللغات الشائعة",
       'aiInterpreterVoicePreferences': "صوت المترجم الذكي والتفضيلات",
-      'aiVoicePrefsDesc': "خصّص كيفية سماع الصوت المترجم أثناء المكالمات. يكتشف الذكاء الاصطناعي اللغات تلقائياً في الوقت الفعلي.",
+      'aiVoicePrefsDesc':
+          "خصّص كيفية سماع الصوت المترجم أثناء المكالمات. يكتشف الذكاء الاصطناعي اللغات تلقائياً في الوقت الفعلي.",
       'zeroTrustRelayActive': "مرحّل الذكاء الاصطناعي السحابي Zero-Trust نشط",
-      'zeroTrustRelayDesc': "تُدار مفاتيح API المباشرة وخطوط الصوت بشكل آمن على الخادم الخلفي.",
+      'zeroTrustRelayDesc':
+          "تُدار مفاتيح API المباشرة وخطوط الصوت بشكل آمن على الخادم الخلفي.",
       'selectAiInterpreterVoice': "اختر صوت المترجم الذكي",
-      'selectAiVoiceDesc': "اختر ملف الصوت الاصطناعي المستخدم عند تشغيل الصوت المترجم لك.",
+      'selectAiVoiceDesc':
+          "اختر ملف الصوت الاصطناعي المستخدم عند تشغيل الصوت المترجم لك.",
       'saveVoicePreference': "حفظ تفضيل الصوت",
       'differentLanguageDetected': "تم اكتشاف لغة مختلفة",
       'youSpeak': "أنت تتحدث",
@@ -2367,7 +2727,8 @@ class AppStrings {
       'callWithAiTranslation': "اتصال مع ترجمة صوتية بالذكاء الاصطناعي",
       'directVoiceCallFree': "مكالمة صوتية مباشرة (مجانية)",
       'registeredLivocalUser': "مستخدم Livocal مسجل ({phone})",
-      'directCallRings': "ستهتز المكالمة المباشرة على هذا الهاتف إذا كان Livocal مثبتاً.",
+      'directCallRings':
+          "ستهتز المكالمة المباشرة على هذا الهاتف إذا كان Livocal مثبتاً.",
       'agreeAndContinue': "أوافق وأتابع",
       'shareContact': "مشاركة جهة الاتصال",
       'editContact': "تعديل جهة الاتصال",
@@ -2382,11 +2743,13 @@ class AppStrings {
       'muteDesc': "كتم تنبيهات الرسائل الجديدة من جهة الاتصال هذه",
       'customNotifications': "إشعارات مخصصة",
       'encryptionAndSecurity': "التشفير والأمان",
-      'encryptionDesc': "تستخدم الرسائل والمكالمات نقل TLS/SRTP آمناً وترجمة مؤقتة",
+      'encryptionDesc':
+          "تستخدم الرسائل والمكالمات نقل TLS/SRTP آمناً وترجمة مؤقتة",
       'reportContactName': "الإبلاغ عن {name}",
       'geminiAiLiveTranslation': "ترجمة Gemini AI الفورية",
       'startTranslatedVoiceCall': "بدء مكالمة صوتية مترجمة",
-      'reportForwardWarning': "ستتم إعادة توجيه آخر 5 رسائل من جهة الاتصال هذه إلى Livocal لمراجعة الأمان. لن يتم إخطار جهة الاتصال.",
+      'reportForwardWarning':
+          "ستتم إعادة توجيه آخر 5 رسائل من جهة الاتصال هذه إلى Livocal لمراجعة الأمان. لن يتم إخطار جهة الاتصال.",
       'reasonForReport': "سبب الإبلاغ:",
       'blockContactClearMessages': "حظر جهة الاتصال ومسح الرسائل",
       'inChatAiTranslation': "ترجمة فورية بالذكاء الاصطناعي داخل الدردشة",
@@ -2394,7 +2757,8 @@ class AppStrings {
       'languagePreferences': "تفضيلات اللغة",
       'myLanguage': "لغتي",
       'autoTranslateIncoming': "ترجمة الرسائل الواردة تلقائياً",
-      'autoTranslateIncomingDesc': "يعرض الترجمات تلقائياً أسفل الرسائل المستلمة",
+      'autoTranslateIncomingDesc':
+          "يعرض الترجمات تلقائياً أسفل الرسائل المستلمة",
       'liveVoiceNoteTranscription': "نسخ الرسائل الصوتية المباشر",
       'liveVoiceNoteDesc': "انسخ وترجم رسائل الصوت الواردة",
       'testRealtimeTranslation': "اختبار الترجمة الفورية",
@@ -2403,26 +2767,32 @@ class AppStrings {
       'inChatTranslationEnabled': "تم تفعيل الترجمة المباشرة في الدردشة",
       'inChatTranslationDisabled': "تم إيقاف الترجمة المباشرة في الدردشة",
       'translationSettingsApplied': "تم تطبيق إعدادات الترجمة: {my} ⇄ {peer}",
-      'inChatTranslationDisabledFor': "تم إيقاف الترجمة المباشرة في الدردشة لـ {name}",
+      'inChatTranslationDisabledFor':
+          "تم إيقاف الترجمة المباشرة في الدردشة لـ {name}",
       'sendPaymentTo': "إرسال دفعة إلى {name}",
       'selectPaymentMethod': "اختر طريقة الدفع",
       'livocalInAppWallet': "محفظة Livocal داخل التطبيق",
-      'walletBalanceTransfer': "الرصيد: {available} دقيقة (يحوّل {needed} دقيقة)",
+      'walletBalanceTransfer':
+          "الرصيد: {available} دقيقة (يحوّل {needed} دقيقة)",
       'bkashNagadMfs': "bKash / Nagad MFS (إرسال مباشر)",
       'cryptoBinanceUsdt': "العملات المشفرة (Binance Pay / USDT)",
       'shortByMinutes': "ينقص {minutes} دقيقة لإتمام هذا التحويل.",
-      'liveRateSummary': "السعر المباشر: \$1.00 ≈ {rate} BDT  |  الإجمالي: {total} BDT",
+      'liveRateSummary':
+          "السعر المباشر: \$1.00 ≈ {rate} BDT  |  الإجمالي: {total} BDT",
       'paste': "لصق",
       'confirmPayment': "تأكيد الدفع: {amount}",
       'welcomeBadge1': "اتصال الجيل القادم",
       'welcomeTitle1': "مرحباً بك في Livocal",
-      'welcomeDesc1': "مراسلة خاصة فائقة السرعة واتصال صوتي واضح مصمم لاتصال يومي سلس.",
+      'welcomeDesc1':
+          "مراسلة خاصة فائقة السرعة واتصال صوتي واضح مصمم لاتصال يومي سلس.",
       'welcomeBadge2': "Gemini Live AI",
       'welcomeTitle2': "ترجمة صوتية فورية",
-      'welcomeDesc2': "اكسر حواجز اللغة في الوقت الفعلي. تحدث بالبنغالية أو الإنجليزية مع ترجمة صوتية ثنائية الاتجاه خلال أقل من ثانية أثناء المكالمات.",
+      'welcomeDesc2':
+          "اكسر حواجز اللغة في الوقت الفعلي. تحدث بالبنغالية أو الإنجليزية مع ترجمة صوتية ثنائية الاتجاه خلال أقل من ثانية أثناء المكالمات.",
       'welcomeBadge3': "الخصوصية بالتصميم",
       'welcomeTitle3': "خاص وآمن افتراضياً",
-      'welcomeDesc3': "بث صوتي مشفر بـ DTLS-SRTP، بيانات شخصية محمية، بلا جمع لدفتر العناوين، وقفل تطبيق بالبصمة.",
+      'welcomeDesc3':
+          "بث صوتي مشفر بـ DTLS-SRTP، بيانات شخصية محمية، بلا جمع لدفتر العناوين، وقفل تطبيق بالبصمة.",
       'enterPhoneNumber': "أدخل رقم هاتفك",
       'carrierCharges': "قد تُطبق رسوم شركة الاتصالات.",
       'next': "التالي",
@@ -2465,7 +2835,8 @@ class AppStrings {
       'myStatus': "حالتي",
       'couldNotLoadStatus': "تعذر تحميل تحديثات الحالة",
       'noRecentUpdates': "لا توجد تحديثات حديثة",
-      'statusUpdatesDesc': "ستظهر تحديثات حالة جهات اتصالك هنا. تختفي بعد 24 ساعة.",
+      'statusUpdatesDesc':
+          "ستظهر تحديثات حالة جهات اتصالك هنا. تختفي بعد 24 ساعة.",
       'statusPrivacyNote': "تحديثات حالتك محمية بإعدادات الخصوصية",
       'messageHint': "رسالة",
       'recentUpdates': "التحديثات الأخيرة",
@@ -2489,18 +2860,23 @@ class AppStrings {
       'noPinnedMessages': "لا توجد رسائل مثبتة",
       'callWarningRemainingMinutes': "⚠️ تحذير: تبقى لديك {minutes} دقيقة فقط.",
       'callTerminatedExhausted': "🛑 نفدت دقائقك. يتم إنهاء المكالمة.",
-      'callTranslationActiveNotice': "{myEmoji} {myName} ⇄ {peerEmoji} {peerName} الترجمة الصوتية الحية نشطة. تحدث بأي لغة!",
+      'callTranslationActiveNotice':
+          "{myEmoji} {myName} ⇄ {peerEmoji} {peerName} الترجمة الصوتية الحية نشطة. تحدث بأي لغة!",
       'dialPhoneNumber': "طلب رقم هاتف",
       'dialPhoneNumberSub': "أدخل الرقم للاتصال أو الدردشة مباشرة",
-      'realtimeTranslationActive': "تم تفعيل الترجمة الفورية بين {langA} و {langB}",
-      'sameLanguageDirectCallNotice': "كلا المستخدمين يتحدثان نفس اللغة ({lang}). تحدث مباشرة بصوتك الطبيعي دون ترجمة.",
+      'realtimeTranslationActive':
+          "تم تفعيل الترجمة الفورية بين {langA} و {langB}",
+      'sameLanguageDirectCallNotice':
+          "كلا المستخدمين يتحدثان نفس اللغة ({lang}). تحدث مباشرة بصوتك الطبيعي دون ترجمة.",
       'directVoiceCallActiveNotice': "المكالمة الصوتية المباشرة نشطة.",
-      'aiUnavailableDirectFallback': "مترجم الذكاء الاصطناعي غير متوفر. تم الاتصال عبر المكالمة الصوتية المباشرة.",
+      'aiUnavailableDirectFallback':
+          "مترجم الذكاء الاصطناعي غير متوفر. تم الاتصال عبر المكالمة الصوتية المباشرة.",
       'starterPackPriceText': "1,200 BDT (\$9.99)",
       'proPackPriceText': "3,000 BDT (\$24.99)",
       'bdtAmount': "{amount} BDT",
       'callContinuingDirectVoiceDesc': "المكالمة مستمرة كمكالمة صوتية مباشرة.",
-      'callerMinutesExhaustedDirectVoiceDesc': "نفدت دقائق الترجمة للمتصل. تم التحويل إلى مكالمة صوتية مباشرة.",
+      'callerMinutesExhaustedDirectVoiceDesc':
+          "نفدت دقائق الترجمة للمتصل. تم التحويل إلى مكالمة صوتية مباشرة.",
       'rechargeNowBtn': "إعادة الشحن",
     },
     'es': {
@@ -2510,16 +2886,19 @@ class AppStrings {
       'accountAndPrivacy': "Cuenta y Privacidad",
       'accountManagement': "Gestión de Cuenta",
       'accountReportSubmitted': "Solicitud enviada. Estará lista en 24 horas.",
-      'accountSub': "Notificaciones de seguridad, verificación en dos pasos, cambiar número",
+      'accountSub':
+          "Notificaciones de seguridad, verificación en dos pasos, cambiar número",
       'advancedAiEngine': "Voz y Traducción",
       'allMedia': "Todos los medios",
       'appDatabaseIsar': "• Base de datos de la app (Isar): ",
       'appInfo': "Info. de la aplicación",
-      'appInfoDesc': "Traducción de voz por IA en tiempo real y mensajería segura con WebRTC y Gemini.",
+      'appInfoDesc':
+          "Traducción de voz por IA en tiempo real y mensajería segura con WebRTC y Gemini.",
       'appLanguage': "Idioma de la aplicación",
       'appLanguageSub': "English, বাংলা, हिन्दी, العربية...",
       'biometricCancelled': "Verificación biométrica cancelada.",
-      'biometricNotSupported': "La autenticación biométrica no es compatible con este dispositivo.",
+      'biometricNotSupported':
+          "La autenticación biométrica no es compatible con este dispositivo.",
       'blockedContacts': "Contactos bloqueados",
       'blockedContactsCount': "0 contactos",
       'cacheClearedSnack': "Caché de medios limpiada con éxito",
@@ -2534,8 +2913,10 @@ class AppStrings {
       'callsHeader': "Llamadas",
       'cancel': "Cancelar",
       'changeNumber': "Cambiar número",
-      'changeNumberDesc': "Cambiar tu número de teléfono transferirá toda tu información, ajustes y claves.",
-      'changeNumberDialogContent': "Migrar a un nuevo número transferirá toda tu información, ajustes y claves.",
+      'changeNumberDesc':
+          "Cambiar tu número de teléfono transferirá toda tu información, ajustes y claves.",
+      'changeNumberDialogContent':
+          "Migrar a un nuevo número transferirá toda tu información, ajustes y claves.",
       'chats': "CHATS",
       'chatsAndTheme': "Chats y Tema",
       'chatsAndThemeSub': "Fondos, tema, historial de chats",
@@ -2544,25 +2925,31 @@ class AppStrings {
       'chooseTheme': "Elegir Tema",
       'classicBellPreset': "Campana Clásica",
       'clearCache': "Limpiar caché de medios",
-      'clearCacheDialogDesc': "Esto eliminará archivos temporales de audio y caché. Tus chats de texto no se verán afectados.",
+      'clearCacheDialogDesc':
+          "Esto eliminará archivos temporales de audio y caché. Tus chats de texto no se verán afectados.",
       'clearCacheDialogTitle': "¿Limpiar caché de medios?",
       'clearCacheSub': "Eliminar notas de voz y audios descargados en caché",
       'clearCallLog': "Borrar registro de llamadas",
       'close': "CERRAR",
       'confirm': "CONFIRMAR",
       'confirmDisable': "CONFIRMAR DESACTIVACIÓN",
-      'confirmFingerprintDisable': "Confirma tu huella digital para desactivar el bloqueo",
-      'confirmFingerprintEnable': "Confirma tu huella digital para activar el bloqueo",
+      'confirmFingerprintDisable':
+          "Confirma tu huella digital para desactivar el bloqueo",
+      'confirmFingerprintEnable':
+          "Confirma tu huella digital para activar el bloqueo",
       'contactSupport': "Contactar a Soporte",
-      'contactSupportDesc': "Cuéntanos cómo podemos ayudarte. Describe tu problema o sugerencia:",
+      'contactSupportDesc':
+          "Cuéntanos cómo podemos ayudarte. Describe tu problema o sugerencia:",
       'contactSupportSub': "¿Preguntas o ayuda? Chatea con nuestro equipo",
       'contacts': "Contactos",
       'conversationTones': "Tonos de conversación",
-      'conversationTonesSub': "Reproducir sonidos para mensajes entrantes y salientes.",
+      'conversationTonesSub':
+          "Reproducir sonidos para mensajes entrantes y salientes.",
       'copyLink': "Copiar enlace",
       'crystalPopPreset': "Crystal Pop",
       'currentNumber': "Actual: ",
-      'customAudioFromStorage': "Elegir sonido personalizado del almacenamiento",
+      'customAudioFromStorage':
+          "Elegir sonido personalizado del almacenamiento",
       'customLabel': "Personalizado: ",
       'dark': "Oscuro",
       'databaseLabel': "Base de datos: ",
@@ -2571,19 +2958,26 @@ class AppStrings {
       'defaultMessageTimer': "Duración predeterminada de mensajes",
       'defaultText': "Predeterminado",
       'delete': "ELIMINAR",
-      'deleteAccountBullet1': "• Eliminar información de tu cuenta y foto de perfil",
-      'deleteAccountBullet2': "• Borrar todo el historial de mensajes locales de este dispositivo",
-      'deleteAccountBullet3': "• Eliminarte de las listas de Livocal de tus contactos",
+      'deleteAccountBullet1':
+          "• Eliminar información de tu cuenta y foto de perfil",
+      'deleteAccountBullet2':
+          "• Borrar todo el historial de mensajes locales de este dispositivo",
+      'deleteAccountBullet3':
+          "• Eliminarte de las listas de Livocal de tus contactos",
       'deleteAccountButton': "ELIMINAR CUENTA",
       'deleteAccountDesc': "Eliminar tu cuenta provocará:",
       'deleteAccountDialogTitle': "¿Eliminar esta cuenta?",
       'deleteAccountTitle': "¿Eliminar esta cuenta?",
-      'deleteAccountWarning1': "Eliminar tu información de cuenta y foto de perfil",
-      'deleteAccountWarning2': "Eliminar todo el historial local de mensajes de este dispositivo",
-      'deleteAccountWarning3': "Eliminarte de las listas de Livocal de tus contactos",
+      'deleteAccountWarning1':
+          "Eliminar tu información de cuenta y foto de perfil",
+      'deleteAccountWarning2':
+          "Eliminar todo el historial local de mensajes de este dispositivo",
+      'deleteAccountWarning3':
+          "Eliminarte de las listas de Livocal de tus contactos",
       'deleteAccountWarningTitle': "Eliminar tu cuenta provocará:",
       'deleteMyAccount': "Eliminar mi cuenta",
-      'deleteMyAccountSub': "Elimina de forma permanente tu cuenta y todos tus datos",
+      'deleteMyAccountSub':
+          "Elimina de forma permanente tu cuenta y todos tus datos",
       'digitalPulsePreset': "Pulso Digital",
       'disableTwoStep': "Desactivar verificación en dos pasos",
       'disabled': "Desactivado",
@@ -2594,40 +2988,52 @@ class AppStrings {
       'enabled': "Activado",
       'enterCurrentPin': "Ingresa tu PIN actual de 6 dígitos para desactivar:",
       'enterMessageError': "Por favor, escribe un mensaje antes de enviar.",
-      'enterNewPin': "Ingresa un PIN de 6 dígitos para proteger tu cuenta de Livocal:",
+      'enterNewPin':
+          "Ingresa un PIN de 6 dígitos para proteger tu cuenta de Livocal:",
       'enterValid6DigitPin': "Por favor, ingresa un PIN válido de 6 dígitos",
       'everyone': "Todos",
-      'faqApiKeyA': "Ve a Ajustes, ingresa tu clave API de Google AI Studio y selecciona tu voz preferida.",
+      'faqApiKeyA':
+          "Ve a Ajustes, ingresa tu clave API de Google AI Studio y selecciona tu voz preferida.",
       'faqApiKeyQ': "¿Cómo configuro mi clave API de Gemini?",
-      'faqContactsA': "Abre la lista de contactos para chatear, llamar o presiona Invitar para enviar un SMS.",
+      'faqContactsA':
+          "Abre la lista de contactos para chatear, llamar o presiona Invitar para enviar un SMS.",
       'faqContactsQ': "¿Cómo añado o invito contactos?",
-      'faqLiveTranslationA': "Durante una llamada, Livocal transmite audio por WebRTC y Gemini Live traduce bidireccionalmente.",
-      'faqLiveTranslationQ': "¿Cómo funciona la traducción en tiempo real por IA?",
-      'faqSecurityA': "¡Sí! Todas las transmisiones de audio usan DTLS-SRTP y los mensajes están estrictamente protegidos.",
+      'faqLiveTranslationA':
+          "Durante una llamada, Livocal transmite audio por WebRTC y Gemini Live traduce bidireccionalmente.",
+      'faqLiveTranslationQ':
+          "¿Cómo funciona la traducción en tiempo real por IA?",
+      'faqSecurityA':
+          "¡Sí! Todas las transmisiones de audio usan DTLS-SRTP y los mensajes están estrictamente protegidos.",
       'faqSecurityQ': "¿Mis llamadas y mensajes están cifrados?",
       'faqTitle': "Preguntas Frecuentes (FAQ)",
-      'feedbackSentSuccess': "¡Gracias! Tus comentarios han sido enviados al equipo de ingeniería de Livocal.",
+      'feedbackSentSuccess':
+          "¡Gracias! Tus comentarios han sido enviados al equipo de ingeniería de Livocal.",
       'fingerprintAuthReason': "Por favor autentícate para desbloquear Livocal",
       'fingerprintLock': "Bloqueo con huella dactilar",
       'fingerprintLockDisabled': "Bloqueo con huella desactivado",
       'fingerprintLockEnabled': "Bloqueo con huella activado",
-      'fingerprintLockSub': "Requerir autenticación biométrica para abrir Livocal",
+      'fingerprintLockSub':
+          "Requerir autenticación biométrica para abrir Livocal",
       'from': "de",
       'geminiVoiceEngine': "Persona de Voz IA",
-      'geminiVoiceEngineSub': "Selecciona la voz preferida para traducción de audio en vivo",
+      'geminiVoiceEngineSub':
+          "Selecciona la voz preferida para traducción de audio en vivo",
       'help': "Ayuda",
       'helpCentre': "Centro de ayuda",
       'helpCentreSub': "Preguntas frecuentes, guías y resolución de problemas",
-      'helpSub': "Centro de ayuda, contáctanos, términos y política de privacidad",
+      'helpSub':
+          "Centro de ayuda, contáctanos, términos y política de privacidad",
       'highPriorityNotif': "Notificaciones de alta prioridad",
-      'highPriorityNotifSub': "Mostrar vistas previas de notificaciones en la parte superior de la pantalla",
+      'highPriorityNotifSub':
+          "Mostrar vistas previas de notificaciones en la parte superior de la pantalla",
       'hours24': "24 horas",
       'iUnderstand': "ENTIENDO",
       'incorrectPin': "PIN incorrecto. Error de verificación.",
       'inviteFriend': "Invitar a un amigo",
       'inviteFriendSub': "Comparte Livocal con contactos y familia",
       'inviteLinkCopied': "Enlace de invitación copiado al portapapeles",
-      'languageNote': "Cambiar el idioma actualiza al instante todas las pantallas, notificaciones y llamadas de voz.",
+      'languageNote':
+          "Cambiar el idioma actualiza al instante todas las pantallas, notificaciones y llamadas de voz.",
       'lastSeenAndOnline': "Hora de últ. vez y En línea",
       'legalAndInfo': "Legal e Información",
       'light': "Claro",
@@ -2636,7 +3042,8 @@ class AppStrings {
       'livocalHarmonyPreset': "Livocal Harmony (Predeterminado)",
       'localDatabase': "Base de datos local y chats",
       'logout': "Cerrar sesión",
-      'logoutDialogContent': "¿Seguro que deseas cerrar sesión? Los datos locales y credenciales se borrarán.",
+      'logoutDialogContent':
+          "¿Seguro que deseas cerrar sesión? Los datos locales y credenciales se borrarán.",
       'logoutDialogTitle': "¿Cerrar sesión en Livocal?",
       'logoutSub': "Borrar credenciales locales y cerrar sesión",
       'manageStorage': "Administrar almacenamiento",
@@ -2670,20 +3077,26 @@ class AppStrings {
       'pinLengthError': "Por favor, ingresa un PIN válido de 6 dígitos",
       'preferences': "Preferencias",
       'privacy': "Privacidad",
-      'privacySub': "Bloquear contactos, mensajes temporales, bloqueo biométrico",
+      'privacySub':
+          "Bloquear contactos, mensajes temporales, bloqueo biométrico",
       'profilePhoto': "Foto de perfil",
       'qrCode': "Código QR",
-      'qrCodeDesc': "Tu código QR es privado. Si lo compartes con alguien, podrá escanearlo para añadirte a Livocal.",
+      'qrCodeDesc':
+          "Tu código QR es privado. Si lo compartes con alguien, podrá escanearlo para añadirte a Livocal.",
       'reactionNotif': "Notificaciones de reacciones",
-      'reactionNotifSub': "Mostrar notificaciones para las reacciones a los mensajes que envías",
+      'reactionNotifSub':
+          "Mostrar notificaciones para las reacciones a los mensajes que envías",
       'reactionNotifications': "Notificaciones de reacciones",
-      'reactionNotificationsSub': "Mostrar notificaciones cuando reaccionen a tus mensajes",
+      'reactionNotificationsSub':
+          "Mostrar notificaciones cuando reaccionen a tus mensajes",
       'readReceipts': "Confirmaciones de lectura (marcas azules)",
-      'readReceiptsSub': "Si las desactivas, no podrás enviar ni recibir confirmaciones de lectura.",
+      'readReceiptsSub':
+          "Si las desactivas, no podrás enviar ni recibir confirmaciones de lectura.",
       'received': "recibidos",
       'receivedTraffic': "• Recibidos: ",
       'requestAccountInfo': "Solicitar info. de mi cuenta",
-      'requestAccountInfoSub': "Solicita un informe de la información y configuración de tu cuenta",
+      'requestAccountInfoSub':
+          "Solicita un informe de la información y configuración de tu cuenta",
       'resetNotifications': "Restablecer ajustes de notificaciones",
       'resetNotificationsSuccess': "Ajustes de notificaciones restablecidos",
       'resetUsage': "RESTABLECER",
@@ -2695,7 +3108,8 @@ class AppStrings {
       'securityAndAppLock': "Seguridad y bloqueo de app",
       'securityAppLockHeader': "Seguridad y Bloqueo de App",
       'securityNotifications': "Notificaciones de seguridad",
-      'securityNotificationsSub': "Mostrar notificaciones de seguridad cuando cambien las claves de cifrado.",
+      'securityNotificationsSub':
+          "Mostrar notificaciones de seguridad cuando cambien las claves de cifrado.",
       'sent': "enviados",
       'sentTraffic': "• Enviados: ",
       'session': "Sesión",
@@ -2719,23 +3133,28 @@ class AppStrings {
       'toneUpdatedSuccess': "actualizado",
       'totalAppFootprint': "Espacio total de la app: ",
       'totalTraffic': "• Tráfico total: ",
-      'twoStepDialogDisableDesc': "Ingresa tu PIN actual de 6 dígitos para confirmar la desactivación:",
+      'twoStepDialogDisableDesc':
+          "Ingresa tu PIN actual de 6 dígitos para confirmar la desactivación:",
       'twoStepDialogDisableTitle': "Desactivar verificación en dos pasos",
-      'twoStepDialogEnableDesc': "Ingresa un PIN de 6 dígitos para proteger tu cuenta de Livocal:",
+      'twoStepDialogEnableDesc':
+          "Ingresa un PIN de 6 dígitos para proteger tu cuenta de Livocal:",
       'twoStepDialogEnableTitle': "Activar verificación en dos pasos",
       'twoStepDisabledSnack': "Verificación en dos pasos desactivada",
       'twoStepDisabledSub': "Desactivada (establece un PIN de 6 dígitos)",
       'twoStepDisabledSuccess': "Verificación en dos pasos desactivada",
-      'twoStepEnabledSnack': "PIN de verificación en dos pasos guardado de forma segura",
+      'twoStepEnabledSnack':
+          "PIN de verificación en dos pasos guardado de forma segura",
       'twoStepEnabledSub': "Activada (protección con PIN activa)",
       'twoStepSavedSuccess': "PIN guardado de forma segura",
       'twoStepVerification': "Verificación en dos pasos",
       'typeMessage': "Mensaje",
       'typeYourMessage': "Escribe tu mensaje aquí...",
       'useHighPriority': "Notificaciones de alta prioridad",
-      'useHighPrioritySub': "Mostrar vistas previas de notificaciones en la parte superior",
+      'useHighPrioritySub':
+          "Mostrar vistas previas de notificaciones en la parte superior",
       'useLessDataCalls': "Usar menos datos para llamadas",
-      'useLessDataCallsSub': "Optimiza la tasa de bits de audio para redes de baja velocidad",
+      'useLessDataCallsSub':
+          "Optimiza la tasa de bits de audio para redes de baja velocidad",
       'version': "Versión 1.0.0 (Listo para producción)",
       'vibrate': "Vibración",
       'vibrateDefault': "Predeterminado",
@@ -2750,27 +3169,36 @@ class AppStrings {
       'appLanguageSetTo': "Idioma de la aplicación configurado en",
       'availableVoicePersonas': "PERSONAS DE VOZ DISPONIBLES",
       'biometricError': "Error biométrico",
-      'couldNotOpenUrl': "No se pudo abrir el enlace de la política de privacidad",
+      'couldNotOpenUrl':
+          "No se pudo abrir el enlace de la política de privacidad",
       'failedToClearCache': "Error al borrar la caché",
       'failedToSendFeedback': "Error al enviar comentarios",
       'listenVoice': "Escuchar voz",
       'liveAudioTranslationVoice': "Voz de traducción de audio en vivo",
-      'liveAudioTranslationVoiceDesc': "Selecciona qué persona de voz te habla con voz traducida durante las llamadas telefónicas y de VoIP en vivo.",
+      'liveAudioTranslationVoiceDesc':
+          "Selecciona qué persona de voz te habla con voz traducida durante las llamadas telefónicas y de VoIP en vivo.",
       'livocalContact': "Contacto de Livocal",
-      'privacyPrinciplesBody': "Livocal valora tu privacidad:\n\n1. Cifrado privado: Tus llamadas y mensajes individuales están estrictamente protegidos.\n\n2. Traducción en vivo de Gemini: Las transmisiones de voz se procesan en memoria segura efímera durante llamadas activas y nunca se almacenan ni se usan para entrenamiento.\n\n3. Sin recopilación de agenda: La coincidencia de contactos se realiza mediante búsquedas de hash criptográfico sin subir tu libreta de direcciones.",
+      'privacyPrinciplesBody':
+          "Livocal valora tu privacidad:\n\n1. Cifrado privado: Tus llamadas y mensajes individuales están estrictamente protegidos.\n\n2. Traducción en vivo de Gemini: Las transmisiones de voz se procesan en memoria segura efímera durante llamadas activas y nunca se almacenan ni se usan para entrenamiento.\n\n3. Sin recopilación de agenda: La coincidencia de contactos se realiza mediante búsquedas de hash criptográfico sin subir tu libreta de direcciones.",
       'selectedVoice': "Voz seleccionada",
-      'shareQrInviteText': "Conéctate conmigo en Livocal: {link}\n¡Descarga la aplicación para chatear y hacer llamadas con traducción en vivo!",
+      'shareQrInviteText':
+          "Conéctate conmigo en Livocal: {link}\n¡Descarga la aplicación para chatear y hacer llamadas con traducción en vivo!",
       'stopPreview': "Detener vista previa",
       'tapToSelect': "Toca para seleccionar",
-      'voicePreferenceSavedNotice': "Tu persona de voz preferida se guarda de forma segura en tu dispositivo y se aplica automáticamente a todas las llamadas traducidas en vivo.",
-      'voicePreviewOffline': "La vista previa de voz no está disponible sin conexión.",
-      'voiceSetSuccess': "Se estableció \"{voiceId}\" como tu voz de traducción en vivo",
+      'voicePreferenceSavedNotice':
+          "Tu persona de voz preferida se guarda de forma segura en tu dispositivo y se aplica automáticamente a todas las llamadas traducidas en vivo.",
+      'voicePreviewOffline':
+          "La vista previa de voz no está disponible sin conexión.",
+      'voiceSetSuccess':
+          "Se estableció \"{voiceId}\" como tu voz de traducción en vivo",
       'trialRemainingBadge': "⏱️ Prueba: quedan {minutes} mins",
       'balanceExhaustedBadge': "⚠️ Saldo agotado (0 mins)",
       'balanceMinutesBadge': "💎 Saldo: {minutes} mins",
       'trialDaysLeftNotice': "Quedan {days} días • Llamadas locales gratis",
-      'rechargeForTranslationNotice': "Recarga para llamadas con traducción • Llamadas locales gratis",
-      'translationRateNotice': "Traducción IA 1 min/min • Llamadas locales gratis",
+      'rechargeForTranslationNotice':
+          "Recarga para llamadas con traducción • Llamadas locales gratis",
+      'translationRateNotice':
+          "Traducción IA 1 min/min • Llamadas locales gratis",
       'recharge': "Recargar",
       'rechargePlus': "+ Recargar",
       'geminiLiveVoiceTranslation': "Traducción de voz en vivo Gemini 3.5",
@@ -2781,35 +3209,48 @@ class AppStrings {
       'selectPeerLanguage': "Selecciona el idioma del contacto",
       'dialNumber': "Marcar número",
       'recentCallsHeader': "Llamadas recientes traducidas y de voz",
-      'noRecentCalls': "Aún no hay llamadas recientes. Marca un número o toca un contacto.",
+      'noRecentCalls':
+          "Aún no hay llamadas recientes. Marca un número o toca un contacto.",
       'directCallByNumber': "Llamada o chat directo por número",
-      'directDialSubtitle': "Ingresa cualquier número para llamar o chatear directamente",
-      'freeLocalCallBanner': "🗣️ Llamada local gratis (Mismo idioma - Sin descuento de minutos)",
-      'aiTranslateCallBanner': "🤖 Llamada con traducción IA (1 min/min) • Saldo: {minutes} min",
+      'directDialSubtitle':
+          "Ingresa cualquier número para llamar o chatear directamente",
+      'freeLocalCallBanner':
+          "🗣️ Llamada local gratis (Mismo idioma - Sin descuento de minutos)",
+      'aiTranslateCallBanner':
+          "🤖 Llamada con traducción IA (1 min/min) • Saldo: {minutes} min",
       'voiceCallAi': "Llamada de voz (IA)",
       'messageAction': "Mensaje",
       'voiceMinutesRecharge': "Recarga de minutos de voz",
-      'talkToInternationalClients': "Habla con clientes internacionales en cualquier idioma",
+      'talkToInternationalClients':
+          "Habla con clientes internacionales en cualquier idioma",
       'currentBalanceText': "Saldo actual: {minutes} mins",
       'trialBadgeText': "Prueba: {minutes} mins",
-      'trialValidityText': "Validez de prueba gratuita restante: {days} días (Saldo pagado: {paid} mins)",
-      'paidBalanceLifetimeText': "El saldo pagado nunca caduca (Validez de por vida)",
-      'sameLanguageFreeRule': "🗣️ Llamadas locales en el mismo idioma 100% gratis",
-      'geminiAiRateRule': "🤖 Llamadas traducidas con Gemini 3.5 Live AI: 1 min/min",
+      'trialValidityText':
+          "Validez de prueba gratuita restante: {days} días (Saldo pagado: {paid} mins)",
+      'paidBalanceLifetimeText':
+          "El saldo pagado nunca caduca (Validez de por vida)",
+      'sameLanguageFreeRule':
+          "🗣️ Llamadas locales en el mismo idioma 100% gratis",
+      'geminiAiRateRule':
+          "🤖 Llamadas traducidas con Gemini 3.5 Live AI: 1 min/min",
       'selectMinutePack': "Selecciona el paquete de minutos",
       'starterPackTitle': "Paquete Inicial (60 Mins)",
-      'starterPackDesc': "Para entrevistas rápidas y briefs iniciales (~৳20/min)",
+      'starterPackDesc':
+          "Para entrevistas rápidas y briefs iniciales (~৳20/min)",
       'proPackTitle': "Freelancer Pro (180 Mins)",
-      'proPackDesc': "Reuniones semanales de proyectos y llamadas regulares (17% ahorro)",
+      'proPackDesc':
+          "Reuniones semanales de proyectos y llamadas regulares (17% ahorro)",
       'popularBadge': "⭐ POPULAR",
       'agencyPackTitle': "Paquete de Agencia (500 Mins)",
-      'agencyPackDesc': "Para agencias y llamadas internacionales frecuentes (28% ahorro)",
+      'agencyPackDesc':
+          "Para agencias y llamadas internacionales frecuentes (28% ahorro)",
       'bestValueBadge': "💎 MEJOR VALOR",
       'paymentMethod': "Método de pago",
       'bdtLocal': "৳ BDT Local",
       'havePromoCode': "¿Tienes un código promocional? Toca aquí",
       'apply': "Aplicar",
-      'promoAppliedBonus': "¡Código aplicado! Se añadirán +{bonus} mins de bonificación.",
+      'promoAppliedBonus':
+          "¡Código aplicado! Se añadirán +{bonus} mins de bonificación.",
       'invalidPromoCode': "Código promocional vencido o inválido.",
       'realPaymentGuideBkash': "Guía de pago (bKash / Nagad)",
       'realPaymentGuideBinance': "Guía de pago con Binance Pay USDT",
@@ -2820,39 +3261,59 @@ class AppStrings {
       'retryTooltip': "Reintentar",
       'bkashMerchantNumber': "Número personal / comercial de bKash / Nagad:",
       'binancePayOfficialId': "ID oficial de Binance Pay de Livocal:",
-      'cryptoOfficialDepositAddress': "Dirección oficial de depósito {network} de Livocal:",
+      'cryptoOfficialDepositAddress':
+          "Dirección oficial de depósito {network} de Livocal:",
       'copyBtn': "Copiar",
-      'copiedToClipboardSnack': "¡Dirección/número {text} copiado al portapapeles!",
-      'paymentInstructionBkash': "1. Envía dinero o realiza el pago de ৳{amount} desde tu app bKash o Nagad.\n2. Tras la transacción exitosa, ingresa tu número remitente y TrxID abajo:",
-      'paymentInstructionBinance': "1. En la app de Binance, ve a Pay > Send to Binance ID y envía {amount} USDT.\n2. Después de enviar, ingresa tu Binance ID y el ID de orden abajo:",
-      'paymentInstructionCrypto': "1. Envía {amount} USDT ({network}) desde tu billetera cripto.\n2. Tras la transacción, ingresa tu dirección de billetera remitente y TxHash abajo:",
-      'senderNumberInputLabel': "Tu número de teléfono remitente (Sender Number)",
+      'copiedToClipboardSnack':
+          "¡Dirección/número {text} copiado al portapapeles!",
+      'paymentInstructionBkash':
+          "1. Envía dinero o realiza el pago de ৳{amount} desde tu app bKash o Nagad.\n2. Tras la transacción exitosa, ingresa tu número remitente y TrxID abajo:",
+      'paymentInstructionBinance':
+          "1. En la app de Binance, ve a Pay > Send to Binance ID y envía {amount} USDT.\n2. Después de enviar, ingresa tu Binance ID y el ID de orden abajo:",
+      'paymentInstructionCrypto':
+          "1. Envía {amount} USDT ({network}) desde tu billetera cripto.\n2. Tras la transacción, ingresa tu dirección de billetera remitente y TxHash abajo:",
+      'senderNumberInputLabel':
+          "Tu número de teléfono remitente (Sender Number)",
       'binancePayIdInputLabel': "Tu Binance Pay ID o correo electrónico",
-      'senderAddressInputLabel': "Tu dirección de billetera remitente (Sender Address)",
+      'senderAddressInputLabel':
+          "Tu dirección de billetera remitente (Sender Address)",
       'trxIdInputLabel': "TrxID de bKash / Nagad (ID de transacción)",
-      'binancePayOrderIdInputLabel': "ID de orden de Binance Pay / ID de transacción",
+      'binancePayOrderIdInputLabel':
+          "ID de orden de Binance Pay / ID de transacción",
       'txHashInputLabel': "TxHash de Blockchain (Hash de transacción)",
       'submitPaymentBdt': "Enviar verificación de pago de ৳{amount}",
       'submitPaymentUsdt': "Enviar verificación de pago de \${amount} USDT",
-      'waitForDepositAccountSnack': "Espera o actualiza hasta que se cargue la cuenta de depósito del servidor.",
-      'enterSenderPhoneSnack': "Por favor ingresa tu número de teléfono remitente.",
-      'enterBinancePayIdSnack': "Por favor ingresa tu Binance Pay ID o correo electrónico.",
-      'enterSenderCryptoAddressSnack': "Por favor ingresa tu dirección de billetera cripto remitente.",
+      'waitForDepositAccountSnack':
+          "Espera o actualiza hasta que se cargue la cuenta de depósito del servidor.",
+      'enterSenderPhoneSnack':
+          "Por favor ingresa tu número de teléfono remitente.",
+      'enterBinancePayIdSnack':
+          "Por favor ingresa tu Binance Pay ID o correo electrónico.",
+      'enterSenderCryptoAddressSnack':
+          "Por favor ingresa tu dirección de billetera cripto remitente.",
       'enterTxHashSnack': "Por favor ingresa el TxHash de la Blockchain.",
-      'enterTrxIdSnack': "Por favor ingresa el ID de transacción (TrxID / Order ID).",
-      'trc20AddressLengthError': "La dirección TRC-20 debe comenzar con 'T' y tener 34 caracteres.",
-      'bep20AddressLengthError': "La dirección BEP-20 debe comenzar con '0x' y tener 42 caracteres.",
-      'invalidTxHashError': "Por favor ingresa un TxHash de Blockchain válido de 64 caracteres.",
-      'paymentSubmittedSuccess': "¡Solicitud de pago enviada! Los minutos se acreditarán tras la aprobación del administrador.",
+      'enterTrxIdSnack':
+          "Por favor ingresa el ID de transacción (TrxID / Order ID).",
+      'trc20AddressLengthError':
+          "La dirección TRC-20 debe comenzar con 'T' y tener 34 caracteres.",
+      'bep20AddressLengthError':
+          "La dirección BEP-20 debe comenzar con '0x' y tener 42 caracteres.",
+      'invalidTxHashError':
+          "Por favor ingresa un TxHash de Blockchain válido de 64 caracteres.",
+      'paymentSubmittedSuccess':
+          "¡Solicitud de pago enviada! Los minutos se acreditarán tras la aprobación del administrador.",
       'paymentFailedSnack': "No se pudo enviar la solicitud de pago.",
       'minutesExhaustedTitle': "Minutos agotados",
-      'minutesExhaustedSub': "Se requiere saldo de minutos para llamadas traducidas con IA en vivo",
-      'sameLanguageFreeNotice': "¡Las llamadas normales en el mismo idioma son 100% gratuitas! Los minutos solo se usan para traducción en tiempo real con IA.",
+      'minutesExhaustedSub':
+          "Se requiere saldo de minutos para llamadas traducidas con IA en vivo",
+      'sameLanguageFreeNotice':
+          "¡Las llamadas normales en el mismo idioma son 100% gratuitas! Los minutos solo se usan para traducción en tiempo real con IA.",
       'starterBundleMinutes': "60 Minutos",
       'proBundleMinutes': "180 Minutos",
       'buyMinutes': "Comprar minutos",
       'callFreeNoAi': "Llamar gratis (Sin traducción)",
-      'minutesExhaustedAlert': "Tus minutos se han agotado. Recarga para continuar la llamada.",
+      'minutesExhaustedAlert':
+          "Tus minutos se han agotado. Recarga para continuar la llamada.",
       'muteBtn': "Silenciar",
       'unmuteBtn': "Activar micrófono",
       'speakerBtn': "Altavoz",
@@ -2865,22 +3326,28 @@ class AppStrings {
       'muteNotifications': "Silenciar notificaciones",
       'unmuteNotifications': "Activar notificaciones",
       'clearChat': "Borrar chat",
-      'blockedTapToUnblock': "Has bloqueado este contacto. Toca para desbloquear.",
+      'blockedTapToUnblock':
+          "Has bloqueado este contacto. Toca para desbloquear.",
       'sayHelloTo': "Saluda a {name}",
-      'noMessagesYet': "Aún no hay mensajes. Envía un saludo o una nota de voz para comenzar.",
+      'noMessagesYet':
+          "Aún no hay mensajes. Envía un saludo o una nota de voz para comenzar.",
       'sayHello': "¡Saluda!",
-      'disappearingMessagesOn': "Los mensajes temporales están activos ({timer})",
+      'disappearingMessagesOn':
+          "Los mensajes temporales están activos ({timer})",
       'takePhoto': "Tomar una foto",
       'chooseFromGallery': "Elegir de la galería",
       'textStatus': "Estado de texto",
       'viewStatus': "Ver estado",
       'addNewStatus': "Añadir estado nuevo",
-      'languageAppliedLocally': "Idioma aplicado localmente (sincronización en la nube sin conexión).",
-      'failedToInitiateCall': "No se pudo iniciar la llamada. Comprueba tu conexión de red.",
+      'languageAppliedLocally':
+          "Idioma aplicado localmente (sincronización en la nube sin conexión).",
+      'failedToInitiateCall':
+          "No se pudo iniciar la llamada. Comprueba tu conexión de red.",
       'searchChatsHint': "Buscar chats, mensajes...",
       'paymentReceivingAccounts': "Cuentas para recibir pagos",
       'p2pPaymentSettings': "Ajustes de pago P2P",
-      'p2pPaymentSettingsDesc': "Configura las cuentas a las que otros usuarios pueden transferirte dinero y criptomonedas en los chats. Asegúrate de que tus direcciones TRC-20 y BEP-20 sean correctas.",
+      'p2pPaymentSettingsDesc':
+          "Configura las cuentas a las que otros usuarios pueden transferirte dinero y criptomonedas en los chats. Asegúrate de que tus direcciones TRC-20 y BEP-20 sean correctas.",
       'cryptocurrencyAndBinance': "Criptomonedas y Binance",
       'mobileFinancialServices': "Servicios financieros móviles (MFS)",
       'binancePayIdLabel': "Binance Pay ID / correo de Binance",
@@ -2891,12 +3358,15 @@ class AppStrings {
       'savePaymentAccounts': "Guardar cuentas de pago",
       'couldNotLoadChats': "No se pudieron cargar los chats",
       'checkConnectionRetry': "Comprueba tu conexión y vuelve a intentarlo.",
-      'noChatsMatching': "No se encontraron chats que coincidan con \"{query}\"",
+      'noChatsMatching':
+          "No se encontraron chats que coincidan con \"{query}\"",
       'noConversationsYet': "Aún no hay conversaciones",
-      'startChattingDesc': "Empieza a chatear con tus contactos con traducción en tiempo real y llamadas de voz.",
+      'startChattingDesc':
+          "Empieza a chatear con tus contactos con traducción en tiempo real y llamadas de voz.",
       'startNewChat': "Iniciar chat nuevo",
       'noMatchesFound': "No se encontraron coincidencias",
-      'languagePreferenceSavedLocally': "Preferencia de idioma guardada localmente (sincronización en la nube sin conexión).",
+      'languagePreferenceSavedLocally':
+          "Preferencia de idioma guardada localmente (sincronización en la nube sin conexión).",
       'selectYourSpokenLanguage': "Selecciona tu idioma hablado",
       'camera': "Cámara",
       'gallery': "Galería",
@@ -2906,9 +3376,11 @@ class AppStrings {
       'phoneLabel': "Teléfono",
       'unstarAll': "Quitar todas las estrellas",
       'defaultDoodleWallpaper': "Degradado de Livocal (predeterminado)",
-      'nameVisibilityHint': "Este no es tu nombre de usuario ni tu PIN. Este nombre será visible para tus contactos de Livocal.",
+      'nameVisibilityHint':
+          "Este no es tu nombre de usuario ni tu PIN. Este nombre será visible para tus contactos de Livocal.",
       'noStarredMessages': "No hay mensajes destacados",
-      'starredEmptyHint': "Mantén pulsado cualquier mensaje de un chat para destacarlo y encontrarlo fácilmente después.",
+      'starredEmptyHint':
+          "Mantén pulsado cualquier mensaje de un chat para destacarlo y encontrarlo fácilmente después.",
       'display': "Pantalla",
       'chatWallpaper': "Fondo de chat",
       'wallpaperResetDefault': "Fondo restablecido al predeterminado",
@@ -2933,12 +3405,15 @@ class AppStrings {
       'invite': "INVITAR",
       'selectContactToBlock': "Seleccionar contacto para bloquear",
       'noContactsToBlock': "No hay contactos disponibles para bloquear",
-      'blockedContactsDesc': "Los contactos bloqueados ya no podrán llamarte ni enviarte mensajes.",
+      'blockedContactsDesc':
+          "Los contactos bloqueados ya no podrán llamarte ni enviarte mensajes.",
       'tapToUnblock': "Toca un contacto para desbloquearlo.",
       'unblock': "Desbloquear",
       'failedToLoadMedia': "No se pudieron cargar los medios",
-      'voicePreviewSavedLocally': "Preferencia de idioma guardada localmente; sincronización en la nube sin conexión.",
-      'voicePreviewUnavailable': "La vista previa de voz no está disponible temporalmente. Comprueba la conexión a internet.",
+      'voicePreviewSavedLocally':
+          "Preferencia de idioma guardada localmente; sincronización en la nube sin conexión.",
+      'voicePreviewUnavailable':
+          "La vista previa de voz no está disponible temporalmente. Comprueba la conexión a internet.",
       'decline': "Rechazar",
       'tapToAnswer': "Toca para responder",
       'aiCall': "Llamada AI",
@@ -2955,10 +3430,14 @@ class AppStrings {
       'zeroMinutesNotConnected': "0 minutos (sin conexión)",
       'zeroMinutesNormalCall': "0 minutos (llamada normal)",
       'minutesDeducted': "Se descontaron {minutes} minutos",
-      'missedIncomingMessage': "Perdiste una llamada entrante. Puedes devolver la llamada o enviar un mensaje.",
-      'missedOutgoingMessage': "El otro lado no respondió. Inténtalo de nuevo en un momento.",
-      'translatedCallSuccessMessage': "🌐 Tu conversación con traducción de voz por IA en tiempo real se completó correctamente. ¡Gracias por usar Livocal!",
-      'normalCallSuccessMessage': "Tu conversación se completó correctamente. ¡Gracias por la charla!",
+      'missedIncomingMessage':
+          "Perdiste una llamada entrante. Puedes devolver la llamada o enviar un mensaje.",
+      'missedOutgoingMessage':
+          "El otro lado no respondió. Inténtalo de nuevo en un momento.",
+      'translatedCallSuccessMessage':
+          "🌐 Tu conversación con traducción de voz por IA en tiempo real se completó correctamente. ¡Gracias por usar Livocal!",
+      'normalCallSuccessMessage':
+          "Tu conversación se completó correctamente. ¡Gracias por la charla!",
       'missedCall': "Llamada perdida",
       'missedVoiceCall': "Llamada de voz perdida",
       'declinedCall': "Llamada rechazada",
@@ -2969,14 +3448,18 @@ class AppStrings {
       'incomingVoiceCall': "Llamada de voz entrante",
       'noAnswer': "Sin respuesta",
       'talkedFor': "Hablaste durante {duration}",
-      'languagesSupported': "{count}+ idiomas de Gemini Live compatibles (cualquiera a cualquiera)",
+      'languagesSupported':
+          "{count}+ idiomas de Gemini Live compatibles (cualquiera a cualquiera)",
       'popularLanguages': "IDIOMAS POPULARES",
       'aiInterpreterVoicePreferences': "Voz y preferencias del intérprete AI",
-      'aiVoicePrefsDesc': "Personaliza cómo suena el habla traducida durante las llamadas. La IA detecta los idiomas automáticamente en tiempo real.",
+      'aiVoicePrefsDesc':
+          "Personaliza cómo suena el habla traducida durante las llamadas. La IA detecta los idiomas automáticamente en tiempo real.",
       'zeroTrustRelayActive': "Relé AI en la nube Zero-Trust activo",
-      'zeroTrustRelayDesc': "Las claves API y los flujos de audio se gestionan de forma segura en el servidor backend.",
+      'zeroTrustRelayDesc':
+          "Las claves API y los flujos de audio se gestionan de forma segura en el servidor backend.",
       'selectAiInterpreterVoice': "Seleccionar voz del intérprete AI",
-      'selectAiVoiceDesc': "Elige el perfil de voz sintética que se usa al reproducir el audio traducido.",
+      'selectAiVoiceDesc':
+          "Elige el perfil de voz sintética que se usa al reproducir el audio traducido.",
       'saveVoicePreference': "Guardar preferencia de voz",
       'differentLanguageDetected': "Se detectó otro idioma",
       'youSpeak': "Tú hablas",
@@ -2984,7 +3467,8 @@ class AppStrings {
       'callWithAiTranslation': "Llamar con traducción de voz AI",
       'directVoiceCallFree': "Llamada de voz directa (gratis)",
       'registeredLivocalUser': "Usuario registrado de Livocal ({phone})",
-      'directCallRings': "La llamada directa sonará en este teléfono si Livocal está instalado.",
+      'directCallRings':
+          "La llamada directa sonará en este teléfono si Livocal está instalado.",
       'agreeAndContinue': "Aceptar y continuar",
       'shareContact': "Compartir contacto",
       'editContact': "Editar contacto",
@@ -2999,19 +3483,23 @@ class AppStrings {
       'muteDesc': "Silenciar alertas de mensajes nuevos de este contacto",
       'customNotifications': "Notificaciones personalizadas",
       'encryptionAndSecurity': "Cifrado y seguridad",
-      'encryptionDesc': "Los mensajes y las llamadas usan transporte TLS/SRTP seguro y traducción efímera",
+      'encryptionDesc':
+          "Los mensajes y las llamadas usan transporte TLS/SRTP seguro y traducción efímera",
       'reportContactName': "Reportar a {name}",
       'geminiAiLiveTranslation': "Traducción en vivo de Gemini AI",
       'startTranslatedVoiceCall': "Iniciar llamada de voz traducida",
-      'reportForwardWarning': "Los últimos 5 mensajes de este contacto se enviarán a Livocal para revisión de seguridad. El contacto no será notificado.",
+      'reportForwardWarning':
+          "Los últimos 5 mensajes de este contacto se enviarán a Livocal para revisión de seguridad. El contacto no será notificado.",
       'reasonForReport': "Motivo del reporte:",
       'blockContactClearMessages': "Bloquear contacto y borrar mensajes",
       'inChatAiTranslation': "Traducción en vivo con IA en el chat",
       'poweredByGeminiFor': "Con tecnología de Gemini Live API para {name}",
       'languagePreferences': "Preferencias de idioma",
       'myLanguage': "Mi idioma",
-      'autoTranslateIncoming': "Traducir automáticamente los mensajes entrantes",
-      'autoTranslateIncomingDesc': "Muestra automáticamente las traducciones debajo de los mensajes recibidos",
+      'autoTranslateIncoming':
+          "Traducir automáticamente los mensajes entrantes",
+      'autoTranslateIncomingDesc':
+          "Muestra automáticamente las traducciones debajo de los mensajes recibidos",
       'liveVoiceNoteTranscription': "Transcripción de notas de voz en vivo",
       'liveVoiceNoteDesc': "Transcribe y traduce los mensajes de voz entrantes",
       'testRealtimeTranslation': "Probar traducción en tiempo real",
@@ -3019,27 +3507,35 @@ class AppStrings {
       'saveApplySettings': "Guardar y aplicar",
       'inChatTranslationEnabled': "Traducción en vivo del chat activada",
       'inChatTranslationDisabled': "Traducción en vivo del chat desactivada",
-      'translationSettingsApplied': "Ajustes de traducción aplicados: {my} ⇄ {peer}",
-      'inChatTranslationDisabledFor': "Traducción en vivo del chat desactivada para {name}",
+      'translationSettingsApplied':
+          "Ajustes de traducción aplicados: {my} ⇄ {peer}",
+      'inChatTranslationDisabledFor':
+          "Traducción en vivo del chat desactivada para {name}",
       'sendPaymentTo': "Enviar pago a {name}",
       'selectPaymentMethod': "Seleccionar método de pago",
       'livocalInAppWallet': "Cartera integrada de Livocal",
-      'walletBalanceTransfer': "Saldo: {available} min (transfiere {needed} min)",
+      'walletBalanceTransfer':
+          "Saldo: {available} min (transfiere {needed} min)",
       'bkashNagadMfs': "bKash / Nagad MFS (envío directo)",
       'cryptoBinanceUsdt': "Cripto (Binance Pay / USDT)",
-      'shortByMinutes': "Faltan {minutes} min para completar esta transferencia.",
-      'liveRateSummary': "Tasa en vivo: \$1.00 ≈ {rate} BDT  |  Total: {total} BDT",
+      'shortByMinutes':
+          "Faltan {minutes} min para completar esta transferencia.",
+      'liveRateSummary':
+          "Tasa en vivo: \$1.00 ≈ {rate} BDT  |  Total: {total} BDT",
       'paste': "PEGAR",
       'confirmPayment': "Confirmar pago: {amount}",
       'welcomeBadge1': "CONEXIÓN DE NUEVA GENERACIÓN",
       'welcomeTitle1': "Bienvenido a Livocal",
-      'welcomeDesc1': "Mensajería privada ultrarrápida y comunicación de voz nítida diseñadas para una conectividad diaria sin interrupciones.",
+      'welcomeDesc1':
+          "Mensajería privada ultrarrápida y comunicación de voz nítida diseñadas para una conectividad diaria sin interrupciones.",
       'welcomeBadge2': "GEMINI LIVE AI",
       'welcomeTitle2': "Traducción de voz en tiempo real",
-      'welcomeDesc2': "Rompe las barreras del idioma en tiempo real. Habla en bengalí o inglés con traducción de audio bidireccional en vivo en menos de un segundo durante las llamadas.",
+      'welcomeDesc2':
+          "Rompe las barreras del idioma en tiempo real. Habla en bengalí o inglés con traducción de audio bidireccional en vivo en menos de un segundo durante las llamadas.",
       'welcomeBadge3': "PRIVACIDAD POR DISEÑO",
       'welcomeTitle3': "Privado y seguro por defecto",
-      'welcomeDesc3': "Flujos de voz cifrados con DTLS-SRTP, datos personales protegidos, sin recolección de libretas de direcciones y bloqueo biométrico.",
+      'welcomeDesc3':
+          "Flujos de voz cifrados con DTLS-SRTP, datos personales protegidos, sin recolección de libretas de direcciones y bloqueo biométrico.",
       'enterPhoneNumber': "Ingresa tu número de teléfono",
       'carrierCharges': "Pueden aplicarse cargos del operador.",
       'next': "Siguiente",
@@ -3080,10 +3576,13 @@ class AppStrings {
       'slideToCancel': "◀ Desliza para cancelar",
       'freeCall': "🗣️ Llamada gratis",
       'myStatus': "Mi estado",
-      'couldNotLoadStatus': "No se pudieron cargar las actualizaciones de estado",
+      'couldNotLoadStatus':
+          "No se pudieron cargar las actualizaciones de estado",
       'noRecentUpdates': "No hay actualizaciones recientes",
-      'statusUpdatesDesc': "Las actualizaciones de estado de tus contactos aparecerán aquí. Desaparecen después de 24 horas.",
-      'statusPrivacyNote': "Tus actualizaciones de estado están protegidas por tu configuración de privacidad",
+      'statusUpdatesDesc':
+          "Las actualizaciones de estado de tus contactos aparecerán aquí. Desaparecen después de 24 horas.",
+      'statusPrivacyNote':
+          "Tus actualizaciones de estado están protegidas por tu configuración de privacidad",
       'messageHint': "Mensaje",
       'recentUpdates': "Actualizaciones recientes",
       'aiTranslatedVoiceCall': "Llamada traducida por IA de Livocal",
@@ -3104,20 +3603,28 @@ class AppStrings {
       'unpinMessage': "Desfijar mensaje",
       'pinnedMessages': "Mensajes fijados",
       'noPinnedMessages': "No hay mensajes fijados",
-      'callWarningRemainingMinutes': "⚠️ Advertencia: Solo te quedan {minutes} minutos.",
-      'callTerminatedExhausted': "🛑 Se han agotado tus minutos. Finalizando llamada.",
-      'callTranslationActiveNotice': "{myEmoji} {myName} ⇄ {peerEmoji} {peerName} Traducción de voz en tiempo real activa. ¡Habla en cualquier idioma!",
+      'callWarningRemainingMinutes':
+          "⚠️ Advertencia: Solo te quedan {minutes} minutos.",
+      'callTerminatedExhausted':
+          "🛑 Se han agotado tus minutos. Finalizando llamada.",
+      'callTranslationActiveNotice':
+          "{myEmoji} {myName} ⇄ {peerEmoji} {peerName} Traducción de voz en tiempo real activa. ¡Habla en cualquier idioma!",
       'dialPhoneNumber': "Marcar número de teléfono",
-      'dialPhoneNumberSub': "Ingresa el número para llamar o chatear directamente",
-      'realtimeTranslationActive': "Traducción en tiempo real {langA} ⇄ {langB} activada",
-      'sameLanguageDirectCallNotice': "Ambos usuarios hablan el mismo idioma ({lang}). Hable directamente con voz natural sin traducción.",
+      'dialPhoneNumberSub':
+          "Ingresa el número para llamar o chatear directamente",
+      'realtimeTranslationActive':
+          "Traducción en tiempo real {langA} ⇄ {langB} activada",
+      'sameLanguageDirectCallNotice':
+          "Ambos usuarios hablan el mismo idioma ({lang}). Hable directamente con voz natural sin traducción.",
       'directVoiceCallActiveNotice': "Llamada de voz directa activa.",
-      'aiUnavailableDirectFallback': "Intérprete de IA no disponible. Conectado mediante llamada de voz directa.",
+      'aiUnavailableDirectFallback':
+          "Intérprete de IA no disponible. Conectado mediante llamada de voz directa.",
       'starterPackPriceText': "1,200 BDT (\$9.99)",
       'proPackPriceText': "3,000 BDT (\$24.99)",
       'bdtAmount': "{amount} BDT",
       'callContinuingDirectVoiceDesc': "La llamada continúa como voz directa.",
-      'callerMinutesExhaustedDirectVoiceDesc': "Minutos de traducción del llamante agotados. Cambiado a voz directa.",
+      'callerMinutesExhaustedDirectVoiceDesc':
+          "Minutos de traducción del llamante agotados. Cambiado a voz directa.",
       'rechargeNowBtn': "Recargar",
     },
     'fr': {
@@ -3126,17 +3633,21 @@ class AppStrings {
       'account': "Compte",
       'accountAndPrivacy': "Compte et Confidentialité",
       'accountManagement': "Gestion du compte",
-      'accountReportSubmitted': "Demande de rapport envoyée. Prêt sous 24 heures.",
-      'accountSub': "Notifications de sécurité, vérification en deux étapes, changer de numéro",
+      'accountReportSubmitted':
+          "Demande de rapport envoyée. Prêt sous 24 heures.",
+      'accountSub':
+          "Notifications de sécurité, vérification en deux étapes, changer de numéro",
       'advancedAiEngine': "Voix et Traduction",
       'allMedia': "Tous les médias",
       'appDatabaseIsar': "• Base de données (Isar) : ",
       'appInfo': "Infos sur l\\",
-      'appInfoDesc': "Traduction vocale en temps réel par IA et messagerie sécurisée avec WebRTC et Gemini.",
+      'appInfoDesc':
+          "Traduction vocale en temps réel par IA et messagerie sécurisée avec WebRTC et Gemini.",
       'appLanguage': "Langue de l\\",
       'appLanguageSub': "English, বাংলা, हिन्दी, العربية...",
       'biometricCancelled': "Vérification biométrique annulée.",
-      'biometricNotSupported': "L’authentification biométrique n’est pas prise en charge.",
+      'biometricNotSupported':
+          "L’authentification biométrique n’est pas prise en charge.",
       'blockedContacts': "Contacts bloqués",
       'blockedContactsCount': "0 contact",
       'cacheClearedSnack': "Cache multimédia vidé avec succès",
@@ -3151,8 +3662,10 @@ class AppStrings {
       'callsHeader': "Appels",
       'cancel': "Annuler",
       'changeNumber': "Changer de numéro",
-      'changeNumberDesc': "Le transfert vers un nouveau numéro déplacera toutes vos infos, paramètres et clés.",
-      'changeNumberDialogContent': "Le transfert vers un nouveau numéro transférera toutes vos données et paramètres.",
+      'changeNumberDesc':
+          "Le transfert vers un nouveau numéro déplacera toutes vos infos, paramètres et clés.",
+      'changeNumberDialogContent':
+          "Le transfert vers un nouveau numéro transférera toutes vos données et paramètres.",
       'chats': "DISCUSSIONS",
       'chatsAndTheme': "Discussions et Thème",
       'chatsAndThemeSub': "Fonds d\\",
@@ -3161,25 +3674,31 @@ class AppStrings {
       'chooseTheme': "Choisir le thème",
       'classicBellPreset': "Cloche Classique",
       'clearCache': "Vider le cache multimédia",
-      'clearCacheDialogDesc': "Cela supprimera les fichiers audio temporaires. Vos messages texte locaux ne seront pas affectés.",
+      'clearCacheDialogDesc':
+          "Cela supprimera les fichiers audio temporaires. Vos messages texte locaux ne seront pas affectés.",
       'clearCacheDialogTitle': "Vider le cache multimédia ?",
       'clearCacheSub': "Supprimer les notes vocales et audios en cache",
       'clearCallLog': "Effacer le journal d\\",
       'close': "FERMER",
       'confirm': "CONFIRMER",
       'confirmDisable': "CONFIRMER LA DÉSACTIVATION",
-      'confirmFingerprintDisable': "Confirmez votre empreinte pour désactiver le verrouillage",
-      'confirmFingerprintEnable': "Confirmez votre empreinte pour activer le verrouillage",
+      'confirmFingerprintDisable':
+          "Confirmez votre empreinte pour désactiver le verrouillage",
+      'confirmFingerprintEnable':
+          "Confirmez votre empreinte pour activer le verrouillage",
       'contactSupport': "Contacter le support",
-      'contactSupportDesc': "Dites-nous comment nous pouvons vous aider. Décrivez votre problème ou suggestion :",
+      'contactSupportDesc':
+          "Dites-nous comment nous pouvons vous aider. Décrivez votre problème ou suggestion :",
       'contactSupportSub': "Des questions ou besoin d\\",
       'contacts': "Contacts",
       'conversationTones': "Sons des conversations",
-      'conversationTonesSub': "Émettre des sons pour les messages entrants et sortants.",
+      'conversationTonesSub':
+          "Émettre des sons pour les messages entrants et sortants.",
       'copyLink': "Copier le lien",
       'crystalPopPreset': "Crystal Pop",
       'currentNumber': "Actuel : ",
-      'customAudioFromStorage': "Choisir un son personnalisé depuis le stockage",
+      'customAudioFromStorage':
+          "Choisir un son personnalisé depuis le stockage",
       'customLabel': "Personnalisé : ",
       'dark': "Sombre",
       'databaseLabel': "Base de données : ",
@@ -3188,19 +3707,24 @@ class AppStrings {
       'defaultMessageTimer': "Délai par défaut des messages",
       'defaultText': "Par défaut",
       'delete': "SUPPRIMER",
-      'deleteAccountBullet1': "• Supprimer vos informations de compte et votre photo de profil",
-      'deleteAccountBullet2': "• Effacer tout l’historique des messages locaux de cet appareil",
+      'deleteAccountBullet1':
+          "• Supprimer vos informations de compte et votre photo de profil",
+      'deleteAccountBullet2':
+          "• Effacer tout l’historique des messages locaux de cet appareil",
       'deleteAccountBullet3': "• Vous retirer des listes de contacts Livocal",
       'deleteAccountButton': "SUPPRIMER LE COMPTE",
       'deleteAccountDesc': "La suppression de votre compte va :",
       'deleteAccountDialogTitle': "Supprimer ce compte ?",
       'deleteAccountTitle': "Supprimer ce compte ?",
-      'deleteAccountWarning1': "Supprimer vos informations de compte et photo de profil",
+      'deleteAccountWarning1':
+          "Supprimer vos informations de compte et photo de profil",
       'deleteAccountWarning2': "Supprimer tout l\\",
-      'deleteAccountWarning3': "Vous retirer des listes Livocal de vos contacts",
+      'deleteAccountWarning3':
+          "Vous retirer des listes Livocal de vos contacts",
       'deleteAccountWarningTitle': "La suppression de votre compte va :",
       'deleteMyAccount': "Supprimer mon compte",
-      'deleteMyAccountSub': "Supprimer définitivement votre compte et vos données",
+      'deleteMyAccountSub':
+          "Supprimer définitivement votre compte et vos données",
       'digitalPulsePreset': "Pulsion Digitale",
       'disableTwoStep': "Désactiver la vérification en deux étapes",
       'disabled': "Désactivé",
@@ -3209,42 +3733,53 @@ class AppStrings {
       'enablePin': "ACTIVER LE PIN",
       'enableTwoStep': "Activer la vérification en deux étapes",
       'enabled': "Activé",
-      'enterCurrentPin': "Entrez votre code PIN à 6 chiffres actuel pour désactiver :",
+      'enterCurrentPin':
+          "Entrez votre code PIN à 6 chiffres actuel pour désactiver :",
       'enterMessageError': "Veuillez écrire un message avant de soumettre.",
-      'enterNewPin': "Entrez un code PIN à 6 chiffres pour sécuriser votre compte Livocal :",
+      'enterNewPin':
+          "Entrez un code PIN à 6 chiffres pour sécuriser votre compte Livocal :",
       'enterValid6DigitPin': "Veuillez saisir un code PIN valide à 6 chiffres",
       'everyone': "Tout le monde",
-      'faqApiKeyA': "Allez dans Paramètres, entrez votre clé API Google AI Studio et choisissez votre voix préférée.",
+      'faqApiKeyA':
+          "Allez dans Paramètres, entrez votre clé API Google AI Studio et choisissez votre voix préférée.",
       'faqApiKeyQ': "Comment configurer ma clé API Gemini ?",
-      'faqContactsA': "Ouvrez la liste des contacts pour appeler directement ou appuyez sur Inviter pour envoyer un SMS.",
+      'faqContactsA':
+          "Ouvrez la liste des contacts pour appeler directement ou appuyez sur Inviter pour envoyer un SMS.",
       'faqContactsQ': "Comment ajouter ou inviter des contacts ?",
-      'faqLiveTranslationA': "Pendant un appel, l’audio transite via WebRTC et Gemini Live effectue la traduction bidirectionnelle instantanée.",
-      'faqLiveTranslationQ': "Comment fonctionne la traduction en direct par IA ?",
-      'faqSecurityA': "Oui ! Tous les flux audio utilisent le chiffrement DTLS-SRTP et les messages sont strictement protégés.",
+      'faqLiveTranslationA':
+          "Pendant un appel, l’audio transite via WebRTC et Gemini Live effectue la traduction bidirectionnelle instantanée.",
+      'faqLiveTranslationQ':
+          "Comment fonctionne la traduction en direct par IA ?",
+      'faqSecurityA':
+          "Oui ! Tous les flux audio utilisent le chiffrement DTLS-SRTP et les messages sont strictement protégés.",
       'faqSecurityQ': "Mes appels et messages sont-ils chiffrés ?",
       'faqTitle': "Foire Aux Questions (FAQ)",
       'feedbackSentSuccess': "Merci ! Vos commentaires ont été envoyés à l\\",
-      'fingerprintAuthReason': "Veuillez vous authentifier pour déverrouiller Livocal",
+      'fingerprintAuthReason':
+          "Veuillez vous authentifier pour déverrouiller Livocal",
       'fingerprintLock': "Verrouillage par empreinte digitale",
       'fingerprintLockDisabled': "Verrouillage par empreinte désactivé",
       'fingerprintLockEnabled': "Verrouillage par empreinte activé",
       'fingerprintLockSub': "Exiger l\\",
       'from': "de",
       'geminiVoiceEngine': "Persona Vocale IA",
-      'geminiVoiceEngineSub': "Choisissez la voix préférée pour la traduction audio en direct",
+      'geminiVoiceEngineSub':
+          "Choisissez la voix préférée pour la traduction audio en direct",
       'help': "Aide",
       'helpCentre': "Centre d’aide",
       'helpCentreSub': "FAQ, guides et dépannage",
       'helpSub': "Centre d\\",
       'highPriorityNotif': "Notifications haute priorité",
-      'highPriorityNotifSub': "Afficher des aperçus des notifications en haut de l\\",
+      'highPriorityNotifSub':
+          "Afficher des aperçus des notifications en haut de l\\",
       'hours24': "24 heures",
       'iUnderstand': "J’AI COMPRIS",
       'incorrectPin': "Code PIN incorrect. Échec de la vérification.",
       'inviteFriend': "Inviter un ami",
       'inviteFriendSub': "Partager Livocal avec vos contacts et votre famille",
       'inviteLinkCopied': "Lien d\\",
-      'languageNote': "Le changement de langue met à jour instantanément tous les écrans, notifications et appels vocaux.",
+      'languageNote':
+          "Le changement de langue met à jour instantanément tous les écrans, notifications et appels vocaux.",
       'lastSeenAndOnline': "Présence en ligne et vu à",
       'legalAndInfo': "Légal & Infos",
       'light': "Clair",
@@ -3253,7 +3788,8 @@ class AppStrings {
       'livocalHarmonyPreset': "Livocal Harmony (Par défaut)",
       'localDatabase': "Base de données locale et discussions",
       'logout': "Déconnexion",
-      'logoutDialogContent': "Voulez-vous vraiment vous déconnecter ? Les données locales seront effacées.",
+      'logoutDialogContent':
+          "Voulez-vous vraiment vous déconnecter ? Les données locales seront effacées.",
       'logoutDialogTitle': "Se déconnecter de Livocal ?",
       'logoutSub': "Effacer les identifiants locaux et se déconnecter",
       'manageStorage': "Gérer le stockage",
@@ -3268,7 +3804,8 @@ class AppStrings {
       'myContactsExcept': "Mes contacts sauf...",
       'networkUsage': "Utilisation réseau",
       'networkUsageDetails': "Détails de l’utilisation réseau",
-      'networkUsageSub': "Afficher la consommation de données cellulaires et Wi-Fi",
+      'networkUsageSub':
+          "Afficher la consommation de données cellulaires et Wi-Fi",
       'newBroadcast': "Nouvelle diffusion",
       'newGroup': "Nouveau groupe",
       'noBlockedContacts': "Aucun contact bloqué.",
@@ -3287,20 +3824,25 @@ class AppStrings {
       'pinLengthError': "Veuillez saisir un code PIN valide à 6 chiffres",
       'preferences': "Préférences",
       'privacy': "Confidentialité",
-      'privacySub': "Bloquer des contacts, messages éphémères, verrouillage biométrique",
+      'privacySub':
+          "Bloquer des contacts, messages éphémères, verrouillage biométrique",
       'profilePhoto': "Photo de profil",
       'qrCode': "Code QR",
-      'qrCodeDesc': "Votre code QR est privé. Si vous le partagez, les gens peuvent le scanner pour vous ajouter sur Livocal.",
+      'qrCodeDesc':
+          "Votre code QR est privé. Si vous le partagez, les gens peuvent le scanner pour vous ajouter sur Livocal.",
       'reactionNotif': "Notifications de réactions",
-      'reactionNotifSub': "Afficher des notifications pour les réactions aux messages que vous envoyez",
+      'reactionNotifSub':
+          "Afficher des notifications pour les réactions aux messages que vous envoyez",
       'reactionNotifications': "Notifications de réactions",
-      'reactionNotificationsSub': "Afficher des notifications pour les réactions à vos messages",
+      'reactionNotificationsSub':
+          "Afficher des notifications pour les réactions à vos messages",
       'readReceipts': "Confirmations de lecture (coches bleues)",
       'readReceiptsSub': "Si désactivé, vous n\\",
       'received': "reçus",
       'receivedTraffic': "• Reçus : ",
       'requestAccountInfo': "Demander les infos de compte",
-      'requestAccountInfoSub': "Demander un rapport sur les informations et paramètres de votre compte",
+      'requestAccountInfoSub':
+          "Demander un rapport sur les informations et paramètres de votre compte",
       'resetNotifications': "Réinitialiser les paramètres de notification",
       'resetNotificationsSuccess': "Paramètres de notification réinitialisés",
       'resetUsage': "RÉINITIALISER",
@@ -3312,7 +3854,8 @@ class AppStrings {
       'securityAndAppLock': "Sécurité et verrouillage",
       'securityAppLockHeader': "Sécurité et Verrouillage",
       'securityNotifications': "Notifications de sécurité",
-      'securityNotificationsSub': "Afficher les notifications de sécurité lorsque les clés de chiffrement changent.",
+      'securityNotificationsSub':
+          "Afficher les notifications de sécurité lorsque les clés de chiffrement changent.",
       'sent': "envoyés",
       'sentTraffic': "• Envoyés : ",
       'session': "Session",
@@ -3325,34 +3868,41 @@ class AppStrings {
       'storageAndNetworkUsage': "Stockage et utilisation réseau",
       'storageBreakdown': "Détails du stockage",
       'storageOverview': "Aperçu du stockage",
-      'storageSub': "Utilisation réseau, nettoyeur de cache, téléchargement automatique",
+      'storageSub':
+          "Utilisation réseau, nettoyeur de cache, téléchargement automatique",
       'submit': "SOUMETTRE",
       'subtleDingPreset': "Teint Subtil",
       'supportAndCommunity': "Support et Communauté",
       'supportAndKnowledge': "Support & Connaissances",
       'systemDefault': "Par défaut du système",
       'termsAndPrivacy': "Conditions et Politique de Confidentialité",
-      'termsAndPrivacySub': "Communication privée et politique de confidentialité",
+      'termsAndPrivacySub':
+          "Communication privée et politique de confidentialité",
       'toneUpdatedSuccess': "mis à jour",
       'totalAppFootprint': "Espace total de l’application : ",
       'totalTraffic': "• Trafic total : ",
-      'twoStepDialogDisableDesc': "Entrez votre code PIN actuel à 6 chiffres pour désactiver la vérification :",
+      'twoStepDialogDisableDesc':
+          "Entrez votre code PIN actuel à 6 chiffres pour désactiver la vérification :",
       'twoStepDialogDisableTitle': "Désactiver la vérification en deux étapes",
-      'twoStepDialogEnableDesc': "Entrez un code PIN à 6 chiffres pour sécuriser votre compte Livocal :",
+      'twoStepDialogEnableDesc':
+          "Entrez un code PIN à 6 chiffres pour sécuriser votre compte Livocal :",
       'twoStepDialogEnableTitle': "Activer la vérification en deux étapes",
       'twoStepDisabledSnack': "Vérification en deux étapes désactivée",
       'twoStepDisabledSub': "Désactivée (configurez un code PIN à 6 chiffres)",
       'twoStepDisabledSuccess': "Vérification en deux étapes désactivée",
-      'twoStepEnabledSnack': "Code PIN de vérification enregistré en toute sécurité",
+      'twoStepEnabledSnack':
+          "Code PIN de vérification enregistré en toute sécurité",
       'twoStepEnabledSub': "Activée (protection par code PIN active)",
       'twoStepSavedSuccess': "Code PIN enregistré en toute sécurité",
       'twoStepVerification': "Vérification en deux étapes",
       'typeMessage': "Message",
       'typeYourMessage': "Tapez votre message ici...",
       'useHighPriority': "Notifications de haute priorité",
-      'useHighPrioritySub': "Afficher des aperçus des notifications en haut de l’écran",
+      'useHighPrioritySub':
+          "Afficher des aperçus des notifications en haut de l’écran",
       'useLessDataCalls': "Utiliser moins de données pour les appels",
-      'useLessDataCallsSub': "Optimise le débit audio pour les connexions à faible bande passante",
+      'useLessDataCallsSub':
+          "Optimise le débit audio pour les connexions à faible bande passante",
       'version': "Version 1.0.0 (Prêt pour la production)",
       'vibrate': "Vibration",
       'vibrateDefault': "Par défaut",
@@ -3367,27 +3917,35 @@ class AppStrings {
       'appLanguageSetTo': "Langue de l'application définie sur",
       'availableVoicePersonas': "PERSONAS VOCAUX DISPONIBLES",
       'biometricError': "Erreur biométrique",
-      'couldNotOpenUrl': "Impossible d'ouvrir l'URL de la politique de confidentialité",
+      'couldNotOpenUrl':
+          "Impossible d'ouvrir l'URL de la politique de confidentialité",
       'failedToClearCache': "Échec de la suppression du cache",
       'failedToSendFeedback': "Échec de l'envoi des commentaires",
       'listenVoice': "Écouter la voix",
       'liveAudioTranslationVoice': "Voix de traduction audio en direct",
-      'liveAudioTranslationVoiceDesc': "Sélectionnez le persona vocal qui vous parle avec la parole traduite pendant les appels téléphoniques et VoIP en direct.",
+      'liveAudioTranslationVoiceDesc':
+          "Sélectionnez le persona vocal qui vous parle avec la parole traduite pendant les appels téléphoniques et VoIP en direct.",
       'livocalContact': "Contact Livocal",
-      'privacyPrinciplesBody': "Livocal accorde une priorité absolue à votre vie privée :\n\n1. Chiffrement privé : Vos appels et messages individuels sont strictement protégés.\n\n2. Traduction Gemini en direct : Les flux vocaux sont traités dans une mémoire sécurisée éphémère pendant les appels actifs et ne sont jamais enregistrés ni utilisés pour l'entraînement.\n\n3. Aucun siphonnage du carnet : La recherche de contacts s'effectue via des empreintes cryptographiques sans télécharger votre carnet d'adresses.",
+      'privacyPrinciplesBody':
+          "Livocal accorde une priorité absolue à votre vie privée :\n\n1. Chiffrement privé : Vos appels et messages individuels sont strictement protégés.\n\n2. Traduction Gemini en direct : Les flux vocaux sont traités dans une mémoire sécurisée éphémère pendant les appels actifs et ne sont jamais enregistrés ni utilisés pour l'entraînement.\n\n3. Aucun siphonnage du carnet : La recherche de contacts s'effectue via des empreintes cryptographiques sans télécharger votre carnet d'adresses.",
       'selectedVoice': "Voix sélectionnée",
-      'shareQrInviteText': "Connectez-vous avec moi sur Livocal : {link}\nTéléchargez l'application pour discuter et passer des appels vocaux traduits en direct !",
+      'shareQrInviteText':
+          "Connectez-vous avec moi sur Livocal : {link}\nTéléchargez l'application pour discuter et passer des appels vocaux traduits en direct !",
       'stopPreview': "Arrêter l'aperçu",
       'tapToSelect': "Appuyez pour sélectionner",
-      'voicePreferenceSavedNotice': "Votre persona vocal préféré est enregistré en toute sécurité sur votre appareil et appliqué automatiquement à tous les appels traduits en direct.",
+      'voicePreferenceSavedNotice':
+          "Votre persona vocal préféré est enregistré en toute sécurité sur votre appareil et appliqué automatiquement à tous les appels traduits en direct.",
       'voicePreviewOffline': "L'aperçu vocal est indisponible hors ligne.",
-      'voiceSetSuccess': "\"{voiceId}\" défini comme voix de traduction en direct",
+      'voiceSetSuccess':
+          "\"{voiceId}\" défini comme voix de traduction en direct",
       'trialRemainingBadge': "⏱️ Essai: {minutes} min restantes",
       'balanceExhaustedBadge': "⚠️ Solde épuisé (0 min)",
       'balanceMinutesBadge': "💎 Solde: {minutes} min",
       'trialDaysLeftNotice': "{days} jours restants • Appels locaux gratuits",
-      'rechargeForTranslationNotice': "Rechargez pour les appels traduits • Appels locaux gratuits",
-      'translationRateNotice': "Traduction IA 1 min/min • Appels locaux gratuits",
+      'rechargeForTranslationNotice':
+          "Rechargez pour les appels traduits • Appels locaux gratuits",
+      'translationRateNotice':
+          "Traduction IA 1 min/min • Appels locaux gratuits",
       'recharge': "Recharger",
       'rechargePlus': "+ Recharger",
       'geminiLiveVoiceTranslation': "Traduction vocale en direct Gemini 3.5",
@@ -3398,78 +3956,113 @@ class AppStrings {
       'selectPeerLanguage': "Sélectionnez la langue du contact",
       'dialNumber': "Composer",
       'recentCallsHeader': "Appels récents traduits et vocaux",
-      'noRecentCalls': "Aucun appel récent. Composez un numéro ou appuyez sur un contact.",
+      'noRecentCalls':
+          "Aucun appel récent. Composez un numéro ou appuyez sur un contact.",
       'directCallByNumber': "Appel ou message direct par numéro",
-      'directDialSubtitle': "Entrez un numéro pour appeler ou discuter directement",
-      'freeLocalCallBanner': "🗣️ Appel local gratuit (Même langue - Aucune minute déduite)",
-      'aiTranslateCallBanner': "🤖 Appel traduit par IA (1 min/min) • Solde: {minutes} min",
+      'directDialSubtitle':
+          "Entrez un numéro pour appeler ou discuter directement",
+      'freeLocalCallBanner':
+          "🗣️ Appel local gratuit (Même langue - Aucune minute déduite)",
+      'aiTranslateCallBanner':
+          "🤖 Appel traduit par IA (1 min/min) • Solde: {minutes} min",
       'voiceCallAi': "Appel vocal (IA)",
       'messageAction': "Message",
       'voiceMinutesRecharge': "Recharge de minutes vocales",
-      'talkToInternationalClients': "Parlez à des clients internationaux dans n'importe quelle langue",
+      'talkToInternationalClients':
+          "Parlez à des clients internationaux dans n'importe quelle langue",
       'currentBalanceText': "Solde actuel: {minutes} min",
       'trialBadgeText': "Essai: {minutes} min",
-      'trialValidityText': "Validité de l'essai restant: {days} jours (Solde payé: {paid} min)",
-      'paidBalanceLifetimeText': "Le solde payé n'expire jamais (Validité à vie)",
-      'sameLanguageFreeRule': "🗣️ Appels locaux dans la même langue 100% gratuits",
-      'geminiAiRateRule': "🤖 Appels traduits par Gemini 3.5 Live AI: 1 min/min",
+      'trialValidityText':
+          "Validité de l'essai restant: {days} jours (Solde payé: {paid} min)",
+      'paidBalanceLifetimeText':
+          "Le solde payé n'expire jamais (Validité à vie)",
+      'sameLanguageFreeRule':
+          "🗣️ Appels locaux dans la même langue 100% gratuits",
+      'geminiAiRateRule':
+          "🤖 Appels traduits par Gemini 3.5 Live AI: 1 min/min",
       'selectMinutePack': "Sélectionnez un pack de minutes",
       'starterPackTitle': "Pack Débutant (60 Mins)",
-      'starterPackDesc': "Pour les entretiens rapides et briefings initiaux (~৳20/min)",
+      'starterPackDesc':
+          "Pour les entretiens rapides et briefings initiaux (~৳20/min)",
       'proPackTitle': "Freelance Pro (180 Mins)",
-      'proPackDesc': "Réunions hebdomadaires et appels réguliers (17% d'économie)",
+      'proPackDesc':
+          "Réunions hebdomadaires et appels réguliers (17% d'économie)",
       'popularBadge': "⭐ POPULAIRE",
       'agencyPackTitle': "Pack Agence (500 Mins)",
-      'agencyPackDesc': "Pour les agences et les appels internationaux fréquents (28% d'économie)",
+      'agencyPackDesc':
+          "Pour les agences et les appels internationaux fréquents (28% d'économie)",
       'bestValueBadge': "💎 MEILLEURE VALEUR",
       'paymentMethod': "Moyen de paiement",
       'bdtLocal': "৳ BDT Local",
       'havePromoCode': "Vous avez un code promo? Appuyez ici",
       'apply': "Appliquer",
-      'promoAppliedBonus': "Code appliqué! +{bonus} min de bonus seront ajoutées.",
+      'promoAppliedBonus':
+          "Code appliqué! +{bonus} min de bonus seront ajoutées.",
       'invalidPromoCode': "Code promotionnel expiré ou invalide.",
       'realPaymentGuideBkash': "Guide de paiement (bKash / Nagad)",
       'realPaymentGuideBinance': "Guide de paiement Binance Pay USDT",
       'realPaymentGuideCrypto': "Guide de dépôt de portefeuille crypto USDT",
       'selectNetwork': "Sélectionnez le réseau:",
-      'loadingDepositAccount': "Chargement du compte de dépôt depuis le serveur...",
+      'loadingDepositAccount':
+          "Chargement du compte de dépôt depuis le serveur...",
       'depositAccountNotFound': "Compte de dépôt introuvable.",
       'retryTooltip': "Réessayer",
       'bkashMerchantNumber': "Numéro personnel / marchand bKash / Nagad:",
       'binancePayOfficialId': "Identifiant officiel Binance Pay de Livocal:",
-      'cryptoOfficialDepositAddress': "Adresse officielle de dépôt {network} de Livocal:",
+      'cryptoOfficialDepositAddress':
+          "Adresse officielle de dépôt {network} de Livocal:",
       'copyBtn': "Copier",
-      'copiedToClipboardSnack': "Adresse/numéro {text} copié dans le presse-papiers!",
-      'paymentInstructionBkash': "1. Envoyez de l'argent ou payez ৳{amount} depuis votre application bKash ou Nagad.\n2. Après la transaction réussie, entrez votre numéro d'expéditeur et le TrxID ci-dessous:",
-      'paymentInstructionBinance': "1. Dans l'application Binance, allez dans Pay > Send to Binance ID et envoyez {amount} USDT.\n2. Après l'envoi, entrez votre identifiant Binance et l'ID de commande ci-dessous:",
-      'paymentInstructionCrypto': "1. Envoyez {amount} USDT ({network}) depuis votre portefeuille crypto.\n2. Après la transaction, entrez l'adresse de votre portefeuille expéditeur et le TxHash ci-dessous:",
-      'senderNumberInputLabel': "Votre numéro de téléphone expéditeur (Sender Number)",
+      'copiedToClipboardSnack':
+          "Adresse/numéro {text} copié dans le presse-papiers!",
+      'paymentInstructionBkash':
+          "1. Envoyez de l'argent ou payez ৳{amount} depuis votre application bKash ou Nagad.\n2. Après la transaction réussie, entrez votre numéro d'expéditeur et le TrxID ci-dessous:",
+      'paymentInstructionBinance':
+          "1. Dans l'application Binance, allez dans Pay > Send to Binance ID et envoyez {amount} USDT.\n2. Après l'envoi, entrez votre identifiant Binance et l'ID de commande ci-dessous:",
+      'paymentInstructionCrypto':
+          "1. Envoyez {amount} USDT ({network}) depuis votre portefeuille crypto.\n2. Après la transaction, entrez l'adresse de votre portefeuille expéditeur et le TxHash ci-dessous:",
+      'senderNumberInputLabel':
+          "Votre numéro de téléphone expéditeur (Sender Number)",
       'binancePayIdInputLabel': "Votre identifiant Binance Pay ou e-mail",
-      'senderAddressInputLabel': "Votre adresse de portefeuille expéditeur (Sender Address)",
+      'senderAddressInputLabel':
+          "Votre adresse de portefeuille expéditeur (Sender Address)",
       'trxIdInputLabel': "TrxID bKash / Nagad (ID de transaction)",
-      'binancePayOrderIdInputLabel': "ID de commande Binance Pay / ID de transaction",
+      'binancePayOrderIdInputLabel':
+          "ID de commande Binance Pay / ID de transaction",
       'txHashInputLabel': "TxHash Blockchain (Hash de transaction)",
       'submitPaymentBdt': "Soumettre la vérification de paiement de ৳{amount}",
-      'submitPaymentUsdt': "Soumettre la vérification de paiement de \${amount} USDT",
-      'waitForDepositAccountSnack': "Veuillez patienter ou actualiser jusqu'au chargement du compte depuis le serveur.",
-      'enterSenderPhoneSnack': "Veuillez entrer votre numéro de téléphone expéditeur.",
-      'enterBinancePayIdSnack': "Veuillez entrer votre identifiant Binance Pay ou votre e-mail.",
-      'enterSenderCryptoAddressSnack': "Veuillez entrer votre adresse de portefeuille crypto expéditeur.",
+      'submitPaymentUsdt':
+          "Soumettre la vérification de paiement de \${amount} USDT",
+      'waitForDepositAccountSnack':
+          "Veuillez patienter ou actualiser jusqu'au chargement du compte depuis le serveur.",
+      'enterSenderPhoneSnack':
+          "Veuillez entrer votre numéro de téléphone expéditeur.",
+      'enterBinancePayIdSnack':
+          "Veuillez entrer votre identifiant Binance Pay ou votre e-mail.",
+      'enterSenderCryptoAddressSnack':
+          "Veuillez entrer votre adresse de portefeuille crypto expéditeur.",
       'enterTxHashSnack': "Veuillez entrer le TxHash de la Blockchain.",
-      'enterTrxIdSnack': "Veuillez entrer l'identifiant de transaction (TrxID / Order ID).",
-      'trc20AddressLengthError': "L'adresse TRC-20 doit commencer par 'T' et comporter 34 caractères.",
-      'bep20AddressLengthError': "L'adresse BEP-20 doit commencer par '0x' et comporter 42 caractères.",
-      'invalidTxHashError': "Veuillez entrer un TxHash de Blockchain valide de 64 caractères.",
-      'paymentSubmittedSuccess': "Demande de paiement envoyée! Les minutes seront ajoutées après approbation de l'administrateur.",
+      'enterTrxIdSnack':
+          "Veuillez entrer l'identifiant de transaction (TrxID / Order ID).",
+      'trc20AddressLengthError':
+          "L'adresse TRC-20 doit commencer par 'T' et comporter 34 caractères.",
+      'bep20AddressLengthError':
+          "L'adresse BEP-20 doit commencer par '0x' et comporter 42 caractères.",
+      'invalidTxHashError':
+          "Veuillez entrer un TxHash de Blockchain valide de 64 caractères.",
+      'paymentSubmittedSuccess':
+          "Demande de paiement envoyée! Les minutes seront ajoutées après approbation de l'administrateur.",
       'paymentFailedSnack': "Impossible de soumettre la demande de paiement.",
       'minutesExhaustedTitle': "Minutes épuisées",
-      'minutesExhaustedSub': "Solde de minutes requis pour les appels traduits en direct par IA",
-      'sameLanguageFreeNotice': "Les appels réguliers dans la même langue sont 100% gratuits! Les minutes ne servent que pour la traduction en direct par IA.",
+      'minutesExhaustedSub':
+          "Solde de minutes requis pour les appels traduits en direct par IA",
+      'sameLanguageFreeNotice':
+          "Les appels réguliers dans la même langue sont 100% gratuits! Les minutes ne servent que pour la traduction en direct par IA.",
       'starterBundleMinutes': "60 Minutes",
       'proBundleMinutes': "180 Minutes",
       'buyMinutes': "Acheter des minutes",
       'callFreeNoAi': "Appeler gratuitement (Sans IA)",
-      'minutesExhaustedAlert': "Vos minutes sont épuisées. Veuillez recharger pour continuer l'appel.",
+      'minutesExhaustedAlert':
+          "Vos minutes sont épuisées. Veuillez recharger pour continuer l'appel.",
       'muteBtn': "Couper le micro",
       'unmuteBtn': "Réactiver le micro",
       'speakerBtn': "Haut-parleur",
@@ -3482,9 +4075,11 @@ class AppStrings {
       'muteNotifications': "Mettre les notifications en sourdine",
       'unmuteNotifications': "Réactiver les notifications",
       'clearChat': "Effacer la discussion",
-      'blockedTapToUnblock': "Vous avez bloqué ce contact. Appuyez pour débloquer.",
+      'blockedTapToUnblock':
+          "Vous avez bloqué ce contact. Appuyez pour débloquer.",
       'sayHelloTo': "Dites bonjour à {name}",
-      'noMessagesYet': "Aucun message pour l'instant. Envoyez un salut ou un message vocal pour commencer.",
+      'noMessagesYet':
+          "Aucun message pour l'instant. Envoyez un salut ou un message vocal pour commencer.",
       'sayHello': "Dites bonjour !",
       'disappearingMessagesOn': "Les messages éphémères sont activés ({timer})",
       'takePhoto': "Prendre une photo",
@@ -3492,12 +4087,15 @@ class AppStrings {
       'textStatus': "Statut texte",
       'viewStatus': "Voir le statut",
       'addNewStatus': "Ajouter un statut",
-      'languageAppliedLocally': "Langue appliquée localement (synchronisation cloud hors ligne).",
-      'failedToInitiateCall': "Impossible de lancer l'appel. Vérifiez votre connexion réseau.",
+      'languageAppliedLocally':
+          "Langue appliquée localement (synchronisation cloud hors ligne).",
+      'failedToInitiateCall':
+          "Impossible de lancer l'appel. Vérifiez votre connexion réseau.",
       'searchChatsHint': "Rechercher des discussions, messages...",
       'paymentReceivingAccounts': "Comptes de réception des paiements",
       'p2pPaymentSettings': "Paramètres de paiement P2P",
-      'p2pPaymentSettingsDesc': "Configurez les comptes vers lesquels les autres utilisateurs peuvent vous envoyer de l'argent et des cryptomonnaies dans les discussions. Vérifiez l'exactitude de vos adresses TRC-20 et BEP-20.",
+      'p2pPaymentSettingsDesc':
+          "Configurez les comptes vers lesquels les autres utilisateurs peuvent vous envoyer de l'argent et des cryptomonnaies dans les discussions. Vérifiez l'exactitude de vos adresses TRC-20 et BEP-20.",
       'cryptocurrencyAndBinance': "Cryptomonnaies et Binance",
       'mobileFinancialServices': "Services financiers mobiles (MFS)",
       'binancePayIdLabel': "Binance Pay ID / e-mail Binance",
@@ -3510,10 +4108,12 @@ class AppStrings {
       'checkConnectionRetry': "Vérifiez votre connexion et réessayez.",
       'noChatsMatching': "Aucune discussion ne correspond à « {query} »",
       'noConversationsYet': "Aucune conversation pour l'instant",
-      'startChattingDesc': "Commencez à discuter avec vos contacts avec traduction en temps réel et appels vocaux.",
+      'startChattingDesc':
+          "Commencez à discuter avec vos contacts avec traduction en temps réel et appels vocaux.",
       'startNewChat': "Démarrer une nouvelle discussion",
       'noMatchesFound': "Aucun résultat",
-      'languagePreferenceSavedLocally': "Préférence de langue enregistrée localement (synchronisation cloud hors ligne).",
+      'languagePreferenceSavedLocally':
+          "Préférence de langue enregistrée localement (synchronisation cloud hors ligne).",
       'selectYourSpokenLanguage': "Sélectionnez votre langue parlée",
       'camera': "Appareil photo",
       'gallery': "Galerie",
@@ -3523,9 +4123,11 @@ class AppStrings {
       'phoneLabel': "Téléphone",
       'unstarAll': "Retirer toutes les étoiles",
       'defaultDoodleWallpaper': "Dégradé Livocal (par défaut)",
-      'nameVisibilityHint': "Ce n'est pas votre nom d'utilisateur ni votre code PIN. Ce nom sera visible par vos contacts Livocal.",
+      'nameVisibilityHint':
+          "Ce n'est pas votre nom d'utilisateur ni votre code PIN. Ce nom sera visible par vos contacts Livocal.",
       'noStarredMessages': "Aucun message favori",
-      'starredEmptyHint': "Appuyez longuement sur un message dans une discussion pour l'ajouter aux favoris et le retrouver facilement.",
+      'starredEmptyHint':
+          "Appuyez longuement sur un message dans une discussion pour l'ajouter aux favoris et le retrouver facilement.",
       'display': "Affichage",
       'chatWallpaper': "Fond de discussion",
       'wallpaperResetDefault': "Fond réinitialisé par défaut",
@@ -3550,12 +4152,15 @@ class AppStrings {
       'invite': "INVITER",
       'selectContactToBlock': "Sélectionner un contact à bloquer",
       'noContactsToBlock': "Aucun contact disponible à bloquer",
-      'blockedContactsDesc': "Les contacts bloqués ne pourront plus vous appeler ni vous envoyer de messages.",
+      'blockedContactsDesc':
+          "Les contacts bloqués ne pourront plus vous appeler ni vous envoyer de messages.",
       'tapToUnblock': "Appuyez sur un contact pour le débloquer.",
       'unblock': "Débloquer",
       'failedToLoadMedia': "Impossible de charger le média",
-      'voicePreviewSavedLocally': "Préférence de langue enregistrée localement ; synchronisation cloud hors ligne.",
-      'voicePreviewUnavailable': "L'aperçu vocal est temporairement indisponible. Vérifiez la connexion Internet.",
+      'voicePreviewSavedLocally':
+          "Préférence de langue enregistrée localement ; synchronisation cloud hors ligne.",
+      'voicePreviewUnavailable':
+          "L'aperçu vocal est temporairement indisponible. Vérifiez la connexion Internet.",
       'decline': "Refuser",
       'tapToAnswer': "Touchez pour répondre",
       'aiCall': "Appel IA",
@@ -3572,10 +4177,14 @@ class AppStrings {
       'zeroMinutesNotConnected': "0 minute (non connecté)",
       'zeroMinutesNormalCall': "0 minute (appel normal)",
       'minutesDeducted': "{minutes} minutes déduites",
-      'missedIncomingMessage': "Vous avez manqué un appel entrant. Vous pouvez rappeler ou envoyer un message.",
-      'missedOutgoingMessage': "L'autre personne n'a pas répondu. Réessayez dans un instant.",
-      'translatedCallSuccessMessage': "🌐 Votre conversation avec traduction vocale IA en direct s'est terminée avec succès. Merci d'utiliser Livocal !",
-      'normalCallSuccessMessage': "Votre conversation s'est terminée avec succès. Merci pour cet échange !",
+      'missedIncomingMessage':
+          "Vous avez manqué un appel entrant. Vous pouvez rappeler ou envoyer un message.",
+      'missedOutgoingMessage':
+          "L'autre personne n'a pas répondu. Réessayez dans un instant.",
+      'translatedCallSuccessMessage':
+          "🌐 Votre conversation avec traduction vocale IA en direct s'est terminée avec succès. Merci d'utiliser Livocal !",
+      'normalCallSuccessMessage':
+          "Votre conversation s'est terminée avec succès. Merci pour cet échange !",
       'missedCall': "Appel manqué",
       'missedVoiceCall': "Appel vocal manqué",
       'declinedCall': "Appel refusé",
@@ -3586,14 +4195,18 @@ class AppStrings {
       'incomingVoiceCall': "Appel vocal entrant",
       'noAnswer': "Pas de réponse",
       'talkedFor': "Durée de l'appel : {duration}",
-      'languagesSupported': "{count}+ langues Gemini Live prises en charge (toutes vers toutes)",
+      'languagesSupported':
+          "{count}+ langues Gemini Live prises en charge (toutes vers toutes)",
       'popularLanguages': "LANGUES POPULAIRES",
       'aiInterpreterVoicePreferences': "Voix et préférences de l'interprète IA",
-      'aiVoicePrefsDesc': "Personnalisez le son de la parole traduite pendant les appels. L'IA détecte automatiquement les langues en temps réel.",
+      'aiVoicePrefsDesc':
+          "Personnalisez le son de la parole traduite pendant les appels. L'IA détecte automatiquement les langues en temps réel.",
       'zeroTrustRelayActive': "Relais IA cloud Zero-Trust actif",
-      'zeroTrustRelayDesc': "Les clés API et les pipelines audio sont gérés en toute sécurité sur le serveur backend.",
+      'zeroTrustRelayDesc':
+          "Les clés API et les pipelines audio sont gérés en toute sécurité sur le serveur backend.",
       'selectAiInterpreterVoice': "Sélectionner la voix de l'interprète IA",
-      'selectAiVoiceDesc': "Choisissez le profil de voix synthétique utilisé pour l'audio traduit.",
+      'selectAiVoiceDesc':
+          "Choisissez le profil de voix synthétique utilisé pour l'audio traduit.",
       'saveVoicePreference': "Enregistrer la préférence de voix",
       'differentLanguageDetected': "Langue différente détectée",
       'youSpeak': "Vous parlez",
@@ -3601,7 +4214,8 @@ class AppStrings {
       'callWithAiTranslation': "Appeler avec traduction vocale IA",
       'directVoiceCallFree': "Appel vocal direct (gratuit)",
       'registeredLivocalUser': "Utilisateur Livocal inscrit ({phone})",
-      'directCallRings': "L'appel direct sonnera sur ce téléphone si Livocal est installé.",
+      'directCallRings':
+          "L'appel direct sonnera sur ce téléphone si Livocal est installé.",
       'agreeAndContinue': "Accepter et continuer",
       'shareContact': "Partager le contact",
       'editContact': "Modifier le contact",
@@ -3616,11 +4230,13 @@ class AppStrings {
       'muteDesc': "Couper les alertes des nouveaux messages de ce contact",
       'customNotifications': "Notifications personnalisées",
       'encryptionAndSecurity': "Chiffrement et sécurité",
-      'encryptionDesc': "Les messages et appels utilisent un transport TLS/SRTP sécurisé et une traduction éphémère",
+      'encryptionDesc':
+          "Les messages et appels utilisent un transport TLS/SRTP sécurisé et une traduction éphémère",
       'reportContactName': "Signaler {name}",
       'geminiAiLiveTranslation': "Traduction en direct Gemini AI",
       'startTranslatedVoiceCall': "Démarrer un appel vocal traduit",
-      'reportForwardWarning': "Les 5 derniers messages de ce contact seront transmis à Livocal pour un examen de sécurité. Le contact ne sera pas averti.",
+      'reportForwardWarning':
+          "Les 5 derniers messages de ce contact seront transmis à Livocal pour un examen de sécurité. Le contact ne sera pas averti.",
       'reasonForReport': "Motif du signalement :",
       'blockContactClearMessages': "Bloquer le contact et effacer les messages",
       'inChatAiTranslation': "Traduction en direct par IA dans le chat",
@@ -3628,35 +4244,45 @@ class AppStrings {
       'languagePreferences': "Préférences de langue",
       'myLanguage': "Ma langue",
       'autoTranslateIncoming': "Traduire automatiquement les messages entrants",
-      'autoTranslateIncomingDesc': "Affiche automatiquement les traductions sous les messages reçus",
-      'liveVoiceNoteTranscription': "Transcription des messages vocaux en direct",
-      'liveVoiceNoteDesc': "Transcrivez et traduisez les messages vocaux entrants",
+      'autoTranslateIncomingDesc':
+          "Affiche automatiquement les traductions sous les messages reçus",
+      'liveVoiceNoteTranscription':
+          "Transcription des messages vocaux en direct",
+      'liveVoiceNoteDesc':
+          "Transcrivez et traduisez les messages vocaux entrants",
       'testRealtimeTranslation': "Tester la traduction en temps réel",
       'translate': "Traduire",
       'saveApplySettings': "Enregistrer et appliquer",
       'inChatTranslationEnabled': "Traduction en direct du chat activée",
       'inChatTranslationDisabled': "Traduction en direct du chat désactivée",
-      'translationSettingsApplied': "Paramètres de traduction appliqués : {my} ⇄ {peer}",
-      'inChatTranslationDisabledFor': "Traduction en direct du chat désactivée pour {name}",
+      'translationSettingsApplied':
+          "Paramètres de traduction appliqués : {my} ⇄ {peer}",
+      'inChatTranslationDisabledFor':
+          "Traduction en direct du chat désactivée pour {name}",
       'sendPaymentTo': "Envoyer un paiement à {name}",
       'selectPaymentMethod': "Sélectionner le mode de paiement",
       'livocalInAppWallet': "Portefeuille intégré Livocal",
-      'walletBalanceTransfer': "Solde : {available} min (transfère {needed} min)",
+      'walletBalanceTransfer':
+          "Solde : {available} min (transfère {needed} min)",
       'bkashNagadMfs': "bKash / Nagad MFS (envoi direct)",
       'cryptoBinanceUsdt': "Crypto (Binance Pay / USDT)",
       'shortByMinutes': "Il manque {minutes} min pour finaliser ce transfert.",
-      'liveRateSummary': "Taux en direct : 1,00 \$ ≈ {rate} BDT  |  Total : {total} BDT",
+      'liveRateSummary':
+          "Taux en direct : 1,00 \$ ≈ {rate} BDT  |  Total : {total} BDT",
       'paste': "COLLER",
       'confirmPayment': "Confirmer le paiement : {amount}",
       'welcomeBadge1': "CONNEXION NOUVELLE GÉNÉRATION",
       'welcomeTitle1': "Bienvenue sur Livocal",
-      'welcomeDesc1': "Messagerie privée ultra-rapide et communication vocale claire, conçues pour une connectivité quotidienne fluide.",
+      'welcomeDesc1':
+          "Messagerie privée ultra-rapide et communication vocale claire, conçues pour une connectivité quotidienne fluide.",
       'welcomeBadge2': "GEMINI LIVE AI",
       'welcomeTitle2': "Traduction vocale en temps réel",
-      'welcomeDesc2': "Brisez les barrières linguistiques en temps réel. Parlez en bengali ou en anglais avec une traduction audio bidirectionnelle en direct en moins d'une seconde pendant les appels.",
+      'welcomeDesc2':
+          "Brisez les barrières linguistiques en temps réel. Parlez en bengali ou en anglais avec une traduction audio bidirectionnelle en direct en moins d'une seconde pendant les appels.",
       'welcomeBadge3': "CONFIDENTIALITÉ PAR CONCEPTION",
       'welcomeTitle3': "Privé et sécurisé par défaut",
-      'welcomeDesc3': "Flux vocaux chiffrés DTLS-SRTP, données personnelles protégées, aucune collecte de carnet d'adresses et verrouillage biométrique.",
+      'welcomeDesc3':
+          "Flux vocaux chiffrés DTLS-SRTP, données personnelles protégées, aucune collecte de carnet d'adresses et verrouillage biométrique.",
       'enterPhoneNumber': "Entrez votre numéro de téléphone",
       'carrierCharges': "Des frais opérateur peuvent s'appliquer.",
       'next': "Suivant",
@@ -3673,7 +4299,8 @@ class AppStrings {
       'messageDeletedForYou': "Message supprimé pour vous",
       'resendMessage': "Renvoyer le message",
       'messageSent': "Message envoyé",
-      'resendFailed': "Impossible de renvoyer le message. Vérifiez la connexion.",
+      'resendFailed':
+          "Impossible de renvoyer le message. Vérifiez la connexion.",
       'deleteForEveryone': "Supprimer pour tout le monde",
       'messageDeletedForEveryone': "Message supprimé pour tout le monde",
       'forwardMessageTo': "Transférer le message à...",
@@ -3699,8 +4326,10 @@ class AppStrings {
       'myStatus': "Mon statut",
       'couldNotLoadStatus': "Impossible de charger les mises à jour de statut",
       'noRecentUpdates': "Aucune mise à jour récente",
-      'statusUpdatesDesc': "Les mises à jour de statut de vos contacts apparaîtront ici. Elles disparaissent après 24 heures.",
-      'statusPrivacyNote': "Vos mises à jour de statut sont protégées par vos paramètres de confidentialité",
+      'statusUpdatesDesc':
+          "Les mises à jour de statut de vos contacts apparaîtront ici. Elles disparaissent après 24 heures.",
+      'statusPrivacyNote':
+          "Vos mises à jour de statut sont protégées par vos paramètres de confidentialité",
       'messageHint': "Message",
       'recentUpdates': "Mises à jour récentes",
       'aiTranslatedVoiceCall': "Appel traduit par IA Livocal",
@@ -3721,20 +4350,28 @@ class AppStrings {
       'unpinMessage': "Désépingler",
       'pinnedMessages': "Messages épinglés",
       'noPinnedMessages': "Aucun message épinglé",
-      'callWarningRemainingMinutes': "⚠️ Avertissement: Il ne vous reste que {minutes} minutes.",
-      'callTerminatedExhausted': "🛑 Vos minutes sont épuisées. Fin de l'appel.",
-      'callTranslationActiveNotice': "{myEmoji} {myName} ⇄ {peerEmoji} {peerName} Traduction vocale en direct active. Parlez dans n'importe quelle langue!",
+      'callWarningRemainingMinutes':
+          "⚠️ Avertissement: Il ne vous reste que {minutes} minutes.",
+      'callTerminatedExhausted':
+          "🛑 Vos minutes sont épuisées. Fin de l'appel.",
+      'callTranslationActiveNotice':
+          "{myEmoji} {myName} ⇄ {peerEmoji} {peerName} Traduction vocale en direct active. Parlez dans n'importe quelle langue!",
       'dialPhoneNumber': "Composer un numéro",
-      'dialPhoneNumberSub': "Entrez le numéro pour appeler ou discuter directement",
-      'realtimeTranslationActive': "Traduction en temps réel {langA} ⇄ {langB} activée",
-      'sameLanguageDirectCallNotice': "Les deux utilisateurs parlent la même langue ({lang}). Parlez directement sans traduction.",
+      'dialPhoneNumberSub':
+          "Entrez le numéro pour appeler ou discuter directement",
+      'realtimeTranslationActive':
+          "Traduction en temps réel {langA} ⇄ {langB} activée",
+      'sameLanguageDirectCallNotice':
+          "Les deux utilisateurs parlent la même langue ({lang}). Parlez directement sans traduction.",
       'directVoiceCallActiveNotice': "Appel vocal direct actif.",
-      'aiUnavailableDirectFallback': "Interprète IA indisponible. Connecté par appel vocal direct.",
+      'aiUnavailableDirectFallback':
+          "Interprète IA indisponible. Connecté par appel vocal direct.",
       'starterPackPriceText': "1,200 BDT (\$9.99)",
       'proPackPriceText': "3,000 BDT (\$24.99)",
       'bdtAmount': "{amount} BDT",
       'callContinuingDirectVoiceDesc': "L'appel continue en voix directe.",
-      'callerMinutesExhaustedDirectVoiceDesc': "Minutes de traduction de l'appelant épuisées. Basculé en voix directe.",
+      'callerMinutesExhaustedDirectVoiceDesc':
+          "Minutes de traduction de l'appelant épuisées. Basculé en voix directe.",
       'rechargeNowBtn': "Recharger",
     },
     'de': {
@@ -3743,17 +4380,21 @@ class AppStrings {
       'account': "Konto",
       'accountAndPrivacy': "Konto und Datenschutz",
       'accountManagement': "Kontoverwaltung",
-      'accountReportSubmitted': "Konto-Bericht angefordert. Innerhalb von 24 Stunden bereit.",
-      'accountSub': "Sicherheitsbenachrichtigungen, Verifizierung in zwei Schritten, Nummer ändern",
+      'accountReportSubmitted':
+          "Konto-Bericht angefordert. Innerhalb von 24 Stunden bereit.",
+      'accountSub':
+          "Sicherheitsbenachrichtigungen, Verifizierung in zwei Schritten, Nummer ändern",
       'advancedAiEngine': "Stimme und Übersetzung",
       'allMedia': "Alle Medien",
       'appDatabaseIsar': "• App-Datenbank (Isar): ",
       'appInfo': "App-Info",
-      'appInfoDesc': "Echtzeit-KI-Sprachübersetzung und sicheres Messaging powered by WebRTC und Gemini.",
+      'appInfoDesc':
+          "Echtzeit-KI-Sprachübersetzung und sicheres Messaging powered by WebRTC und Gemini.",
       'appLanguage': "App-Sprache",
       'appLanguageSub': "English, বাংলা, हिन्दी, العربية...",
       'biometricCancelled': "Biometrische Überprüfung abgebrochen.",
-      'biometricNotSupported': "Biometrische Authentifizierung wird auf diesem Gerät nicht unterstützt.",
+      'biometricNotSupported':
+          "Biometrische Authentifizierung wird auf diesem Gerät nicht unterstützt.",
       'blockedContacts': "Blockierte Kontakte",
       'blockedContactsCount': "0 Kontakte",
       'cacheClearedSnack': "Mediencache erfolgreich geleert",
@@ -3768,8 +4409,10 @@ class AppStrings {
       'callsHeader': "Anrufe",
       'cancel': "Abbrechen",
       'changeNumber': "Nummer ändern",
-      'changeNumberDesc': "Beim Wechsel der Telefonnummer werden alle Kontodaten, Einstellungen und Schlüssel übertragen.",
-      'changeNumberDialogContent': "Beim Wechsel zu einer neuen Nummer werden alle Einstellungen und Daten übertragen.",
+      'changeNumberDesc':
+          "Beim Wechsel der Telefonnummer werden alle Kontodaten, Einstellungen und Schlüssel übertragen.",
+      'changeNumberDialogContent':
+          "Beim Wechsel zu einer neuen Nummer werden alle Einstellungen und Daten übertragen.",
       'chats': "CHATS",
       'chatsAndTheme': "Chats und Design",
       'chatsAndThemeSub': "Hintergrundbilder, Design, Chat-Verlauf",
@@ -3778,21 +4421,28 @@ class AppStrings {
       'chooseTheme': "Design auswählen",
       'classicBellPreset': "Klassische Glocke",
       'clearCache': "Mediencache leeren",
-      'clearCacheDialogDesc': "Dadurch werden temporäre Audiodateien gelöscht. Lokale Textnachrichten bleiben unberührt.",
+      'clearCacheDialogDesc':
+          "Dadurch werden temporäre Audiodateien gelöscht. Lokale Textnachrichten bleiben unberührt.",
       'clearCacheDialogTitle': "Mediencache leeren?",
-      'clearCacheSub': "Heruntergeladene zwischengespeicherte Audios und Sprachnachrichten löschen",
+      'clearCacheSub':
+          "Heruntergeladene zwischengespeicherte Audios und Sprachnachrichten löschen",
       'clearCallLog': "Anrufliste leeren",
       'close': "SCHLIESSEN",
       'confirm': "BESTÄTIGEN",
       'confirmDisable': "DEAKTIVIERUNG BESTÄTIGEN",
-      'confirmFingerprintDisable': "Bestätigen Sie Ihren Fingerabdruck, um die Sperre zu deaktivieren",
-      'confirmFingerprintEnable': "Bestätigen Sie Ihren Fingerabdruck, um die Sperre zu aktivieren",
+      'confirmFingerprintDisable':
+          "Bestätigen Sie Ihren Fingerabdruck, um die Sperre zu deaktivieren",
+      'confirmFingerprintEnable':
+          "Bestätigen Sie Ihren Fingerabdruck, um die Sperre zu aktivieren",
       'contactSupport': "Support kontaktieren",
-      'contactSupportDesc': "Sagen Sie uns, wie wir helfen können. Beschreiben Sie Ihr Anliegen:",
-      'contactSupportSub': "Fragen oder Hilfe nötig? Sprechen Sie mit unserem Team",
+      'contactSupportDesc':
+          "Sagen Sie uns, wie wir helfen können. Beschreiben Sie Ihr Anliegen:",
+      'contactSupportSub':
+          "Fragen oder Hilfe nötig? Sprechen Sie mit unserem Team",
       'contacts': "Kontakte",
       'conversationTones': "Gesprächstöne",
-      'conversationTonesSub': "Töne für eingehende und ausgehende Nachrichten abspielen.",
+      'conversationTonesSub':
+          "Töne für eingehende und ausgehende Nachrichten abspielen.",
       'copyLink': "Link kopieren",
       'crystalPopPreset': "Kristall-Pop",
       'currentNumber': "Aktuell: ",
@@ -3805,16 +4455,21 @@ class AppStrings {
       'defaultMessageTimer': "Standard-Nachrichtentimer",
       'defaultText': "Standard",
       'delete': "LÖSCHEN",
-      'deleteAccountBullet1': "• Kontoinformationen und Profilfoto werden gelöscht",
-      'deleteAccountBullet2': "• Der gesamte lokale Nachrichtenverlauf wird von diesem Gerät gelöscht",
-      'deleteAccountBullet3': "• Sie werden aus den Livocal-Kontaktlisten entfernt",
+      'deleteAccountBullet1':
+          "• Kontoinformationen und Profilfoto werden gelöscht",
+      'deleteAccountBullet2':
+          "• Der gesamte lokale Nachrichtenverlauf wird von diesem Gerät gelöscht",
+      'deleteAccountBullet3':
+          "• Sie werden aus den Livocal-Kontaktlisten entfernt",
       'deleteAccountButton': "KONTO LÖSCHEN",
       'deleteAccountDesc': "Das Löschen Ihres Kontos bewirkt:",
       'deleteAccountDialogTitle': "Dieses Konto löschen?",
       'deleteAccountTitle': "Dieses Konto löschen?",
       'deleteAccountWarning1': "Löscht Ihre Kontodaten und Ihr Profilbild",
-      'deleteAccountWarning2': "Löscht den gesamten lokalen Chatverlauf von diesem Gerät",
-      'deleteAccountWarning3': "Entfernt Sie aus den Livocal-Listen Ihrer Kontakte",
+      'deleteAccountWarning2':
+          "Löscht den gesamten lokalen Chatverlauf von diesem Gerät",
+      'deleteAccountWarning3':
+          "Entfernt Sie aus den Livocal-Listen Ihrer Kontakte",
       'deleteAccountWarningTitle': "Das Löschen Ihres Kontos bewirkt:",
       'deleteMyAccount': "Mein Konto löschen",
       'deleteMyAccountSub': "Löschen Sie Ihr Konto und alle Daten dauerhaft",
@@ -3826,42 +4481,56 @@ class AppStrings {
       'enablePin': "PIN AKTIVIEREN",
       'enableTwoStep': "Zweistufige Verifizierung aktivieren",
       'enabled': "Aktiviert",
-      'enterCurrentPin': "Geben Sie Ihre aktuelle 6-stellige PIN ein, um zu deaktivieren:",
-      'enterMessageError': "Bitte geben Sie vor dem Absenden eine Nachricht ein.",
-      'enterNewPin': "Geben Sie eine 6-stellige PIN ein, um Ihr Livocal-Konto zu schützen:",
+      'enterCurrentPin':
+          "Geben Sie Ihre aktuelle 6-stellige PIN ein, um zu deaktivieren:",
+      'enterMessageError':
+          "Bitte geben Sie vor dem Absenden eine Nachricht ein.",
+      'enterNewPin':
+          "Geben Sie eine 6-stellige PIN ein, um Ihr Livocal-Konto zu schützen:",
       'enterValid6DigitPin': "Bitte geben Sie eine gültige 6-stellige PIN ein",
       'everyone': "Jeder",
-      'faqApiKeyA': "Gehen Sie zu Einstellungen, geben Sie Ihren Google AI Studio-Schlüssel ein und wählen Sie eine Stimme.",
+      'faqApiKeyA':
+          "Gehen Sie zu Einstellungen, geben Sie Ihren Google AI Studio-Schlüssel ein und wählen Sie eine Stimme.",
       'faqApiKeyQ': "Wie konfiguriere ich meinen Gemini API-Schlüssel?",
-      'faqContactsA': "Öffnen Sie Kontakte für Direktanrufe oder tippen Sie auf Einladen, um eine SMS zu senden.",
+      'faqContactsA':
+          "Öffnen Sie Kontakte für Direktanrufe oder tippen Sie auf Einladen, um eine SMS zu senden.",
       'faqContactsQ': "Wie füge ich Kontakte hinzu oder lade sie ein?",
-      'faqLiveTranslationA': "Während eines Sprachanrufs überträgt Livocal Audio über WebRTC und Gemini Live übersetzt nahtlos bidirektional.",
-      'faqLiveTranslationQ': "Wie funktioniert die Echtzeit-KI-Live-Übersetzung?",
-      'faqSecurityA': "Ja! Alle WebRTC-Audioströme verwenden DTLS-SRTP und Nachrichten sind streng gesichert.",
+      'faqLiveTranslationA':
+          "Während eines Sprachanrufs überträgt Livocal Audio über WebRTC und Gemini Live übersetzt nahtlos bidirektional.",
+      'faqLiveTranslationQ':
+          "Wie funktioniert die Echtzeit-KI-Live-Übersetzung?",
+      'faqSecurityA':
+          "Ja! Alle WebRTC-Audioströme verwenden DTLS-SRTP und Nachrichten sind streng gesichert.",
       'faqSecurityQ': "Sind meine Anrufe und Nachrichten verschlüsselt?",
       'faqTitle': "Häufig gestellte Fragen (FAQ)",
-      'feedbackSentSuccess': "Vielen Dank! Ihr Feedback wurde an das Livocal-Entwicklungsteam gesendet.",
-      'fingerprintAuthReason': "Bitte authentifizieren Sie sich, um Livocal zu entsperren",
+      'feedbackSentSuccess':
+          "Vielen Dank! Ihr Feedback wurde an das Livocal-Entwicklungsteam gesendet.",
+      'fingerprintAuthReason':
+          "Bitte authentifizieren Sie sich, um Livocal zu entsperren",
       'fingerprintLock': "Fingerabdruck-Sperre",
       'fingerprintLockDisabled': "Fingerabdruck-Sperre deaktiviert",
       'fingerprintLockEnabled': "Fingerabdruck-Sperre aktiviert",
-      'fingerprintLockSub': "Biometrische Authentifizierung zum Öffnen von Livocal erforderlich",
+      'fingerprintLockSub':
+          "Biometrische Authentifizierung zum Öffnen von Livocal erforderlich",
       'from': "von",
       'geminiVoiceEngine': "KI-Stimm-Persona",
-      'geminiVoiceEngineSub': "Wählen Sie die bevorzugte Stimme für die Live-Audio-Übersetzung",
+      'geminiVoiceEngineSub':
+          "Wählen Sie die bevorzugte Stimme für die Live-Audio-Übersetzung",
       'help': "Hilfe",
       'helpCentre': "Hilfebereich",
       'helpCentreSub': "FAQs, Anleitungen und Fehlerbehebung",
       'helpSub': "Hilfebereich, Kontakt, Nutzungsbedingungen und Datenschutz",
       'highPriorityNotif': "Benachrichtigungen mit hoher Priorität",
-      'highPriorityNotifSub': "Vorschau von Benachrichtigungen oben auf dem Bildschirm anzeigen",
+      'highPriorityNotifSub':
+          "Vorschau von Benachrichtigungen oben auf dem Bildschirm anzeigen",
       'hours24': "24 Stunden",
       'iUnderstand': "VERSTANDEN",
       'incorrectPin': "Falsche PIN. Verifizierung fehlgeschlagen.",
       'inviteFriend': "Freund einladen",
       'inviteFriendSub': "Livocal mit Kontakten und Familie teilen",
       'inviteLinkCopied': "Einladungslink in die Zwischenablage kopiert",
-      'languageNote': "Das Ändern der Sprache aktualisiert sofort alle Bildschirme, Benachrichtigungen und Sprachanrufe.",
+      'languageNote':
+          "Das Ändern der Sprache aktualisiert sofort alle Bildschirme, Benachrichtigungen und Sprachanrufe.",
       'lastSeenAndOnline': "Zuletzt online und Online",
       'legalAndInfo': "Rechtliches & Info",
       'light': "Hell",
@@ -3870,7 +4539,8 @@ class AppStrings {
       'livocalHarmonyPreset': "Livocal Harmony (Standard)",
       'localDatabase': "Lokale Datenbank und Chats",
       'logout': "Abmelden",
-      'logoutDialogContent': "Möchten Sie sich wirklich abmelden? Lokale Daten und Anmeldeinformationen werden gelöscht.",
+      'logoutDialogContent':
+          "Möchten Sie sich wirklich abmelden? Lokale Daten und Anmeldeinformationen werden gelöscht.",
       'logoutDialogTitle': "Von Livocal abmelden?",
       'logoutSub': "Lokale Anmeldedaten löschen und abmelden",
       'manageStorage': "Speicher verwalten",
@@ -3904,22 +4574,29 @@ class AppStrings {
       'pinLengthError': "Bitte geben Sie eine gültige 6-stellige PIN ein",
       'preferences': "Einstellungen",
       'privacy': "Datenschutz",
-      'privacySub': "Kontakte blockieren, selbstlöschende Nachrichten, biometrische Sperre",
+      'privacySub':
+          "Kontakte blockieren, selbstlöschende Nachrichten, biometrische Sperre",
       'profilePhoto': "Profilbild",
       'qrCode': "QR-Code",
-      'qrCodeDesc': "Ihr QR-Code ist privat. Wenn Sie ihn teilen, können andere ihn scannen, um Sie hinzuzufügen.",
+      'qrCodeDesc':
+          "Ihr QR-Code ist privat. Wenn Sie ihn teilen, können andere ihn scannen, um Sie hinzuzufügen.",
       'reactionNotif': "Reaktionsbenachrichtigungen",
-      'reactionNotifSub': "Benachrichtigungen für Reaktionen auf Ihre gesendeten Nachrichten anzeigen",
+      'reactionNotifSub':
+          "Benachrichtigungen für Reaktionen auf Ihre gesendeten Nachrichten anzeigen",
       'reactionNotifications': "Reaktionsbenachrichtigungen",
-      'reactionNotificationsSub': "Benachrichtigungen für Reaktionen auf Ihre Nachrichten anzeigen",
+      'reactionNotificationsSub':
+          "Benachrichtigungen für Reaktionen auf Ihre Nachrichten anzeigen",
       'readReceipts': "Lesebestätigungen (blaue Häkchen)",
-      'readReceiptsSub': "Wenn deaktiviert, senden und empfangen Sie keine Lesebestätigungen.",
+      'readReceiptsSub':
+          "Wenn deaktiviert, senden und empfangen Sie keine Lesebestätigungen.",
       'received': "empfangen",
       'receivedTraffic': "• Empfangen: ",
       'requestAccountInfo': "Konto-Info anfordern",
-      'requestAccountInfoSub': "Bericht über Ihre Kontoinformationen und Einstellungen anfordern",
+      'requestAccountInfoSub':
+          "Bericht über Ihre Kontoinformationen und Einstellungen anfordern",
       'resetNotifications': "Benachrichtigungseinstellungen zurücksetzen",
-      'resetNotificationsSuccess': "Benachrichtigungseinstellungen auf Standard zurückgesetzt",
+      'resetNotificationsSuccess':
+          "Benachrichtigungseinstellungen auf Standard zurückgesetzt",
       'resetUsage': "ZURÜCKSETZEN",
       'ringtone': "Klingelton",
       'save': "Speichern",
@@ -3929,7 +4606,8 @@ class AppStrings {
       'securityAndAppLock': "Sicherheit & App-Sperre",
       'securityAppLockHeader': "Sicherheit und App-Sperre",
       'securityNotifications': "Sicherheitsbenachrichtigungen",
-      'securityNotificationsSub': "Sicherheitsbenachrichtigungen anzeigen, wenn sich Verschlüsselungsschlüssel ändern.",
+      'securityNotificationsSub':
+          "Sicherheitsbenachrichtigungen anzeigen, wenn sich Verschlüsselungsschlüssel ändern.",
       'sent': "gesendet",
       'sentTraffic': "• Gesendet: ",
       'session': "Sitzung",
@@ -3942,7 +4620,8 @@ class AppStrings {
       'storageAndNetworkUsage': "Speicher und Datennutzung",
       'storageBreakdown': "Speicheraufschlüsselung",
       'storageOverview': "Speicherübersicht",
-      'storageSub': "Netzwerknutzung, Cache-Bereinigung, automatischer Download",
+      'storageSub':
+          "Netzwerknutzung, Cache-Bereinigung, automatischer Download",
       'submit': "ABSENDEN",
       'subtleDingPreset': "Sanfter Ton",
       'supportAndCommunity': "Support und Community",
@@ -3953,23 +4632,29 @@ class AppStrings {
       'toneUpdatedSuccess': "aktualisiert",
       'totalAppFootprint': "Gesamter App-Speicherplatz: ",
       'totalTraffic': "• Gesamtverkehr: ",
-      'twoStepDialogDisableDesc': "Geben Sie Ihre aktuelle 6-stellige PIN ein, um die Deaktivierung zu bestätigen:",
-      'twoStepDialogDisableTitle': "Verifizierung in zwei Schritten deaktivieren",
-      'twoStepDialogEnableDesc': "Geben Sie eine 6-stellige PIN ein, um Ihr Livocal-Konto zu schützen:",
+      'twoStepDialogDisableDesc':
+          "Geben Sie Ihre aktuelle 6-stellige PIN ein, um die Deaktivierung zu bestätigen:",
+      'twoStepDialogDisableTitle':
+          "Verifizierung in zwei Schritten deaktivieren",
+      'twoStepDialogEnableDesc':
+          "Geben Sie eine 6-stellige PIN ein, um Ihr Livocal-Konto zu schützen:",
       'twoStepDialogEnableTitle': "Verifizierung in zwei Schritten aktivieren",
       'twoStepDisabledSnack': "Verifizierung in zwei Schritten deaktiviert",
       'twoStepDisabledSub': "Deaktiviert (6-stellige PIN einrichten)",
       'twoStepDisabledSuccess': "Zweistufige Verifizierung deaktiviert",
-      'twoStepEnabledSnack': "PIN für Verifizierung in zwei Schritten sicher gespeichert",
+      'twoStepEnabledSnack':
+          "PIN für Verifizierung in zwei Schritten sicher gespeichert",
       'twoStepEnabledSub': "Aktiviert (PIN-Schutz aktiv)",
       'twoStepSavedSuccess': "PIN sicher gespeichert",
       'twoStepVerification': "Verifizierung in zwei Schritten",
       'typeMessage': "Nachricht",
       'typeYourMessage': "Geben Sie Ihre Nachricht hier ein...",
       'useHighPriority': "Benachrichtigungen mit hoher Priorität",
-      'useHighPrioritySub': "Vorschau von Benachrichtigungen am oberen Bildschirmrand anzeigen",
+      'useHighPrioritySub':
+          "Vorschau von Benachrichtigungen am oberen Bildschirmrand anzeigen",
       'useLessDataCalls': "Weniger Daten für Anrufe verwenden",
-      'useLessDataCallsSub': "Optimiert die Sprachbitrate für Netzwerke mit geringer Bandbreite",
+      'useLessDataCallsSub':
+          "Optimiert die Sprachbitrate für Netzwerke mit geringer Bandbreite",
       'version': "Version 1.0.0 (Produktionsbereit)",
       'vibrate': "Vibration",
       'vibrateDefault': "Standard",
@@ -3989,22 +4674,28 @@ class AppStrings {
       'failedToSendFeedback': "Feedback konnte nicht gesendet werden",
       'listenVoice': "Stimme anhören",
       'liveAudioTranslationVoice': "Stimme für Live-Audio-Übersetzung",
-      'liveAudioTranslationVoiceDesc': "Wählen Sie aus, welche Sprach-Persona Ihnen bei Live-Telefon- und VoIP-Anrufen übersetzte Sprache vorspricht.",
+      'liveAudioTranslationVoiceDesc':
+          "Wählen Sie aus, welche Sprach-Persona Ihnen bei Live-Telefon- und VoIP-Anrufen übersetzte Sprache vorspricht.",
       'livocalContact': "Livocal-Kontakt",
-      'privacyPrinciplesBody': "Livocal schützt Ihre Privatsphäre:\n\n1. Private Verschlüsselung: Ihre 1-zu-1-Anrufe und Nachrichten sind streng geschützt.\n\n2. Gemini Live-Übersetzung: Sprachübertragungen werden während aktiver Anrufe im flüchtigen sicheren Speicher verarbeitet und niemals gespeichert oder trainiert.\n\n3. Kein Adressbuch-Harvesting: Der Kontaktabgleich erfolgt über kryptografische Hash-Abfragen, ohne Ihr Adressbuch hochzuladen.",
+      'privacyPrinciplesBody':
+          "Livocal schützt Ihre Privatsphäre:\n\n1. Private Verschlüsselung: Ihre 1-zu-1-Anrufe und Nachrichten sind streng geschützt.\n\n2. Gemini Live-Übersetzung: Sprachübertragungen werden während aktiver Anrufe im flüchtigen sicheren Speicher verarbeitet und niemals gespeichert oder trainiert.\n\n3. Kein Adressbuch-Harvesting: Der Kontaktabgleich erfolgt über kryptografische Hash-Abfragen, ohne Ihr Adressbuch hochzuladen.",
       'selectedVoice': "Ausgewählte Stimme",
-      'shareQrInviteText': "Verbinden Sie sich mit mir auf Livocal: {link}\nLaden Sie die App herunter, um zu chatten und live übersetzte Sprachanrufe zu tätigen!",
+      'shareQrInviteText':
+          "Verbinden Sie sich mit mir auf Livocal: {link}\nLaden Sie die App herunter, um zu chatten und live übersetzte Sprachanrufe zu tätigen!",
       'stopPreview': "Vorschau stoppen",
       'tapToSelect': "Zum Auswählen tippen",
-      'voicePreferenceSavedNotice': "Ihre bevorzugte Sprach-Persona wird sicher auf Ihrem Gerät gespeichert und automatisch auf alle live übersetzten Anrufe angewendet.",
+      'voicePreferenceSavedNotice':
+          "Ihre bevorzugte Sprach-Persona wird sicher auf Ihrem Gerät gespeichert und automatisch auf alle live übersetzten Anrufe angewendet.",
       'voicePreviewOffline': "Die Sprachvorschau ist offline nicht verfügbar.",
       'voiceSetSuccess': "\"{voiceId}\" als Live-Übersetzungsstimme festgelegt",
       'trialRemainingBadge': "⏱️ Testphase: noch {minutes} Min.",
       'balanceExhaustedBadge': "⚠️ Guthaben aufgebraucht (0 Min.)",
       'balanceMinutesBadge': "💎 Guthaben: {minutes} Min.",
       'trialDaysLeftNotice': "Noch {days} Tage • Lokale Anrufe kostenlos",
-      'rechargeForTranslationNotice': "Für Übersetzungsanrufe aufladen • Lokale Anrufe kostenlos",
-      'translationRateNotice': "KI-Übersetzung 1 Min./Min. • Lokale Anrufe kostenlos",
+      'rechargeForTranslationNotice':
+          "Für Übersetzungsanrufe aufladen • Lokale Anrufe kostenlos",
+      'translationRateNotice':
+          "KI-Übersetzung 1 Min./Min. • Lokale Anrufe kostenlos",
       'recharge': "Aufladen",
       'rechargePlus': "+ Aufladen",
       'geminiLiveVoiceTranslation': "Gemini 3.5 Live-Sprachübersetzung",
@@ -4015,35 +4706,48 @@ class AppStrings {
       'selectPeerLanguage': "Wählen Sie die Partnersprache",
       'dialNumber': "Nummer wählen",
       'recentCallsHeader': "Kürzliche übersetzte und Sprachanrufe",
-      'noRecentCalls': "Noch keine kürzlichen Anrufe. Nummer wählen oder Kontakt antippen.",
+      'noRecentCalls':
+          "Noch keine kürzlichen Anrufe. Nummer wählen oder Kontakt antippen.",
       'directCallByNumber': "Direktanruf oder Chat per Nummer",
-      'directDialSubtitle': "Telefonnummer eingeben, um direkt anzurufen oder zu chatten",
-      'freeLocalCallBanner': "🗣️ Kostenloser lokaler Anruf (Gleiche Sprache - Keine Minuten abgezogen)",
-      'aiTranslateCallBanner': "🤖 KI-Übersetzter Anruf (1 Min./Min.) • Guthaben: {minutes} Min.",
+      'directDialSubtitle':
+          "Telefonnummer eingeben, um direkt anzurufen oder zu chatten",
+      'freeLocalCallBanner':
+          "🗣️ Kostenloser lokaler Anruf (Gleiche Sprache - Keine Minuten abgezogen)",
+      'aiTranslateCallBanner':
+          "🤖 KI-Übersetzter Anruf (1 Min./Min.) • Guthaben: {minutes} Min.",
       'voiceCallAi': "Sprachanruf (KI)",
       'messageAction': "Nachricht",
       'voiceMinutesRecharge': "Sprachminuten aufladen",
-      'talkToInternationalClients': "Sprechen Sie mit internationalen Kunden in jeder Sprache",
+      'talkToInternationalClients':
+          "Sprechen Sie mit internationalen Kunden in jeder Sprache",
       'currentBalanceText': "Aktuelles Guthaben: {minutes} Min.",
       'trialBadgeText': "Test: {minutes} Min.",
-      'trialValidityText': "Verbleibende Testzeit: {days} Tage (Bezahltes Guthaben: {paid} Min.)",
-      'paidBalanceLifetimeText': "Bezahltes Guthaben verfällt nie (Lebenslange Gültigkeit)",
-      'sameLanguageFreeRule': "🗣️ Lokale Anrufe in derselben Sprache 100% kostenlos",
-      'geminiAiRateRule': "🤖 Gemini 3.5 Live KI-Übersetzungsanrufe: 1 Min./Min.",
+      'trialValidityText':
+          "Verbleibende Testzeit: {days} Tage (Bezahltes Guthaben: {paid} Min.)",
+      'paidBalanceLifetimeText':
+          "Bezahltes Guthaben verfällt nie (Lebenslange Gültigkeit)",
+      'sameLanguageFreeRule':
+          "🗣️ Lokale Anrufe in derselben Sprache 100% kostenlos",
+      'geminiAiRateRule':
+          "🤖 Gemini 3.5 Live KI-Übersetzungsanrufe: 1 Min./Min.",
       'selectMinutePack': "Minutenpaket wählen",
       'starterPackTitle': "Starter-Paket (60 Min.)",
-      'starterPackDesc': "Für schnelle Interviews und Erstgespräche (~৳20/Min.)",
+      'starterPackDesc':
+          "Für schnelle Interviews und Erstgespräche (~৳20/Min.)",
       'proPackTitle': "Freelancer Pro (180 Min.)",
-      'proPackDesc': "Wöchentliche Projektmeetings und regelmäßige Anrufe (17% Ersparnis)",
+      'proPackDesc':
+          "Wöchentliche Projektmeetings und regelmäßige Anrufe (17% Ersparnis)",
       'popularBadge': "⭐ BELIEBT",
       'agencyPackTitle': "Agentur-Paket (500 Min.)",
-      'agencyPackDesc': "Für Agenturen und häufige internationale Anrufe (28% Ersparnis)",
+      'agencyPackDesc':
+          "Für Agenturen und häufige internationale Anrufe (28% Ersparnis)",
       'bestValueBadge': "💎 BESTER WERT",
       'paymentMethod': "Zahlungsmethode",
       'bdtLocal': "৳ BDT Lokal",
       'havePromoCode': "Haben Sie einen Gutscheincode? Hier tippen",
       'apply': "Anwenden",
-      'promoAppliedBonus': "Code angewendet! +{bonus} Min. Bonus werden gutgeschrieben.",
+      'promoAppliedBonus':
+          "Code angewendet! +{bonus} Min. Bonus werden gutgeschrieben.",
       'invalidPromoCode': "Abgelaufener oder ungültiger Gutscheincode.",
       'realPaymentGuideBkash': "Zahlungsanleitung (bKash / Nagad)",
       'realPaymentGuideBinance': "Binance Pay USDT Zahlungsanleitung",
@@ -4054,39 +4758,58 @@ class AppStrings {
       'retryTooltip': "Wiederholen",
       'bkashMerchantNumber': "bKash / Nagad persönliche / Händlernummer:",
       'binancePayOfficialId': "Offizielle Binance Pay-ID von Livocal:",
-      'cryptoOfficialDepositAddress': "Offizielle {network}-Einzahlungsadresse von Livocal:",
+      'cryptoOfficialDepositAddress':
+          "Offizielle {network}-Einzahlungsadresse von Livocal:",
       'copyBtn': "Kopieren",
-      'copiedToClipboardSnack': "Adresse/Nummer {text} in die Zwischenablage kopiert!",
-      'paymentInstructionBkash': "1. Senden Sie Geld oder zahlen Sie ৳{amount} über Ihre bKash- oder Nagad-App.\n2. Geben Sie nach erfolgreicher Transaktion unten Ihre Absendernummer und TrxID ein:",
-      'paymentInstructionBinance': "1. Gehen Sie in der Binance-App zu Pay > An Binance-ID senden und senden Sie {amount} USDT.\n2. Geben Sie nach dem Senden unten Ihre Binance-ID und Bestell-ID ein:",
-      'paymentInstructionCrypto': "1. Senden Sie {amount} USDT ({network}) von Ihrer Krypto-Wallet.\n2. Geben Sie nach der Transaktion unten Ihre Absender-Wallet-Adresse und den TxHash ein:",
+      'copiedToClipboardSnack':
+          "Adresse/Nummer {text} in die Zwischenablage kopiert!",
+      'paymentInstructionBkash':
+          "1. Senden Sie Geld oder zahlen Sie ৳{amount} über Ihre bKash- oder Nagad-App.\n2. Geben Sie nach erfolgreicher Transaktion unten Ihre Absendernummer und TrxID ein:",
+      'paymentInstructionBinance':
+          "1. Gehen Sie in der Binance-App zu Pay > An Binance-ID senden und senden Sie {amount} USDT.\n2. Geben Sie nach dem Senden unten Ihre Binance-ID und Bestell-ID ein:",
+      'paymentInstructionCrypto':
+          "1. Senden Sie {amount} USDT ({network}) von Ihrer Krypto-Wallet.\n2. Geben Sie nach der Transaktion unten Ihre Absender-Wallet-Adresse und den TxHash ein:",
       'senderNumberInputLabel': "Ihre Absender-Telefonnummer (Sender Number)",
       'binancePayIdInputLabel': "Ihre Binance Pay-ID oder E-Mail",
-      'senderAddressInputLabel': "Ihre Absender-Wallet-Adresse (Sender Address)",
+      'senderAddressInputLabel':
+          "Ihre Absender-Wallet-Adresse (Sender Address)",
       'trxIdInputLabel': "bKash / Nagad TrxID (Transaktions-ID)",
       'binancePayOrderIdInputLabel': "Binance Pay Bestell-ID / Transaktions-ID",
       'txHashInputLabel': "Blockchain TxHash (Transaktions-Hash)",
       'submitPaymentBdt': "Zahlungsüberprüfung für ৳{amount} einreichen",
       'submitPaymentUsdt': "Zahlungsüberprüfung für \${amount} USDT einreichen",
-      'waitForDepositAccountSnack': "Bitte warten oder aktualisieren, bis das Einzahlungskonto geladen ist.",
-      'enterSenderPhoneSnack': "Bitte geben Sie Ihre Absender-Telefonnummer ein.",
-      'enterBinancePayIdSnack': "Bitte geben Sie Ihre Binance Pay-ID oder E-Mail ein.",
-      'enterSenderCryptoAddressSnack': "Bitte geben Sie Ihre Absender-Krypto-Wallet-Adresse ein.",
+      'waitForDepositAccountSnack':
+          "Bitte warten oder aktualisieren, bis das Einzahlungskonto geladen ist.",
+      'enterSenderPhoneSnack':
+          "Bitte geben Sie Ihre Absender-Telefonnummer ein.",
+      'enterBinancePayIdSnack':
+          "Bitte geben Sie Ihre Binance Pay-ID oder E-Mail ein.",
+      'enterSenderCryptoAddressSnack':
+          "Bitte geben Sie Ihre Absender-Krypto-Wallet-Adresse ein.",
       'enterTxHashSnack': "Bitte geben Sie den Blockchain TxHash ein.",
-      'enterTrxIdSnack': "Bitte geben Sie die Transaktions-ID (TrxID / Order ID) ein.",
-      'trc20AddressLengthError': "TRC-20-Adresse muss mit 'T' beginnen und 34 Zeichen lang sein.",
-      'bep20AddressLengthError': "BEP-20-Adresse muss mit '0x' beginnen und 42 Zeichen lang sein.",
-      'invalidTxHashError': "Bitte geben Sie einen gültigen 64-stelligen Blockchain-TxHash ein.",
-      'paymentSubmittedSuccess': "Zahlungsanforderung übermittelt! Minuten werden nach Admin-Genehmigung gutgeschrieben.",
-      'paymentFailedSnack': "Zahlungsanforderung konnte nicht übermittelt werden.",
+      'enterTrxIdSnack':
+          "Bitte geben Sie die Transaktions-ID (TrxID / Order ID) ein.",
+      'trc20AddressLengthError':
+          "TRC-20-Adresse muss mit 'T' beginnen und 34 Zeichen lang sein.",
+      'bep20AddressLengthError':
+          "BEP-20-Adresse muss mit '0x' beginnen und 42 Zeichen lang sein.",
+      'invalidTxHashError':
+          "Bitte geben Sie einen gültigen 64-stelligen Blockchain-TxHash ein.",
+      'paymentSubmittedSuccess':
+          "Zahlungsanforderung übermittelt! Minuten werden nach Admin-Genehmigung gutgeschrieben.",
+      'paymentFailedSnack':
+          "Zahlungsanforderung konnte nicht übermittelt werden.",
       'minutesExhaustedTitle': "Minuten aufgebraucht",
-      'minutesExhaustedSub': "Minutenguthaben für Live-KI-Übersetzungsanrufe erforderlich",
-      'sameLanguageFreeNotice': "Normale Anrufe in derselben Sprache sind 100% kostenlos! Minuten werden nur für KI-Echtzeitübersetzungen benötigt.",
+      'minutesExhaustedSub':
+          "Minutenguthaben für Live-KI-Übersetzungsanrufe erforderlich",
+      'sameLanguageFreeNotice':
+          "Normale Anrufe in derselben Sprache sind 100% kostenlos! Minuten werden nur für KI-Echtzeitübersetzungen benötigt.",
       'starterBundleMinutes': "60 Minuten",
       'proBundleMinutes': "180 Minuten",
       'buyMinutes': "Minuten kaufen",
       'callFreeNoAi': "Kostenlos anrufen (Ohne Übersetzung)",
-      'minutesExhaustedAlert': "Ihre Minuten sind aufgebraucht. Bitte laden Sie auf, um das Gespräch fortzusetzen.",
+      'minutesExhaustedAlert':
+          "Ihre Minuten sind aufgebraucht. Bitte laden Sie auf, um das Gespräch fortzusetzen.",
       'muteBtn': "Stummschalten",
       'unmuteBtn': "Stummschaltung aufheben",
       'speakerBtn': "Lautsprecher",
@@ -4099,22 +4822,28 @@ class AppStrings {
       'muteNotifications': "Benachrichtigungen stummschalten",
       'unmuteNotifications': "Benachrichtigungen aktivieren",
       'clearChat': "Chat löschen",
-      'blockedTapToUnblock': "Sie haben diesen Kontakt blockiert. Tippen zum Entsperren.",
+      'blockedTapToUnblock':
+          "Sie haben diesen Kontakt blockiert. Tippen zum Entsperren.",
       'sayHelloTo': "Sag {name} Hallo",
-      'noMessagesYet': "Noch keine Nachrichten. Sende eine Begrüßung oder Sprachnachricht.",
+      'noMessagesYet':
+          "Noch keine Nachrichten. Sende eine Begrüßung oder Sprachnachricht.",
       'sayHello': "Sag Hallo!",
-      'disappearingMessagesOn': "Verschwindende Nachrichten sind aktiv ({timer})",
+      'disappearingMessagesOn':
+          "Verschwindende Nachrichten sind aktiv ({timer})",
       'takePhoto': "Foto aufnehmen",
       'chooseFromGallery': "Aus Galerie wählen",
       'textStatus': "Textstatus",
       'viewStatus': "Status ansehen",
       'addNewStatus': "Neuen Status hinzufügen",
-      'languageAppliedLocally': "Sprache lokal übernommen (Cloud-Synchronisierung offline).",
-      'failedToInitiateCall': "Anruf konnte nicht gestartet werden. Prüfen Sie Ihre Netzwerkverbindung.",
+      'languageAppliedLocally':
+          "Sprache lokal übernommen (Cloud-Synchronisierung offline).",
+      'failedToInitiateCall':
+          "Anruf konnte nicht gestartet werden. Prüfen Sie Ihre Netzwerkverbindung.",
       'searchChatsHint': "Chats, Nachrichten suchen...",
       'paymentReceivingAccounts': "Konten für Zahlungseingänge",
       'p2pPaymentSettings': "P2P-Zahlungseinstellungen",
-      'p2pPaymentSettingsDesc': "Konfigurieren Sie die Konten, an die andere Nutzer Ihnen in Chats Geld und Kryptowährung senden können. Stellen Sie sicher, dass Ihre TRC-20- und BEP-20-Adressen korrekt sind.",
+      'p2pPaymentSettingsDesc':
+          "Konfigurieren Sie die Konten, an die andere Nutzer Ihnen in Chats Geld und Kryptowährung senden können. Stellen Sie sicher, dass Ihre TRC-20- und BEP-20-Adressen korrekt sind.",
       'cryptocurrencyAndBinance': "Kryptowährung & Binance",
       'mobileFinancialServices': "Mobile Finanzdienste (MFS)",
       'binancePayIdLabel': "Binance Pay ID / Binance-E-Mail",
@@ -4124,13 +4853,16 @@ class AppStrings {
       'nagadPersonalLabel': "Nagad-Nummer (persönlich)",
       'savePaymentAccounts': "Zahlungskonten speichern",
       'couldNotLoadChats': "Chats konnten nicht geladen werden",
-      'checkConnectionRetry': "Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+      'checkConnectionRetry':
+          "Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
       'noChatsMatching': "Keine Chats für \"{query}\" gefunden",
       'noConversationsYet': "Noch keine Unterhaltungen",
-      'startChattingDesc': "Starten Sie Chats mit Ihren Kontakten – mit Echtzeitübersetzung und Sprachanrufen.",
+      'startChattingDesc':
+          "Starten Sie Chats mit Ihren Kontakten – mit Echtzeitübersetzung und Sprachanrufen.",
       'startNewChat': "Neuen Chat starten",
       'noMatchesFound': "Keine Treffer",
-      'languagePreferenceSavedLocally': "Spracheinstellung lokal gespeichert (Cloud-Synchronisierung offline).",
+      'languagePreferenceSavedLocally':
+          "Spracheinstellung lokal gespeichert (Cloud-Synchronisierung offline).",
       'selectYourSpokenLanguage': "Wählen Sie Ihre gesprochene Sprache",
       'camera': "Kamera",
       'gallery': "Galerie",
@@ -4140,9 +4872,11 @@ class AppStrings {
       'phoneLabel': "Telefon",
       'unstarAll': "Alle Markierungen entfernen",
       'defaultDoodleWallpaper': "Livocal-Verlauf (Standard)",
-      'nameVisibilityHint': "Dies ist nicht Ihr Benutzername oder Ihre PIN. Dieser Name ist für Ihre Livocal-Kontakte sichtbar.",
+      'nameVisibilityHint':
+          "Dies ist nicht Ihr Benutzername oder Ihre PIN. Dieser Name ist für Ihre Livocal-Kontakte sichtbar.",
       'noStarredMessages': "Keine markierten Nachrichten",
-      'starredEmptyHint': "Halten Sie eine Nachricht in einem Chat gedrückt, um sie zu markieren und später leicht wiederzufinden.",
+      'starredEmptyHint':
+          "Halten Sie eine Nachricht in einem Chat gedrückt, um sie zu markieren und später leicht wiederzufinden.",
       'display': "Anzeige",
       'chatWallpaper': "Chat-Hintergrund",
       'wallpaperResetDefault': "Hintergrund auf Standard zurückgesetzt",
@@ -4167,12 +4901,15 @@ class AppStrings {
       'invite': "EINLADEN",
       'selectContactToBlock': "Kontakt zum Blockieren auswählen",
       'noContactsToBlock': "Keine Kontakte zum Blockieren verfügbar",
-      'blockedContactsDesc': "Blockierte Kontakte können Sie nicht mehr anrufen oder Ihnen Nachrichten senden.",
+      'blockedContactsDesc':
+          "Blockierte Kontakte können Sie nicht mehr anrufen oder Ihnen Nachrichten senden.",
       'tapToUnblock': "Tippen Sie auf einen Kontakt, um ihn zu entsperren.",
       'unblock': "Entsperren",
       'failedToLoadMedia': "Medien konnten nicht geladen werden",
-      'voicePreviewSavedLocally': "Spracheinstellung lokal gespeichert; Cloud-Synchronisierung offline.",
-      'voicePreviewUnavailable': "Sprachvorschau vorübergehend nicht verfügbar. Prüfen Sie die Internetverbindung.",
+      'voicePreviewSavedLocally':
+          "Spracheinstellung lokal gespeichert; Cloud-Synchronisierung offline.",
+      'voicePreviewUnavailable':
+          "Sprachvorschau vorübergehend nicht verfügbar. Prüfen Sie die Internetverbindung.",
       'decline': "Ablehnen",
       'tapToAnswer': "Zum Antworten tippen",
       'aiCall': "KI-Anruf",
@@ -4189,10 +4926,14 @@ class AppStrings {
       'zeroMinutesNotConnected': "0 Minuten (nicht verbunden)",
       'zeroMinutesNormalCall': "0 Minuten (normaler Anruf)",
       'minutesDeducted': "{minutes} Minuten abgezogen",
-      'missedIncomingMessage': "Sie haben einen eingehenden Anruf verpasst. Sie können zurückrufen oder eine Nachricht senden.",
-      'missedOutgoingMessage': "Die andere Seite hat nicht geantwortet. Bitte versuchen Sie es gleich noch einmal.",
-      'translatedCallSuccessMessage': "🌐 Ihr Gespräch mit Live-KI-Sprachübersetzung wurde erfolgreich abgeschlossen. Danke, dass Sie Livocal nutzen!",
-      'normalCallSuccessMessage': "Ihr Gespräch wurde erfolgreich abgeschlossen. Danke für das schöne Gespräch!",
+      'missedIncomingMessage':
+          "Sie haben einen eingehenden Anruf verpasst. Sie können zurückrufen oder eine Nachricht senden.",
+      'missedOutgoingMessage':
+          "Die andere Seite hat nicht geantwortet. Bitte versuchen Sie es gleich noch einmal.",
+      'translatedCallSuccessMessage':
+          "🌐 Ihr Gespräch mit Live-KI-Sprachübersetzung wurde erfolgreich abgeschlossen. Danke, dass Sie Livocal nutzen!",
+      'normalCallSuccessMessage':
+          "Ihr Gespräch wurde erfolgreich abgeschlossen. Danke für das schöne Gespräch!",
       'missedCall': "Verpasster Anruf",
       'missedVoiceCall': "Verpasster Sprachanruf",
       'declinedCall': "Abgelehnter Anruf",
@@ -4203,14 +4944,18 @@ class AppStrings {
       'incomingVoiceCall': "Eingehender Sprachanruf",
       'noAnswer': "Keine Antwort",
       'talkedFor': "Gesprochen: {duration}",
-      'languagesSupported': "{count}+ unterstützte Gemini-Live-Sprachen (beliebig zu beliebig)",
+      'languagesSupported':
+          "{count}+ unterstützte Gemini-Live-Sprachen (beliebig zu beliebig)",
       'popularLanguages': "BELIEBTE SPRACHEN",
       'aiInterpreterVoicePreferences': "KI-Dolmetscher-Stimme & Einstellungen",
-      'aiVoicePrefsDesc': "Passen Sie an, wie übersetzte Sprache während Anrufen klingt. Die KI erkennt Sprachen automatisch in Echtzeit.",
+      'aiVoicePrefsDesc':
+          "Passen Sie an, wie übersetzte Sprache während Anrufen klingt. Die KI erkennt Sprachen automatisch in Echtzeit.",
       'zeroTrustRelayActive': "Zero-Trust-Cloud-KI-Relay aktiv",
-      'zeroTrustRelayDesc': "Live-API-Schlüssel und Audio-Pipelines werden sicher auf dem Backend-Server verwaltet.",
+      'zeroTrustRelayDesc':
+          "Live-API-Schlüssel und Audio-Pipelines werden sicher auf dem Backend-Server verwaltet.",
       'selectAiInterpreterVoice': "KI-Dolmetscher-Stimme auswählen",
-      'selectAiVoiceDesc': "Wählen Sie das synthetische Stimmprofil für übersetztes Audio.",
+      'selectAiVoiceDesc':
+          "Wählen Sie das synthetische Stimmprofil für übersetztes Audio.",
       'saveVoicePreference': "Stimmeinstellung speichern",
       'differentLanguageDetected': "Andere Sprache erkannt",
       'youSpeak': "Sie sprechen",
@@ -4218,7 +4963,8 @@ class AppStrings {
       'callWithAiTranslation': "Anruf mit KI-Sprachübersetzung",
       'directVoiceCallFree': "Direkter Sprachanruf (kostenlos)",
       'registeredLivocalUser': "Registrierter Livocal-Nutzer ({phone})",
-      'directCallRings': "Der Direktanruf klingelt auf diesem Telefon, wenn Livocal installiert ist.",
+      'directCallRings':
+          "Der Direktanruf klingelt auf diesem Telefon, wenn Livocal installiert ist.",
       'agreeAndContinue': "Zustimmen und fortfahren",
       'shareContact': "Kontakt teilen",
       'editContact': "Kontakt bearbeiten",
@@ -4230,14 +4976,17 @@ class AppStrings {
       'onlineStatus': "Online-Status: {status}",
       'mobile': "Mobil",
       'mediaLinksDocs': "Medien, Links und Dokumente",
-      'muteDesc': "Benachrichtigungen für neue Nachrichten dieses Kontakts stummschalten",
+      'muteDesc':
+          "Benachrichtigungen für neue Nachrichten dieses Kontakts stummschalten",
       'customNotifications': "Benutzerdefinierte Benachrichtigungen",
       'encryptionAndSecurity': "Verschlüsselung & Sicherheit",
-      'encryptionDesc': "Nachrichten und Anrufe nutzen sicheren TLS/SRTP-Transport und ephemere Übersetzung",
+      'encryptionDesc':
+          "Nachrichten und Anrufe nutzen sicheren TLS/SRTP-Transport und ephemere Übersetzung",
       'reportContactName': "{name} melden",
       'geminiAiLiveTranslation': "Gemini KI-Live-Übersetzung",
       'startTranslatedVoiceCall': "Übersetzten Sprachanruf starten",
-      'reportForwardWarning': "Die letzten 5 Nachrichten dieses Kontakts werden zur Sicherheitsprüfung an Livocal weitergeleitet. Der Kontakt wird nicht benachrichtigt.",
+      'reportForwardWarning':
+          "Die letzten 5 Nachrichten dieses Kontakts werden zur Sicherheitsprüfung an Livocal weitergeleitet. Der Kontakt wird nicht benachrichtigt.",
       'reasonForReport': "Grund für die Meldung:",
       'blockContactClearMessages': "Kontakt blockieren und Nachrichten löschen",
       'inChatAiTranslation': "KI-Live-Übersetzung im Chat",
@@ -4245,35 +4994,44 @@ class AppStrings {
       'languagePreferences': "Spracheinstellungen",
       'myLanguage': "Meine Sprache",
       'autoTranslateIncoming': "Eingehende Nachrichten automatisch übersetzen",
-      'autoTranslateIncomingDesc': "Zeigt Übersetzungen automatisch unter empfangenen Nachrichten an",
+      'autoTranslateIncomingDesc':
+          "Zeigt Übersetzungen automatisch unter empfangenen Nachrichten an",
       'liveVoiceNoteTranscription': "Live-Transkription von Sprachnachrichten",
-      'liveVoiceNoteDesc': "Eingehende Sprachnachrichten transkribieren und übersetzen",
+      'liveVoiceNoteDesc':
+          "Eingehende Sprachnachrichten transkribieren und übersetzen",
       'testRealtimeTranslation': "Echtzeit-Übersetzung testen",
       'translate': "Übersetzen",
       'saveApplySettings': "Speichern & anwenden",
       'inChatTranslationEnabled': "Chat-Live-Übersetzung aktiviert",
       'inChatTranslationDisabled': "Chat-Live-Übersetzung deaktiviert",
-      'translationSettingsApplied': "Übersetzungseinstellungen angewendet: {my} ⇄ {peer}",
-      'inChatTranslationDisabledFor': "Chat-Live-Übersetzung für {name} deaktiviert",
+      'translationSettingsApplied':
+          "Übersetzungseinstellungen angewendet: {my} ⇄ {peer}",
+      'inChatTranslationDisabledFor':
+          "Chat-Live-Übersetzung für {name} deaktiviert",
       'sendPaymentTo': "Zahlung an {name} senden",
       'selectPaymentMethod': "Zahlungsmethode auswählen",
       'livocalInAppWallet': "Livocal-In-App-Wallet",
-      'walletBalanceTransfer': "Guthaben: {available} Min. (überträgt {needed} Min.)",
+      'walletBalanceTransfer':
+          "Guthaben: {available} Min. (überträgt {needed} Min.)",
       'bkashNagadMfs': "bKash / Nagad MFS (Direkt senden)",
       'cryptoBinanceUsdt': "Krypto (Binance Pay / USDT)",
       'shortByMinutes': "Es fehlen {minutes} Min. für diese Überweisung.",
-      'liveRateSummary': "Live-Kurs: 1,00 \$ ≈ {rate} BDT  |  Gesamt: {total} BDT",
+      'liveRateSummary':
+          "Live-Kurs: 1,00 \$ ≈ {rate} BDT  |  Gesamt: {total} BDT",
       'paste': "EINFÜGEN",
       'confirmPayment': "Zahlung bestätigen: {amount}",
       'welcomeBadge1': "VERBINDUNG DER NÄCHSTEN GENERATION",
       'welcomeTitle1': "Willkommen bei Livocal",
-      'welcomeDesc1': "Ultraschnelles, privates Messaging und glasklare Sprachkommunikation für nahtlose tägliche Konnektivität.",
+      'welcomeDesc1':
+          "Ultraschnelles, privates Messaging und glasklare Sprachkommunikation für nahtlose tägliche Konnektivität.",
       'welcomeBadge2': "GEMINI LIVE AI",
       'welcomeTitle2': "Echtzeit-Sprachübersetzung",
-      'welcomeDesc2': "Überwinden Sie Sprachbarrieren in Echtzeit. Sprechen Sie während Anrufen Bengalisch oder Englisch mit bidirektionaler Live-Audioübersetzung in unter einer Sekunde.",
+      'welcomeDesc2':
+          "Überwinden Sie Sprachbarrieren in Echtzeit. Sprechen Sie während Anrufen Bengalisch oder Englisch mit bidirektionaler Live-Audioübersetzung in unter einer Sekunde.",
       'welcomeBadge3': "DATENSCHUTZ DURCH DESIGN",
       'welcomeTitle3': "Standardmäßig privat und sicher",
-      'welcomeDesc3': "DTLS-SRTP-verschlüsselte Sprachströme, geschützte persönliche Daten, kein Adressbuch-Scraping und biometrische App-Sperre.",
+      'welcomeDesc3':
+          "DTLS-SRTP-verschlüsselte Sprachströme, geschützte persönliche Daten, kein Adressbuch-Scraping und biometrische App-Sperre.",
       'enterPhoneNumber': "Geben Sie Ihre Telefonnummer ein",
       'carrierCharges': "Es können Netzbetreibergebühren anfallen.",
       'next': "Weiter",
@@ -4290,7 +5048,8 @@ class AppStrings {
       'messageDeletedForYou': "Nachricht für Sie gelöscht",
       'resendMessage': "Nachricht erneut senden",
       'messageSent': "Nachricht gesendet",
-      'resendFailed': "Nachricht konnte nicht erneut gesendet werden. Verbindung prüfen.",
+      'resendFailed':
+          "Nachricht konnte nicht erneut gesendet werden. Verbindung prüfen.",
       'deleteForEveryone': "Für alle löschen",
       'messageDeletedForEveryone': "Nachricht für alle gelöscht",
       'forwardMessageTo': "Nachricht weiterleiten an...",
@@ -4314,10 +5073,13 @@ class AppStrings {
       'slideToCancel': "◀ Zum Abbrechen wischen",
       'freeCall': "🗣️ Kostenloser Anruf",
       'myStatus': "Mein Status",
-      'couldNotLoadStatus': "Statusaktualisierungen konnten nicht geladen werden",
+      'couldNotLoadStatus':
+          "Statusaktualisierungen konnten nicht geladen werden",
       'noRecentUpdates': "Keine aktuellen Updates",
-      'statusUpdatesDesc': "Statusaktualisierungen Ihrer Kontakte erscheinen hier. Sie verschwinden nach 24 Stunden.",
-      'statusPrivacyNote': "Ihre Statusaktualisierungen sind durch Ihre Datenschutzeinstellungen geschützt",
+      'statusUpdatesDesc':
+          "Statusaktualisierungen Ihrer Kontakte erscheinen hier. Sie verschwinden nach 24 Stunden.",
+      'statusPrivacyNote':
+          "Ihre Statusaktualisierungen sind durch Ihre Datenschutzeinstellungen geschützt",
       'messageHint': "Nachricht",
       'recentUpdates': "Aktuelle Updates",
       'aiTranslatedVoiceCall': "Livocal KI-übersetzter Anruf",
@@ -4338,26 +5100,77 @@ class AppStrings {
       'unpinMessage': "Anheftung lösen",
       'pinnedMessages': "Angeheftete Nachrichten",
       'noPinnedMessages': "Keine angehefteten Nachrichten",
-      'callWarningRemainingMinutes': "⚠️ Warnung: Sie haben nur noch {minutes} Minuten übrig.",
-      'callTerminatedExhausted': "🛑 Ihre Minuten sind aufgebraucht. Anruf wird beendet.",
-      'callTranslationActiveNotice': "{myEmoji} {myName} ⇄ {peerEmoji} {peerName} Echtzeit-Sprachübersetzung aktiv. Sprechen Sie in jeder Sprache!",
+      'callWarningRemainingMinutes':
+          "⚠️ Warnung: Sie haben nur noch {minutes} Minuten übrig.",
+      'callTerminatedExhausted':
+          "🛑 Ihre Minuten sind aufgebraucht. Anruf wird beendet.",
+      'callTranslationActiveNotice':
+          "{myEmoji} {myName} ⇄ {peerEmoji} {peerName} Echtzeit-Sprachübersetzung aktiv. Sprechen Sie in jeder Sprache!",
       'dialPhoneNumber': "Telefonnummer wählen",
-      'dialPhoneNumberSub': "Nummer eingeben, um direkt anzurufen oder zu chatten",
-      'realtimeTranslationActive': "Echtzeit-Übersetzung {langA} ⇄ {langB} aktiviert",
-      'sameLanguageDirectCallNotice': "Beide Benutzer sprechen dieselbe Sprache ({lang}). Sprechen Sie direkt ohne KI-Übersetzung.",
+      'dialPhoneNumberSub':
+          "Nummer eingeben, um direkt anzurufen oder zu chatten",
+      'realtimeTranslationActive':
+          "Echtzeit-Übersetzung {langA} ⇄ {langB} aktiviert",
+      'sameLanguageDirectCallNotice':
+          "Beide Benutzer sprechen dieselbe Sprache ({lang}). Sprechen Sie direkt ohne KI-Übersetzung.",
       'directVoiceCallActiveNotice': "Direkter Sprachanruf aktiv.",
-      'aiUnavailableDirectFallback': "KI-Dolmetscher nicht verfügbar. Über direkten Sprachanruf verbunden.",
+      'aiUnavailableDirectFallback':
+          "KI-Dolmetscher nicht verfügbar. Über direkten Sprachanruf verbunden.",
       'starterPackPriceText': "1,200 BDT (\$9.99)",
       'proPackPriceText': "3,000 BDT (\$24.99)",
       'bdtAmount': "{amount} BDT",
-      'callContinuingDirectVoiceDesc': "Anruf wird als direkter Sprachanruf fortgesetzt.",
-      'callerMinutesExhaustedDirectVoiceDesc': "Übersetzungsminuten des Anrufers aufgebraucht. Auf direkten Sprachanruf umgeschaltet.",
+      'callContinuingDirectVoiceDesc':
+          "Anruf wird als direkter Sprachanruf fortgesetzt.",
+      'callerMinutesExhaustedDirectVoiceDesc':
+          "Übersetzungsminuten des Anrufers aufgebraucht. Auf direkten Sprachanruf umgeschaltet.",
       'rechargeNowBtn': "Aufladen",
     },
   };
 
+  /// Additive strings that don't touch the per-language maps above.
+  static const Map<String, Map<String, String>> _extraValues = {
+    'en': {
+      'updatesTab': 'Updates',
+      'transportSecurity': 'Transport security',
+    },
+    'bn': {
+      'updatesTab': 'আপডেট',
+      'transportSecurity': 'ট্রান্সপোর্ট সিকিউরিটি',
+    },
+    'hi': {
+      'updatesTab': 'अपडेट',
+      'transportSecurity': 'ट्रांसपोर्ट सुरक्षा',
+    },
+    'ar': {
+      'updatesTab': 'التحديثات',
+      'transportSecurity': 'أمان النقل',
+    },
+    'es': {
+      'updatesTab': 'Novedades',
+      'transportSecurity': 'Seguridad del transporte',
+    },
+    'fr': {
+      'updatesTab': 'Actus',
+      'transportSecurity': 'Sécurité du transport',
+    },
+    'de': {
+      'updatesTab': 'Updates',
+      'transportSecurity': 'Transportsicherung',
+    },
+  };
+
+  /// Base maps merged with [_extraValues] so every locale exposes the same keys.
+  static final Map<String, Map<String, String>> _mergedValues = {
+    for (final entry in _localizedValues.entries)
+      entry.key: <String, String>{
+        ...entry.value,
+        ...?_extraValues[entry.key],
+      },
+  };
+
   static String get(String key, String lang, {Map<String, String>? args}) {
-    String text = _localizedValues[lang]?[key] ?? _localizedValues['en']?[key] ?? key;
+    final localized = _mergedValues[lang] ?? const <String, String>{};
+    String text = localized[key] ?? _mergedValues['en']?[key] ?? key;
     if (args != null) {
       args.forEach((k, v) {
         text = text.replaceAll('{$k}', v);
@@ -4371,7 +5184,8 @@ class AppStrings {
     return get(key, lang, args: args);
   }
 
-  static String trParams(WidgetRef ref, String key, Map<String, String> params) {
+  static String trParams(
+      WidgetRef ref, String key, Map<String, String> params) {
     String text = tr(ref, key);
     params.forEach((k, v) {
       text = text.replaceAll('{$k}', v);
@@ -4384,9 +5198,10 @@ class AppStrings {
     return get(key, lang);
   }
 
-  static List<String> get supportedLanguages => const ['en', 'bn', 'hi', 'ar', 'es', 'fr', 'de'];
+  static List<String> get supportedLanguages =>
+      const ['en', 'bn', 'hi', 'ar', 'es', 'fr', 'de'];
 
-  static Map<String, Map<String, String>> get localizedValues => _localizedValues;
+  static Map<String, Map<String, String>> get localizedValues => _mergedValues;
 
-  static Set<String> get allKeys => _localizedValues['en']!.keys.toSet();
+  static Set<String> get allKeys => _mergedValues['en']!.keys.toSet();
 }

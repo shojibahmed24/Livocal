@@ -1,14 +1,16 @@
 import 'dart:math';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:livocal/shared/models/user.dart';
+import 'package:livocal/shared/ui/livocal_app_bar.dart';
+import 'package:livocal/shared/ui/livocal_avatar.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/app_tokens.dart';
+import 'package:livocal/theme/text_theme.dart';
 
 class QrCodeScreen extends ConsumerWidget {
   final User user;
@@ -17,7 +19,8 @@ class QrCodeScreen extends ConsumerWidget {
 
   void _shareQrCode(BuildContext context, WidgetRef ref) {
     HapticFeedback.lightImpact();
-    final link = 'https://livocal.app/add/${user.phone.getFormattedNumber().replaceAll(RegExp(r'\s+'), '')}';
+    final link =
+        'https://livocal.app/add/${user.phone.getFormattedNumber().replaceAll(RegExp(r'\s+'), '')}';
     Share.share(
       AppStrings.trParams(ref, 'shareQrInviteText', {'link': link}),
     );
@@ -25,7 +28,8 @@ class QrCodeScreen extends ConsumerWidget {
 
   void _copyLink(BuildContext context, WidgetRef ref) {
     HapticFeedback.lightImpact();
-    final link = 'https://livocal.app/add/${user.phone.getFormattedNumber().replaceAll(RegExp(r'\s+'), '')}';
+    final link =
+        'https://livocal.app/add/${user.phone.getFormattedNumber().replaceAll(RegExp(r'\s+'), '')}';
     Clipboard.setData(ClipboardData(text: link));
     showSnackBar(
       context: context,
@@ -37,25 +41,25 @@ class QrCodeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF16203A) : Colors.white;
+    final cardBg = isDark ? AppColors.darkSurfaceContainer : Colors.white;
+    final fg = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: isDark ? AppColors.darkSurface : AppColors.primary,
-        foregroundColor: Colors.white,
-        scrolledUnderElevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        actionsIconTheme: const IconThemeData(color: Colors.white),
+      appBar: livocalAppBar(
+        context,
         title: Text(
           AppStrings.tr(ref, 'qrCode'),
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+          style: TextStyle(
+            fontFamily: CustomTextTheme.display,
+            fontSize: 19,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
+            color: fg,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.share_rounded, color: Colors.white),
+            icon: Icon(Icons.share_rounded, color: fg),
             onPressed: () => _shareQrCode(context, ref),
           ),
         ],
@@ -68,13 +72,15 @@ class QrCodeScreen extends ConsumerWidget {
               // QR Card
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
                 decoration: BoxDecoration(
                   color: cardBg,
                   borderRadius: BorderRadius.circular(AppRadius.radiusXl),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+                      color:
+                          Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
                       blurRadius: 20,
                       offset: const Offset(0, 6),
                     ),
@@ -84,24 +90,11 @@ class QrCodeScreen extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Avatar
-                    CircleAvatar(
-                      radius: 36,
-                      backgroundColor: AppColors.primary,
-                      backgroundImage: user.avatarUrl.isNotEmpty
-                          ? CachedNetworkImageProvider(user.avatarUrl)
-                          : null,
-                      child: user.avatarUrl.isEmpty
-                          ? Text(
-                              user.name.isNotEmpty
-                                  ? user.name[0].toUpperCase()
-                                  : '?',
-                              style: const TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            )
-                          : null,
+                    LivocalAvatar(
+                      name: user.name,
+                      imageUrl: user.avatarUrl,
+                      size: 72,
+                      ring: AvatarRing.brand,
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -118,7 +111,9 @@ class QrCodeScreen extends ConsumerWidget {
                       user.phone.getFormattedNumber(),
                       style: TextStyle(
                         fontSize: 14,
-                        color: isDark ? const Color(0xFF8A96B2) : Colors.grey.shade600,
+                        color: isDark
+                            ? const Color(0xFF8A96B2)
+                            : Colors.grey.shade600,
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -159,7 +154,8 @@ class QrCodeScreen extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 13,
                   height: 1.4,
-                  color: isDark ? const Color(0xFF8A96B2) : Colors.grey.shade600,
+                  color:
+                      isDark ? const Color(0xFF8A96B2) : Colors.grey.shade600,
                 ),
               ),
               const SizedBox(height: 28),
@@ -172,7 +168,8 @@ class QrCodeScreen extends ConsumerWidget {
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.radiusLg),
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.radiusLg),
                         ),
                         side: BorderSide(
                           color: isDark ? Colors.white24 : Colors.black12,
@@ -191,7 +188,8 @@ class QrCodeScreen extends ConsumerWidget {
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.radiusLg),
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.radiusLg),
                         ),
                       ),
                       onPressed: () => _shareQrCode(context, ref),
@@ -281,7 +279,8 @@ class _QrCodePainter extends CustomPainter {
       );
     }
 
-    drawAlignment(size.width - (moduleSize * 8), size.height - (moduleSize * 8));
+    drawAlignment(
+        size.width - (moduleSize * 8), size.height - (moduleSize * 8));
 
     // Data modules derived from seedData hash
     final rand = Random(seedData.hashCode);
@@ -297,7 +296,8 @@ class _QrCodePainter extends CustomPainter {
         if (r == 6 || c == 6) {
           if ((r + c) % 2 == 0) {
             canvas.drawRect(
-              Rect.fromLTWH(c * moduleSize, r * moduleSize, moduleSize, moduleSize),
+              Rect.fromLTWH(
+                  c * moduleSize, r * moduleSize, moduleSize, moduleSize),
               paint,
             );
           }
@@ -306,7 +306,8 @@ class _QrCodePainter extends CustomPainter {
 
         if (rand.nextBool()) {
           canvas.drawRect(
-            Rect.fromLTWH(c * moduleSize, r * moduleSize, moduleSize, moduleSize),
+            Rect.fromLTWH(
+                c * moduleSize, r * moduleSize, moduleSize, moduleSize),
             paint,
           );
         }

@@ -9,7 +9,10 @@ import 'package:livocal/features/auth/views/login.dart';
 import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/shared/ui/livocal_app_bar.dart';
+import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/color_theme.dart';
+import 'package:livocal/theme/text_theme.dart';
 import 'package:livocal/theme/theme.dart';
 
 import '../../../shared/models/user.dart';
@@ -60,146 +63,138 @@ class _VerificationPageState extends ConsumerState<VerificationPage> {
         ref.read(resendTimerControllerProvider.notifier).resendCount > 2;
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        iconTheme: IconThemeData(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white
-              : AppColors.lightIcon,
-        ),
-        actionsIconTheme: IconThemeData(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white
-              : AppColors.lightIcon,
-        ),
+      appBar: livocalAppBar(
+        context,
+        centerTitle: true,
         title: Text(
           AppStrings.tr(ref, 'verifyingNumber'),
           style: TextStyle(
+            fontFamily: CustomTextTheme.display,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
             color: Theme.of(context).brightness == Brightness.dark
                 ? AppColors.darkTextPrimary
                 : AppColors.lightTextPrimary,
-            fontWeight: FontWeight.bold,
           ),
         ),
-        centerTitle: true,
-        systemOverlayStyle: SystemUiOverlayStyle(
-          statusBarColor: colorTheme.statusBarColor,
-          statusBarIconBrightness:
-              Theme.of(context).brightness == Brightness.dark
-                  ? Brightness.light
-                  : Brightness.dark,
-          systemNavigationBarColor: colorTheme.navigationBarColor,
-          systemNavigationBarDividerColor: colorTheme.navigationBarColor,
-        ),
-        actions: [
-          Icon(
-            Icons.more_vert_rounded,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white
-                : AppColors.lightIcon,
-          ),
-          const SizedBox(width: 16)
-        ],
       ),
-      body: Center(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 50.0,
-                vertical: 16.0,
-              ),
-              child: RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  children: [
-                    multipleTimesSent
-                        ? TextSpan(
-                            text: 'You have tried to register ',
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: Theme.of(context).brightness == Brightness.dark
+                ? const [Color(0xFF0E1526), AppColors.darkBackground]
+                : [
+                    AppColors.primary.withValues(alpha: 0.10),
+                    AppColors.accent.withValues(alpha: 0.06),
+                    AppColors.lightBackground,
+                  ],
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 50.0,
+                    vertical: 16.0,
+                  ),
+                  child: RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      children: [
+                        multipleTimesSent
+                            ? TextSpan(
+                                text: 'You have tried to register ',
+                                style: TextStyle(color: colorTheme.textColor1),
+                              )
+                            : TextSpan(
+                                text:
+                                    'Waiting to automatically detect an SMS sent to ',
+                                style: TextStyle(color: colorTheme.textColor1),
+                              ),
+                        TextSpan(
+                          text: '${widget.phone.formattedNumber}. ',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: colorTheme.textColor1,
+                          ),
+                        ),
+                        if (multipleTimesSent) ...[
+                          TextSpan(
+                            text:
+                                'recently. Wait before requesting an SMS or a call with your code. ',
                             style: TextStyle(color: colorTheme.textColor1),
                           )
-                        : TextSpan(
-                            text:
-                                'Waiting to automatically detect an SMS sent to ',
-                            style: TextStyle(color: colorTheme.textColor1),
-                          ),
-                    TextSpan(
-                      text: '${widget.phone.formattedNumber}. ',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: colorTheme.textColor1,
-                      ),
+                        ],
+                        TextSpan(
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () {
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginPage(),
+                                ),
+                                (route) => false,
+                              );
+                            },
+                          text: 'Wrong Number?',
+                          style: TextStyle(color: colorTheme.blueColor),
+                        ),
+                      ],
                     ),
-                    if (multipleTimesSent) ...[
-                      TextSpan(
-                        text:
-                            'recently. Wait before requesting an SMS or a call with your code. ',
-                        style: TextStyle(color: colorTheme.textColor1),
-                      )
-                    ],
-                    TextSpan(
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () {
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                              builder: (context) => const LoginPage(),
-                            ),
-                            (route) => false,
-                          );
-                        },
-                      text: 'Wrong Number?',
-                      style: TextStyle(color: colorTheme.blueColor),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-            OTPField(
-              onFilled: (value) {
-                ref
-                    .read(verificationControllerProvider)
-                    .onFilled(context, value, widget.phone);
-              },
-            ),
-            const SizedBox(
-              height: 12,
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12.0),
-              child: Text(
-                AppStrings.tr(ref, 'enter6DigitCode'),
-                style: TextStyle(color: colorTheme.greyColor),
-              ),
-            ),
-            InkWell(
-              onTap: isTimerActive
-                  ? null
-                  : () =>
-                      ref.read(verificationControllerProvider).onResendPressed(
+                OTPField(
+                  onFilled: (value) {
+                    ref
+                        .read(verificationControllerProvider)
+                        .onFilled(context, value, widget.phone);
+                  },
+                ),
+                const SizedBox(
+                  height: 12,
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12.0),
+                  child: Text(
+                    AppStrings.tr(ref, 'enter6DigitCode'),
+                    style: TextStyle(color: colorTheme.greyColor),
+                  ),
+                ),
+                InkWell(
+                  onTap: isTimerActive
+                      ? null
+                      : () => ref
+                          .read(verificationControllerProvider)
+                          .onResendPressed(
                             context,
                             widget.phone.rawNumber,
                           ),
-              child: Text(
-                AppStrings.tr(ref, 'didntReceiveCode'),
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: isTimerActive
-                      ? colorTheme.greyColor
-                      : colorTheme.greenColor,
+                  child: Text(
+                    AppStrings.tr(ref, 'didntReceiveCode'),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: isTimerActive
+                          ? colorTheme.greyColor
+                          : colorTheme.greenColor,
+                    ),
+                  ),
                 ),
-              ),
+                Text(
+                  isTimerActive
+                      ? 'You may request a new code in ${timeFromSeconds(resendTime, true)}'
+                      : '',
+                  style: TextStyle(color: colorTheme.greyColor),
+                ),
+                const SizedBox(height: 24),
+              ],
             ),
-            Text(
-              isTimerActive
-                  ? 'You may request a new code in ${timeFromSeconds(resendTime, true)}'
-                  : '',
-              style: TextStyle(color: colorTheme.greyColor),
-            ),
-            const SizedBox(height: 24),
-          ],
+          ),
         ),
       ),
     );
@@ -277,7 +272,7 @@ class _OTPFieldState extends ConsumerState<OTPField>
     final hintWidth = calculateHintWidth() + 4;
     final totalWidth = hintWidth + 50;
     final textStyle = TextStyle(
-      backgroundColor: colorTheme.backgroundColor,
+      backgroundColor: Colors.transparent,
       fontFamily: "AzeretMono",
       fontSize: 20,
       letterSpacing: 4,
@@ -304,15 +299,18 @@ class _OTPFieldState extends ConsumerState<OTPField>
           },
           child: Container(
             width: totalWidth,
-            height: 44,
+            height: 56,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  width: 2,
-                  color: otpError != null
-                      ? Colors.redAccent
-                      : colorTheme.greenColor,
-                ),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: otpError != null
+                    ? Colors.redAccent
+                    : AppColors.primary.withValues(alpha: 0.30),
+                width: otpError != null ? 1.6 : 1.2,
               ),
             ),
             child: Stack(
@@ -357,7 +355,8 @@ class _OTPFieldState extends ConsumerState<OTPField>
 
                       _textController.value = TextEditingValue(
                         text: newValue,
-                        selection: TextSelection.collapsed(offset: cursorPosition),
+                        selection:
+                            TextSelection.collapsed(offset: cursorPosition),
                       );
 
                       if (newValue.length == 7) {

@@ -233,7 +233,7 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                         const Icon(Icons.shield_outlined,
                             size: 20, color: Color(0xFF8A96B2)),
                         const SizedBox(width: 12),
-                        Text(AppStrings.tr(ref, 'encryptionInfo')),
+                        Text(AppStrings.tr(ref, 'transportSecurity')),
                       ],
                     ),
                   ),

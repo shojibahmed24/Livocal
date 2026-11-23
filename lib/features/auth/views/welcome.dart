@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:livocal/features/auth/views/login.dart';
 import 'package:livocal/features/settings/views/app_language_screen.dart';
 import 'package:livocal/shared/constants/app_config.dart';
+import 'package:livocal/shared/ui/livocal_buttons.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
@@ -24,28 +25,28 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
   int _currentPage = 0;
 
   List<_OnboardingSlide> get _slides => [
-    _OnboardingSlide(
-      icon: Icons.bolt_rounded,
-      badge: AppStrings.tr(ref, 'welcomeBadge1'),
-      title: AppStrings.tr(ref, 'welcomeTitle1'),
-      description: AppStrings.tr(ref, 'welcomeDesc1'),
-      accentColor: AppColors.primary,
-    ),
-    _OnboardingSlide(
-      icon: Icons.translate_rounded,
-      badge: AppStrings.tr(ref, 'welcomeBadge2'),
-      title: AppStrings.tr(ref, 'welcomeTitle2'),
-      description: AppStrings.tr(ref, 'welcomeDesc2'),
-      accentColor: const Color(0xFF00B0FF),
-    ),
-    _OnboardingSlide(
-      icon: Icons.shield_outlined,
-      badge: AppStrings.tr(ref, 'welcomeBadge3'),
-      title: AppStrings.tr(ref, 'welcomeTitle3'),
-      description: AppStrings.tr(ref, 'welcomeDesc3'),
-      accentColor: AppColors.primary,
-    ),
-  ];
+        _OnboardingSlide(
+          icon: Icons.bolt_rounded,
+          badge: AppStrings.tr(ref, 'welcomeBadge1'),
+          title: AppStrings.tr(ref, 'welcomeTitle1'),
+          description: AppStrings.tr(ref, 'welcomeDesc1'),
+          accentColor: AppColors.primary,
+        ),
+        _OnboardingSlide(
+          icon: Icons.translate_rounded,
+          badge: AppStrings.tr(ref, 'welcomeBadge2'),
+          title: AppStrings.tr(ref, 'welcomeTitle2'),
+          description: AppStrings.tr(ref, 'welcomeDesc2'),
+          accentColor: const Color(0xFF00B0FF),
+        ),
+        _OnboardingSlide(
+          icon: Icons.shield_outlined,
+          badge: AppStrings.tr(ref, 'welcomeBadge3'),
+          title: AppStrings.tr(ref, 'welcomeTitle3'),
+          description: AppStrings.tr(ref, 'welcomeDesc3'),
+          accentColor: AppColors.primary,
+        ),
+      ];
 
   @override
   void dispose() {
@@ -63,7 +64,8 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
   Future<void> _openUrl(String url) async {
     final uri = Uri.parse(url);
     try {
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final launched =
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!launched && mounted) {
         showSnackBar(
           context: context,
@@ -86,7 +88,8 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
   Future<void> _showTermsDialog() async {
     final uri = Uri.parse(AppConfig.termsOfServiceUrl);
     try {
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final launched =
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (launched) return;
     } catch (e) {
       debugPrint('[Welcome] Failed to launch terms URL: $e');
@@ -109,16 +112,19 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   ChoiceChip(
-                    label: const Text('English', style: TextStyle(fontSize: 12)),
+                    label:
+                        const Text('English', style: TextStyle(fontSize: 12)),
                     selected: !isBnSelected,
-                    onSelected: (val) => setContentState(() => isBnSelected = !val),
+                    onSelected: (val) =>
+                        setContentState(() => isBnSelected = !val),
                     selectedColor: AppColors.primary.withValues(alpha: 0.15),
                   ),
                   const SizedBox(width: 8),
                   ChoiceChip(
                     label: const Text('বাংলা', style: TextStyle(fontSize: 12)),
                     selected: isBnSelected,
-                    onSelected: (val) => setContentState(() => isBnSelected = val),
+                    onSelected: (val) =>
+                        setContentState(() => isBnSelected = val),
                     selectedColor: AppColors.primary.withValues(alpha: 0.15),
                   ),
                 ],
@@ -127,15 +133,15 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
               Text(
                 isBnSelected
                     ? 'Livocal ব্যবহার করার মাধ্যমে আপনি নিম্নলিখিত শর্তাবলী মেনে নিচ্ছেন:\n\n'
-                      '১. আপনার অ্যাকাউন্টের তথ্যের সুরক্ষার দায়িত্ব আপনার নিজের।\n\n'
-                      '২. যোগাযোগের গোপনীয়তাকে শ্রদ্ধা করুন এবং যেকোনো প্রকার হয়রানি থেকে বিরত থাকুন।\n\n'
-                      '৩. লাইভ ভয়েস অনুবাদ সুবিধাটি এআই ইনফারেন্সের মাধ্যমে দুই ভাষার মধ্যে সংযোগ স্থাপন করতে সহায়তা করে।\n\n'
-                      '৪. Livocal কখনোই আপনার ব্যক্তিগত কন্টাক্ট বা মেসেজ ডেটা তৃতীয় পক্ষের কাছে বিক্রি করে না।'
+                        '১. আপনার অ্যাকাউন্টের তথ্যের সুরক্ষার দায়িত্ব আপনার নিজের।\n\n'
+                        '২. যোগাযোগের গোপনীয়তাকে শ্রদ্ধা করুন এবং যেকোনো প্রকার হয়রানি থেকে বিরত থাকুন।\n\n'
+                        '৩. লাইভ ভয়েস অনুবাদ সুবিধাটি এআই ইনফারেন্সের মাধ্যমে দুই ভাষার মধ্যে সংযোগ স্থাপন করতে সহায়তা করে।\n\n'
+                        '৪. Livocal কখনোই আপনার ব্যক্তিগত কন্টাক্ট বা মেসেজ ডেটা তৃতীয় পক্ষের কাছে বিক্রি করে না।'
                     : 'By using Livocal, you agree to:\n\n'
-                      '1. Accept responsibility for your account activity.\n\n'
-                      '2. Respect communication privacy and refrain from harassment.\n\n'
-                      '3. Understand that real-time voice translation uses AI inference to assist cross-language communication.\n\n'
-                      '4. Acknowledge that Livocal does not sell your private contact or message data to third parties.',
+                        '1. Accept responsibility for your account activity.\n\n'
+                        '2. Respect communication privacy and refrain from harassment.\n\n'
+                        '3. Understand that real-time voice translation uses AI inference to assist cross-language communication.\n\n'
+                        '4. Acknowledge that Livocal does not sell your private contact or message data to third parties.',
                 style: const TextStyle(fontSize: 13.5, height: 1.45),
               ),
             ],
@@ -209,89 +215,90 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
                       physics: const ClampingScrollPhysics(),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Decorative glowing icon container
-                        Container(
-                          width: 140,
-                          height: 140,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: slide.accentColor.withValues(alpha: 0.12),
-                            border: Border.all(
-                              color: slide.accentColor.withValues(alpha: 0.35),
-                              width: 2,
+                        children: [
+                          // Decorative glowing icon container
+                          Container(
+                            width: 140,
+                            height: 140,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: slide.accentColor.withValues(alpha: 0.12),
+                              border: Border.all(
+                                color:
+                                    slide.accentColor.withValues(alpha: 0.35),
+                                width: 2,
+                              ),
                             ),
-                          ),
-                          child: Center(
-                            child: index == 0
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(40),
-                                    child: Image.asset(
-                                      'assets/images/logo.png',
-                                      width: 80,
-                                      height: 80,
-                                      fit: BoxFit.contain,
+                            child: Center(
+                              child: index == 0
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(40),
+                                      child: Image.asset(
+                                        'assets/images/logo.png',
+                                        width: 80,
+                                        height: 80,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    )
+                                  : Icon(
+                                      slide.icon,
+                                      size: 72,
+                                      color: slide.accentColor,
                                     ),
-                                  )
-                                : Icon(
-                                    slide.icon,
-                                    size: 72,
-                                    color: slide.accentColor,
-                                  ),
-                          ),
-                        ),
-                        const SizedBox(height: 28),
-
-                        // Badge Pill
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: slide.accentColor.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            slide.badge,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.0,
-                              color: slide.accentColor,
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 16),
+                          const SizedBox(height: 28),
 
-                        // Title
-                        Text(
-                          slide.title,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : Colors.black87,
+                          // Badge Pill
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: slide.accentColor.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              slide.badge,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.0,
+                                color: slide.accentColor,
+                              ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 12),
+                          const SizedBox(height: 16),
 
-                        // Description
-                        Text(
-                          slide.description,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14,
-                            height: 1.45,
-                            color: isDark
-                                ? const Color(0xFF8A96B2)
-                                : const Color(0xFF536471),
+                          // Title
+                          Text(
+                            slide.title,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 12),
+
+                          // Description
+                          Text(
+                            slide.description,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              height: 1.45,
+                              color: isDark
+                                  ? const Color(0xFF8A96B2)
+                                  : const Color(0xFF536471),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                );
+                  );
                 },
               ),
             ),
@@ -343,7 +350,8 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
                       recognizer: TapGestureRecognizer()
                         ..onTap = () => _openUrl(AppConfig.privacyPolicyUrl),
                     ),
-                    const TextSpan(text: '. Tap "Agree and continue" to accept the '),
+                    const TextSpan(
+                        text: '. Tap "Agree and continue" to accept the '),
                     TextSpan(
                       text: 'Terms of Service',
                       style: const TextStyle(
@@ -365,28 +373,10 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
             // Full-width CTA Button
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    elevation: 1,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24.0),
-                    ),
-                  ),
-                  onPressed: () => _navigateToLoginPage(context),
-                  child: Text(
-                    AppStrings.tr(ref, 'agreeAndContinue'),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ),
+              child: PrimaryButton(
+                label: AppStrings.tr(ref, 'agreeAndContinue'),
+                icon: Icons.arrow_forward_rounded,
+                onPressed: () => _navigateToLoginPage(context),
               ),
             ),
 

@@ -671,7 +671,7 @@ class _HomePageState extends ConsumerState<HomePage>
                 controller: _tabController,
                 labels: [
                   AppStrings.tr(ref, 'chats'),
-                  AppStrings.tr(ref, 'status'),
+                  AppStrings.tr(ref, 'updatesTab'),
                   AppStrings.tr(ref, 'calls'),
                   DialerStrings.of(ref.watch(appLocaleProvider).languageCode)
                       .keypad,
