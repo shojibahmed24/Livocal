@@ -166,7 +166,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
                 onPressed: () => Navigator.of(ctx).pop(true),
-                child: Text('End Call', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                child: Text('End Call', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
