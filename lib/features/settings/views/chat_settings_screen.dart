@@ -126,10 +126,12 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
                   ),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.wallpaper_rounded, color: AppColors.primary),
+                  leading: const Icon(Icons.wallpaper_rounded,
+                      color: AppColors.primary),
                   title: Text(AppStrings.tr(ref, 'defaultDoodleWallpaper')),
                   onTap: () async {
-                    await SharedPref.instance.setString('chat_wallpaper', 'Default');
+                    await SharedPref.instance
+                        .setString('chat_wallpaper', 'Default');
                     if (mounted) setState(() => _wallpaper = 'Default');
                     if (ctx.mounted) Navigator.pop(ctx);
                     if (mounted) {
@@ -142,30 +144,36 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.photo_library_outlined, color: AppColors.primary),
+                  leading: const Icon(Icons.photo_library_outlined,
+                      color: AppColors.primary),
                   title: Text(AppStrings.tr(ref, 'chooseFromGallery')),
                   onTap: () async {
                     Navigator.pop(ctx);
                     final picker = ImagePicker();
-                    final image = await picker.pickImage(source: ImageSource.gallery);
+                    final image =
+                        await picker.pickImage(source: ImageSource.gallery);
                     if (image != null) {
-                      await SharedPref.instance.setString('chat_wallpaper', image.path);
+                      await SharedPref.instance
+                          .setString('chat_wallpaper', image.path);
                       if (mounted) setState(() => _wallpaper = 'Custom Photo');
                       if (mounted) {
                         showSnackBar(
                           context: context,
-                          content: 'Custom wallpaper set successfully',
+                          content: AppStrings.tr(ref, 'customWallpaperSet'),
                           type: SnacBarType.info,
                         );
                       }
                     }
                   },
                 ),
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                   child: Text(
-                    'Solid Colors',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey),
+                    AppStrings.tr(ref, 'solidColor').toUpperCase(),
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey),
                   ),
                 ),
                 SizedBox(
@@ -181,13 +189,19 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
                       return GestureDetector(
                         onTap: () async {
                           final key = 'color_$colorVal';
-                          await SharedPref.instance.setString('chat_wallpaper', key);
-                          if (mounted) setState(() => _wallpaper = item['name'] as String);
+                          await SharedPref.instance
+                              .setString('chat_wallpaper', key);
+                          if (mounted)
+                            setState(() => _wallpaper = item['name'] as String);
                           if (ctx.mounted) Navigator.pop(ctx);
                           if (mounted) {
                             showSnackBar(
                               context: context,
-                              content: 'Wallpaper set to ${item['name']}',
+                              content: AppStrings.tr(
+                                ref,
+                                'wallpaperSetTo',
+                                args: {'name': item['name'] as String},
+                              ),
                               type: SnacBarType.info,
                             );
                           }
@@ -218,11 +232,11 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
   }
 
   void _showFontSizeDialog() {
-    final options = ['Small', 'Medium', 'Large'];
+    const options = ['Small', 'Medium', 'Large'];
 
     showAppDialog(
       context: context,
-      title: 'Font Size',
+      title: AppStrings.tr(ref, 'fontSize'),
       icon: Icons.format_size_rounded,
       content: RadioGroup<String>(
         groupValue: _fontSize,
@@ -238,7 +252,16 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
           children: options
               .map(
                 (opt) => RadioListTile<String>(
-                  title: Text(opt),
+                  title: Text(
+                    AppStrings.tr(
+                      ref,
+                      switch (opt) {
+                        'Small' => 'sizeSmall',
+                        'Large' => 'sizeLarge',
+                        _ => 'sizeMedium',
+                      },
+                    ),
+                  ),
                   value: opt,
                 ),
               )
@@ -257,18 +280,17 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
   Future<void> _handleClearAllChats() async {
     final confirmed = await showAppDialog<bool>(
       context: context,
-      title: 'Clear all chats?',
+      title: AppStrings.tr(ref, 'clearAllChatsTitle'),
       icon: Icons.delete_sweep_outlined,
       iconColor: Colors.redAccent,
-      contentText:
-          'Messages in all chats will be deleted permanently from this device. Chats will remain empty.',
+      contentText: AppStrings.tr(ref, 'clearAllChatsBody'),
       actions: [
         AppDialogAction(
           label: AppStrings.tr(ref, 'cancel'),
           onPressed: () => Navigator.pop(context, false),
         ),
         AppDialogAction(
-          label: 'CLEAR CHATS',
+          label: AppStrings.tr(ref, 'clearChatsAction'),
           isDestructive: true,
           onPressed: () => Navigator.pop(context, true),
         ),
@@ -280,7 +302,7 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
       if (mounted) {
         showSnackBar(
           context: context,
-          content: 'All chat messages cleared successfully.',
+          content: AppStrings.tr(ref, 'allChatsCleared'),
           type: SnacBarType.info,
         );
       }
@@ -290,18 +312,17 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
   Future<void> _handleDeleteAllChats() async {
     final confirmed = await showAppDialog<bool>(
       context: context,
-      title: 'Delete all chats?',
+      title: AppStrings.tr(ref, 'deleteAllChatsTitle'),
       icon: Icons.delete_forever_rounded,
       iconColor: Colors.redAccent,
-      contentText:
-          'All chats and messages will be permanently deleted from this device.',
+      contentText: AppStrings.tr(ref, 'deleteAllChatsBody'),
       actions: [
         AppDialogAction(
           label: AppStrings.tr(ref, 'cancel'),
           onPressed: () => Navigator.pop(context, false),
         ),
         AppDialogAction(
-          label: 'DELETE ALL',
+          label: AppStrings.tr(ref, 'deleteAllAction'),
           isDestructive: true,
           onPressed: () => Navigator.pop(context, true),
         ),
@@ -313,7 +334,7 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
       if (mounted) {
         showSnackBar(
           context: context,
-          content: 'All chats deleted permanently.',
+          content: AppStrings.tr(ref, 'allChatsDeleted'),
           type: SnacBarType.info,
         );
       }
@@ -356,7 +377,6 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
             onTap: _showWallpaperPicker,
           ),
           const Divider(height: 1),
-
           const SettingsSectionHeader(title: 'Chat settings'),
           SettingsRow(
             icon: Icons.keyboard_return_rounded,
@@ -396,7 +416,6 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
             onTap: _showFontSizeDialog,
           ),
           const Divider(height: 1),
-
           const SettingsSectionHeader(title: 'Chat history'),
           SettingsRow(
             icon: Icons.delete_sweep_outlined,
