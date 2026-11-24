@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:livocal/features/settings/services/block_service.dart';
 import 'package:livocal/features/settings/views/blocked_contacts_screen.dart';
+import 'package:livocal/shared/services/screen_security.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
@@ -30,6 +31,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
   bool _readReceipts = true;
   String _disappearingTimer = 'Off';
   bool _fingerprintLock = false;
+  bool _allowScreenshots = false;
 
   @override
   void initState() {
@@ -83,6 +85,9 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
     }
     _fingerprintLock =
         SharedPref.instance.getBool('privacy_fingerprint') ?? false;
+    _allowScreenshots =
+        SharedPref.instance.getBool(ScreenSecurity.prefAllowScreenshots) ??
+            false;
   }
 
   String _localizeOption(String opt) {
@@ -397,6 +402,29 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
                   }
                 } finally {
                   AppAuthGuard.isSystemAuthenticating = false;
+                }
+              },
+            ),
+          ),
+          const Divider(height: 1),
+          SettingsRow(
+            icon: Icons.screenshot_monitor_rounded,
+            title: AppStrings.tr(ref, 'allowScreenshots'),
+            subtitle: AppStrings.tr(ref, 'allowScreenshotsSub'),
+            showChevron: false,
+            trailing: Switch(
+              value: _allowScreenshots,
+              activeTrackColor: AppColors.primary,
+              activeThumbColor: Colors.white,
+              onChanged: (val) async {
+                setState(() => _allowScreenshots = val);
+                await SharedPref.instance.setBool(
+                  ScreenSecurity.prefAllowScreenshots,
+                  val,
+                );
+                if (val) {
+                  // Turn the current window's protection off right away.
+                  await ScreenSecurity.disable();
                 }
               },
             ),

@@ -5240,6 +5240,9 @@ class AppStrings {
       'openSettings': 'Open settings',
       'voicePersonaDesc':
           'This voice is what the other person hears when your speech is translated during a live call.',
+      'allowScreenshots': 'Allow screenshots',
+      'allowScreenshotsSub':
+          'Chat and OTP screens are protected by default. Turn this on only while debugging.',
     },
     'bn': {
       'updatesTab': 'আপডেট',
@@ -5352,6 +5355,9 @@ class AppStrings {
       'openSettings': 'সেটিংস খুলুন',
       'voicePersonaDesc':
           'লাইভ কলে আপনার কথা অনুবাদ হয়ে অন্য প্রান্তের মানুষ এই কণ্ঠেই শুনবে।',
+      'allowScreenshots': 'স্ক্রিনশটের অনুমতি দিন',
+      'allowScreenshotsSub':
+          'চ্যাট ও OTP স্ক্রিন ডিফল্টভাবে সুরক্ষিত। শুধু ডিবাগ করার সময় চালু করুন।',
     },
     'hi': {
       'updatesTab': 'अपडेट',
@@ -5463,6 +5469,9 @@ class AppStrings {
       'openSettings': 'सेटिंग्स खोलें',
       'voicePersonaDesc':
           'लाइव कॉल में आपकी बात अनुवाद होकर सामने वाला इसी आवाज़ में सुनेगा।',
+      'allowScreenshots': 'स्क्रीनशॉट की अनुमति दें',
+      'allowScreenshotsSub':
+          'चैट और OTP स्क्रीन डिफ़ॉल्ट रूप से सुरक्षित हैं। केवल डिबग के समय चालू करें।',
     },
     'ar': {
       'updatesTab': 'التحديثات',
@@ -5572,6 +5581,9 @@ class AppStrings {
       'openSettings': 'فتح الإعدادات',
       'voicePersonaDesc':
           'هذا هو الصوت الذي يسمعه الطرف الآخر عند ترجمة كلامك في المكالمة الحية.',
+      'allowScreenshots': 'السماح بلقطات الشاشة',
+      'allowScreenshotsSub':
+          'شاشات الدردشة وOTP محمية افتراضيًا. فعّل هذا فقط أثناء التصحيح.',
     },
     'es': {
       'updatesTab': 'Novedades',
@@ -5684,6 +5696,9 @@ class AppStrings {
       'openSettings': 'Abrir ajustes',
       'voicePersonaDesc':
           'Esta es la voz que oirá la otra persona cuando se traduzca tu voz en una llamada.',
+      'allowScreenshots': 'Permitir capturas de pantalla',
+      'allowScreenshotsSub':
+          'Las pantallas de chat y OTP están protegidas por defecto. Actívalo solo para depurar.',
     },
     'fr': {
       'updatesTab': 'Actus',
@@ -5796,6 +5811,9 @@ class AppStrings {
       'openSettings': 'Ouvrir les réglages',
       'voicePersonaDesc':
           'C’est la voix que l’autre personne entendra lorsque votre parole sera traduite.',
+      'allowScreenshots': 'Autoriser les captures d’écran',
+      'allowScreenshotsSub':
+          'Les écrans de discussion et OTP sont protégés par défaut. Activez uniquement pour déboguer.',
     },
     'de': {
       'updatesTab': 'Updates',
@@ -5910,6 +5928,9 @@ class AppStrings {
       'openSettings': 'Einstellungen öffnen',
       'voicePersonaDesc':
           'Diese Stimme hört die andere Person, wenn deine Sprache im Anruf übersetzt wird.',
+      'allowScreenshots': 'Screenshots erlauben',
+      'allowScreenshotsSub':
+          'Chat- und OTP-Bildschirme sind standardmäßig geschützt. Nur zum Debuggen aktivieren.',
     },
   };
 
