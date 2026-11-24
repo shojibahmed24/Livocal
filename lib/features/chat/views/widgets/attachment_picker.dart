@@ -8,7 +8,9 @@ import '../../controllers/chat_controller.dart';
 import 'buttons.dart';
 
 class AttachmentPicker extends ConsumerWidget {
-  const AttachmentPicker({super.key});
+  final VoidCallback? onPayment;
+
+  const AttachmentPicker({super.key, this.onPayment});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -114,6 +116,21 @@ class AttachmentPicker extends ConsumerWidget {
                       color: Colors.white,
                     ),
                   ),
+                  if (onPayment != null)
+                    LabelledButton(
+                      onTap: () async {
+                        HapticFeedback.lightImpact();
+                        Navigator.pop(context);
+                        onPayment!.call();
+                      },
+                      label: 'Payment',
+                      backgroundColor: const Color(0xFF00897B),
+                      child: const Icon(
+                        Icons.payments_rounded,
+                        size: 26,
+                        color: Colors.white,
+                      ),
+                    ),
                 ],
               ),
               const SizedBox(height: AppSpacing.xs),

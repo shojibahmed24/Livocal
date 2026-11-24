@@ -44,6 +44,7 @@ import '../../../shared/widgets/emoji_picker.dart';
 import 'contact_profile_screen.dart';
 import 'widgets/chat_translation_sheet.dart';
 import 'widgets/send_payment_sheet.dart';
+import 'widgets/swipe_to_reply.dart';
 import 'widgets/unread_banner.dart';
 
 class ChatPage extends ConsumerStatefulWidget {
@@ -990,68 +991,7 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
               ),
             ),
           ),
-          if (!hideElements) ...[
-            InkWell(
-              onTap: () {
-                showSendPaymentSheet(
-                  context: context,
-                  self: widget.self,
-                  other: widget.other,
-                  contactName: widget.otherUserContactName,
-                  onPaymentConfirmed: (amount, note,
-                      [method, txId, paymentRecordId, clientMessageId]) {
-                    final methodStr = (method != null && method.isNotEmpty)
-                        ? ' via $method'
-                        : '';
-                    final refStr = (txId != null && txId.isNotEmpty)
-                        ? ' (Ref: $txId)'
-                        : '';
-                    final idStr =
-                        (paymentRecordId != null && paymentRecordId.isNotEmpty)
-                            ? ' [id:$paymentRecordId]'
-                            : '';
-                    final noteStr = note.isNotEmpty ? '\nNote: $note' : '';
-                    final paymentMsg =
-                        '💰 Payment sent: \$amount$methodStr$refStr$idStr$noteStr';
-                    ref
-                        .read(chatControllerProvider.notifier)
-                        .sendMessageNoAttachments(
-                          Message(
-                            id: clientMessageId ?? const Uuid().v4(),
-                            content: paymentMsg,
-                            status: MessageStatus.pending,
-                            senderId: widget.self.id,
-                            receiverId: widget.other.id,
-                            timestamp: Timestamp.now(),
-                          ),
-                        );
-                  },
-                );
-              },
-              child: Container(
-                width: 22,
-                height: 22,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Theme.of(context).brightness == Brightness.light
-                      ? colorTheme.greyColor
-                      : colorTheme.iconColor,
-                ),
-                child: Center(
-                  child: Text(
-                    '\$',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: Theme.of(context).brightness == Brightness.light
-                          ? colorTheme.backgroundColor
-                          : colorTheme.appBarColor,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          if (!hideElements)
             InkWell(
               onTap: () {
                 ref
@@ -1065,8 +1005,40 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
                 size: 24.0,
               ),
             ),
-          ],
         ]);
+  }
+
+  /// Payment lives in the attachment sheet now: the composer only keeps the
+  /// attach and camera icons so narrow screens are not crowded.
+  void _openPaymentSheet(BuildContext context) {
+    showSendPaymentSheet(
+      context: context,
+      self: widget.self,
+      other: widget.other,
+      contactName: widget.otherUserContactName,
+      onPaymentConfirmed: (amount, note,
+          [method, txId, paymentRecordId, clientMessageId]) {
+        final methodStr =
+            (method != null && method.isNotEmpty) ? ' via $method' : '';
+        final refStr = (txId != null && txId.isNotEmpty) ? ' (Ref: $txId)' : '';
+        final idStr = (paymentRecordId != null && paymentRecordId.isNotEmpty)
+            ? ' [id:$paymentRecordId]'
+            : '';
+        final noteStr = note.isNotEmpty ? '\nNote: $note' : '';
+        final paymentMsg =
+            '💰 Payment sent: \$amount$methodStr$refStr$idStr$noteStr';
+        ref.read(chatControllerProvider.notifier).sendMessageNoAttachments(
+              Message(
+                id: clientMessageId ?? const Uuid().v4(),
+                content: paymentMsg,
+                status: MessageStatus.pending,
+                senderId: widget.self.id,
+                receiverId: widget.other.id,
+                timestamp: Timestamp.now(),
+              ),
+            );
+      },
+    );
   }
 
   void onAttachmentsIconPressed(BuildContext context) {
@@ -1094,9 +1066,11 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
                 borderRadius: BorderRadius.circular(16.0),
               ),
               elevation: 0,
-              child: const Padding(
-                padding: EdgeInsets.only(top: 24.0),
-                child: AttachmentPicker(),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 24.0),
+                child: AttachmentPicker(
+                  onPayment: () => _openPaymentSheet(context),
+                ),
               ),
             );
           },
@@ -1572,12 +1546,22 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: MessageCard(
-              message: message,
-              currentUserId: self.id,
-              special: isSpecial,
-              isLastInGroup: isLastInGroup,
-              onTapReplyQuote: (targetId) => _jumpToMessage(targetId, messages),
+            child: SwipeToReply(
+              enabled: !message.isDeleted,
+              onReply: () {
+                HapticFeedback.mediumImpact();
+                ref
+                    .read(chatControllerProvider.notifier)
+                    .setReplyingMessage(message);
+              },
+              child: MessageCard(
+                message: message,
+                currentUserId: self.id,
+                special: isSpecial,
+                isLastInGroup: isLastInGroup,
+                onTapReplyQuote: (targetId) =>
+                    _jumpToMessage(targetId, messages),
+              ),
             ),
           ),
         ),
