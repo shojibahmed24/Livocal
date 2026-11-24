@@ -47,18 +47,21 @@ void main() async {
       debugPrint("FCM background handler registration error: $fcmErr");
     }
 
-    // Firebase App Check is opt-in so QA/debug builds keep working before the
-    // provider is registered in the Firebase console. Enable with:
+    // Firebase App Check is ON for release builds. Debug builds opt in with
     //   flutter run --dart-define=ENABLE_APP_CHECK=true
-    if (const bool.fromEnvironment('ENABLE_APP_CHECK')) {
+    // after registering the debug token in Firebase Console → App Check.
+    // Release can be temporarily disabled with DISABLE_APP_CHECK=true.
+    const bool appCheckEnabled = kReleaseMode
+        ? !bool.fromEnvironment('DISABLE_APP_CHECK')
+        : bool.fromEnvironment('ENABLE_APP_CHECK');
+    if (appCheckEnabled) {
       try {
         await FirebaseAppCheck.instance.activate(
           androidProvider: kDebugMode
               ? AndroidProvider.debug
               : AndroidProvider.playIntegrity,
-          appleProvider: kDebugMode
-              ? AppleProvider.debug
-              : AppleProvider.deviceCheck,
+          appleProvider:
+              kDebugMode ? AppleProvider.debug : AppleProvider.deviceCheck,
         );
       } catch (e, st) {
         debugPrint('App Check activation error: $e\n$st');
@@ -66,7 +69,8 @@ void main() async {
     }
 
     // Explicitly enable Crashlytics collection in production
-    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
+    await FirebaseCrashlytics.instance
+        .setCrashlyticsCollectionEnabled(!kDebugMode);
 
     // Pass all uncaught "fatal" errors from the framework to Crashlytics
     FlutterError.onError = (errorDetails) {
@@ -214,7 +218,8 @@ class CustomErrorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("🔴 CustomErrorWidget caught: ${details.exceptionAsString()}\n${details.stack}");
+    debugPrint(
+        "🔴 CustomErrorWidget caught: ${details.exceptionAsString()}\n${details.stack}");
     final colorTheme = Theme.of(context).custom.colorTheme;
 
     return Scaffold(

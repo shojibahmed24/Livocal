@@ -1140,25 +1140,27 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
                           : const Color(0xFF5B6785),
                     ),
                     const SizedBox(width: 6),
-                    RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: TextStyle(
-                          fontSize: 12.0,
-                          color: isDark
-                              ? const Color(0xFF8A96B2)
-                              : const Color(0xFF5B6785),
-                        ),
-                        children: const [
-                          TextSpan(text: 'Your personal messages are '),
-                          TextSpan(
-                            text: 'encrypted in transit and stored securely',
-                            style: TextStyle(
-                              color: Color(0xFF00D4C8),
-                              fontWeight: FontWeight.w600,
-                            ),
+                    Expanded(
+                      child: RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(
+                          style: TextStyle(
+                            fontSize: 12.0,
+                            color: isDark
+                                ? const Color(0xFF8A96B2)
+                                : const Color(0xFF5B6785),
                           ),
-                        ],
+                          children: const [
+                            TextSpan(text: 'Your personal messages are '),
+                            TextSpan(
+                              text: 'encrypted in transit and stored securely',
+                              style: TextStyle(
+                                color: Color(0xFF00D4C8),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
