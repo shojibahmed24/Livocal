@@ -15,6 +15,7 @@ import 'package:livocal/shared/repositories/push_notifications.dart';
 import 'package:livocal/features/auth/data/repositories/auth_repository.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/shared/utils/app_version.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/storage_paths.dart';
 import 'features/auth/views/welcome.dart';
@@ -90,6 +91,7 @@ void main() async {
   try {
     await SharedPref.init();
     await GeminiLiveTranslator.initSecureStorage();
+    await AppVersion.load();
     BlockService.syncFromFirestore();
     NativeChannel.createNotificationChannels();
   } catch (e, st) {

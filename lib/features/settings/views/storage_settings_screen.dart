@@ -22,7 +22,6 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
   bool _lessDataForCalls = false;
   String _mobileDataAuto = 'Photos';
   String _wifiAuto = 'All media';
-  String _roamingAuto = 'No media';
 
   int _dbBytes = 0;
   int _cacheBytes = 0;
@@ -37,8 +36,6 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
         SharedPref.instance.getString('storage_mobile_auto') ?? 'Photos';
     _wifiAuto =
         SharedPref.instance.getString('storage_wifi_auto') ?? 'All media';
-    _roamingAuto =
-        SharedPref.instance.getString('storage_roaming_auto') ?? 'No media';
 
     _loadRealStorageSizes();
   }
@@ -137,7 +134,8 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
       if (mounted) {
         showSnackBar(
           context: context,
-          content: '${AppStrings.tr(ref, 'cacheClearedSuccess')} (${_formatBytes(freed)})',
+          content:
+              '${AppStrings.tr(ref, 'cacheClearedSuccess')} (${_formatBytes(freed)})',
           type: SnacBarType.info,
         );
       }
@@ -214,7 +212,8 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
       ),
       body: ListView(
         children: [
-          SettingsSectionHeader(title: AppStrings.tr(ref, 'storageAndNetworkUsage')),
+          SettingsSectionHeader(
+              title: AppStrings.tr(ref, 'storageAndNetworkUsage')),
           SettingsRow(
             icon: Icons.folder_outlined,
             title: AppStrings.tr(ref, 'manageStorage'),
@@ -230,7 +229,8 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${AppStrings.tr(ref, 'appDatabaseIsar')}${_formatBytes(_dbBytes)}'),
+                    Text(
+                        '${AppStrings.tr(ref, 'appDatabaseIsar')}${_formatBytes(_dbBytes)}'),
                     const SizedBox(height: 8),
                     Text(
                         '${AppStrings.tr(ref, 'cachedMediaTemp')}${_formatBytes(_cacheBytes)}'),
@@ -279,9 +279,11 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
                           Text(
                               '${AppStrings.tr(ref, 'totalTraffic')}${_formatBytes(sentBytes + recvBytes)}'),
                           const SizedBox(height: 6),
-                          Text('${AppStrings.tr(ref, 'sentTraffic')}${_formatBytes(sentBytes)}'),
+                          Text(
+                              '${AppStrings.tr(ref, 'sentTraffic')}${_formatBytes(sentBytes)}'),
                           const SizedBox(height: 6),
-                          Text('${AppStrings.tr(ref, 'receivedTraffic')}${_formatBytes(recvBytes)}'),
+                          Text(
+                              '${AppStrings.tr(ref, 'receivedTraffic')}${_formatBytes(recvBytes)}'),
                         ],
                       ),
                 actions: [
@@ -351,19 +353,6 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
             ),
           ),
           const Divider(height: 1),
-          SettingsRow(
-            icon: Icons.public_rounded,
-            title: AppStrings.tr(ref, 'whenRoaming'),
-            subtitle: _localizeOption(_roamingAuto),
-            onTap: () => _showAutoDownloadDialog(
-              title: AppStrings.tr(ref, 'whenRoaming'),
-              current: _roamingAuto,
-              onSelected: (val) {
-                setState(() => _roamingAuto = val);
-                SharedPref.instance.setString('storage_roaming_auto', val);
-              },
-            ),
-          ),
         ],
       ),
     );

@@ -139,7 +139,8 @@ class CallControllerState {
       isTranslationExhausted:
           isTranslationExhausted ?? this.isTranslationExhausted,
       error: clearError ? null : (error ?? this.error),
-      lastEndedCall: clearLastEndedCall ? null : (lastEndedCall ?? this.lastEndedCall),
+      lastEndedCall:
+          clearLastEndedCall ? null : (lastEndedCall ?? this.lastEndedCall),
     );
   }
 }
@@ -224,13 +225,15 @@ class CallController extends StateNotifier<CallControllerState> {
           }
         },
         onEnded: (callId) {
-          debugPrint('[CallController] CallKit onEnded for $callId (programmatic cleanup)');
+          debugPrint(
+              '[CallController] CallKit onEnded for $callId (programmatic cleanup)');
           // CallKit on Android emits actionCallEnded when endCall() is invoked
           // programmatically or when an incoming call notification is dismissed after answer.
           // Do NOT terminate active or dialing call sessions here to avoid false hangups.
         },
         onCallback: (callId, body) {
-          debugPrint('[CallController] CallKit onCallback (Call back) for $callId');
+          debugPrint(
+              '[CallController] CallKit onCallback (Call back) for $callId');
           CallKitService().endCall(callId);
         },
       );
@@ -241,19 +244,23 @@ class CallController extends StateNotifier<CallControllerState> {
           final isAccepted = activeCall['isAccepted'] == true;
           // Guard: Only connect if user explicitly tapped the native green Accept button on CallKit notification
           if (isAccepted && callId != null && callId.isNotEmpty) {
-            debugPrint('[CallController] Resuming accepted CallKit call $callId on app launch');
+            debugPrint(
+                '[CallController] Resuming accepted CallKit call $callId on app launch');
             acceptAndConnectCall(callId: callId).then((_) {
               navigateToActiveCall();
             });
           } else {
-            debugPrint('[CallController] Stale or ringing CallKit call $callId (isAccepted: $isAccepted), suppressing ghost auto-answer');
+            debugPrint(
+                '[CallController] Stale or ringing CallKit call $callId (isAccepted: $isAccepted), suppressing ghost auto-answer');
           }
         }
       }).catchError((err, st) {
-        debugPrint('[CallController] FlutterCallkitIncoming.activeCalls error: $err\n$st');
+        debugPrint(
+            '[CallController] FlutterCallkitIncoming.activeCalls error: $err\n$st');
       });
     } catch (e) {
-      debugPrint('[CallController] CallKit init suppressed in test/headless environment: $e');
+      debugPrint(
+          '[CallController] CallKit init suppressed in test/headless environment: $e');
     }
   }
 
@@ -274,7 +281,8 @@ class CallController extends StateNotifier<CallControllerState> {
     required User self,
     required CallSession incomingSession,
   }) async {
-    debugPrint('[CallController] Recording suppressed call from muted contact ${incomingSession.callerId} in call history');
+    debugPrint(
+        '[CallController] Recording suppressed call from muted contact ${incomingSession.callerId} in call history');
     final record = CallHistoryRecord(
       callId: incomingSession.callId,
       peerId: incomingSession.callerId,
@@ -294,10 +302,12 @@ class CallController extends StateNotifier<CallControllerState> {
   }
 
   Future<bool> setMyLanguage(String langCode, {bool isExplicit = true}) async {
-    final synced = await CallRepository.setMyLanguageCode(langCode, isExplicit: isExplicit);
+    final synced = await CallRepository.setMyLanguageCode(langCode,
+        isExplicit: isExplicit);
     state = state.copyWith(myLangCode: langCode);
     if (!synced) {
-      debugPrint('[CallController] Language synced locally; cloud sync offline.');
+      debugPrint(
+          '[CallController] Language synced locally; cloud sync offline.');
     }
     if (state.activeSession != null &&
         state.activeSession!.status == CallStateStatus.connected) {
@@ -313,10 +323,12 @@ class CallController extends StateNotifier<CallControllerState> {
     await CallRepository.setPeerLanguageCode(langCode);
     CallSession? updatedSession;
     if (state.activeSession != null) {
-      final isSame = state.myLangCode.toLowerCase().trim() == langCode.toLowerCase().trim();
+      final isSame = state.myLangCode.toLowerCase().trim() ==
+          langCode.toLowerCase().trim();
       updatedSession = state.activeSession!.copyWith(
         calleeLangCode: langCode,
-        translationEnabled: isSame ? false : state.activeSession!.translationEnabled,
+        translationEnabled:
+            isSame ? false : state.activeSession!.translationEnabled,
       );
     }
     state = state.copyWith(
@@ -479,18 +491,34 @@ class CallController extends StateNotifier<CallControllerState> {
       try {
         final fsRepo = ref?.read(firebaseFirestoreRepositoryProvider);
         if (fsRepo != null) {
-          final phoneToLookup = callee.phone.formattedNumber ?? callee.phone.number ?? '';
+          final phoneToLookup =
+              callee.phone.formattedNumber ?? callee.phone.number ?? '';
           if (phoneToLookup.isNotEmpty) {
             final foundUser = await fsRepo.getUserByPhone(phoneToLookup);
-            if (foundUser != null && foundUser.id.isNotEmpty && !foundUser.id.startsWith('phone_')) {
+            if (foundUser != null &&
+                foundUser.id.isNotEmpty &&
+                !foundUser.id.startsWith('phone_')) {
               resolvedCalleeId = foundUser.id;
-              debugPrint('[CallController] Resolved real callee UID: $resolvedCalleeId for phone: $phoneToLookup');
+              debugPrint(
+                  '[CallController] Resolved real callee UID: $resolvedCalleeId for phone: $phoneToLookup');
             }
           }
         }
       } catch (e) {
         debugPrint('[CallController] Error resolving callee UID: $e');
       }
+    }
+
+    // A call can only ring a Livocal account. Raw numbers that do not resolve
+    // to a UID used to create `phone_<number>` documents that the callee could
+    // never read (Firestore cannot authorise collection queries by document
+    // data), so those calls silently never rang.
+    if (resolvedCalleeId.startsWith('phone_') || resolvedCalleeId.isEmpty) {
+      debugPrint(
+        '[CallController] Unresolved calleeId "$resolvedCalleeId" — aborting call',
+      );
+      state = state.copyWith(error: 'CONTACT_NOT_ON_LIVOCAL');
+      return null;
     }
 
     final session = CallSession(
@@ -525,7 +553,8 @@ class CallController extends StateNotifier<CallControllerState> {
 
     final callCreated = await repo.createCall(session);
     if (!callCreated) {
-      debugPrint('[CallController] createCall failed in Firestore. Aborting outgoing call.');
+      debugPrint(
+          '[CallController] createCall failed in Firestore. Aborting outgoing call.');
       state = state.copyWith(activeSession: null);
       return null;
     }
@@ -589,15 +618,15 @@ class CallController extends StateNotifier<CallControllerState> {
       // Caller side: do NOT call acceptAndConnectCall() — just update local state.
       // The caller transitions to connected state only via WebRTC answer exchange.
       else {
-        debugPrint('[CallController] Caller detected remote connected status. Initializing caller in-call audio engines...');
+        debugPrint(
+            '[CallController] Caller detected remote connected status. Initializing caller in-call audio engines...');
         _callTimeoutTimer?.cancel();
         _callTimeoutTimer = null;
 
-        final updatedSession =
-            state.activeSession!.copyWith(
-              status: CallStateStatus.connected,
-              connectedAt: remote.connectedAt ?? DateTime.now(),
-            );
+        final updatedSession = state.activeSession!.copyWith(
+          status: CallStateStatus.connected,
+          connectedAt: remote.connectedAt ?? DateTime.now(),
+        );
         state = state.copyWith(
           activeSession: updatedSession,
           translationEnabled: updatedSession.translationEnabled,
@@ -621,10 +650,12 @@ class CallController extends StateNotifier<CallControllerState> {
     // For Caller (!isIncoming): remote peer is Callee -> remote.calleeLangCode
     // For Callee (isIncoming): remote peer is Caller -> remote.callerLangCode
     final isCaller = !state.activeSession!.isIncoming;
-    final remotePeerLang = isCaller ? remote.calleeLangCode : remote.callerLangCode;
+    final remotePeerLang =
+        isCaller ? remote.calleeLangCode : remote.callerLangCode;
 
     if (remotePeerLang.isNotEmpty && remotePeerLang != state.peerLangCode) {
-      debugPrint('[CallController] Remote peer language updated to $remotePeerLang. Synchronizing...');
+      debugPrint(
+          '[CallController] Remote peer language updated to $remotePeerLang. Synchronizing...');
       state = state.copyWith(peerLangCode: remotePeerLang);
       CallRepository.setPeerLanguageCode(remotePeerLang);
 
@@ -634,7 +665,8 @@ class CallController extends StateNotifier<CallControllerState> {
         final langB = CallLanguageRegistry.fromCode(remotePeerLang);
 
         if (langA.code == langB.code) {
-          debugPrint('[CallController] Bypass activated: Both users speak ${langA.code}. Disconnecting Gemini.');
+          debugPrint(
+              '[CallController] Bypass activated: Both users speak ${langA.code}. Disconnecting Gemini.');
           _geminiTranslator.disconnect();
           setAudioMode(CallAudioMode.originalOnly);
           _webrtcClient.setRemoteAudioVolume(1.0);
@@ -713,7 +745,8 @@ class CallController extends StateNotifier<CallControllerState> {
     final isForeground =
         WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
     if (!isForeground) {
-      debugPrint('[CallController] App is in background/locked. Triggering native CallKit UI.');
+      debugPrint(
+          '[CallController] App is in background/locked. Triggering native CallKit UI.');
       CallKitService().showIncomingCall(
         callId: session.callId,
         callerName: callerName,
@@ -721,7 +754,8 @@ class CallController extends StateNotifier<CallControllerState> {
         callerAvatar: callerAvatar,
       );
     } else {
-      debugPrint('[CallController] App is in foreground. Suppressing CallKit heads-up banner.');
+      debugPrint(
+          '[CallController] App is in foreground. Suppressing CallKit heads-up banner.');
     }
 
     state = state.copyWith(
@@ -737,7 +771,8 @@ class CallController extends StateNotifier<CallControllerState> {
     _callTimeoutTimer = Timer(const Duration(seconds: 30), () {
       if (state.activeSession?.callId == session.callId &&
           state.activeSession?.status == CallStateStatus.ringing) {
-        debugPrint('[CallController] Incoming call timed out after 30s unanswered. Auto-dismissing and marking as missed call.');
+        debugPrint(
+            '[CallController] Incoming call timed out after 30s unanswered. Auto-dismissing and marking as missed call.');
         CallKitService().endAllCalls();
         endCall(
           endStatus: CallStateStatus.missed,
@@ -748,12 +783,12 @@ class CallController extends StateNotifier<CallControllerState> {
 
     // Watch incoming call session in Firestore while ringing. If caller hangs up before answer, dismiss ringing UI immediately
     _firestoreCallSub?.cancel();
-    _firestoreCallSub = repo
-        .watchCallSession(session.callId, self.id)
-        .listen((remote) {
+    _firestoreCallSub =
+        repo.watchCallSession(session.callId, self.id).listen((remote) {
       if (remote == null) return;
       if (remote.status == CallStateStatus.connected) {
-        debugPrint('[CallController] Call answered on another device. Dismissing ringing UI without missed call.');
+        debugPrint(
+            '[CallController] Call answered on another device. Dismissing ringing UI without missed call.');
         _callTimeoutTimer?.cancel();
         _callTimeoutTimer = null;
         CallKitService().endAllCalls();
@@ -766,7 +801,8 @@ class CallController extends StateNotifier<CallControllerState> {
       if (remote.status == CallStateStatus.ended ||
           remote.status == CallStateStatus.rejected ||
           remote.status == CallStateStatus.missed) {
-        debugPrint('[CallController] Remote caller cancelled incoming call while ringing. Dismissing ringing UI.');
+        debugPrint(
+            '[CallController] Remote caller cancelled incoming call while ringing. Dismissing ringing UI.');
         _callTimeoutTimer?.cancel();
         _callTimeoutTimer = null;
         CallKitService().endAllCalls();
@@ -782,7 +818,8 @@ class CallController extends StateNotifier<CallControllerState> {
   }
 
   /// Connects the call, starts Full-Duplex Audio + Hardware AEC + Gemini Live WebSocket
-  Future<void> acceptAndConnectCall({bool? withTranslation, String? callId}) async {
+  Future<void> acceptAndConnectCall(
+      {bool? withTranslation, String? callId}) async {
     var current = state.activeSession;
     if (current == null && callId != null && callId.isNotEmpty) {
       try {
@@ -793,7 +830,8 @@ class CallController extends StateNotifier<CallControllerState> {
           state = state.copyWith(activeSession: current);
         }
       } catch (e) {
-        debugPrint('Failed to restore CallSession from Firestore for $callId: $e');
+        debugPrint(
+            'Failed to restore CallSession from Firestore for $callId: $e');
       }
     }
     if (current == null) return;
@@ -828,20 +866,26 @@ class CallController extends StateNotifier<CallControllerState> {
         // Retry up to 5 times with 600ms delay — caller may still be uploading the offer
         Map<String, dynamic>? offerData;
         for (int attempt = 0; attempt < 5; attempt++) {
-          final doc = await repo.firestore?.collection('calls').doc(current.callId).get();
+          final doc = await repo.firestore
+              ?.collection('calls')
+              .doc(current.callId)
+              .get();
           final data = doc?.data();
           if (data != null && data['offer'] is Map<String, dynamic>) {
             offerData = data['offer'] as Map<String, dynamic>;
-            debugPrint('[CallController] WebRTC offer fetched on attempt ${attempt + 1}');
+            debugPrint(
+                '[CallController] WebRTC offer fetched on attempt ${attempt + 1}');
             break;
           }
-          debugPrint('[CallController] WebRTC offer not ready (attempt ${attempt + 1}/5), retrying in 600ms...');
+          debugPrint(
+              '[CallController] WebRTC offer not ready (attempt ${attempt + 1}/5), retrying in 600ms...');
           await Future.delayed(const Duration(milliseconds: 600));
         }
         if (offerData != null) {
           await _webrtcClient.answerIncomingCall(current.callId, offerData);
         } else {
-          debugPrint('[CallController] WebRTC offer was never available after retries. Aborting call.');
+          debugPrint(
+              '[CallController] WebRTC offer was never available after retries. Aborting call.');
           state = state.copyWith(error: 'CALL_CONNECTION_FAILED');
           await endCall(endStatus: CallStateStatus.ended);
           return;
@@ -866,23 +910,30 @@ class CallController extends StateNotifier<CallControllerState> {
 
     // Exchange languages and auto-sync peer language code
     if (current.isIncoming) {
-      repo.updateCallLanguages(current.callId, calleeLangCode: state.myLangCode);
-      if (current.callerLangCode.isNotEmpty && current.callerLangCode != state.peerLangCode) {
+      repo.updateCallLanguages(current.callId,
+          calleeLangCode: state.myLangCode);
+      if (current.callerLangCode.isNotEmpty &&
+          current.callerLangCode != state.peerLangCode) {
         state = state.copyWith(peerLangCode: current.callerLangCode);
         CallRepository.setPeerLanguageCode(current.callerLangCode);
       }
     } else {
       // Caller syncing Callee's language code from remote call doc snapshot
       try {
-        final callDoc = await repo.firestore?.collection('calls').doc(current.callId).get();
+        final callDoc =
+            await repo.firestore?.collection('calls').doc(current.callId).get();
         final remoteCalleeLang = callDoc?.data()?['calleeLangCode'] as String?;
-        if (remoteCalleeLang != null && remoteCalleeLang.isNotEmpty && remoteCalleeLang != state.peerLangCode) {
-          debugPrint('[CallController] Caller detected remote calleeLangCode: $remoteCalleeLang on connect. Syncing...');
+        if (remoteCalleeLang != null &&
+            remoteCalleeLang.isNotEmpty &&
+            remoteCalleeLang != state.peerLangCode) {
+          debugPrint(
+              '[CallController] Caller detected remote calleeLangCode: $remoteCalleeLang on connect. Syncing...');
           state = state.copyWith(peerLangCode: remoteCalleeLang);
           CallRepository.setPeerLanguageCode(remoteCalleeLang);
         }
       } catch (e) {
-        debugPrint('[CallController] Error checking initial calleeLangCode: $e');
+        debugPrint(
+            '[CallController] Error checking initial calleeLangCode: $e');
       }
     }
 
@@ -891,8 +942,10 @@ class CallController extends StateNotifier<CallControllerState> {
 
   /// Shared engine initialization for BOTH Caller and Callee when call transitions to connected
   Future<void> _startInCallAudioEngines(CallSession connectedSession) async {
-    if (_isAudioEngineRunning && _currentRunningCallId == connectedSession.callId) {
-      debugPrint('[CallController] _startInCallAudioEngines already running for ${connectedSession.callId}, skipping redundant duplicate start');
+    if (_isAudioEngineRunning &&
+        _currentRunningCallId == connectedSession.callId) {
+      debugPrint(
+          '[CallController] _startInCallAudioEngines already running for ${connectedSession.callId}, skipping redundant duplicate start');
       return;
     }
     _isAudioEngineRunning = true;
@@ -913,12 +966,14 @@ class CallController extends StateNotifier<CallControllerState> {
         // but WebRTC connected is the authoritative local signal for audio readiness).
         if (state.activeSession?.status != CallStateStatus.connected &&
             !(state.activeSession?.isIncoming ?? true)) {
-          debugPrint('[CallController] WebRTC P2P connected on caller side. Marking session as connected.');
-          final updatedSession =
-              state.activeSession?.copyWith(status: CallStateStatus.connected, connectedAt: DateTime.now());
+          debugPrint(
+              '[CallController] WebRTC P2P connected on caller side. Marking session as connected.');
+          final updatedSession = state.activeSession?.copyWith(
+              status: CallStateStatus.connected, connectedAt: DateTime.now());
           if (updatedSession != null) {
             state = state.copyWith(activeSession: updatedSession);
-            repo.updateCallStatus(updatedSession.callId, CallStateStatus.connected);
+            repo.updateCallStatus(
+                updatedSession.callId, CallStateStatus.connected);
             // Ensure caller audio is fully open
             _webrtcClient.setMicrophoneMute(false);
             _webrtcClient.setRemoteAudioVolume(1.0);
@@ -945,7 +1000,8 @@ class CallController extends StateNotifier<CallControllerState> {
           );
         }
       } else if (wState == WebRtcCallState.disconnected) {
-        debugPrint('[CallController] WebRTC disconnected, triggering ICE restart and starting 10s timer');
+        debugPrint(
+            '[CallController] WebRTC disconnected, triggering ICE restart and starting 10s timer');
         _webrtcClient.restartIce();
         _networkDropTimer?.cancel();
         final reconnectingBubble = LiveTranscriptEntry(
@@ -965,17 +1021,22 @@ class CallController extends StateNotifier<CallControllerState> {
           transcripts: [...state.transcripts, reconnectingBubble],
         );
         _networkDropTimer = Timer(const Duration(seconds: 10), () {
-          if (state.webrtcState == WebRtcCallState.disconnected && state.activeSession != null) {
-            debugPrint('[CallController] WebRTC disconnected for >10s. Auto hanging up.');
+          if (state.webrtcState == WebRtcCallState.disconnected &&
+              state.activeSession != null) {
+            debugPrint(
+                '[CallController] WebRTC disconnected for >10s. Auto hanging up.');
             endCall();
           }
         });
       } else if (wState == WebRtcCallState.failed) {
-        debugPrint('[CallController] WebRTC connection failed, starting 10s timer');
+        debugPrint(
+            '[CallController] WebRTC connection failed, starting 10s timer');
         _networkDropTimer?.cancel();
         _networkDropTimer = Timer(const Duration(seconds: 10), () {
-          if (state.webrtcState == WebRtcCallState.failed && state.activeSession != null) {
-            debugPrint('[CallController] WebRTC connection failed for >10s. Auto hanging up.');
+          if (state.webrtcState == WebRtcCallState.failed &&
+              state.activeSession != null) {
+            debugPrint(
+                '[CallController] WebRTC connection failed for >10s. Auto hanging up.');
             endCall();
           }
         });
@@ -986,7 +1047,8 @@ class CallController extends StateNotifier<CallControllerState> {
     _webrtcQualitySub?.cancel();
     _webrtcQualitySub = _webrtcClient.networkQualityStream.listen((quality) {
       final isPoor = quality == CallNetworkQuality.poor;
-      debugPrint('[CallController] Network quality changed to: $quality (autoLowData: $isPoor)');
+      debugPrint(
+          '[CallController] Network quality changed to: $quality (autoLowData: $isPoor)');
       state = state.copyWith(
         networkQuality: quality,
         isLowDataModeAutoEnabled: isPoor,
@@ -1005,8 +1067,10 @@ class CallController extends StateNotifier<CallControllerState> {
     final hasGeminiKey = GeminiLiveTranslator.getSavedApiKey().isNotEmpty;
     final hasRelay = GeminiLiveTranslator.getSavedRelayUrl().isNotEmpty;
     final hasTranslationEngine = hasGeminiKey || hasRelay;
-    final isSameLanguage = CallLanguageRegistry.isSameLanguageFamily(state.myLangCode, state.peerLangCode);
-    final shouldTranslate = state.translationEnabled && !isSameLanguage && hasTranslationEngine;
+    final isSameLanguage = CallLanguageRegistry.isSameLanguageFamily(
+        state.myLangCode, state.peerLangCode);
+    final shouldTranslate =
+        state.translationEnabled && !isSameLanguage && hasTranslationEngine;
 
     if (!shouldTranslate) {
       // 100% Direct P2P Audio Call - WebRTC handles native mic & speaker with hardware AEC
@@ -1018,7 +1082,9 @@ class CallController extends StateNotifier<CallControllerState> {
         speakerId: 'system',
         speakerName: isSameLanguage
             ? 'Direct Voice Call'
-            : (!hasTranslationEngine ? 'Direct Call (Relay/API Key Not Set)' : 'Direct Call (Translation Off)'),
+            : (!hasTranslationEngine
+                ? 'Direct Call (Relay/API Key Not Set)'
+                : 'Direct Call (Translation Off)'),
         isSelf: false,
         sourceLangCode: myLang.code,
         targetLangCode: peerLang.code,
@@ -1068,7 +1134,8 @@ class CallController extends StateNotifier<CallControllerState> {
 
     // Apply WebRTC audio volume and mic mute based on active audioMode
     // During connecting phase, ensure direct voice remains open so users are never left in silence
-    if (state.audioMode == CallAudioMode.translatedOnly && _geminiTranslator.isConnected) {
+    if (state.audioMode == CallAudioMode.translatedOnly &&
+        _geminiTranslator.isConnected) {
       _webrtcClient.setRemoteAudioVolume(0.0);
       _webrtcClient.setMicrophoneMute(true);
     } else if (state.audioMode == CallAudioMode.ducking) {
@@ -1115,8 +1182,8 @@ class CallController extends StateNotifier<CallControllerState> {
                 originalText: (gState == GeminiLiveState.connecting)
                     ? 'AI Interpreter reconnecting. Switched to direct WebRTC voice.'
                     : 'AI Interpreter unavailable. Connected via direct WebRTC voice.',
-                translatedText:
-                    AppStrings.get('aiUnavailableDirectFallback', _currentAppLang),
+                translatedText: AppStrings.get(
+                    'aiUnavailableDirectFallback', _currentAppLang),
                 timestamp: DateTime.now(),
               );
               state = state.copyWith(
@@ -1143,12 +1210,11 @@ class CallController extends StateNotifier<CallControllerState> {
           isSelf: false,
           sourceLangCode: myLang.code,
           targetLangCode: peerLang.code,
-          originalText:
-              'AI Interpreter reconnected. Live translation active.',
-          translatedText: AppStrings.get(
-                  'callTranslationActiveNotice', _currentAppLang)
-              .replaceAll('{langA}', state.myLanguage.nativeName)
-              .replaceAll('{langB}', state.peerLanguage.nativeName),
+          originalText: 'AI Interpreter reconnected. Live translation active.',
+          translatedText:
+              AppStrings.get('callTranslationActiveNotice', _currentAppLang)
+                  .replaceAll('{langA}', state.myLanguage.nativeName)
+                  .replaceAll('{langB}', state.peerLanguage.nativeName),
           timestamp: DateTime.now(),
         );
         state = state.copyWith(
@@ -1181,18 +1247,17 @@ class CallController extends StateNotifier<CallControllerState> {
       }
     });
 
-    _geminiTranscriptSub =
-        _geminiTranslator.transcriptStream.listen((entry) {
+    _geminiTranscriptSub = _geminiTranslator.transcriptStream.listen((entry) {
       final updated = [...state.transcripts, entry];
       state = state.copyWith(transcripts: updated);
       repo.sendTranscriptToCall(connectedSession.callId, entry);
     });
 
     _geminiBillingSub?.cancel();
-    _geminiBillingSub =
-        _geminiTranslator.billingUpdateStream.listen((bEvent) {
+    _geminiBillingSub = _geminiTranslator.billingUpdateStream.listen((bEvent) {
       if (bEvent.isCallee) {
-        debugPrint('[CallController] Callee role confirmed: Translation is free.');
+        debugPrint(
+            '[CallController] Callee role confirmed: Translation is free.');
         return;
       }
       if (bEvent.lowBalanceWarning && !_lowBalanceAlerted) {
@@ -1204,12 +1269,15 @@ class CallController extends StateNotifier<CallControllerState> {
           isSelf: true,
           sourceLangCode: 'en',
           targetLangCode: _currentAppLang,
-          originalText: '⚠️ Low Balance Warning: You have ${bEvent.remainingMinutes} minute(s) remaining.',
-          translatedText: AppStrings.get('callWarningRemainingMinutes', _currentAppLang)
-              .replaceAll('{minutes}', '${bEvent.remainingMinutes}'),
+          originalText:
+              '⚠️ Low Balance Warning: You have ${bEvent.remainingMinutes} minute(s) remaining.',
+          translatedText:
+              AppStrings.get('callWarningRemainingMinutes', _currentAppLang)
+                  .replaceAll('{minutes}', '${bEvent.remainingMinutes}'),
           timestamp: DateTime.now(),
         );
-        state = state.copyWith(transcripts: [...state.transcripts, warningBubble]);
+        state =
+            state.copyWith(transcripts: [...state.transcripts, warningBubble]);
       }
       if (bEvent.isExhausted) {
         if (_exhaustedBubbleAdded ||
@@ -1217,8 +1285,10 @@ class CallController extends StateNotifier<CallControllerState> {
             state.transcripts.any((t) =>
                 t.id.startsWith('exhausted_') ||
                 t.originalText.contains('Translation minutes exhausted') ||
-                t.originalText.contains("Caller's translation minutes exhausted"))) {
-          debugPrint('[CallController] Suppressing duplicate minutes exhausted notification bubble.');
+                t.originalText
+                    .contains("Caller's translation minutes exhausted"))) {
+          debugPrint(
+              '[CallController] Suppressing duplicate minutes exhausted notification bubble.');
           return;
         }
         _exhaustedBubbleAdded = true;
@@ -1228,7 +1298,8 @@ class CallController extends StateNotifier<CallControllerState> {
             ? "Caller's translation minutes exhausted. Switched to direct voice call."
             : "Translation minutes exhausted. Switched to direct voice call. Recharge to resume live translation.";
         final translatedNotice = isCallee
-            ? AppStrings.get('callerMinutesExhaustedDirectVoiceDesc', _currentAppLang)
+            ? AppStrings.get(
+                'callerMinutesExhaustedDirectVoiceDesc', _currentAppLang)
             : '${AppStrings.get('minutesExhaustedAlert', _currentAppLang)} ${AppStrings.get('callContinuingDirectVoiceDesc', _currentAppLang)}';
 
         final exhaustedBubble = LiveTranscriptEntry(
@@ -1265,7 +1336,8 @@ class CallController extends StateNotifier<CallControllerState> {
     );
 
     if (!connectedWs) {
-      debugPrint('[CallController] Gemini connection failed/missing key. Falling back to direct WebRTC audio.');
+      debugPrint(
+          '[CallController] Gemini connection failed/missing key. Falling back to direct WebRTC audio.');
       _webrtcClient.setMicrophoneMute(state.isMuted);
       _webrtcClient.setRemoteAudioVolume(1.0);
       setAudioMode(CallAudioMode.originalOnly);
@@ -1278,8 +1350,10 @@ class CallController extends StateNotifier<CallControllerState> {
           isSelf: false,
           sourceLangCode: myLang.code,
           targetLangCode: peerLang.code,
-          originalText: 'AI Interpreter unavailable (missing key/relay). Connected via direct WebRTC voice.',
-          translatedText: AppStrings.get('aiUnavailableDirectFallback', _currentAppLang),
+          originalText:
+              'AI Interpreter unavailable (missing key/relay). Connected via direct WebRTC voice.',
+          translatedText:
+              AppStrings.get('aiUnavailableDirectFallback', _currentAppLang),
           timestamp: DateTime.now(),
         );
         state = state.copyWith(
@@ -1291,7 +1365,8 @@ class CallController extends StateNotifier<CallControllerState> {
     }
 
     // Play a pleasant connection chime through the 24kHz PCM stream
-    final chime = GeminiLiveTranslator.generateTestVoiceTonePcm24k(durationMs: 360);
+    final chime =
+        GeminiLiveTranslator.generateTestVoiceTonePcm24k(durationMs: 360);
     _audioPipeline.feedTranslatedAiPcm(chime);
 
     // Add initial welcome bilingual transcript bubble
@@ -1305,11 +1380,12 @@ class CallController extends StateNotifier<CallControllerState> {
       originalText: connectedWs
           ? '🟢 Live Neural Audio Interpreter Active: Speak in ${myLang.nativeName} (${myLang.englishName}) or ${peerLang.nativeName} (${peerLang.englishName}).'
           : '⚡ Live Interpreter Ready (${myLang.shortBadge} ⇄ ${peerLang.shortBadge}). Speak into mic or tap quick test phrases below.',
-      translatedText: AppStrings.get('callTranslationActiveNotice', _currentAppLang)
-          .replaceAll('{myEmoji}', myLang.flagEmoji)
-          .replaceAll('{myName}', myLang.nativeName)
-          .replaceAll('{peerEmoji}', peerLang.flagEmoji)
-          .replaceAll('{peerName}', peerLang.nativeName),
+      translatedText:
+          AppStrings.get('callTranslationActiveNotice', _currentAppLang)
+              .replaceAll('{myEmoji}', myLang.flagEmoji)
+              .replaceAll('{myName}', myLang.nativeName)
+              .replaceAll('{peerEmoji}', peerLang.flagEmoji)
+              .replaceAll('{peerName}', peerLang.nativeName),
       timestamp: DateTime.now(),
     );
 
@@ -1324,11 +1400,11 @@ class CallController extends StateNotifier<CallControllerState> {
     navigateToActiveCall();
   }
 
-
   void toggleMute() {
     final nextMute = !state.isMuted;
     _audioPipeline.setMuted(nextMute);
-    if (!state.translationEnabled || state.audioMode != CallAudioMode.translatedOnly) {
+    if (!state.translationEnabled ||
+        state.audioMode != CallAudioMode.translatedOnly) {
       _webrtcClient.setMicrophoneMute(nextMute);
     } else {
       // In translatedOnly mode, raw mic is kept muted to conserve mobile bandwidth
@@ -1427,7 +1503,8 @@ class CallController extends StateNotifier<CallControllerState> {
     final current = state.activeSession;
     if (current == null || current.status != CallStateStatus.connected) return;
 
-    debugPrint('[CallController] Resuming translation after wallet recharge...');
+    debugPrint(
+        '[CallController] Resuming translation after wallet recharge...');
     state = state.copyWith(
       isTranslationExhausted: false,
       translationEnabled: true,
@@ -1465,7 +1542,8 @@ class CallController extends StateNotifier<CallControllerState> {
         transcripts: [...state.transcripts, resumedBubble],
       );
     } else {
-      debugPrint('[CallController] Failed to resume translation after recharge. Staying in direct voice.');
+      debugPrint(
+          '[CallController] Failed to resume translation after recharge. Staying in direct voice.');
       _webrtcClient.setMicrophoneMute(state.isMuted);
       _webrtcClient.setRemoteAudioVolume(1.0);
       setAudioMode(CallAudioMode.originalOnly);
@@ -1474,7 +1552,6 @@ class CallController extends StateNotifier<CallControllerState> {
 
   bool _lowBalanceAlerted = false;
   bool _exhaustedBubbleAdded = false;
-
 
   /// Declines the incoming call and sends a short chat message to the caller.
   /// Used by the "Decline with message" quick replies on the incoming screen.
@@ -1495,12 +1572,8 @@ class CallController extends StateNotifier<CallControllerState> {
     );
     try {
       await IsarDb.addMessage(message);
-      await ref
-          ?.read(firebaseFirestoreRepositoryProvider)
-          .sendMessage(message);
-      ref
-          ?.read(pushNotificationsRepoProvider)
-          .sendPushNotification(message);
+      await ref?.read(firebaseFirestoreRepositoryProvider).sendMessage(message);
+      ref?.read(pushNotificationsRepoProvider).sendPushNotification(message);
     } catch (e) {
       debugPrint('[CallController] declineWithMessage send failed: $e');
     }
@@ -1594,7 +1667,8 @@ class CallController extends StateNotifier<CallControllerState> {
 
           // Deterministic unique message ID scoped per participant to prevent double-write and conflict when syncing
           final myId = current.isIncoming ? current.calleeId : current.callerId;
-          final peerId = current.isIncoming ? current.callerId : current.calleeId;
+          final peerId =
+              current.isIncoming ? current.callerId : current.calleeId;
           final callLogMessage = Message(
             id: 'call_${current.callId}_$myId',
             content: logContent,

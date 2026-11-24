@@ -6,7 +6,6 @@ import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/features/calls/models/call_model.dart';
-import 'package:livocal/shared/utils/phone_normalizer.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
 final callRepositoryProvider = Provider<CallRepository>((ref) {
@@ -52,13 +51,17 @@ class CallRepository {
     return CallLanguageRegistry.getDeviceLocaleCode();
   }
 
-  static Future<bool> setMyLanguageCode(String code, {bool isExplicit = true}) async {
+  static Future<bool> setMyLanguageCode(String code,
+      {bool isExplicit = true}) async {
     await SharedPref.instance.setString(prefMyLang, code);
     await SharedPref.instance.setBool(prefHasExplicitLang, isExplicit);
     try {
       final currentUid = fb.FirebaseAuth.instance.currentUser?.uid;
       if (currentUid != null && currentUid.isNotEmpty) {
-        await FirebaseFirestore.instance.collection('users').doc(currentUid).set({
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUid)
+            .set({
           'spokenLanguage': code,
           'hasExplicitSpokenLanguage': isExplicit,
           'updatedAt': FieldValue.serverTimestamp(),
@@ -66,7 +69,8 @@ class CallRepository {
         return true;
       }
     } catch (e) {
-      debugPrint('[CallRepository] Error syncing spokenLanguage to Firestore: $e');
+      debugPrint(
+          '[CallRepository] Error syncing spokenLanguage to Firestore: $e');
       return false;
     }
     return true;
@@ -116,13 +120,26 @@ class CallRepository {
     final lowerId = peerId.toLowerCase();
     final lowerName = peerName.toLowerCase();
     if (lowerId.contains('_en_') || lowerName.contains('english')) return 'en';
-    if (lowerId.contains('_es_') || lowerName.contains('español') || lowerName.contains('spanish')) return 'es';
-    if (lowerId.contains('_ar_') || lowerName.contains('العربية') || lowerName.contains('arabic')) return 'ar';
+    if (lowerId.contains('_es_') ||
+        lowerName.contains('español') ||
+        lowerName.contains('spanish')) return 'es';
+    if (lowerId.contains('_ar_') ||
+        lowerName.contains('العربية') ||
+        lowerName.contains('arabic')) return 'ar';
     final hasBengaliChars = RegExp(r'[\u0980-\u09FF]').hasMatch(peerName);
-    if (lowerId.contains('_bn_') || lowerName.contains('বাংলা') || lowerName.contains('bangla') || hasBengaliChars) return 'bn';
-    if (lowerId.contains('_hi_') || lowerName.contains('हिन्दी') || lowerName.contains('hindi')) return 'hi';
-    if (lowerId.contains('_fr_') || lowerName.contains('français') || lowerName.contains('french')) return 'fr';
-    if (lowerId.contains('_de_') || lowerName.contains('deutsch') || lowerName.contains('german')) return 'de';
+    if (lowerId.contains('_bn_') ||
+        lowerName.contains('বাংলা') ||
+        lowerName.contains('bangla') ||
+        hasBengaliChars) return 'bn';
+    if (lowerId.contains('_hi_') ||
+        lowerName.contains('हिन्दी') ||
+        lowerName.contains('hindi')) return 'hi';
+    if (lowerId.contains('_fr_') ||
+        lowerName.contains('français') ||
+        lowerName.contains('french')) return 'fr';
+    if (lowerId.contains('_de_') ||
+        lowerName.contains('deutsch') ||
+        lowerName.contains('german')) return 'de';
 
     return getPeerLanguageCode();
   }
@@ -216,7 +233,8 @@ class CallRepository {
           break;
         }
       }
-      resolvedPeer ??= inferPeerLanguageCode(peerId, peerName, phone: peerPhone);
+      resolvedPeer ??=
+          inferPeerLanguageCode(peerId, peerName, phone: peerPhone);
     }
 
     // If both speak the same language, translation is NOT needed!
@@ -244,7 +262,8 @@ class CallRepository {
           .timeout(const Duration(seconds: 5));
       return true;
     } catch (e) {
-      debugPrint('[CallRepository] createCall failed for ${session.callId}: $e');
+      debugPrint(
+          '[CallRepository] createCall failed for ${session.callId}: $e');
       return false;
     }
   }
@@ -264,7 +283,8 @@ class CallRepository {
           .update(updates)
           .timeout(const Duration(seconds: 3));
     } catch (e) {
-      debugPrint('[CallRepository] updateCallStatus failed for $callId ($status): $e');
+      debugPrint(
+          '[CallRepository] updateCallStatus failed for $callId ($status): $e');
     }
   }
 
@@ -309,7 +329,8 @@ class CallRepository {
           .set(data)
           .timeout(const Duration(seconds: 3));
     } catch (e) {
-      debugPrint('[CallRepository] sendTranscriptToCall failed for $callId: $e');
+      debugPrint(
+          '[CallRepository] sendTranscriptToCall failed for $callId: $e');
     }
   }
 
@@ -319,14 +340,10 @@ class CallRepository {
   Future<void> deleteCallTranscripts(String callId) async {
     if (firestore == null || callId.isEmpty) return;
     try {
-      final collection = firestore!
-          .collection('calls')
-          .doc(callId)
-          .collection('transcripts');
-      final snapshot = await collection
-          .limit(500)
-          .get()
-          .timeout(const Duration(seconds: 3));
+      final collection =
+          firestore!.collection('calls').doc(callId).collection('transcripts');
+      final snapshot =
+          await collection.limit(500).get().timeout(const Duration(seconds: 3));
       if (snapshot.docs.isEmpty) return;
       final batch = firestore!.batch();
       for (final doc in snapshot.docs) {
@@ -342,18 +359,13 @@ class CallRepository {
 
   Stream<CallSession?> watchCallSession(String callId, String ownId) {
     if (firestore == null) return const Stream.empty();
-    return firestore!
-        .collection('calls')
-        .doc(callId)
-        .snapshots()
-        .map((snap) {
-          if (!snap.exists || snap.data() == null) return null;
-          return CallSession.fromMap(snap.data()!, ownId: ownId);
-        })
-        .handleError((err) {
-          debugPrint('[CallRepository] watchCallSession error for $callId: $err');
-          return null;
-        });
+    return firestore!.collection('calls').doc(callId).snapshots().map((snap) {
+      if (!snap.exists || snap.data() == null) return null;
+      return CallSession.fromMap(snap.data()!, ownId: ownId);
+    }).handleError((err) {
+      debugPrint('[CallRepository] watchCallSession error for $callId: $err');
+      return null;
+    });
   }
 
   Stream<CallSession?> watchIncomingCalls(String ownId, {String? ownPhone}) {
@@ -386,20 +398,13 @@ class CallRepository {
         .collection('calls')
         .where('calleeId', isEqualTo: ownId)
         .snapshots()
-        .listen(processQuery, onError: (e) => debugPrint('[CallRepository] watchIncomingCalls primary error: $e')));
+        .listen(processQuery,
+            onError: (e) => debugPrint(
+                '[CallRepository] watchIncomingCalls primary error: $e')));
 
-    // 2. Secondary listener: calleeId == 'phone_$clean' (when dialed by raw phone number)
-    if (ownPhone != null && ownPhone.trim().isNotEmpty) {
-      final phoneCandidates = PhoneNormalizer.matchKeys(ownPhone.trim());
-
-      for (final p in phoneCandidates) {
-        subs.add(firestore!
-            .collection('calls')
-            .where('calleeId', isEqualTo: 'phone_$p')
-            .snapshots()
-            .listen(processQuery, onError: (e) => debugPrint('[CallRepository] watchIncomingCalls phone_$p error: $e')));
-      }
-    }
+    // Only UID-targeted calls can be authorised by Firestore. Phone-keyed
+    // documents (`phone_<number>`) were rejected for every listener, so raw
+    // numbers are resolved to a UID before a call is created instead.
 
     controller.onCancel = () {
       for (final sub in subs) {
@@ -422,11 +427,10 @@ class CallRepository {
         .orderBy('timestamp', descending: false)
         .snapshots()
         .map((snap) {
-          return snap.docs
-              .map((d) => LiveTranscriptEntry.fromMap(d.data(), ownId))
-              .toList();
-        })
-        .handleError((_) => <LiveTranscriptEntry>[]);
+      return snap.docs
+          .map((d) => LiveTranscriptEntry.fromMap(d.data(), ownId))
+          .toList();
+    }).handleError((_) => <LiveTranscriptEntry>[]);
   }
 
   // --- Local Call History Persistence ---
@@ -437,11 +441,10 @@ class CallRepository {
       return [];
     }
     try {
-      return rawList
-          .map((item) => CallHistoryRecord.fromJson(item))
-          .toList();
+      return rawList.map((item) => CallHistoryRecord.fromJson(item)).toList();
     } catch (e, st) {
-      debugPrint('[CallRepository] getCallHistory deserialization error: $e\n$st');
+      debugPrint(
+          '[CallRepository] getCallHistory deserialization error: $e\n$st');
       return [];
     }
   }

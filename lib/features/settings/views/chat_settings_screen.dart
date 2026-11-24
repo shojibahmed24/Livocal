@@ -359,7 +359,7 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppStrings.tr(ref, 'chats')),
+        title: Text(AppStrings.tr(ref, 'chatsAndTheme')),
       ),
       body: ListView(
         children: [
@@ -372,16 +372,16 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
           ),
           SettingsRow(
             icon: Icons.wallpaper_rounded,
-            title: 'Wallpaper',
+            title: AppStrings.tr(ref, 'chatWallpaper'),
             subtitle: wallpaperLabel,
             onTap: _showWallpaperPicker,
           ),
           const Divider(height: 1),
-          const SettingsSectionHeader(title: 'Chat settings'),
+          SettingsSectionHeader(title: AppStrings.tr(ref, 'chatSettings')),
           SettingsRow(
             icon: Icons.keyboard_return_rounded,
-            title: 'Enter is send',
-            subtitle: 'Enter key will send your message',
+            title: AppStrings.tr(ref, 'enterIsSend'),
+            subtitle: AppStrings.tr(ref, 'enterIsSendSub'),
             showChevron: false,
             trailing: Switch(
               value: _enterIsSend,

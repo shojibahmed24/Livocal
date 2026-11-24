@@ -560,6 +560,94 @@ app.get(['/privacy-policy', '/privacy'], (req, res) => {
 </html>`);
 });
 
+// Hosted Public Terms of Service Page for Google Play & App Store Compliance
+app.get(['/terms-of-service', '/terms'], (req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Livocal - Terms of Service | সেবার শর্তাবলী</title>
+  <style>
+    :root { --primary: #00B386; --bg: #0B1220; --card: #131C2B; --text: #E8EEF7; --muted: #9AA7BD; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.65; }
+    header { padding: 32px 20px 16px; max-width: 820px; margin: 0 auto; }
+    h1 { font-size: 26px; margin: 0 0 6px; }
+    .sub { color: var(--muted); font-size: 14px; }
+    main { max-width: 820px; margin: 0 auto; padding: 0 20px 64px; }
+    section { background: var(--card); border-radius: 14px; padding: 20px 22px; margin-top: 16px; }
+    h2 { font-size: 17px; margin: 0 0 10px; color: var(--primary); }
+    p, li { font-size: 14.5px; color: var(--text); }
+    ul { padding-left: 20px; }
+    a { color: var(--primary); }
+    footer { max-width: 820px; margin: 0 auto; padding: 0 20px 48px; color: var(--muted); font-size: 12.5px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Terms of Service</h1>
+    <div class="sub">Livocal · Last updated: 25 November 2026</div>
+  </header>
+  <main>
+    <section>
+      <h2>1. Acceptance</h2>
+      <p>By creating an account or using Livocal you agree to these terms. If you do not agree, please do not use the app.</p>
+    </section>
+    <section>
+      <h2>2. What Livocal does</h2>
+      <p>Livocal provides messaging, voice calls and real-time AI speech translation. Translation is generated automatically by third-party AI models and may contain mistakes, especially with names, numbers, accents and technical terms. Always confirm critical information yourself.</p>
+    </section>
+    <section>
+      <h2>3. Accounts</h2>
+      <ul>
+        <li>You must be at least 13 years old (or the minimum age in your country).</li>
+        <li>Keep your phone number and verification codes private.</li>
+        <li>You are responsible for activity on your account.</li>
+      </ul>
+    </section>
+    <section>
+      <h2>4. Acceptable use</h2>
+      <ul>
+        <li>No harassment, threats, hate speech, or illegal content.</li>
+        <li>No impersonation, spam, or automated abuse of the service.</li>
+        <li>No attempts to bypass usage limits, billing or security controls.</li>
+      </ul>
+      <p>We may suspend accounts that break these rules.</p>
+    </section>
+    <section>
+      <h2>5. Translation minutes and payments</h2>
+      <p>Translated calls use prepaid minutes. Free trial minutes and premium minutes are shown in the app. Purchases are processed by Google Play; refunds follow Google Play policy. Minutes are non-transferable and expire as shown at purchase.</p>
+    </section>
+    <section>
+      <h2>6. Privacy</h2>
+      <p>How we handle data is described in our <a href="/privacy-policy">Privacy Policy</a>, which forms part of these terms.</p>
+    </section>
+    <section>
+      <h2>7. Availability</h2>
+      <p>The service depends on network connectivity and third-party providers. We may change, suspend or discontinue features, and we do not guarantee uninterrupted availability.</p>
+    </section>
+    <section>
+      <h2>8. Limitation of liability</h2>
+      <p>To the extent permitted by law, Livocal is not liable for indirect or consequential losses, or for decisions made based on machine translation output.</p>
+    </section>
+    <section>
+      <h2>9. Termination</h2>
+      <p>You may delete your account at any time from Settings → Account. We may terminate accounts that violate these terms.</p>
+    </section>
+    <section>
+      <h2>10. Contact</h2>
+      <p>Questions about these terms: <a href="mailto:support@livocal.app">support@livocal.app</a></p>
+    </section>
+  </main>
+  <footer>© 2026 Livocal. All rights reserved.</footer>
+</body>
+</html>`);
+});
+
+
 // Send Full-Screen Incoming Call Wakeup Push via FCM
 // Anti-Phishing: Enforces callerId = req.user.uid and pulls verified name/phone from Firestore
 app.post(

@@ -78,7 +78,10 @@ class ContactsRepository {
 
   /// Fetches all device contacts and cross-references them against Firestore
   /// `users` collection to identify which contacts are registered on Livocal.
-  Future<List<Contact>> getContacts({required User self}) async {
+  Future<List<Contact>> getContacts({
+    required User self,
+    bool matchRegistered = true,
+  }) async {
     final result = <Contact>[];
     try {
       final hasPermission =
@@ -109,8 +112,11 @@ class ContactsRepository {
       // Protects privacy by matching only contact numbers without dumping the /users collection
       final Map<String, _FirestoreUser> registeredByPhone = {};
       try {
-        final idToken =
-            await auth.FirebaseAuth.instance.currentUser?.getIdToken();
+        // The device read above is what the picker needs first. Server matching
+        // is optional and slow (thousands of numbers), so it can be skipped.
+        final idToken = matchRegistered
+            ? await auth.FirebaseAuth.instance.currentUser?.getIdToken()
+            : null;
         if (idToken != null && allNormalized.isNotEmpty) {
           final allList = allNormalized.toList();
           for (int i = 0; i < allList.length; i += 500) {

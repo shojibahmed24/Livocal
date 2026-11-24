@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'package:livocal/features/calls/views/widgets/different_language_call_sheet.dart';
@@ -891,6 +892,66 @@ class _ContactsEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Only offer the permission card when access is actually missing, otherwise
+    // an empty list (still loading, or no contacts) looked like a permission bug.
+    return FutureBuilder<PermissionStatus>(
+      future: Permission.contacts.status,
+      builder: (context, snapshot) {
+        final granted = snapshot.data?.isGranted ?? false;
+        if (granted) {
+          return _buildNoContactsCard(context);
+        }
+        return _buildPermissionCard(context);
+      },
+    );
+  }
+
+  Widget _buildNoContactsCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.06),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            AppStrings.tr(ref, 'noContactsFound'),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.lightTextPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () => ref.invalidate(contactsProvider),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: Text(AppStrings.tr(ref, 'refresh')),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPermissionCard(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final titleColor =
         isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;

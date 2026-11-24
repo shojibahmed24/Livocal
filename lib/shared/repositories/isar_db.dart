@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -71,7 +72,8 @@ class IsarDb {
   static Future<void> addMessage(Message message) async {
     // Drop message if incoming from a blocked contact
     if (BlockService.isBlocked(message.senderId)) {
-      debugPrint('[IsarDb] Blocked message from sender ${message.senderId} dropped.');
+      debugPrint(
+          '[IsarDb] Blocked message from sender ${message.senderId} dropped.');
       return;
     }
     final storedMsg = StoredMessage(
@@ -130,7 +132,8 @@ class IsarDb {
   }
 
   static Future<void> addMessages(List<Message> messages) async {
-    final allowedMessages = messages.where((m) => !BlockService.isBlocked(m.senderId)).toList();
+    final allowedMessages =
+        messages.where((m) => !BlockService.isBlocked(m.senderId)).toList();
     if (allowedMessages.isEmpty) return;
     await isar.writeTxn(() async {
       for (final message in allowedMessages) {
@@ -146,7 +149,8 @@ class IsarDb {
           if (message.content.isNotEmpty) existing.content = message.content;
           if (message.attachment != null && existing.attachment != null) {
             existing.attachment!.url = message.attachment!.url;
-            existing.attachment!.uploadStatus = message.attachment!.uploadStatus;
+            existing.attachment!.uploadStatus =
+                message.attachment!.uploadStatus;
           }
           await isar.storedMessages.put(existing);
         } else {
@@ -306,7 +310,8 @@ class IsarDb {
   }) async {
     String setting = 'Off';
     if (forChatId != null && forChatId.isNotEmpty) {
-      setting = SharedPref.instance.getString('chat_disappearing_$forChatId') ?? 'Off';
+      setting = SharedPref.instance.getString('chat_disappearing_$forChatId') ??
+          'Off';
     }
     if (setting == 'Off' && forContactId != null && forContactId.isNotEmpty) {
       setting =
@@ -314,8 +319,7 @@ class IsarDb {
               'Off';
     }
     if (setting == 'Off') {
-      setting =
-          SharedPref.instance.getString('privacy_disappearing') ?? 'Off';
+      setting = SharedPref.instance.getString('privacy_disappearing') ?? 'Off';
     }
 
     final starredIds =
@@ -410,7 +414,8 @@ class IsarDb {
           }
         }
       } catch (fsErr) {
-        debugPrint('[IsarDb] Firestore disappearing messages purge note: $fsErr');
+        debugPrint(
+            '[IsarDb] Firestore disappearing messages purge note: $fsErr');
       }
     } catch (e) {
       debugPrint('[IsarDb] Error purging disappearing messages: $e');
@@ -432,7 +437,8 @@ class IsarDb {
               fileSize: msg.attachment!.fileSize ?? 0,
               width: msg.attachment!.width,
               height: msg.attachment!.height,
-              uploadStatus: msg.attachment!.uploadStatus ?? UploadStatus.notUploading,
+              uploadStatus:
+                  msg.attachment!.uploadStatus ?? UploadStatus.notUploading,
               autoDownload: msg.attachment!.autoDownload ?? false,
               url: msg.attachment!.url ?? '',
               type: msg.attachment!.type ?? AttachmentType.document,
@@ -529,13 +535,15 @@ class IsarDb {
           peerIdsToResolve.where((id) => !_userCache.containsKey(id)).toList();
       if (missingFromMemory.isNotEmpty) {
         for (final id in missingFromMemory) {
-          final local = await isarInstance.users.filter().idEqualTo(id).findFirst();
+          final local =
+              await isarInstance.users.filter().idEqualTo(id).findFirst();
           if (local != null) {
             _userCache[id] = local;
           }
         }
-        final stillMissing =
-            missingFromMemory.where((id) => !_userCache.containsKey(id)).toList();
+        final stillMissing = missingFromMemory
+            .where((id) => !_userCache.containsKey(id))
+            .toList();
         if (stillMissing.isNotEmpty) {
           await Future.wait(stillMissing.map((id) async {
             try {
@@ -545,7 +553,8 @@ class IsarDb {
               if (user != null) {
                 _userCache[id] = user;
                 try {
-                  await isarInstance.writeTxn(() async => await isarInstance.users.put(user));
+                  await isarInstance
+                      .writeTxn(() async => await isarInstance.users.put(user));
                 } catch (_) {}
               }
             } catch (_) {}
@@ -558,7 +567,9 @@ class IsarDb {
       for (final peerId in peerIdsToResolve) {
         final user = _userCache[peerId];
         final phone = user?.phone.number;
-        if (phone != null && phone.isNotEmpty && !_contactCache.containsKey(phone)) {
+        if (phone != null &&
+            phone.isNotEmpty &&
+            !_contactCache.containsKey(phone)) {
           phonesToResolve.add(phone);
         }
       }
@@ -613,7 +624,9 @@ class IsarDb {
         final senderName = contact?.displayName ??
             (sender.name.isNotEmpty
                 ? sender.name
-                : (sender.phone.formattedNumber ?? sender.phone.number ?? peerId));
+                : (sender.phone.formattedNumber ??
+                    sender.phone.number ??
+                    peerId));
 
         final chat = RecentChat(
           message: Message(
@@ -630,7 +643,8 @@ class IsarDb {
                     fileSize: msg.attachment!.fileSize ?? 0,
                     width: msg.attachment!.width,
                     height: msg.attachment!.height,
-                    uploadStatus: msg.attachment!.uploadStatus ?? UploadStatus.uploaded,
+                    uploadStatus:
+                        msg.attachment!.uploadStatus ?? UploadStatus.uploaded,
                     autoDownload: msg.attachment!.autoDownload ?? false,
                     url: msg.attachment!.url ?? '',
                     type: msg.attachment!.type ?? AttachmentType.document,
@@ -665,26 +679,43 @@ class IsarDb {
   static Future<void> addContacts() async {
     final providerContainer = ProviderContainer();
     final self = getCurrentUser();
+    if (self == null) return;
 
-    List<Contact> localContacts = [];
-    if (self != null) {
-      try {
-        localContacts = await providerContainer
-            .read(contactsRepositoryProvider)
-            .getContacts(self: self)
-            .timeout(const Duration(seconds: 12));
-      } catch (e) {
-        debugPrint('[IsarDb] addContacts error: $e');
+    final repository = providerContainer.read(contactsRepositoryProvider);
+
+    // 1. Device contacts first. This is a local read only, so it is fast even
+    // with thousands of contacts, and the picker can render immediately.
+    try {
+      final localContacts = await repository
+          .getContacts(self: self, matchRegistered: false)
+          .timeout(const Duration(seconds: 20));
+      if (localContacts.isNotEmpty) {
+        await isar.writeTxn(() async {
+          await isar.contacts.clear();
+          await isar.contacts.putAll(localContacts);
+        });
       }
+    } catch (e) {
+      debugPrint('[IsarDb] addContacts (local) error: $e');
     }
 
-    // Only update cache if new contacts were successfully loaded, never destroy offline cache
-    if (localContacts.isNotEmpty) {
-      await isar.writeTxn(() async {
-        await isar.contacts.clear();
-        await isar.contacts.putAll(localContacts);
-      });
-    }
+    // 2. Registered-user matching runs detached; the list upgrades itself when
+    // the backend answers instead of blocking the first paint.
+    unawaited(() async {
+      try {
+        final matched = await repository
+            .getContacts(self: self, matchRegistered: true)
+            .timeout(const Duration(seconds: 90));
+        if (matched.isNotEmpty) {
+          await isar.writeTxn(() async {
+            await isar.contacts.clear();
+            await isar.contacts.putAll(matched);
+          });
+        }
+      } catch (e) {
+        debugPrint('[IsarDb] addContacts (match) error: $e');
+      }
+    }());
   }
 
   static Future<void> refreshContacts() async {
@@ -715,7 +746,8 @@ class IsarDb {
       final isarInstance = _instance ?? Isar.getInstance();
       if (isarInstance == null) return;
       await isarInstance.writeTxn(() async {
-        final existing = await isarInstance.users.filter().idEqualTo(user.id).findFirst();
+        final existing =
+            await isarInstance.users.filter().idEqualTo(user.id).findFirst();
         if (existing != null) {
           user.isarId = existing.isarId;
         }
@@ -731,13 +763,19 @@ class IsarDb {
       final clean = phone.replaceAll(RegExp(r'[\s\-\(\)]'), '');
       final allUsers = await isar.users.where().findAll();
       for (final u in allUsers) {
-        final raw = (u.phone.formattedNumber ?? '').replaceAll(RegExp(r'[\s\-\(\)]'), '');
-        final num = (u.phone.number ?? '').replaceAll(RegExp(r'[\s\-\(\)]'), '');
+        final raw = (u.phone.formattedNumber ?? '')
+            .replaceAll(RegExp(r'[\s\-\(\)]'), '');
+        final num =
+            (u.phone.number ?? '').replaceAll(RegExp(r'[\s\-\(\)]'), '');
         final code = u.phone.code ?? '';
         final full = '$code$num'.replaceAll(RegExp(r'[\s\-\(\)]'), '');
-        if (raw == clean || num == clean || full == clean ||
-            (clean.startsWith('+') && (raw == clean.substring(1) || full == clean.substring(1))) ||
-            (!clean.startsWith('+') && (raw == '+$clean' || full == '+$clean'))) {
+        if (raw == clean ||
+            num == clean ||
+            full == clean ||
+            (clean.startsWith('+') &&
+                (raw == clean.substring(1) || full == clean.substring(1))) ||
+            (!clean.startsWith('+') &&
+                (raw == '+$clean' || full == '+$clean'))) {
           return u;
         }
       }
@@ -750,7 +788,8 @@ class IsarDb {
     if (local != null) return local;
 
     try {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(id).get();
+      final doc =
+          await FirebaseFirestore.instance.collection('users').doc(id).get();
       if (doc.exists && doc.data() != null) {
         final user = User.fromMap(doc.data()!);
         try {
@@ -782,7 +821,10 @@ class IsarDb {
       final isarInstance = _instance ?? Isar.getInstance();
       if (isarInstance != null) {
         await isarInstance.writeTxn(() async {
-          await isarInstance.storedMessages.filter().chatIdEqualTo(chatId).deleteAll();
+          await isarInstance.storedMessages
+              .filter()
+              .chatIdEqualTo(chatId)
+              .deleteAll();
         });
       }
     } catch (e) {
@@ -818,13 +860,17 @@ class IsarDb {
     }
   }
 
-  static Future<List<StoredMessage>> getStarredMessagesByIds(List<String> messageIds) async {
+  static Future<List<StoredMessage>> getStarredMessagesByIds(
+      List<String> messageIds) async {
     try {
       final isarInstance = _instance ?? Isar.getInstance();
       if (isarInstance == null) return [];
       final List<StoredMessage> results = [];
       for (final id in messageIds) {
-        final msg = await isarInstance.storedMessages.filter().messageIdEqualTo(id).findFirst();
+        final msg = await isarInstance.storedMessages
+            .filter()
+            .messageIdEqualTo(id)
+            .findFirst();
         if (msg != null) results.add(msg);
       }
       return results;

@@ -456,7 +456,7 @@ class _StatusTabState extends ConsumerState<StatusTab>
                       child: Column(
                         children: [
                           Icon(
-                            Icons.motion_photos_on_outlined,
+                            Icons.campaign_outlined,
                             size: 64,
                             color: Colors.grey.withValues(alpha: 0.4),
                           ),

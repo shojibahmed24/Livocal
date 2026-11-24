@@ -27,7 +27,7 @@ final contactsProvider = FutureProvider<List<Contact>>((ref) async {
 
   if (cached.isEmpty) {
     try {
-      await IsarDb.refreshContacts().timeout(const Duration(seconds: 10));
+      await IsarDb.refreshContacts().timeout(const Duration(seconds: 25));
     } catch (e) {
       debugPrint('[contactsProvider] first refresh failed: $e');
     }

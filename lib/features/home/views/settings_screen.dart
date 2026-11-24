@@ -24,6 +24,7 @@ import 'package:livocal/features/settings/views/help_settings_screen.dart';
 import 'package:livocal/features/settings/views/payment_settings_screen.dart';
 import 'package:livocal/features/settings/views/chat_settings_screen.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
+import 'package:livocal/shared/utils/app_version.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   final User user;
@@ -387,7 +388,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  AppStrings.tr(ref, 'version'),
+                  AppVersion.display,
                   style: const TextStyle(fontSize: 11, color: Colors.grey),
                 ),
                 const SizedBox(height: 32),

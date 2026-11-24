@@ -15,6 +15,7 @@ import 'package:livocal/features/chat/views/chat.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/wallet_repository.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
+import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/utils/navigator_key.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/app_tokens.dart';
@@ -66,19 +67,29 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      final session = await ref
-          .read(callControllerProvider.notifier)
-          .startOutgoingCall(
-            caller: widget.caller,
-            callee: widget.callee,
-            calleeDisplayName: widget.calleeDisplayName,
-            overrideMyLangCode: _resolvedSettings.myLangCode,
-            overridePeerLangCode: _resolvedSettings.peerLangCode,
-            translationEnabled: _resolvedSettings.isTranslationEnabled,
-          );
+      final session =
+          await ref.read(callControllerProvider.notifier).startOutgoingCall(
+                caller: widget.caller,
+                callee: widget.callee,
+                calleeDisplayName: widget.calleeDisplayName,
+                overrideMyLangCode: _resolvedSettings.myLangCode,
+                overridePeerLangCode: _resolvedSettings.peerLangCode,
+                translationEnabled: _resolvedSettings.isTranslationEnabled,
+              );
       if (session == null && mounted) {
         _navigated = true;
         final callState = ref.read(callControllerProvider);
+        if (callState.error == 'CONTACT_NOT_ON_LIVOCAL') {
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
+          showSnackBar(
+            context: context,
+            content: AppStrings.tr(ref, 'contactNotOnLivocal'),
+            type: SnacBarType.error,
+          );
+          return;
+        }
         if (callState.error == 'INSUFFICIENT_MINUTES') {
           if (Navigator.of(context).canPop()) {
             Navigator.of(context).pop();
@@ -122,7 +133,8 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
       backgroundColor:
           isDark ? AppColors.darkSurface : AppColors.lightBackground,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.radiusLg)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppRadius.radiusLg)),
       ),
       builder: (ctx) => SafeArea(
         child: Column(
@@ -159,7 +171,8 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
                       calleeDisplayName: widget.calleeDisplayName,
                       overrideMyLangCode: widget.overrideMyLangCode,
                       overridePeerLangCode: widget.overridePeerLangCode,
-                      initialTranslationEnabled: widget.initialTranslationEnabled,
+                      initialTranslationEnabled:
+                          widget.initialTranslationEnabled,
                     ),
                   ),
                 );
@@ -322,9 +335,8 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
                   label: isTranslatedCall
                       ? 'AI translation ON'
                       : 'Free direct call',
-                  color: isTranslatedCall
-                      ? AppColors.accent
-                      : AppColors.success,
+                  color:
+                      isTranslatedCall ? AppColors.accent : AppColors.success,
                   isDark: isDark,
                 ),
                 ref.watch(walletStreamProvider(widget.caller.id)).when(
@@ -334,8 +346,7 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
                           ref,
                           'minutesLeft',
                           args: {
-                            'minutes':
-                                '${wallet.effectiveRemainingMinutes}',
+                            'minutes': '${wallet.effectiveRemainingMinutes}',
                           },
                         ),
                         color: AppColors.primary,
@@ -368,7 +379,8 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
                   isTranslatedCall
                       ? Icons.auto_awesome_rounded
                       : Icons.lock_outline_rounded,
-                  color: isTranslatedCall ? AppColors.accent : AppColors.primary,
+                  color:
+                      isTranslatedCall ? AppColors.accent : AppColors.primary,
                   size: 16,
                 ),
                 const SizedBox(width: 8),
@@ -492,7 +504,9 @@ class _StatusTimeline extends StatelessWidget {
               height: 8,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: active ? AppColors.primary : inactive.withValues(alpha: 0.35),
+                color: active
+                    ? AppColors.primary
+                    : inactive.withValues(alpha: 0.35),
                 boxShadow: active
                     ? [
                         BoxShadow(
@@ -517,9 +531,7 @@ class _StatusTimeline extends StatelessWidget {
                 width: 18,
                 height: 1,
                 margin: const EdgeInsets.symmetric(horizontal: 6),
-                color: (_activeIndex > index
-                        ? AppColors.primary
-                        : inactive)
+                color: (_activeIndex > index ? AppColors.primary : inactive)
                     .withValues(alpha: 0.35),
               ),
           ],

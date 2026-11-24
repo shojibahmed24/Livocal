@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
+import 'package:livocal/shared/utils/app_version.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/widgets/settings_row.dart';
 import 'package:livocal/theme/app_colors.dart';
@@ -49,7 +50,8 @@ class HelpSettingsScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 const Center(
                   child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(AppColors.primary),
                   ),
                 ),
               ],
@@ -84,7 +86,7 @@ class HelpSettingsScreen extends ConsumerWidget {
                 'phoneNumber': user?.phoneNumber ?? '',
                 'message': message,
                 'platform': Platform.operatingSystem,
-                'appVersion': '1.0.0',
+                'appVersion': AppVersion.version,
                 'createdAt': FieldValue.serverTimestamp(),
               });
 
@@ -127,7 +129,8 @@ class HelpSettingsScreen extends ConsumerWidget {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
-          const Text('Version 1.0.0 (Production Build 2026.10.15)'),
+          Text(
+              'Version ${AppVersion.version} (build ${AppVersion.buildNumber})'),
           const SizedBox(height: 12),
           Text(
             AppStrings.tr(ref, 'appInfoDesc'),
@@ -168,7 +171,8 @@ class HelpSettingsScreen extends ConsumerWidget {
       ),
       body: ListView(
         children: [
-          SettingsSectionHeader(title: AppStrings.tr(ref, 'supportAndKnowledge')),
+          SettingsSectionHeader(
+              title: AppStrings.tr(ref, 'supportAndKnowledge')),
           SettingsRow(
             icon: Icons.help_center_outlined,
             title: AppStrings.tr(ref, 'helpCentre'),
@@ -211,11 +215,13 @@ class HelpSettingsScreen extends ConsumerWidget {
                         await launchUrl(uri,
                             mode: LaunchMode.externalApplication);
                       } catch (e) {
-                        debugPrint('HelpSettingsScreen launch privacy URL error: $e');
+                        debugPrint(
+                            'HelpSettingsScreen launch privacy URL error: $e');
                         if (context.mounted) {
                           showSnackBar(
                             context: context,
-                            content: '${AppStrings.tr(ref, 'couldNotOpenUrl')}: $uri',
+                            content:
+                                '${AppStrings.tr(ref, 'couldNotOpenUrl')}: $uri',
                             type: SnacBarType.error,
                           );
                         }
@@ -234,7 +240,7 @@ class HelpSettingsScreen extends ConsumerWidget {
           SettingsRow(
             icon: Icons.info_outline,
             title: AppStrings.tr(ref, 'appInfo'),
-            subtitle: 'Livocal v1.0.0',
+            subtitle: 'Livocal ${AppVersion.display}',
             onTap: () => _showAppInfoDialog(context, ref),
           ),
         ],
@@ -271,7 +277,8 @@ class FAQScreen extends ConsumerWidget {
             title: Text(AppStrings.tr(ref, 'faqLiveTranslationQ')),
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Text(
                   AppStrings.tr(ref, 'faqLiveTranslationA'),
                   style: const TextStyle(fontSize: 14, color: Colors.grey),
@@ -283,7 +290,8 @@ class FAQScreen extends ConsumerWidget {
             title: Text(AppStrings.tr(ref, 'faqSecurityQ')),
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Text(
                   AppStrings.tr(ref, 'faqSecurityA'),
                   style: const TextStyle(fontSize: 14, color: Colors.grey),
@@ -295,7 +303,8 @@ class FAQScreen extends ConsumerWidget {
             title: Text(AppStrings.tr(ref, 'faqContactsQ')),
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Text(
                   AppStrings.tr(ref, 'faqContactsA'),
                   style: const TextStyle(fontSize: 14, color: Colors.grey),
@@ -307,7 +316,8 @@ class FAQScreen extends ConsumerWidget {
             title: Text(AppStrings.tr(ref, 'faqApiKeyQ')),
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Text(
                   AppStrings.tr(ref, 'faqApiKeyA'),
                   style: const TextStyle(fontSize: 14, color: Colors.grey),
