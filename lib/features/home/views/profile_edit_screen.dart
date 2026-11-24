@@ -69,7 +69,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           ? AppColors.darkSurface
           : AppColors.lightBackground,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.radiusLg)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppRadius.radiusLg)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
@@ -90,7 +91,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.photo_library, color: AppColors.primary),
+                leading:
+                    const Icon(Icons.photo_library, color: AppColors.primary),
                 title: Text(AppStrings.tr(ref, 'gallery')),
                 onTap: () async {
                   Navigator.pop(ctx);
@@ -103,7 +105,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               ),
               if (_currentUser.avatarUrl.isNotEmpty || _newProfileImage != null)
                 ListTile(
-                  leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                  leading:
+                      const Icon(Icons.delete_outline, color: Colors.redAccent),
                   title: Text(
                     AppStrings.tr(ref, 'removePhoto'),
                     style: const TextStyle(color: Colors.redAccent),
@@ -161,7 +164,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   Future<void> _syncUserToStorageAndFirestore(User user) async {
     // 1. SharedPreferences
     await SharedPref.instance.setString('user', jsonEncode(user.toMap()));
-    await SharedPref.instance.setString('user_about', _aboutController.text.trim());
+    await SharedPref.instance
+        .setString('user_about', _aboutController.text.trim());
 
     // 2. Local Isar
     await IsarDb.saveUser(user);
@@ -171,7 +175,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.id)
-          .set(user.toMap(), SetOptions(merge: true));
+          .set(user.toPublicMap(), SetOptions(merge: true));
     } catch (e) {
       debugPrint('Failed to update user on Firestore: $e');
     }
@@ -328,7 +332,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                             ? CachedNetworkImageProvider(_currentUser.avatarUrl)
                                 as ImageProvider
                             : null),
-                    child: (_newProfileImage == null && _currentUser.avatarUrl.isEmpty)
+                    child: (_newProfileImage == null &&
+                            _currentUser.avatarUrl.isEmpty)
                         ? Text(
                             _currentUser.name.isNotEmpty
                                 ? _currentUser.name[0].toUpperCase()
@@ -380,7 +385,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               ),
               subtitle: Text(
                 _currentUser.name,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               trailing: IconButton(
                 icon: const Icon(Icons.edit, color: AppColors.primary),

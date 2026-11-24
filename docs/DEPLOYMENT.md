@@ -115,3 +115,24 @@ Rollout order: deploy this build, install the new APK on your test devices,
 confirm calls/translation still work, then set `APP_CHECK_ENFORCE=true` and
 enable enforcement for Firestore/Storage/Auth in the Firebase console.
 `/health` reports `appCheckEnforced`.
+
+## 7. Phone-number privacy migration (one-time)
+
+`users/{uid}` used to store the account phone number, which any authenticated
+user could read by uid. New builds write `User.toPublicMap()` (no phone), and
+`firestore.rules` rejects `phone` on create and on update.
+
+Existing documents still carry the field. After deploying the relay, run once
+(preview first):
+
+```
+curl -X POST https://livocal-relay.onrender.com/api/admin/scrub-user-phones \
+  -H "x-admin-secret: $ADMIN_SECRET" -H "Content-Type: application/json" \
+  -d '{"dryRun": true}'
+```
+
+Then repeat with `{}` to delete the field. The endpoint is idempotent.
+
+Note: builds older than this change still send `phone` on register/update, so
+registration from an old APK will be rejected by the new rules. Install the
+current APK on every test device before deploying rules.

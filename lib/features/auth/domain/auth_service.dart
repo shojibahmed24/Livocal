@@ -61,8 +61,7 @@ class AuthController {
     Phone phone,
     File? avatar,
   ) async {
-    String uid =
-        authRepository.auth.currentUser?.uid ?? 'user_${phone.number}';
+    String uid = authRepository.auth.currentUser?.uid ?? 'user_${phone.number}';
     String avatarUrl =
         'https://en.gravatar.com/userimage/238463648/8cc16f6f5423605920569a634fd097eb.jpeg?size=256';
 
@@ -89,7 +88,7 @@ class AuthController {
     );
 
     try {
-      await authRepository.registerUser(user.toMap());
+      await authRepository.registerUser(user.toPublicMap());
     } catch (e) {
       debugPrint('[AuthService] registerUser failed in Firestore: $e');
       rethrow;

@@ -49,13 +49,19 @@ class User {
 
   factory User.fromMap(Map<String, dynamic> userData) {
     final explicitLang = (userData['spokenLanguage'] as String?)?.trim();
-    final phone = Phone.fromMap(userData['phone']);
+    final rawPhone = userData['phone'];
+    final phone = rawPhone is Map
+        ? Phone.fromMap(Map<String, dynamic>.from(rawPhone))
+        : Phone(code: '', number: '', formattedNumber: '');
     final hasExplicit = userData['hasExplicitSpokenLanguage'] == true;
-    final resolvedLang = (hasExplicit && explicitLang != null && explicitLang.isNotEmpty)
-        ? explicitLang
-        : (explicitLang != null && explicitLang.isNotEmpty && userData['hasExplicitSpokenLanguage'] != false
+    final resolvedLang =
+        (hasExplicit && explicitLang != null && explicitLang.isNotEmpty)
             ? explicitLang
-            : CallLanguageRegistry.inferLanguageFromPhone(phone));
+            : (explicitLang != null &&
+                    explicitLang.isNotEmpty &&
+                    userData['hasExplicitSpokenLanguage'] != false
+                ? explicitLang
+                : CallLanguageRegistry.inferLanguageFromPhone(phone));
 
     return User(
       id: userData['id'],
@@ -74,6 +80,22 @@ class User {
       'name': name,
       'avatarUrl': avatarUrl,
       'phone': phone.toMap(),
+      'activityStatus': activityStatus.value,
+      'spokenLanguage': spokenLanguage,
+      'hasExplicitSpokenLanguage': hasExplicitSpokenLanguage,
+    };
+  }
+
+  /// Fields safe to store in the shared `users/{uid}` document.
+  ///
+  /// The phone number is deliberately excluded: it lives in Firebase Auth and
+  /// the owner's local cache only, so an authenticated stranger cannot read
+  /// another person's number by uid.
+  Map<String, dynamic> toPublicMap() {
+    return {
+      'id': id,
+      'name': name,
+      'avatarUrl': avatarUrl,
       'activityStatus': activityStatus.value,
       'spokenLanguage': spokenLanguage,
       'hasExplicitSpokenLanguage': hasExplicitSpokenLanguage,

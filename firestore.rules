@@ -52,12 +52,14 @@ service cloud.firestore {
       }
 
       allow create: if isAuthenticated() && request.auth.uid == userId && request.resource.data.id == request.auth.uid
+        && !('phone' in request.resource.data)
         && !('binancePayId' in request.resource.data)
         && !('cryptoUsdtTrc20' in request.resource.data)
         && !('cryptoUsdtBep20' in request.resource.data)
         && !('bkashNumber' in request.resource.data)
         && !('nagadNumber' in request.resource.data);
       allow update: if isAuthenticated() && request.auth.uid == userId && request.resource.data.id == resource.data.id
+        && !(request.resource.data.diff(resource.data).affectedKeys().hasAny(['phone']))
         && paymentFieldClean('binancePayId')
         && paymentFieldClean('cryptoUsdtTrc20')
         && paymentFieldClean('cryptoUsdtBep20')

@@ -1663,6 +1663,51 @@ app.post('/api/wallet/recharge', authenticateAdmin, async (req, res) => {
 });
 
 // Admin metrics overview endpoint
+// One-time privacy migration: remove the legacy `phone` field from user docs so
+// an authenticated stranger can no longer read another person's number by uid.
+// Safe to run repeatedly; use { "dryRun": true } to preview counts first.
+app.post('/api/admin/scrub-user-phones', authenticateAdmin, async (req, res) => {
+  if (!firestoreDb) {
+    return res.status(503).json({ error: 'Firestore database service is currently unavailable' });
+  }
+  const dryRun = req.body?.dryRun === true;
+  let scanned = 0;
+  let scrubbed = 0;
+
+  try {
+    let lastDoc = null;
+    for (;;) {
+      let query = firestoreDb.collection('users').orderBy('__name__').limit(200);
+      if (lastDoc) query = query.startAfter(lastDoc);
+      const snap = await query.get();
+      if (snap.empty) break;
+
+      const batch = firestoreDb.batch();
+      let queued = 0;
+      snap.forEach((doc) => {
+        scanned += 1;
+        const data = doc.data() || {};
+        if (Object.prototype.hasOwnProperty.call(data, 'phone')) {
+          scrubbed += 1;
+          if (!dryRun) {
+            batch.update(doc.ref, { phone: FieldValue.delete() });
+            queued += 1;
+          }
+        }
+      });
+      if (!dryRun && queued > 0) await batch.commit();
+
+      lastDoc = snap.docs[snap.docs.length - 1];
+      if (snap.size < 200) break;
+    }
+
+    return res.json({ success: true, dryRun, scanned, scrubbed });
+  } catch (err) {
+    console.error('[Privacy] scrub-user-phones failed:', err.message);
+    return res.status(500).json({ error: 'Migration failed', message: err.message });
+  }
+});
+
 app.get('/api/admin/metrics', authenticateAdmin, async (req, res) => {
   if (!firestoreDb) {
     return res.status(503).json({ error: 'Firestore database service is currently unavailable' });
