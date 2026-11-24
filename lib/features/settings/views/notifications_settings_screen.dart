@@ -10,6 +10,7 @@ import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/shared/widgets/settings_group.dart';
 import 'package:livocal/shared/widgets/settings_row.dart';
 import 'package:livocal/theme/app_colors.dart';
 
@@ -36,16 +37,15 @@ class _NotificationsSettingsScreenState
     super.initState();
     _conversationTones =
         SharedPref.instance.getBool('notif_conv_tones') ?? true;
-    _msgTone =
-        SharedPref.instance.getString('notif_msg_tone') ?? 'Livocal Chime (Default)';
+    _msgTone = SharedPref.instance.getString('notif_msg_tone') ??
+        'Livocal Chime (Default)';
     _msgVibrate =
         SharedPref.instance.getString('notif_msg_vibrate') ?? 'Default';
-    _highPriority =
-        SharedPref.instance.getBool('notif_high_priority') ?? true;
+    _highPriority = SharedPref.instance.getBool('notif_high_priority') ?? true;
     _reactionNotifications =
         SharedPref.instance.getBool('notif_reactions') ?? true;
-    _callRingtone =
-        SharedPref.instance.getString('notif_call_ringtone') ?? 'Livocal Harmony (Default)';
+    _callRingtone = SharedPref.instance.getString('notif_call_ringtone') ??
+        'Livocal Harmony (Default)';
     _callVibrate =
         SharedPref.instance.getString('notif_call_vibrate') ?? 'Default';
   }
@@ -139,14 +139,17 @@ class _NotificationsSettingsScreenState
 
     String currentSelection = isCallRingtone ? _callRingtone : _msgTone;
     String? customPath = SharedPref.instance.getString(
-      isCallRingtone ? 'notif_custom_ringtone_path' : 'notif_custom_msg_tone_path',
+      isCallRingtone
+          ? 'notif_custom_ringtone_path'
+          : 'notif_custom_msg_tone_path',
     );
     String? playingTone;
 
     showAppDialog(
       context: context,
       title: title,
-      icon: isCallRingtone ? Icons.ring_volume_rounded : Icons.music_note_rounded,
+      icon:
+          isCallRingtone ? Icons.ring_volume_rounded : Icons.music_note_rounded,
       content: StatefulBuilder(
         builder: (dialogCtx, setDialogState) {
           final isDark = Theme.of(dialogCtx).brightness == Brightness.dark;
@@ -175,7 +178,8 @@ class _NotificationsSettingsScreenState
                       _localizeOption(preset),
                       style: TextStyle(
                         fontSize: 15,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.w500,
                         color: isSelected
                             ? AppColors.primary
                             : (isDark ? Colors.white : Colors.black87),
@@ -183,8 +187,12 @@ class _NotificationsSettingsScreenState
                     ),
                     trailing: IconButton(
                       icon: Icon(
-                        isPlaying ? Icons.stop_circle_rounded : Icons.play_circle_fill_rounded,
-                        color: isPlaying ? const Color(0xFFE53935) : AppColors.primary,
+                        isPlaying
+                            ? Icons.stop_circle_rounded
+                            : Icons.play_circle_fill_rounded,
+                        color: isPlaying
+                            ? const Color(0xFFE53935)
+                            : AppColors.primary,
                         size: 28,
                       ),
                       onPressed: () async {
@@ -211,82 +219,97 @@ class _NotificationsSettingsScreenState
                     leading: const Radio<String>(
                       value: 'custom',
                     ),
-                  title: Text(
-                    '${AppStrings.tr(ref, 'customLabel')}${File(customPath!).uri.pathSegments.last}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: currentSelection == 'custom' ? FontWeight.bold : FontWeight.w500,
-                      color: currentSelection == 'custom' ? AppColors.primary : null,
+                    title: Text(
+                      '${AppStrings.tr(ref, 'customLabel')}${File(customPath!).uri.pathSegments.last}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: currentSelection == 'custom'
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        color: currentSelection == 'custom'
+                            ? AppColors.primary
+                            : null,
+                      ),
                     ),
+                    trailing: IconButton(
+                      icon: Icon(
+                        playingTone == 'custom'
+                            ? Icons.stop_circle_rounded
+                            : Icons.play_circle_fill_rounded,
+                        color: playingTone == 'custom'
+                            ? const Color(0xFFE53935)
+                            : AppColors.primary,
+                        size: 28,
+                      ),
+                      onPressed: () async {
+                        if (playingTone == 'custom') {
+                          await RingtoneManager().stopPreview();
+                          setDialogState(() => playingTone = null);
+                        } else {
+                          setDialogState(() => playingTone = 'custom');
+                          await RingtoneManager()
+                              .previewTone('custom', customPath: customPath);
+                        }
+                      },
+                    ),
+                    onTap: () =>
+                        setDialogState(() => currentSelection = 'custom'),
                   ),
-                  trailing: IconButton(
-                    icon: Icon(
-                      playingTone == 'custom' ? Icons.stop_circle_rounded : Icons.play_circle_fill_rounded,
-                      color: playingTone == 'custom' ? const Color(0xFFE53935) : AppColors.primary,
-                      size: 28,
-                    ),
-                    onPressed: () async {
-                      if (playingTone == 'custom') {
-                        await RingtoneManager().stopPreview();
-                        setDialogState(() => playingTone = null);
+                ],
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.primary),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                  ),
+                  icon: const Icon(Icons.audio_file_outlined, size: 20),
+                  label: Text(AppStrings.tr(ref, 'chooseAudioFromPhone')),
+                  onPressed: () async {
+                    await RingtoneManager().stopPreview();
+                    final result = await FilePicker.platform.pickFiles(
+                      type: FileType.audio,
+                      allowMultiple: false,
+                    );
+                    if (result != null && result.files.single.path != null) {
+                      final path = result.files.single.path!;
+                      final name = result.files.single.name;
+                      setDialogState(() {
+                        customPath = path;
+                        currentSelection = 'custom';
+                      });
+                      if (isCallRingtone) {
+                        setState(() => _callRingtone = name);
+                        SharedPref.instance
+                            .setString('notif_call_ringtone', name);
+                        SharedPref.instance
+                            .setString('notif_custom_ringtone_path', path);
                       } else {
-                        setDialogState(() => playingTone = 'custom');
-                        await RingtoneManager().previewTone('custom', customPath: customPath);
+                        setState(() => _msgTone = name);
+                        SharedPref.instance.setString('notif_msg_tone', name);
+                        SharedPref.instance
+                            .setString('notif_custom_msg_tone_path', path);
                       }
-                    },
-                  ),
-                  onTap: () => setDialogState(() => currentSelection = 'custom'),
+                      if (mounted && dialogCtx.mounted) {
+                        Navigator.pop(dialogCtx);
+                        showSnackBar(
+                          context: context,
+                          content: '$title set to custom audio: $name',
+                          type: SnacBarType.info,
+                        );
+                      }
+                    }
+                  },
                 ),
               ],
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primary,
-                  side: const BorderSide(color: AppColors.primary),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                ),
-                icon: const Icon(Icons.audio_file_outlined, size: 20),
-                label: Text(AppStrings.tr(ref, 'chooseAudioFromPhone')),
-                onPressed: () async {
-                  await RingtoneManager().stopPreview();
-                  final result = await FilePicker.platform.pickFiles(
-                    type: FileType.audio,
-                    allowMultiple: false,
-                  );
-                  if (result != null && result.files.single.path != null) {
-                    final path = result.files.single.path!;
-                    final name = result.files.single.name;
-                    setDialogState(() {
-                      customPath = path;
-                      currentSelection = 'custom';
-                    });
-                    if (isCallRingtone) {
-                      setState(() => _callRingtone = name);
-                      SharedPref.instance.setString('notif_call_ringtone', name);
-                      SharedPref.instance.setString('notif_custom_ringtone_path', path);
-                    } else {
-                      setState(() => _msgTone = name);
-                      SharedPref.instance.setString('notif_msg_tone', name);
-                      SharedPref.instance.setString('notif_custom_msg_tone_path', path);
-                    }
-                    if (mounted && dialogCtx.mounted) {
-                      Navigator.pop(dialogCtx);
-                      showSnackBar(
-                        context: context,
-                        content: '$title set to custom audio: $name',
-                        type: SnacBarType.info,
-                      );
-                    }
-                  }
-                },
-              ),
-            ],
-          ),
-        );
-      },
+            ),
+          );
+        },
       ),
       actions: [
         AppDialogAction(
@@ -304,11 +327,13 @@ class _NotificationsSettingsScreenState
             if (currentSelection != 'custom') {
               if (isCallRingtone) {
                 setState(() => _callRingtone = currentSelection);
-                SharedPref.instance.setString('notif_call_ringtone', currentSelection);
+                SharedPref.instance
+                    .setString('notif_call_ringtone', currentSelection);
                 SharedPref.instance.setString('notif_custom_ringtone_path', '');
               } else {
                 setState(() => _msgTone = currentSelection);
-                SharedPref.instance.setString('notif_msg_tone', currentSelection);
+                SharedPref.instance
+                    .setString('notif_msg_tone', currentSelection);
                 SharedPref.instance.setString('notif_custom_msg_tone_path', '');
               }
             }
@@ -370,14 +395,19 @@ class _NotificationsSettingsScreenState
                     _callVibrate = 'Default';
                   });
                   SharedPref.instance.setBool('notif_conv_tones', true);
-                  SharedPref.instance.setString('notif_msg_tone', 'Livocal Chime (Default)');
+                  SharedPref.instance
+                      .setString('notif_msg_tone', 'Livocal Chime (Default)');
                   SharedPref.instance.setString('notif_msg_vibrate', 'Default');
                   SharedPref.instance.setBool('notif_high_priority', true);
                   SharedPref.instance.setBool('notif_reactions', true);
-                  SharedPref.instance.setString('notif_call_ringtone', 'Livocal Harmony (Default)');
-                  SharedPref.instance.setString('notif_call_vibrate', 'Default');
-                  SharedPref.instance.setString('notif_custom_ringtone_path', '');
-                  SharedPref.instance.setString('notif_custom_msg_tone_path', '');
+                  SharedPref.instance.setString(
+                      'notif_call_ringtone', 'Livocal Harmony (Default)');
+                  SharedPref.instance
+                      .setString('notif_call_vibrate', 'Default');
+                  SharedPref.instance
+                      .setString('notif_custom_ringtone_path', '');
+                  SharedPref.instance
+                      .setString('notif_custom_msg_tone_path', '');
                   if (context.mounted) {
                     showSnackBar(
                       context: context,
@@ -391,7 +421,7 @@ class _NotificationsSettingsScreenState
           ),
         ],
       ),
-      body: ListView(
+      body: SettingsGroupedList(
         children: [
           SettingsRow(
             icon: Icons.volume_up_outlined,

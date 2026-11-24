@@ -7,6 +7,7 @@ import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/secure_pin_service.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/shared/widgets/settings_group.dart';
 import 'package:livocal/shared/widgets/settings_row.dart';
 import 'package:livocal/theme/app_colors.dart';
 
@@ -188,74 +189,81 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
         ),
       ),
       body: ListView(
+        padding: const EdgeInsets.only(bottom: 24),
         children: [
-          SettingsSectionHeader(title: AppStrings.tr(ref, 'securityAndAccess')),
-          SettingsRow(
-            icon: Icons.shield_outlined,
-            title: AppStrings.tr(ref, 'securityNotifications'),
-            subtitle: AppStrings.tr(ref, 'securityNotificationsSub'),
-            showChevron: false,
-            trailing: Switch(
-              value: _securityNotifications,
-              activeTrackColor: AppColors.primary,
-              activeThumbColor: Colors.white,
-              onChanged: (val) async {
-                setState(() => _securityNotifications = val);
-                await SharedPref.instance.setBool('sec_notifications', val);
-              },
-            ),
+          SettingsGroup(
+            title: AppStrings.tr(ref, 'securityAndAccess'),
+            rows: [
+              SettingsRow(
+                icon: Icons.shield_outlined,
+                title: AppStrings.tr(ref, 'securityNotifications'),
+                subtitle: AppStrings.tr(ref, 'securityNotificationsSub'),
+                showChevron: false,
+                trailing: Switch(
+                  value: _securityNotifications,
+                  activeTrackColor: AppColors.primary,
+                  activeThumbColor: Colors.white,
+                  onChanged: (val) async {
+                    setState(() => _securityNotifications = val);
+                    await SharedPref.instance.setBool('sec_notifications', val);
+                  },
+                ),
+              ),
+              SettingsRow(
+                icon: Icons.pin_outlined,
+                title: AppStrings.tr(ref, 'twoStepVerification'),
+                subtitle: _twoStepEnabled
+                    ? AppStrings.tr(ref, 'twoStepEnabledSub')
+                    : AppStrings.tr(ref, 'twoStepDisabledSub'),
+                onTap: _showTwoStepDialog,
+              ),
+            ],
           ),
-          const Divider(height: 1),
-          SettingsRow(
-            icon: Icons.pin_outlined,
-            title: AppStrings.tr(ref, 'twoStepVerification'),
-            subtitle: _twoStepEnabled
-                ? AppStrings.tr(ref, 'twoStepEnabledSub')
-                : AppStrings.tr(ref, 'twoStepDisabledSub'),
-            onTap: _showTwoStepDialog,
-          ),
-          SettingsSectionHeader(title: AppStrings.tr(ref, 'accountManagement')),
-          SettingsRow(
-            icon: Icons.phone_android_outlined,
-            title: AppStrings.tr(ref, 'changeNumber'),
-            subtitle:
-                '${AppStrings.tr(ref, 'currentNumber')}${widget.user.phone.getFormattedNumber()}',
-            onTap: () {
-              showAppDialog(
-                context: context,
-                title: AppStrings.tr(ref, 'changeNumber'),
+          SettingsGroup(
+            title: AppStrings.tr(ref, 'accountManagement'),
+            rows: [
+              SettingsRow(
                 icon: Icons.phone_android_outlined,
-                contentText: AppStrings.tr(ref, 'changeNumberDialogContent'),
-                actions: [
-                  AppDialogAction(
-                    label: AppStrings.tr(ref, 'ok'),
-                    isPrimary: true,
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              );
-            },
-          ),
-          const Divider(height: 1),
-          SettingsRow(
-            icon: Icons.description_outlined,
-            title: AppStrings.tr(ref, 'requestAccountInfo'),
-            subtitle: AppStrings.tr(ref, 'requestAccountInfoSub'),
-            onTap: () {
-              showSnackBar(
-                context: context,
-                content: AppStrings.tr(ref, 'accountReportSubmitted'),
-                type: SnacBarType.info,
-              );
-            },
-          ),
-          const Divider(height: 1),
-          SettingsRow(
-            icon: Icons.delete_outline,
-            title: AppStrings.tr(ref, 'deleteMyAccount'),
-            subtitle: AppStrings.tr(ref, 'deleteMyAccountSub'),
-            isDestructive: true,
-            onTap: _showDeleteAccountDialog,
+                title: AppStrings.tr(ref, 'changeNumber'),
+                subtitle:
+                    '${AppStrings.tr(ref, 'currentNumber')}${widget.user.phone.getFormattedNumber()}',
+                onTap: () {
+                  showAppDialog(
+                    context: context,
+                    title: AppStrings.tr(ref, 'changeNumber'),
+                    icon: Icons.phone_android_outlined,
+                    contentText:
+                        AppStrings.tr(ref, 'changeNumberDialogContent'),
+                    actions: [
+                      AppDialogAction(
+                        label: AppStrings.tr(ref, 'ok'),
+                        isPrimary: true,
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  );
+                },
+              ),
+              SettingsRow(
+                icon: Icons.description_outlined,
+                title: AppStrings.tr(ref, 'requestAccountInfo'),
+                subtitle: AppStrings.tr(ref, 'requestAccountInfoSub'),
+                onTap: () {
+                  showSnackBar(
+                    context: context,
+                    content: AppStrings.tr(ref, 'accountReportSubmitted'),
+                    type: SnacBarType.info,
+                  );
+                },
+              ),
+              SettingsRow(
+                icon: Icons.delete_outline,
+                title: AppStrings.tr(ref, 'deleteMyAccount'),
+                subtitle: AppStrings.tr(ref, 'deleteMyAccountSub'),
+                isDestructive: true,
+                onTap: _showDeleteAccountDialog,
+              ),
+            ],
           ),
         ],
       ),

@@ -7,6 +7,7 @@ import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/network_tracker.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/shared/widgets/settings_group.dart';
 import 'package:livocal/shared/widgets/settings_row.dart';
 import 'package:livocal/theme/app_colors.dart';
 
@@ -210,7 +211,7 @@ class _StorageSettingsScreenState extends ConsumerState<StorageSettingsScreen> {
           ),
         ),
       ),
-      body: ListView(
+      body: SettingsGroupedList(
         children: [
           SettingsSectionHeader(
               title: AppStrings.tr(ref, 'storageAndNetworkUsage')),

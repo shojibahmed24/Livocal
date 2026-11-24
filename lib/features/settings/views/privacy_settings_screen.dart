@@ -13,6 +13,7 @@ import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/widgets/app_auth_guard.dart';
+import 'package:livocal/shared/widgets/settings_group.dart';
 import 'package:livocal/shared/widgets/settings_row.dart';
 import 'package:livocal/theme/app_colors.dart';
 
@@ -172,7 +173,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
           ),
         ),
       ),
-      body: ListView(
+      body: SettingsGroupedList(
         children: [
           SettingsSectionHeader(title: AppStrings.tr(ref, 'whoCanSeeMyInfo')),
           SettingsRow(
