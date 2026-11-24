@@ -174,45 +174,70 @@ class _DialerTabState extends ConsumerState<DialerTab> {
       top: false,
       child: Column(
         children: [
-          SizedBox(
-            height: 92,
-            child: Center(
-              child: _number.isEmpty
-                  ? Text(
-                      s.enterNumber,
-                      style: TextStyle(
-                        fontFamily: CustomTextTheme.body,
-                        fontSize: 15,
-                        color: isDark
-                            ? AppColors.darkTextSecondary
-                            : AppColors.lightTextSecondary,
-                      ),
-                    )
-                  : Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          _number,
-                          maxLines: 1,
-                          style: TextStyle(
-                            fontFamily: CustomTextTheme.display,
-                            fontSize: 34,
-                            letterSpacing: 1.6,
-                            fontWeight: FontWeight.w600,
-                            color: isDark
-                                ? AppColors.darkTextPrimary
-                                : AppColors.lightTextPrimary,
-                          ),
-                        ),
-                      ),
-                    ),
-            ),
-          ),
+          _buildNumberHeader(isDark, s),
           Expanded(child: _buildSuggestions(context, s, history, isDark)),
           _buildKeypad(context, isDark),
           _buildActions(context, s, isDark),
         ],
+      ),
+    );
+  }
+
+  /// Compact header: a quiet hint line when idle, the large number when typing.
+  /// The old 92 px block left a dead band above the keypad.
+  Widget _buildNumberHeader(bool isDark, DialerStrings s) {
+    if (_number.isEmpty) {
+      return Container(
+        height: 54,
+        padding: const EdgeInsets.symmetric(horizontal: 22),
+        alignment: Alignment.centerLeft,
+        child: Row(
+          children: [
+            Icon(
+              Icons.dialpad_rounded,
+              size: 18,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              s.enterNumber,
+              style: TextStyle(
+                fontFamily: CustomTextTheme.body,
+                fontSize: 13.5,
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 72,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              _number,
+              maxLines: 1,
+              style: TextStyle(
+                fontFamily: CustomTextTheme.display,
+                fontSize: 34,
+                letterSpacing: 1.6,
+                fontWeight: FontWeight.w600,
+                color: isDark
+                    ? AppColors.darkTextPrimary
+                    : AppColors.lightTextPrimary,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -261,70 +286,140 @@ class _DialerTabState extends ConsumerState<DialerTab> {
     }
 
     if (history.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color:
+                  isDark ? Colors.white.withValues(alpha: 0.045) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : AppColors.lightDivider,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.primary.withValues(alpha: 0.12),
+                  ),
+                  child: const Icon(
+                    Icons.history_rounded,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        s.recent,
+                        style: TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
+                          color: isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.lightTextPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        s.noRecents,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          height: 1.35,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(22, 8, 22, 2),
           child: Text(
-            s.noRecents,
-            textAlign: TextAlign.center,
+            s.recent.toUpperCase(),
             style: TextStyle(
-              fontSize: 13,
-              height: 1.4,
+              fontSize: 10.5,
+              letterSpacing: 0.9,
+              fontWeight: FontWeight.w700,
               color: isDark
                   ? AppColors.darkTextSecondary
                   : AppColors.lightTextSecondary,
             ),
           ),
         ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 4, bottom: 8),
-      itemCount: history.length > 6 ? 6 : history.length,
-      itemBuilder: (context, index) {
-        final record = history[index];
-        final peer = _userFromRecord(record);
-        return ListTile(
-          dense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 18),
-          leading: LivocalAvatar(
-            name: record.peerName,
-            imageUrl: record.peerAvatar,
-            size: 40,
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.only(top: 0, bottom: 8),
+            itemCount: history.length > 6 ? 6 : history.length,
+            itemBuilder: (context, index) {
+              final record = history[index];
+              final peer = _userFromRecord(record);
+              return ListTile(
+                dense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 18),
+                leading: LivocalAvatar(
+                  name: record.peerName,
+                  imageUrl: record.peerAvatar,
+                  size: 40,
+                ),
+                title: Text(
+                  record.peerName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: CustomTextTheme.body,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: record.isMissed
+                        ? AppColors.errorLight
+                        : (isDark
+                            ? AppColors.darkTextPrimary
+                            : AppColors.lightTextPrimary),
+                  ),
+                ),
+                subtitle: Text(
+                  record.peerPhone,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary,
+                  ),
+                ),
+                trailing: IconButton(
+                  icon: const Icon(Icons.call_rounded, size: 20),
+                  color: AppColors.primary,
+                  onPressed: () =>
+                      _placeCall(context, record.peerPhone, known: peer),
+                ),
+                onTap: () => _placeCall(context, record.peerPhone, known: peer),
+              );
+            },
           ),
-          title: Text(
-            record.peerName,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: CustomTextTheme.body,
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: record.isMissed
-                  ? AppColors.errorLight
-                  : (isDark
-                      ? AppColors.darkTextPrimary
-                      : AppColors.lightTextPrimary),
-            ),
-          ),
-          subtitle: Text(
-            record.peerPhone,
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
-            ),
-          ),
-          trailing: IconButton(
-            icon: const Icon(Icons.call_rounded, size: 20),
-            color: AppColors.primary,
-            onPressed: () => _placeCall(context, record.peerPhone, known: peer),
-          ),
-          onTap: () => _placeCall(context, record.peerPhone, known: peer),
-        );
-      },
+        ),
+      ],
     );
   }
 
