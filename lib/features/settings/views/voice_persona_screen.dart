@@ -1,16 +1,10 @@
-import 'dart:convert';
-import 'dart:io';
-import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'package:livocal/features/calls/services/gemini_live_translator.dart';
-import 'package:livocal/shared/constants/app_config.dart';
-import 'package:livocal/shared/services/app_check_service.dart';
+import 'package:livocal/features/settings/services/voice_preview_service.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
@@ -328,133 +322,33 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
       _isLoadingAudio = true;
     });
 
-    final sampleText = persona.getSampleText(_selectedLangCode);
-
     try {
-      final apiKey = GeminiLiveTranslator.getSavedApiKey();
-      final modelId =
-          GeminiLiveTranslator.getSavedModelId().replaceAll('models/', '');
-      bool playedAudio = false;
+      // The relay speaks a short fixed sample through the same Live Translate
+      // model used by real calls, so this is the actual call voice.
+      final filePath = await VoicePreviewService.sample(
+        voice: persona.id,
+        langCode: _selectedLangCode,
+      );
 
-      // 1. Direct Gemini API Audio Synthesis (if API key is present)
-      if (apiKey.isNotEmpty) {
-        try {
-          final url = Uri.parse(
-              'https://generativelanguage.googleapis.com/v1beta/models/$modelId:generateContent?key=$apiKey');
-          final response = await http
-              .post(
-                url,
-                headers: {'Content-Type': 'application/json'},
-                body: jsonEncode({
-                  'contents': [
-                    {
-                      'parts': [
-                        {
-                          'text':
-                              'Say with natural ${persona.gender.toLowerCase()} tone: "$sampleText"'
-                        }
-                      ]
-                    }
-                  ],
-                  'generationConfig': {
-                    'responseModalities': ['AUDIO'],
-                    'speechConfig': {
-                      'voiceConfig': {
-                        'prebuiltVoiceConfig': {
-                          'voiceName': persona.id,
-                        }
-                      }
-                    }
-                  }
-                }),
-              )
-              .timeout(const Duration(seconds: 6));
+      if (!mounted) return;
 
-          if (response.statusCode == 200) {
-            final json = jsonDecode(response.body);
-            final parts = json['candidates']?[0]?['content']?['parts'] as List?;
-            final inlineData = parts?.firstWhere((p) => p['inlineData'] != null,
-                orElse: () => null)?['inlineData'];
-            final base64Audio = inlineData?['data'] as String?;
-            if (base64Audio != null && base64Audio.isNotEmpty) {
-              final audioBytes = base64Decode(base64Audio);
-              final tempDir = await getTemporaryDirectory();
-              final tempFile =
-                  File('${tempDir.path}/gemini_voice_${persona.id}.wav');
-              await tempFile.writeAsBytes(audioBytes);
-              await _audioPlayer.setPlaybackRate(1.0);
-              await _audioPlayer.play(DeviceFileSource(tempFile.path));
-              playedAudio = true;
-            }
-          }
-        } catch (apiErr) {
-          debugPrint('[VoicePersonaScreen] Direct Gemini TTS error: $apiErr');
-        }
-      }
-
-      // 2. Try Backend Relay /api/voice-preview
-      if (!playedAudio) {
-        try {
-          final relayUrl = AppConfig.liveCallWsUrl
-              .replaceFirst('ws://', 'http://')
-              .replaceFirst('wss://', 'https://')
-              .replaceFirst('/ws/live-call', '/api/voice-preview');
-
-          final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
-          final relayRes = await http
-              .post(
-                Uri.parse(relayUrl),
-                headers: await AppCheckService.withAppCheck({
-                  'Content-Type': 'application/json',
-                  if (idToken != null) 'Authorization': 'Bearer $idToken',
-                }),
-                body: jsonEncode({
-                  'voice': persona.id,
-                  'text': sampleText,
-                  'langCode': _selectedLangCode,
-                  'model': GeminiLiveTranslator.getSavedModelId(),
-                }),
-              )
-              .timeout(const Duration(seconds: 5));
-
-          if (relayRes.statusCode == 200) {
-            final data = jsonDecode(relayRes.body);
-            final audioBase64 = data['audioBase64'] as String?;
-            if (audioBase64 != null && audioBase64.isNotEmpty) {
-              final audioBytes = base64Decode(audioBase64);
-              final tempDir = await getTemporaryDirectory();
-              final tempFile =
-                  File('${tempDir.path}/relay_voice_${persona.id}.wav');
-              await tempFile.writeAsBytes(audioBytes);
-              await _audioPlayer.setPlaybackRate(1.0);
-              await _audioPlayer.play(DeviceFileSource(tempFile.path));
-              playedAudio = true;
-            }
-          }
-        } catch (relayErr) {
-          debugPrint('[VoicePersonaScreen] Relay preview note: $relayErr');
-        }
-      }
-
-      // Fail cleanly if authentic Gemini voice synthesis was unavailable
-      // Never deceive user with generic 3rd-party TTS (e.g. StreamElements Brian or Google TTS)
-      if (!playedAudio) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                AppStrings.tr(ref, 'voicePreviewOffline'),
-              ),
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        }
-      }
-
-      if (mounted) {
+      if (filePath == null) {
         setState(() {
+          _currentlyPlayingId = null;
           _isLoadingAudio = false;
         });
+        showSnackBar(
+          context: context,
+          content: AppStrings.tr(ref, 'voicePreviewUnavailable'),
+          type: SnacBarType.error,
+        );
+        return;
+      }
+
+      await _audioPlayer.setPlaybackRate(1.0);
+      await _audioPlayer.play(DeviceFileSource(filePath));
+      if (mounted) {
+        setState(() => _isLoadingAudio = false);
       }
     } catch (e) {
       debugPrint('[VoicePersonaScreen] Audio preview error: $e');
@@ -465,7 +359,7 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
         });
         showSnackBar(
           context: context,
-          content: AppStrings.tr(ref, 'voicePreviewOffline'),
+          content: AppStrings.tr(ref, 'voicePreviewUnavailable'),
           type: SnacBarType.error,
         );
       }

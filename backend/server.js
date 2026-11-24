@@ -16,6 +16,10 @@ import { getMessaging } from 'firebase-admin/messaging';
 import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
+import {
+  loadPreviewSample as readPreviewSample,
+  synthesizeLiveVoicePreview,
+} from './lib/voice-preview.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -79,16 +83,22 @@ const DEFAULT_VOICE = process.env.DEFAULT_VOICE?.trim() || 'Aoede';
 const TEXT_MODEL =
     process.env.GEMINI_TEXT_MODEL?.trim() || 'gemini-2.5-flash';
 
-// Whitelist of allowed Gemini multimodal models for voice preview synthesis
-const ALLOWED_PREVIEW_MODELS = new Set([
-  'gemini-2.0-flash',
-  'gemini-2.5-flash',
-  'gemini-2.5-flash-native-audio-preview',
-  'gemini-2.0-flash-exp',
-  'gemini-3.5-live-translate-preview',
-  DEFAULT_MODEL.replace(/^models\//, ''),
-]);
+// Voice previews are produced by the SAME speech-to-speech model that powers
+// real calls. It only accepts audio input, so the relay streams a short bundled
+// spoken sample and records the translated speech it returns. Results are
+// cached per voice+language (the first synthesis takes several seconds).
+const PREVIEW_SAMPLE_FILE = path.join(__dirname, 'assets', 'preview-input-16k.pcm.b64');
+const VOICE_ALIASES = { Sularis: 'Autonoe', Perseus: 'Umbriel' };
+const PREVIEW_CACHE_LIMIT = 60;
+const voicePreviewCache = new Map();
+let previewSamplePcm = null;
 
+/** Loads the bundled 16 kHz mono PCM sample once and keeps it in memory. */
+function loadPreviewSample() {
+  if (previewSamplePcm) return previewSamplePcm;
+  previewSamplePcm = readPreviewSample(PREVIEW_SAMPLE_FILE);
+  return previewSamplePcm;
+}
 function sanitizeBoundedNote(val, maxLen = 500) {
   if (val === undefined || val === null) return '';
   return String(val).trim().slice(0, maxLen);
@@ -3552,8 +3562,13 @@ app.post(
 
 /**
  * POST /api/voice-preview
- * Returns real synthesized audio bytes (base64) using Gemini multimodal audio model.
- * Protected by Firebase ID token authentication, rate-limiting, and strict input sanitization.
+ * Speaks a short fixed sample through the same speech-to-speech model that
+ * powers real calls (Gemini 3.5 Live Translate), in the caller's selected voice.
+ *
+ * The live model accepts audio input only, so the relay streams a bundled
+ * 16 kHz spoken sample and records the translated speech it returns. Results
+ * are cached per voice+language: the first synthesis takes several seconds,
+ * later taps answer instantly.
  */
 app.post(
   '/api/voice-preview',
@@ -3561,104 +3576,63 @@ app.post(
   authenticateRequest,
   voicePreviewLimiter,
   async (req, res) => {
-    const { voice, text, model: requestedModel } = req.body || {};
-    const rawVoice = (voice && ALLOWED_VOICES.has(voice)) ? voice : 'Aoede';
-    const voiceAliases = { Sularis: 'Autonoe', Perseus: 'Umbriel' };
-    const validVoice = voiceAliases[rawVoice] || rawVoice;
-    
-    // Strict sanitization: limit sample length to 160 characters and strip line breaks/quotes to prevent prompt injection
-    const rawText = typeof text === 'string' ? text : '';
-    const cleanText = rawText.replace(/[\r\n"'\\]/g, ' ').trim().slice(0, 160);
-    const sampleText = cleanText || 'Hello, I will translate your calls.';
+    const { voice, langCode } = req.body || {};
+    const rawVoice = (typeof voice === 'string' && ALLOWED_VOICES.has(voice)) ? voice : DEFAULT_VOICE;
+    const validVoice = VOICE_ALIASES[rawVoice] || rawVoice;
+
+    const requestedLang = typeof langCode === 'string' ? langCode.trim().toLowerCase() : '';
+    const targetLang = /^[a-z]{2,4}$/.test(requestedLang) ? requestedLang : 'en';
 
     if (!GEMINI_API_KEY) {
       return res.status(503).json({ error: 'GEMINI_API_KEY_NOT_CONFIGURED' });
     }
+    if (!fs.existsSync(PREVIEW_SAMPLE_FILE)) {
+      return res.status(503).json({ error: 'PREVIEW_SAMPLE_MISSING' });
+    }
+
+    const cacheKey = `${validVoice}|${targetLang}`;
+    const cachedWav = voicePreviewCache.get(cacheKey);
+    if (cachedWav) {
+      res.setHeader('X-Voice-Preview-Cache', 'hit');
+      res.setHeader('Cache-Control', 'no-store');
+      return res.json({
+        audioBase64: cachedWav.toString('base64'),
+        mimeType: 'audio/wav',
+        voice: validVoice,
+        langCode: targetLang,
+        modelUsed: DEFAULT_MODEL,
+        cached: true,
+      });
+    }
 
     try {
-      // Whitelist verification: strictly restrict requestedModel to authorized Gemini audio models
-      const rawModel = (typeof requestedModel === 'string' && requestedModel.trim().length > 0)
-        ? requestedModel.trim().replace(/^models\//, '')
-        : DEFAULT_MODEL.replace(/^models\//, '');
-      
-      const targetModel = ALLOWED_PREVIEW_MODELS.has(rawModel)
-        ? rawModel
-        : DEFAULT_MODEL.replace(/^models\//, '');
+      const wav = await synthesizeLiveVoicePreview({
+        apiKey: GEMINI_API_KEY,
+        model: DEFAULT_MODEL,
+        voice: validVoice,
+        langCode: targetLang,
+        sample: loadPreviewSample(),
+      });
 
-      // Try target live model first; fallback to standard multimodal audio model if live preview is WebSocket-only
-      const candidateModels = [targetModel];
-      if (!candidateModels.includes('gemini-2.0-flash')) {
-        candidateModels.push('gemini-2.0-flash');
+      voicePreviewCache.set(cacheKey, wav);
+      while (voicePreviewCache.size > PREVIEW_CACHE_LIMIT) {
+        const oldestKey = voicePreviewCache.keys().next().value;
+        voicePreviewCache.delete(oldestKey);
       }
 
-      let response = null;
-      let lastStatus = 500;
-      let successfulModel = null;
-
-      for (const m of candidateModels) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${GEMINI_API_KEY}`;
-        try {
-          const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [
-                {
-                  parts: [{ text: `Say in a warm natural speaking tone: ${sampleText}` }]
-                }
-              ],
-              generationConfig: {
-                responseModalities: ['AUDIO'],
-                speechConfig: {
-                  voiceConfig: {
-                    prebuiltVoiceConfig: {
-                      voiceName: validVoice,
-                    }
-                  }
-                }
-              }
-            })
-          });
-
-          if (res.ok) {
-            response = res;
-            successfulModel = m;
-            break;
-          } else {
-            lastStatus = res.status;
-            console.warn(`[VoicePreview] Model '${m}' returned HTTP ${res.status}. Attempting candidate fallback.`);
-          }
-        } catch (fetchErr) {
-          console.warn(`[VoicePreview] Model '${m}' network error: ${fetchErr.message}`);
-        }
-      }
-
-      if (!response || !response.ok) {
-        return res.status(502).json({ error: `Upstream synthesis failed (HTTP ${lastStatus})` });
-      }
-
-      const json = await response.json();
-      const parts = json.candidates?.[0]?.content?.parts || [];
-      const inlineData = parts.find(p => p.inlineData)?.inlineData;
-      if (inlineData?.data) {
-        const fallbackUsed = Boolean(successfulModel && successfulModel !== targetModel);
-        if (fallbackUsed) {
-          console.warn(`[VoicePreview] Live fidelity notice: requested '${targetModel}' was unavailable for REST synthesis; transparently fulfilled by candidate '${successfulModel}'.`);
-        }
-        res.setHeader('X-Voice-Model-Used', successfulModel);
-        res.setHeader('X-Voice-Fallback-Used', String(fallbackUsed));
-        return res.json({
-          audioBase64: inlineData.data,
-          voice: validVoice,
-          modelUsed: successfulModel,
-          requestedModel: targetModel,
-          fallbackUsed: fallbackUsed,
-        });
-      }
-      return res.status(500).json({ error: 'No audio returned' });
+      res.setHeader('X-Voice-Preview-Cache', 'miss');
+      res.setHeader('Cache-Control', 'no-store');
+      return res.json({
+        audioBase64: wav.toString('base64'),
+        mimeType: 'audio/wav',
+        voice: validVoice,
+        langCode: targetLang,
+        modelUsed: DEFAULT_MODEL,
+        cached: false,
+      });
     } catch (err) {
-      console.error('[VoicePreview] Synthesis error:', err?.message || err);
-      return res.status(500).json({ error: 'Voice preview synthesis failed' });
+      console.error('[VoicePreview] Live synthesis error:', err?.message || err);
+      return res.status(502).json({ error: 'Voice preview synthesis failed' });
     }
   }
 );
