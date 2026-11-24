@@ -187,23 +187,23 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
     showAppDialog(
       context: context,
-      title: 'Enter your name',
+      title: AppStrings.tr(ref, 'enterYourName'),
       icon: Icons.person_outline,
       content: TextField(
         controller: controller,
         autofocus: true,
         maxLength: 30,
-        decoration: const InputDecoration(
-          hintText: 'Your name',
+        decoration: InputDecoration(
+          hintText: AppStrings.tr(ref, 'yourName'),
         ),
       ),
       actions: [
         AppDialogAction(
-          label: 'CANCEL',
+          label: AppStrings.tr(ref, 'cancel').toUpperCase(),
           onPressed: () => Navigator.pop(context),
         ),
         AppDialogAction(
-          label: 'SAVE',
+          label: AppStrings.tr(ref, 'save').toUpperCase(),
           isPrimary: true,
           onPressed: () async {
             final newName = controller.text.trim();
@@ -225,7 +225,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
     showAppDialog(
       context: context,
-      title: 'About',
+      title: AppStrings.tr(ref, 'aboutDialogTitle'),
       icon: Icons.info_outline,
       content: SizedBox(
         width: double.maxFinite,
@@ -237,14 +237,27 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               controller: controller,
               autofocus: true,
               maxLength: 70,
-              decoration: const InputDecoration(
-                hintText: 'About message',
+              decoration: InputDecoration(
+                hintText: AppStrings.tr(ref, 'aboutMessageHint'),
               ),
             ),
+            Row(
+              children: [
+                const Icon(Icons.lock_outline_rounded,
+                    size: 13, color: Colors.grey),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text(
+                    AppStrings.tr(ref, 'aboutOnlyYouSee'),
+                    style: const TextStyle(fontSize: 11.5, color: Colors.grey),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 12),
-            const Text(
-              'Select About',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            Text(
+              AppStrings.tr(ref, 'selectAbout'),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
             ),
             const SizedBox(height: 8),
             Flexible(
@@ -269,11 +282,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       ),
       actions: [
         AppDialogAction(
-          label: 'CANCEL',
+          label: AppStrings.tr(ref, 'cancel').toUpperCase(),
           onPressed: () => Navigator.pop(context),
         ),
         AppDialogAction(
-          label: 'SAVE',
+          label: AppStrings.tr(ref, 'save').toUpperCase(),
           isPrimary: true,
           onPressed: () async {
             final newAbout = controller.text.trim();
