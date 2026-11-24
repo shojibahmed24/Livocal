@@ -483,6 +483,21 @@ class AppStrings {
       'cryptocurrencyAndBinance': "Cryptocurrency & Binance",
       'mobileFinancialServices': "Mobile Financial Services (MFS)",
       'binancePayIdLabel': "Binance Pay ID / Binance Email",
+      'binancePayIdHint': "e.g. 849201842 or user@email.com",
+      'binancePayIdHelper': "Optional • Used for 0-fee Binance transfers",
+      'binancePayIdInvalid': "Invalid Binance Pay ID (8–12 digits or email)",
+      'usdtTrc20Hint': "Starts with T (34 characters)",
+      'usdtTrc20Invalid':
+          "Invalid TRC-20 address (must start with T, 34 characters)",
+      'usdtBep20Hint': "Starts with 0x (42 characters)",
+      'usdtBep20Invalid':
+          "Invalid BEP-20 address (must start with 0x, 42 characters)",
+      'bkashNumberHint': "e.g. 017XXXXXXXX",
+      'bkashNumberInvalid':
+          "Invalid bKash number (e.g. 017XXXXXXXX or +8801XXXXXXXX)",
+      'nagadNumberHint': "e.g. 018XXXXXXXX",
+      'nagadNumberInvalid':
+          "Invalid Nagad number (e.g. 018XXXXXXXX or +8801XXXXXXXX)",
       'usdtTrc20Label': "USDT TRC-20 Address (Tron Network)",
       'usdtBep20Label': "USDT BEP-20 Address (BNB Smart Chain)",
       'bkashPersonalLabel': "bKash Personal Number",
@@ -1208,6 +1223,19 @@ class AppStrings {
       'cryptocurrencyAndBinance': "ক্রিপ্টোকারেন্সি ও Binance",
       'mobileFinancialServices': "মোবাইল ফাইন্যান্সিয়াল সার্ভিস (MFS)",
       'binancePayIdLabel': "Binance Pay ID / Binance ইমেইল",
+      'binancePayIdHint': "যেমন ৮৪৯২০১৮৪২ বা user@email.com",
+      'binancePayIdHelper': "ঐচ্ছিক • ০-ফি Binance ট্রান্সফারের জন্য",
+      'binancePayIdInvalid': "Binance Pay ID সঠিক নয় (৮–১২ সংখ্যা বা ইমেইল)",
+      'usdtTrc20Hint': "T দিয়ে শুরু (৩৪ অক্ষর)",
+      'usdtTrc20Invalid': "TRC-20 ঠিকানা সঠিক নয় (T দিয়ে শুরু, ৩৪ অক্ষর)",
+      'usdtBep20Hint': "0x দিয়ে শুরু (৪২ অক্ষর)",
+      'usdtBep20Invalid': "BEP-20 ঠিকানা সঠিক নয় (0x দিয়ে শুরু, ৪২ অক্ষর)",
+      'bkashNumberHint': "যেমন 017XXXXXXXX",
+      'bkashNumberInvalid':
+          "bKash নাম্বার সঠিক নয় (যেমন 017XXXXXXXX বা +8801XXXXXXXX)",
+      'nagadNumberHint': "যেমন 018XXXXXXXX",
+      'nagadNumberInvalid':
+          "Nagad নাম্বার সঠিক নয় (যেমন 018XXXXXXXX বা +8801XXXXXXXX)",
       'usdtTrc20Label': "USDT TRC-20 ঠিকানা (Tron নেটওয়ার্ক)",
       'usdtBep20Label': "USDT BEP-20 ঠিকানা (BNB Smart Chain)",
       'bkashPersonalLabel': "bKash ব্যক্তিগত নম্বর",
@@ -1927,6 +1955,19 @@ class AppStrings {
       'cryptocurrencyAndBinance': "क्रिप्टोकरेंसी और Binance",
       'mobileFinancialServices': "मोबाइल वित्तीय सेवाएँ (MFS)",
       'binancePayIdLabel': "Binance Pay ID / Binance ईमेल",
+      'binancePayIdHint': "जैसे 849201842 या user@email.com",
+      'binancePayIdHelper': "वैकल्पिक • 0-शुल्क Binance ट्रांसफर के लिए",
+      'binancePayIdInvalid': "अमान्य Binance Pay ID (8–12 अंक या ईमेल)",
+      'usdtTrc20Hint': "T से शुरू (34 अक्षर)",
+      'usdtTrc20Invalid': "अमान्य TRC-20 पता (T से शुरू, 34 अक्षर)",
+      'usdtBep20Hint': "0x से शुरू (42 अक्षर)",
+      'usdtBep20Invalid': "अमान्य BEP-20 पता (0x से शुरू, 42 अक्षर)",
+      'bkashNumberHint': "जैसे 017XXXXXXXX",
+      'bkashNumberInvalid':
+          "अमान्य bKash नंबर (जैसे 017XXXXXXXX या +8801XXXXXXXX)",
+      'nagadNumberHint': "जैसे 018XXXXXXXX",
+      'nagadNumberInvalid':
+          "अमान्य Nagad नंबर (जैसे 018XXXXXXXX या +8801XXXXXXXX)",
       'usdtTrc20Label': "USDT TRC-20 पता (Tron नेटवर्क)",
       'usdtBep20Label': "USDT BEP-20 पता (BNB Smart Chain)",
       'bkashPersonalLabel': "bKash व्यक्तिगत नंबर",
@@ -2629,6 +2670,20 @@ class AppStrings {
       'cryptocurrencyAndBinance': "العملات المشفرة وBinance",
       'mobileFinancialServices': "الخدمات المالية عبر الهاتف المحمول (MFS)",
       'binancePayIdLabel': "Binance Pay ID / بريد Binance",
+      'binancePayIdHint': "مثال: 849201842 أو user@email.com",
+      'binancePayIdHelper': "اختياري • لتحويلات Binance بدون رسوم",
+      'binancePayIdInvalid':
+          "معرّف Binance Pay غير صالح (8–12 رقمًا أو بريد إلكتروني)",
+      'usdtTrc20Hint': "يبدأ بـ T (34 حرفًا)",
+      'usdtTrc20Invalid': "عنوان TRC-20 غير صالح (يبدأ بـ T، 34 حرفًا)",
+      'usdtBep20Hint': "يبدأ بـ 0x (42 حرفًا)",
+      'usdtBep20Invalid': "عنوان BEP-20 غير صالح (يبدأ بـ 0x، 42 حرفًا)",
+      'bkashNumberHint': "مثال: 017XXXXXXXX",
+      'bkashNumberInvalid':
+          "رقم bKash غير صالح (مثال: 017XXXXXXXX أو +8801XXXXXXXX)",
+      'nagadNumberHint': "مثال: 018XXXXXXXX",
+      'nagadNumberInvalid':
+          "رقم Nagad غير صالح (مثال: 018XXXXXXXX أو +8801XXXXXXXX)",
       'usdtTrc20Label': "عنوان USDT TRC-20 (شبكة Tron)",
       'usdtBep20Label': "عنوان USDT BEP-20 (BNB Smart Chain)",
       'bkashPersonalLabel': "رقم bKash الشخصي",
@@ -2663,8 +2718,7 @@ class AppStrings {
       'chatSettings': "إعدادات الدردشة",
       'enterIsSend': "الإرسال بمفتاح Enter",
       'enterIsSendSub': "سيتم إرسال الرسالة عند الضغط على Enter",
-      'contactNotOnLivocal':
-          "هذا الرقم ليس على Livocal بعد. قم بدعوته أولًا.",
+      'contactNotOnLivocal': "هذا الرقم ليس على Livocal بعد. قم بدعوته أولًا.",
       'wallpaperResetDefault': "تمت إعادة تعيين الخلفية إلى الافتراضي",
       'customPhoto': "صورة مخصصة",
       'solidColor': "لون موحد",
@@ -3372,6 +3426,23 @@ class AppStrings {
       'cryptocurrencyAndBinance': "Criptomonedas y Binance",
       'mobileFinancialServices': "Servicios financieros móviles (MFS)",
       'binancePayIdLabel': "Binance Pay ID / correo de Binance",
+      'binancePayIdHint': "p. ej. 849201842 o user@email.com",
+      'binancePayIdHelper':
+          "Opcional • Para transferencias Binance sin comisión",
+      'binancePayIdInvalid':
+          "ID de Binance Pay no válido (8–12 dígitos o email)",
+      'usdtTrc20Hint': "Empieza con T (34 caracteres)",
+      'usdtTrc20Invalid':
+          "Dirección TRC-20 no válida (debe empezar con T, 34 caracteres)",
+      'usdtBep20Hint': "Empieza con 0x (42 caracteres)",
+      'usdtBep20Invalid':
+          "Dirección BEP-20 no válida (debe empezar con 0x, 42 caracteres)",
+      'bkashNumberHint': "p. ej. 017XXXXXXXX",
+      'bkashNumberInvalid':
+          "Número de bKash no válido (p. ej. 017XXXXXXXX o +8801XXXXXXXX)",
+      'nagadNumberHint': "p. ej. 018XXXXXXXX",
+      'nagadNumberInvalid':
+          "Número de Nagad no válido (p. ej. 018XXXXXXXX o +8801XXXXXXXX)",
       'usdtTrc20Label': "Dirección USDT TRC-20 (red Tron)",
       'usdtBep20Label': "Dirección USDT BEP-20 (BNB Smart Chain)",
       'bkashPersonalLabel': "Número personal de bKash",
@@ -4125,6 +4196,23 @@ class AppStrings {
       'cryptocurrencyAndBinance': "Cryptomonnaies et Binance",
       'mobileFinancialServices': "Services financiers mobiles (MFS)",
       'binancePayIdLabel': "Binance Pay ID / e-mail Binance",
+      'binancePayIdHint': "ex. 849201842 ou user@email.com",
+      'binancePayIdHelper':
+          "Facultatif • Pour les transferts Binance sans frais",
+      'binancePayIdInvalid':
+          "ID Binance Pay invalide (8–12 chiffres ou e-mail)",
+      'usdtTrc20Hint': "Commence par T (34 caractères)",
+      'usdtTrc20Invalid':
+          "Adresse TRC-20 invalide (doit commencer par T, 34 caractères)",
+      'usdtBep20Hint': "Commence par 0x (42 caractères)",
+      'usdtBep20Invalid':
+          "Adresse BEP-20 invalide (doit commencer par 0x, 42 caractères)",
+      'bkashNumberHint': "ex. 017XXXXXXXX",
+      'bkashNumberInvalid':
+          "Numéro bKash invalide (ex. 017XXXXXXXX ou +8801XXXXXXXX)",
+      'nagadNumberHint': "ex. 018XXXXXXXX",
+      'nagadNumberInvalid':
+          "Numéro Nagad invalide (ex. 018XXXXXXXX ou +8801XXXXXXXX)",
       'usdtTrc20Label': "Adresse USDT TRC-20 (réseau Tron)",
       'usdtBep20Label': "Adresse USDT BEP-20 (BNB Smart Chain)",
       'bkashPersonalLabel': "Numéro personnel bKash",
@@ -4878,6 +4966,22 @@ class AppStrings {
       'cryptocurrencyAndBinance': "Kryptowährung & Binance",
       'mobileFinancialServices': "Mobile Finanzdienste (MFS)",
       'binancePayIdLabel': "Binance Pay ID / Binance-E-Mail",
+      'binancePayIdHint': "z. B. 849201842 oder user@email.com",
+      'binancePayIdHelper': "Optional • Für gebührenfreie Binance-Transfers",
+      'binancePayIdInvalid':
+          "Ungültige Binance Pay ID (8–12 Ziffern oder E-Mail)",
+      'usdtTrc20Hint': "Beginnt mit T (34 Zeichen)",
+      'usdtTrc20Invalid':
+          "Ungültige TRC-20-Adresse (beginnt mit T, 34 Zeichen)",
+      'usdtBep20Hint': "Beginnt mit 0x (42 Zeichen)",
+      'usdtBep20Invalid':
+          "Ungültige BEP-20-Adresse (beginnt mit 0x, 42 Zeichen)",
+      'bkashNumberHint': "z. B. 017XXXXXXXX",
+      'bkashNumberInvalid':
+          "Ungültige bKash-Nummer (z. B. 017XXXXXXXX oder +8801XXXXXXXX)",
+      'nagadNumberHint': "z. B. 018XXXXXXXX",
+      'nagadNumberInvalid':
+          "Ungültige Nagad-Nummer (z. B. 018XXXXXXXX oder +8801XXXXXXXX)",
       'usdtTrc20Label': "USDT TRC-20-Adresse (Tron-Netzwerk)",
       'usdtBep20Label': "USDT BEP-20-Adresse (BNB Smart Chain)",
       'bkashPersonalLabel': "bKash-Nummer (persönlich)",

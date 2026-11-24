@@ -10,6 +10,8 @@ import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
+import 'package:livocal/shared/ui/livocal_buttons.dart';
+import 'package:livocal/shared/ui/livocal_card.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fba;
 
 class PaymentSettingsScreen extends ConsumerStatefulWidget {
@@ -52,15 +54,21 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
 
   Future<void> _loadExistingSettings() async {
     final authUid = fba.FirebaseAuth.instance.currentUser?.uid;
-    final uid = (authUid != null && authUid.isNotEmpty) ? authUid : widget.user.id;
+    final uid =
+        (authUid != null && authUid.isNotEmpty) ? authUid : widget.user.id;
 
     // 1. Immediately populate from user-scoped local cache so UI is responsive
     try {
-      final localBinance = SharedPref.instance.getString(_prefKey(uid, 'binancePayId')) ?? '';
-      final localTrc20 = SharedPref.instance.getString(_prefKey(uid, 'cryptoUsdtTrc20')) ?? '';
-      final localBep20 = SharedPref.instance.getString(_prefKey(uid, 'cryptoUsdtBep20')) ?? '';
-      final localBkash = SharedPref.instance.getString(_prefKey(uid, 'bkashNumber')) ?? '';
-      final localNagad = SharedPref.instance.getString(_prefKey(uid, 'nagadNumber')) ?? '';
+      final localBinance =
+          SharedPref.instance.getString(_prefKey(uid, 'binancePayId')) ?? '';
+      final localTrc20 =
+          SharedPref.instance.getString(_prefKey(uid, 'cryptoUsdtTrc20')) ?? '';
+      final localBep20 =
+          SharedPref.instance.getString(_prefKey(uid, 'cryptoUsdtBep20')) ?? '';
+      final localBkash =
+          SharedPref.instance.getString(_prefKey(uid, 'bkashNumber')) ?? '';
+      final localNagad =
+          SharedPref.instance.getString(_prefKey(uid, 'nagadNumber')) ?? '';
 
       if (localBinance.isNotEmpty) _binancePayController.text = localBinance;
       if (localTrc20.isNotEmpty) _trc20Controller.text = localTrc20;
@@ -84,11 +92,23 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
       if (mounted) {
         setState(() {
           // Authoritative remote data: allow clearing fields if deleted remotely
-          final bPay = (walletData['binancePayId'] ?? userData['binancePayId'] ?? '').toString();
-          final trc = (walletData['cryptoUsdtTrc20'] ?? userData['cryptoUsdtTrc20'] ?? '').toString();
-          final bep = (walletData['cryptoUsdtBep20'] ?? userData['cryptoUsdtBep20'] ?? '').toString();
-          final bks = (walletData['bkashNumber'] ?? userData['bkashNumber'] ?? '').toString();
-          final ngd = (walletData['nagadNumber'] ?? userData['nagadNumber'] ?? '').toString();
+          final bPay =
+              (walletData['binancePayId'] ?? userData['binancePayId'] ?? '')
+                  .toString();
+          final trc = (walletData['cryptoUsdtTrc20'] ??
+                  userData['cryptoUsdtTrc20'] ??
+                  '')
+              .toString();
+          final bep = (walletData['cryptoUsdtBep20'] ??
+                  userData['cryptoUsdtBep20'] ??
+                  '')
+              .toString();
+          final bks =
+              (walletData['bkashNumber'] ?? userData['bkashNumber'] ?? '')
+                  .toString();
+          final ngd =
+              (walletData['nagadNumber'] ?? userData['nagadNumber'] ?? '')
+                  .toString();
 
           _binancePayController.text = bPay;
           _trc20Controller.text = trc;
@@ -101,11 +121,16 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
 
         // Mirror remote data into user-scoped cache
         try {
-          await SharedPref.instance.setString(_prefKey(uid, 'binancePayId'), _binancePayController.text);
-          await SharedPref.instance.setString(_prefKey(uid, 'cryptoUsdtTrc20'), _trc20Controller.text);
-          await SharedPref.instance.setString(_prefKey(uid, 'cryptoUsdtBep20'), _bep20Controller.text);
-          await SharedPref.instance.setString(_prefKey(uid, 'bkashNumber'), _bkashController.text);
-          await SharedPref.instance.setString(_prefKey(uid, 'nagadNumber'), _nagadController.text);
+          await SharedPref.instance.setString(
+              _prefKey(uid, 'binancePayId'), _binancePayController.text);
+          await SharedPref.instance.setString(
+              _prefKey(uid, 'cryptoUsdtTrc20'), _trc20Controller.text);
+          await SharedPref.instance.setString(
+              _prefKey(uid, 'cryptoUsdtBep20'), _bep20Controller.text);
+          await SharedPref.instance
+              .setString(_prefKey(uid, 'bkashNumber'), _bkashController.text);
+          await SharedPref.instance
+              .setString(_prefKey(uid, 'nagadNumber'), _nagadController.text);
         } catch (_) {}
       }
     } catch (e) {
@@ -119,7 +144,8 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
 
     setState(() => _isSaving = true);
     final authUid = fba.FirebaseAuth.instance.currentUser?.uid;
-    final uid = (authUid != null && authUid.isNotEmpty) ? authUid : widget.user.id;
+    final uid =
+        (authUid != null && authUid.isNotEmpty) ? authUid : widget.user.id;
 
     final binancePay = _binancePayController.text.trim();
     final trc20 = _trc20Controller.text.trim();
@@ -194,11 +220,16 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
     // 3. Handle outcome: update local cache and dismiss ONLY on verified remote success
     if (remoteSaved) {
       try {
-        await SharedPref.instance.setString(_prefKey(uid, 'binancePayId'), binancePay);
-        await SharedPref.instance.setString(_prefKey(uid, 'cryptoUsdtTrc20'), trc20);
-        await SharedPref.instance.setString(_prefKey(uid, 'cryptoUsdtBep20'), bep20);
-        await SharedPref.instance.setString(_prefKey(uid, 'bkashNumber'), bkash);
-        await SharedPref.instance.setString(_prefKey(uid, 'nagadNumber'), nagad);
+        await SharedPref.instance
+            .setString(_prefKey(uid, 'binancePayId'), binancePay);
+        await SharedPref.instance
+            .setString(_prefKey(uid, 'cryptoUsdtTrc20'), trc20);
+        await SharedPref.instance
+            .setString(_prefKey(uid, 'cryptoUsdtBep20'), bep20);
+        await SharedPref.instance
+            .setString(_prefKey(uid, 'bkashNumber'), bkash);
+        await SharedPref.instance
+            .setString(_prefKey(uid, 'nagadNumber'), nagad);
       } catch (e) {
         debugPrint('[PaymentSettings] Local save warning: $e');
       }
@@ -218,7 +249,8 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
         setState(() => _isSaving = false);
         showSnackBar(
           context: context,
-          content: 'Failed to save payment accounts to server. Please check your internet connection.',
+          content:
+              'Failed to save payment accounts to server. Please check your internet connection.',
           type: SnacBarType.error,
         );
       }
@@ -238,18 +270,17 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
               child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header info banner
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: primaryColor.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: primaryColor.withValues(alpha: 0.25),
                         ),
@@ -289,189 +320,172 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
-
-                    // Section 1: Crypto & Binance Pay
-                    Text(
+                    const SizedBox(height: 20),
+                    _sectionTitle(
                       AppStrings.tr(ref, 'cryptocurrencyAndBinance'),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: isDark ? Colors.white : Colors.black87,
+                      isDark,
+                    ),
+                    const SizedBox(height: 10),
+                    LivocalCard(
+                      child: Column(
+                        children: [
+                          _binanceField(),
+                          const SizedBox(height: 16),
+                          _trc20Field(),
+                          const SizedBox(height: 16),
+                          _bep20Field(),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 12),
-
-                    // Binance Pay ID
-                    TextFormField(
-                      controller: _binancePayController,
-                      keyboardType: TextInputType.text,
-                      decoration: InputDecoration(
-                        labelText: AppStrings.tr(ref, 'binancePayIdLabel'),
-                        hintText: 'e.g. 849201842 or user@email.com',
-                        prefixIcon: const Icon(Icons.currency_bitcoin_rounded,
-                            color: Colors.amber),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        helperText: 'Optional • Used for 0-fee Binance transfers',
-                      ),
-                      validator: (value) {
-                        final val = (value ?? '').trim();
-                        if (val.isEmpty) return null;
-                        final isDigits = RegExp(r'^\d{8,12}$').hasMatch(val);
-                        final isEmail = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(val);
-                        if (!isDigits && !isEmail) {
-                          return 'Invalid Binance Pay ID (8-12 digits or email)';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // USDT TRC-20 Address
-                    TextFormField(
-                      controller: _trc20Controller,
-                      keyboardType: TextInputType.text,
-                      decoration: InputDecoration(
-                        labelText: AppStrings.tr(ref, 'usdtTrc20Label'),
-                        hintText: 'Starts with T (34 characters)',
-                        prefixIcon: const Icon(Icons.account_balance_wallet,
-                            color: Colors.redAccent),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      validator: (value) {
-                        final val = (value ?? '').trim();
-                        if (val.isEmpty) return null;
-                        if (!RegExp(r'^T[a-zA-HJ-NP-Z0-9]{33}$').hasMatch(val)) {
-                          return 'Invalid TRC-20 address format (must start with T and be 34 characters)';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // USDT BEP-20 Address
-                    TextFormField(
-                      controller: _bep20Controller,
-                      keyboardType: TextInputType.text,
-                      decoration: InputDecoration(
-                        labelText: AppStrings.tr(ref, 'usdtBep20Label'),
-                        hintText: 'Starts with 0x (42 characters)',
-                        prefixIcon: const Icon(Icons.toll_rounded,
-                            color: Colors.amber),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      validator: (value) {
-                        final val = (value ?? '').trim();
-                        if (val.isEmpty) return null;
-                        if (!RegExp(r'^0x[a-fA-F0-9]{40}$').hasMatch(val)) {
-                          return 'Invalid BEP-20 address format (must start with 0x and be 42 characters)';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 28),
-
-                    // Section 2: Mobile Financial Services (bKash / Nagad)
-                    Text(
+                    const SizedBox(height: 20),
+                    _sectionTitle(
                       AppStrings.tr(ref, 'mobileFinancialServices'),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: isDark ? Colors.white : Colors.black87,
+                      isDark,
+                    ),
+                    const SizedBox(height: 10),
+                    LivocalCard(
+                      child: Column(
+                        children: [
+                          _bkashField(),
+                          const SizedBox(height: 16),
+                          _nagadField(),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 12),
-
-                    // bKash Number
-                    TextFormField(
-                      controller: _bkashController,
-                      keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        labelText: AppStrings.tr(ref, 'bkashPersonalLabel'),
-                        hintText: 'e.g. 017XXXXXXXX',
-                        prefixIcon: const Icon(Icons.phone_android_rounded,
-                            color: Colors.pinkAccent),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      validator: (value) {
-                        final val = (value ?? '').trim().replaceAll(RegExp(r'[\s\-]'), '');
-                        if (val.isEmpty) return null;
-                        if (!RegExp(r'^(?:\+?8801|01)[3-9]\d{8}$').hasMatch(val)) {
-                          return 'Invalid bKash number (e.g. 017XXXXXXXX or +8801XXXXXXXX)';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Nagad Number
-                    TextFormField(
-                      controller: _nagadController,
-                      keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        labelText: AppStrings.tr(ref, 'nagadPersonalLabel'),
-                        hintText: 'e.g. 018XXXXXXXX',
-                        prefixIcon: const Icon(Icons.phone_android_rounded,
-                            color: Colors.deepOrangeAccent),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      validator: (value) {
-                        final val = (value ?? '').trim().replaceAll(RegExp(r'[\s\-]'), '');
-                        if (val.isEmpty) return null;
-                        if (!RegExp(r'^(?:\+?8801|01)[3-9]\d{8}$').hasMatch(val)) {
-                          return 'Invalid Nagad number (e.g. 018XXXXXXXX or +8801XXXXXXXX)';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 32),
-
-                    // Save Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryColor,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        onPressed: _isSaving ? null : _saveSettings,
-                        child: _isSaving
-                            ? const SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.2,
-                                  valueColor:
-                                      AlwaysStoppedAnimation(Colors.white),
-                                ),
-                              )
-                            : Text(
-                                AppStrings.tr(ref, 'savePaymentAccounts'),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                      ),
+                    const SizedBox(height: 24),
+                    PrimaryButton(
+                      label: AppStrings.tr(ref, 'savePaymentAccounts'),
+                      icon: Icons.save_rounded,
+                      loading: _isSaving,
+                      onPressed: _isSaving ? null : _saveSettings,
                     ),
                   ],
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _sectionTitle(String text, bool isDark) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: 15,
+        color: isDark ? Colors.white : Colors.black87,
+      ),
+    );
+  }
+
+  Widget _binanceField() {
+    return TextFormField(
+      controller: _binancePayController,
+      keyboardType: TextInputType.text,
+      decoration: InputDecoration(
+        labelText: AppStrings.tr(ref, 'binancePayIdLabel'),
+        hintText: AppStrings.tr(ref, 'binancePayIdHint'),
+        prefixIcon:
+            const Icon(Icons.currency_bitcoin_rounded, color: Colors.amber),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        helperText: AppStrings.tr(ref, 'binancePayIdHelper'),
+      ),
+      validator: (value) {
+        final val = (value ?? '').trim();
+        if (val.isEmpty) return null;
+        final isDigits = RegExp(r'^\d{8,12}$').hasMatch(val);
+        final isEmail = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(val);
+        if (!isDigits && !isEmail) {
+          return AppStrings.tr(ref, 'binancePayIdInvalid');
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _trc20Field() {
+    return TextFormField(
+      controller: _trc20Controller,
+      keyboardType: TextInputType.text,
+      decoration: InputDecoration(
+        labelText: AppStrings.tr(ref, 'usdtTrc20Label'),
+        hintText: AppStrings.tr(ref, 'usdtTrc20Hint'),
+        prefixIcon:
+            const Icon(Icons.account_balance_wallet, color: Colors.redAccent),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      validator: (value) {
+        final val = (value ?? '').trim();
+        if (val.isEmpty) return null;
+        if (!RegExp(r'^T[a-zA-HJ-NP-Z0-9]{33}$').hasMatch(val)) {
+          return AppStrings.tr(ref, 'usdtTrc20Invalid');
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _bep20Field() {
+    return TextFormField(
+      controller: _bep20Controller,
+      keyboardType: TextInputType.text,
+      decoration: InputDecoration(
+        labelText: AppStrings.tr(ref, 'usdtBep20Label'),
+        hintText: AppStrings.tr(ref, 'usdtBep20Hint'),
+        prefixIcon: const Icon(Icons.toll_rounded, color: Colors.amber),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      validator: (value) {
+        final val = (value ?? '').trim();
+        if (val.isEmpty) return null;
+        if (!RegExp(r'^0x[a-fA-F0-9]{40}$').hasMatch(val)) {
+          return AppStrings.tr(ref, 'usdtBep20Invalid');
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _bkashField() {
+    return TextFormField(
+      controller: _bkashController,
+      keyboardType: TextInputType.phone,
+      decoration: InputDecoration(
+        labelText: AppStrings.tr(ref, 'bkashPersonalLabel'),
+        hintText: AppStrings.tr(ref, 'bkashNumberHint'),
+        prefixIcon:
+            const Icon(Icons.phone_android_rounded, color: Colors.pinkAccent),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      validator: (value) {
+        final val = (value ?? '').trim().replaceAll(RegExp(r'[\s\-]'), '');
+        if (val.isEmpty) return null;
+        if (!RegExp(r'^(?:\+?8801|01)[3-9]\d{8}$').hasMatch(val)) {
+          return AppStrings.tr(ref, 'bkashNumberInvalid');
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _nagadField() {
+    return TextFormField(
+      controller: _nagadController,
+      keyboardType: TextInputType.phone,
+      decoration: InputDecoration(
+        labelText: AppStrings.tr(ref, 'nagadPersonalLabel'),
+        hintText: AppStrings.tr(ref, 'nagadNumberHint'),
+        prefixIcon: const Icon(Icons.phone_android_rounded,
+            color: Colors.deepOrangeAccent),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      validator: (value) {
+        final val = (value ?? '').trim().replaceAll(RegExp(r'[\s\-]'), '');
+        if (val.isEmpty) return null;
+        if (!RegExp(r'^(?:\+?8801|01)[3-9]\d{8}$').hasMatch(val)) {
+          return AppStrings.tr(ref, 'nagadNumberInvalid');
+        }
+        return null;
+      },
     );
   }
 }
