@@ -21,7 +21,6 @@ import 'package:livocal/features/settings/views/notifications_settings_screen.da
 import 'package:livocal/features/settings/views/storage_settings_screen.dart';
 import 'package:livocal/features/settings/views/app_language_screen.dart';
 import 'package:livocal/features/settings/views/help_settings_screen.dart';
-import 'package:livocal/features/settings/views/voice_persona_screen.dart';
 import 'package:livocal/features/settings/views/payment_settings_screen.dart';
 import 'package:livocal/features/settings/views/chat_settings_screen.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
@@ -324,25 +323,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
 
           // Section 3: Advanced & AI Engine
-          _group(
-            title: AppStrings.tr(ref, 'advancedAiEngine'),
-            rows: [
-              SettingsRow(
-                icon: Icons.auto_awesome_rounded,
-                title: AppStrings.tr(ref, 'geminiVoiceEngine'),
-                subtitle: AppStrings.tr(ref, 'geminiVoiceEngineSub'),
-                iconColor: const Color(0xFF53BDEC),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const VoicePersonaScreen(),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
 
           // Section 4: Support & Community
           _group(

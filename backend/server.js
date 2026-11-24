@@ -16,10 +16,6 @@ import { getMessaging } from 'firebase-admin/messaging';
 import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
-import {
-  loadPreviewSample as readPreviewSample,
-  synthesizeLiveVoicePreview,
-} from './lib/voice-preview.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -83,22 +79,6 @@ const DEFAULT_VOICE = process.env.DEFAULT_VOICE?.trim() || 'Aoede';
 const TEXT_MODEL =
     process.env.GEMINI_TEXT_MODEL?.trim() || 'gemini-2.5-flash';
 
-// Voice previews are produced by the SAME speech-to-speech model that powers
-// real calls. It only accepts audio input, so the relay streams a short bundled
-// spoken sample and records the translated speech it returns. Results are
-// cached per voice+language (the first synthesis takes several seconds).
-const PREVIEW_SAMPLE_FILE = path.join(__dirname, 'assets', 'preview-input-16k.pcm.b64');
-const VOICE_ALIASES = { Sularis: 'Autonoe', Perseus: 'Umbriel' };
-const PREVIEW_CACHE_LIMIT = 60;
-const voicePreviewCache = new Map();
-let previewSamplePcm = null;
-
-/** Loads the bundled 16 kHz mono PCM sample once and keeps it in memory. */
-function loadPreviewSample() {
-  if (previewSamplePcm) return previewSamplePcm;
-  previewSamplePcm = readPreviewSample(PREVIEW_SAMPLE_FILE);
-  return previewSamplePcm;
-}
 function sanitizeBoundedNote(val, maxLen = 500) {
   if (val === undefined || val === null) return '';
   return String(val).trim().slice(0, maxLen);
@@ -239,7 +219,6 @@ const APP_CHECK_ENFORCE = process.env.APP_CHECK_ENFORCE === 'true';
 const APP_CHECK_PROTECTED_PATHS = new Set([
   '/api/translate',
   '/api/contacts/match',
-  '/api/voice-preview',
   '/api/wallet/init-or-get',
   '/api/wallet/balance',
   '/api/wallet/deduct-minute',
@@ -310,12 +289,6 @@ const contactsLimiter = makeUserLimiter({
   windowMs: 60 * 60 * 1000,
   max: 30,
   message: 'Contact matching limit reached. Try again later.',
-});
-
-const voicePreviewLimiter = makeUserLimiter({
-  windowMs: 60 * 1000,
-  max: 6,
-  message: 'Too many voice previews. Please slow down.',
 });
 
 /**
@@ -3556,83 +3529,6 @@ app.post(
     } catch (err) {
       console.error('[Translate] API error:', err);
       res.status(500).json({ error: 'Translation request failed' });
-    }
-  }
-);
-
-/**
- * POST /api/voice-preview
- * Speaks a short fixed sample through the same speech-to-speech model that
- * powers real calls (Gemini 3.5 Live Translate), in the caller's selected voice.
- *
- * The live model accepts audio input only, so the relay streams a bundled
- * 16 kHz spoken sample and records the translated speech it returns. Results
- * are cached per voice+language: the first synthesis takes several seconds,
- * later taps answer instantly.
- */
-app.post(
-  '/api/voice-preview',
-  apiLimiter,
-  authenticateRequest,
-  voicePreviewLimiter,
-  async (req, res) => {
-    const { voice, langCode } = req.body || {};
-    const rawVoice = (typeof voice === 'string' && ALLOWED_VOICES.has(voice)) ? voice : DEFAULT_VOICE;
-    const validVoice = VOICE_ALIASES[rawVoice] || rawVoice;
-
-    const requestedLang = typeof langCode === 'string' ? langCode.trim().toLowerCase() : '';
-    const targetLang = /^[a-z]{2,4}$/.test(requestedLang) ? requestedLang : 'en';
-
-    if (!GEMINI_API_KEY) {
-      return res.status(503).json({ error: 'GEMINI_API_KEY_NOT_CONFIGURED' });
-    }
-    if (!fs.existsSync(PREVIEW_SAMPLE_FILE)) {
-      return res.status(503).json({ error: 'PREVIEW_SAMPLE_MISSING' });
-    }
-
-    const cacheKey = `${validVoice}|${targetLang}`;
-    const cachedWav = voicePreviewCache.get(cacheKey);
-    if (cachedWav) {
-      res.setHeader('X-Voice-Preview-Cache', 'hit');
-      res.setHeader('Cache-Control', 'no-store');
-      return res.json({
-        audioBase64: cachedWav.toString('base64'),
-        mimeType: 'audio/wav',
-        voice: validVoice,
-        langCode: targetLang,
-        modelUsed: DEFAULT_MODEL,
-        cached: true,
-      });
-    }
-
-    try {
-      const wav = await synthesizeLiveVoicePreview({
-        apiKey: GEMINI_API_KEY,
-        model: DEFAULT_MODEL,
-        voice: validVoice,
-        langCode: targetLang,
-        sample: loadPreviewSample(),
-      });
-
-      voicePreviewCache.set(cacheKey, wav);
-      while (voicePreviewCache.size > PREVIEW_CACHE_LIMIT) {
-        const oldestKey = voicePreviewCache.keys().next().value;
-        voicePreviewCache.delete(oldestKey);
-      }
-
-      res.setHeader('X-Voice-Preview-Cache', 'miss');
-      res.setHeader('Cache-Control', 'no-store');
-      return res.json({
-        audioBase64: wav.toString('base64'),
-        mimeType: 'audio/wav',
-        voice: validVoice,
-        langCode: targetLang,
-        modelUsed: DEFAULT_MODEL,
-        cached: false,
-      });
-    } catch (err) {
-      console.error('[VoicePreview] Live synthesis error:', err?.message || err);
-      return res.status(502).json({ error: 'Voice preview synthesis failed' });
     }
   }
 );
