@@ -41,6 +41,8 @@ import 'package:livocal/theme/theme.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 
 import '../../../shared/widgets/emoji_picker.dart';
+import 'package:livocal/features/calls/models/call_language.dart';
+import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'contact_profile_screen.dart';
 import 'widgets/chat_translation_sheet.dart';
 import 'widgets/send_payment_sheet.dart';
@@ -102,6 +104,102 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             child: _build(self, other, context),
           )
         : _build(self, other, context);
+  }
+
+  /// Shows the translation pair (e.g. `বাংলা ⇄ English`) in the header when
+  /// in-chat translation is on, otherwise the online presence dot. Tapping the
+  /// chip opens the translation settings sheet.
+  Widget _buildStatusOrLanguageChip(
+    BuildContext context,
+    User other,
+    Color fg,
+  ) {
+    final settings = CallRepository.getPeerTranslationSettings(
+      peerId: other.id,
+      peerName: widget.otherUserContactName,
+      peerPhone: other.phone.getFormattedNumber(),
+    );
+
+    if (settings.isEffectivelyTranslated) {
+      final mine = CallLanguageRegistry.fromCode(settings.myLangCode);
+      final peer = CallLanguageRegistry.fromCode(settings.peerLangCode);
+      return InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () {
+          showInChatTranslationSheet(
+            context: context,
+            peerName: widget.otherUserContactName,
+            peerId: other.id,
+            onSettingsChanged: () {
+              if (mounted) setState(() {});
+            },
+          );
+        },
+        child: Container(
+          margin: const EdgeInsets.only(top: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+          decoration: BoxDecoration(
+            color: const Color(0xFF00D4C8).withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.translate_rounded,
+                size: 11,
+                color: Color(0xFF00D4C8),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '${mine.nativeName} ⇄ ${peer.nativeName}',
+                style: TextStyle(
+                  fontSize: 10.5,
+                  height: 1.2,
+                  fontWeight: FontWeight.w600,
+                  color: fg.withValues(alpha: 0.9),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return StreamBuilder<UserActivityStatus>(
+      stream: ref
+          .read(firebaseFirestoreRepositoryProvider)
+          .userActivityStatusStream(userId: other.id),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const SizedBox.shrink();
+        }
+
+        return snapshot.data!.value == 'Online'
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: AppColors.accent,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    AppStrings.tr(ref, 'online'),
+                    style: Theme.of(context).custom.textTheme.caption.copyWith(
+                          color: fg.withValues(alpha: 0.65),
+                          fontSize: 12,
+                        ),
+                  ),
+                ],
+              )
+            : const SizedBox.shrink();
+      },
+    );
   }
 
   Widget _build(User self, User other, BuildContext context) {
@@ -191,46 +289,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                           ],
                         ],
                       ),
-                      StreamBuilder<UserActivityStatus>(
-                        stream: ref
-                            .read(firebaseFirestoreRepositoryProvider)
-                            .userActivityStatusStream(userId: other.id),
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) {
-                            return const SizedBox.shrink();
-                          }
-
-                          return snapshot.data!.value == 'Online'
-                              ? Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      width: 6,
-                                      height: 6,
-                                      decoration: const BoxDecoration(
-                                        color: AppColors.accent,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      AppStrings.tr(ref, 'online'),
-                                      style: Theme.of(context)
-                                          .custom
-                                          .textTheme
-                                          .caption
-                                          .copyWith(
-                                            color: appBarFg.withValues(
-                                              alpha: 0.65,
-                                            ),
-                                            fontSize: 12,
-                                          ),
-                                    ),
-                                  ],
-                                )
-                              : const SizedBox.shrink();
-                        },
-                      ),
+                      _buildStatusOrLanguageChip(context, other, appBarFg),
                     ],
                   ),
                 ),
