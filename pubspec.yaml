@@ -48,7 +48,7 @@ dependencies:
   image: ^4.0.17
   audioplayers: ^5.1.0
   flutter_sound: ^9.30.0
-  audio_session: ^0.1.16
+  audio_session: ^0.2.4
   camera: ^0.10.5+3
   photo_manager: ^3.0.0-dev.2
   flutter_webrtc: 0.12.5
