@@ -12,6 +12,7 @@ import 'package:livocal/features/chat/views/widgets/attachment_renderers.dart';
 import 'package:livocal/features/chat/views/widgets/painters.dart';
 import 'package:livocal/features/chat/views/widgets/progress_btn.dart';
 import 'package:livocal/shared/repositories/download_service.dart';
+import 'package:livocal/shared/services/media_download_policy.dart';
 import 'package:livocal/shared/repositories/upload_service.dart';
 import 'package:livocal/shared/utils/storage_paths.dart';
 import 'package:livocal/theme/color_theme.dart';
@@ -424,7 +425,8 @@ class _AttachedVoiceViewerState extends ConsumerState<AttachedVoiceViewer> {
                   backgroundColor: Colors.black,
                   backgroundImage: avatarUrl.isNotEmpty
                       ? CachedNetworkImageProvider(avatarUrl)
-                      : const AssetImage('assets/images/avatar.png') as ImageProvider,
+                      : const AssetImage('assets/images/avatar.png')
+                          as ImageProvider,
                 ),
                 Positioned(
                   bottom: 0,
@@ -1205,10 +1207,13 @@ class _AttachmentViewerState extends State<AttachmentViewer> {
                           Row(
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.download_rounded, color: Colors.white),
+                                icon: const Icon(Icons.download_rounded,
+                                    color: Colors.white),
                                 tooltip: 'Save to Gallery',
                                 onPressed: () async {
-                                  final savedPath = await DeviceStorage.saveMediaToGallery(widget.file);
+                                  final savedPath =
+                                      await DeviceStorage.saveMediaToGallery(
+                                          widget.file);
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
@@ -1265,19 +1270,24 @@ class _DownloadingAttachmentState extends ConsumerState<DownloadingAttachment> {
 
   @override
   void initState() {
-    isDownloading = widget.message.attachment!.autoDownload;
-    if (isDownloading) {
-      final downloadStream =
-          DownloadService.getDownloadStream(widget.message.id);
-      if (downloadStream == null) {
-        download();
-      }
-    }
-
+    isDownloading = false;
     clientIsSender = ref.read(chatControllerProvider.notifier).self.id ==
         widget.message.senderId;
-
     super.initState();
+    _maybeAutoDownload();
+  }
+
+  /// The sender's `autoDownload` flag is only a hint; the receiver's Media
+  /// auto-download settings and the current network decide the truth.
+  Future<void> _maybeAutoDownload() async {
+    final attachment = widget.message.attachment;
+    if (attachment == null || !attachment.autoDownload) return;
+    final allowed = await MediaDownloadPolicy.allow(attachment.type);
+    if (!mounted || !allowed) return;
+    setState(() => isDownloading = true);
+    if (DownloadService.getDownloadStream(widget.message.id) == null) {
+      download();
+    }
   }
 
   Future<void> download() async {

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +26,6 @@ class PrivacySettingsScreen extends ConsumerStatefulWidget {
 class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
   String _lastSeen = 'Everyone';
   String _profilePhoto = 'Everyone';
-  String _about = 'Everyone';
   String _statusPrivacy = 'contacts';
   bool _readReceipts = true;
   String _disappearingTimer = 'Off';
@@ -37,11 +38,22 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
         SharedPref.instance.getString('privacy_last_seen') ?? 'Everyone';
     _profilePhoto =
         SharedPref.instance.getString('privacy_profile_photo') ?? 'Everyone';
-    _about = SharedPref.instance.getString('privacy_about') ?? 'Everyone';
     _statusPrivacy =
         SharedPref.instance.getString('status_privacy') ?? 'contacts';
     _readReceipts =
         SharedPref.instance.getBool('privacy_read_receipts') ?? true;
+
+    // "My contacts" cannot be enforced per-viewer with the current data model,
+    // so legacy values are migrated to the strict option instead of pretending.
+    for (final key in ['privacy_last_seen', 'privacy_profile_photo']) {
+      if (SharedPref.instance.getString(key) == 'My contacts') {
+        SharedPref.instance.setString(key, 'Nobody');
+      }
+    }
+    _lastSeen =
+        SharedPref.instance.getString('privacy_last_seen') ?? 'Everyone';
+    _profilePhoto =
+        SharedPref.instance.getString('privacy_profile_photo') ?? 'Everyone';
     final cachedDisappearing =
         SharedPref.instance.getString('privacy_disappearing');
     if (cachedDisappearing != null) {
@@ -50,16 +62,22 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
       _disappearingTimer = 'Off';
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid != null && uid.isNotEmpty) {
-        FirebaseFirestore.instance.collection('users').doc(uid).get().then((doc) {
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .get()
+            .then((doc) {
           if (doc.exists && mounted) {
-            final cloudTimer = doc.data()?['defaultDisappearingTimer'] as String?;
+            final cloudTimer =
+                doc.data()?['defaultDisappearingTimer'] as String?;
             if (cloudTimer != null && cloudTimer.isNotEmpty) {
               setState(() => _disappearingTimer = cloudTimer);
               SharedPref.instance.setString('privacy_disappearing', cloudTimer);
             }
           }
         }).catchError((e) {
-          debugPrint('[PrivacySettings] Fetch cloud disappearing timer error: $e');
+          debugPrint(
+              '[PrivacySettings] Fetch cloud disappearing timer error: $e');
         });
       }
     }
@@ -158,11 +176,23 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
             subtitle: _localizeOption(_lastSeen),
             onTap: () => _showRadioOptionDialog(
               title: AppStrings.tr(ref, 'lastSeenAndOnline'),
-              options: ['Everyone', 'My contacts', 'Nobody'],
+              options: ['Everyone', 'Nobody'],
               currentValue: _lastSeen,
               onSelected: (val) {
                 setState(() => _lastSeen = val);
                 SharedPref.instance.setString('privacy_last_seen', val);
+                // Apply immediately: stop publishing presence when hidden.
+                final uid = FirebaseAuth.instance.currentUser?.uid;
+                if (uid != null && uid.isNotEmpty) {
+                  FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(uid)
+                      .update({
+                    'activityStatus': val == 'Nobody' ? 'Offline' : 'Online',
+                  }).catchError((e) {
+                    debugPrint('[PrivacySettings] presence update error: $e');
+                  });
+                }
               },
             ),
           ),
@@ -173,26 +203,29 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
             subtitle: _localizeOption(_profilePhoto),
             onTap: () => _showRadioOptionDialog(
               title: AppStrings.tr(ref, 'profilePhoto'),
-              options: ['Everyone', 'My contacts', 'Nobody'],
+              options: ['Everyone', 'Nobody'],
               currentValue: _profilePhoto,
-              onSelected: (val) {
+              onSelected: (val) async {
                 setState(() => _profilePhoto = val);
-                SharedPref.instance.setString('privacy_profile_photo', val);
-              },
-            ),
-          ),
-          const Divider(height: 1),
-          SettingsRow(
-            icon: Icons.info_outline,
-            title: AppStrings.tr(ref, 'about'),
-            subtitle: _localizeOption(_about),
-            onTap: () => _showRadioOptionDialog(
-              title: AppStrings.tr(ref, 'about'),
-              options: ['Everyone', 'My contacts', 'Nobody'],
-              currentValue: _about,
-              onSelected: (val) {
-                setState(() => _about = val);
-                SharedPref.instance.setString('privacy_about', val);
+                await SharedPref.instance
+                    .setString('privacy_profile_photo', val);
+                // Apply immediately to the shared profile document.
+                final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+                final current = SharedPref.instance.getString('user') ?? '';
+                if (uid.isEmpty) return;
+                try {
+                  final stored = jsonDecode(current) as Map<String, dynamic>;
+                  final avatarUrl = (stored['avatarUrl'] ?? '').toString();
+                  await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(uid)
+                      .set({
+                    'avatarUrl': val == 'Nobody' ? '' : avatarUrl,
+                  }, SetOptions(merge: true));
+                } catch (e) {
+                  debugPrint(
+                      '[PrivacySettings] avatar privacy update error: $e');
+                }
               },
             ),
           ),
@@ -243,7 +276,8 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
             ),
           ),
           const Divider(height: 1),
-          SettingsSectionHeader(title: AppStrings.tr(ref, 'disappearingMessages')),
+          SettingsSectionHeader(
+              title: AppStrings.tr(ref, 'disappearingMessages')),
           SettingsRow(
             icon: Icons.timer_outlined,
             title: AppStrings.tr(ref, 'defaultMessageTimer'),
@@ -254,23 +288,30 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
               currentValue: _disappearingTimer,
               onSelected: (val) async {
                 setState(() => _disappearingTimer = val);
-                await SharedPref.instance.setString('privacy_disappearing', val);
+                await SharedPref.instance
+                    .setString('privacy_disappearing', val);
                 final uid = FirebaseAuth.instance.currentUser?.uid;
                 if (uid != null && uid.isNotEmpty) {
                   try {
-                    await FirebaseFirestore.instance.collection('users').doc(uid).set({
+                    await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(uid)
+                        .set({
                       'defaultDisappearingTimer': val,
                       'privacyUpdatedAt': FieldValue.serverTimestamp(),
-                    }, SetOptions(merge: true)).timeout(const Duration(seconds: 4));
+                    }, SetOptions(merge: true)).timeout(
+                            const Duration(seconds: 4));
                   } catch (e) {
-                    debugPrint('[PrivacySettings] Error syncing disappearing timer: $e');
+                    debugPrint(
+                        '[PrivacySettings] Error syncing disappearing timer: $e');
                   }
                 }
               },
             ),
           ),
           const Divider(height: 1),
-          SettingsSectionHeader(title: AppStrings.tr(ref, 'securityAndAppLock')),
+          SettingsSectionHeader(
+              title: AppStrings.tr(ref, 'securityAndAppLock')),
           SettingsRow(
             icon: Icons.block_flipped,
             title: AppStrings.tr(ref, 'blockedContacts'),

@@ -12,6 +12,7 @@ import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/attachment_utils.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
+import 'package:livocal/shared/services/profile_privacy.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/app_tokens.dart';
@@ -175,7 +176,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.id)
-          .set(user.toPublicMap(), SetOptions(merge: true));
+          .set(ProfilePrivacy.publicMap(user), SetOptions(merge: true));
     } catch (e) {
       debugPrint('Failed to update user on Firestore: $e');
     }

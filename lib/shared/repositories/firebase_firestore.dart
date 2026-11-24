@@ -36,10 +36,17 @@ class FirebaseFirestoreRepo {
     required String statusValue,
   }) async {
     try {
+      // Last-seen privacy: when the user hides their presence, never publish
+      // "Online" to the shared user document.
+      final lastSeenPref = SharedPref.instance.getString('privacy_last_seen');
+      final presenceHidden =
+          lastSeenPref == 'Nobody' || lastSeenPref == 'My contacts';
+      final effectiveStatus = presenceHidden ? 'Offline' : statusValue;
+
       await firestore
           .collection('users')
           .doc(userId)
-          .update({'activityStatus': statusValue});
+          .update({'activityStatus': effectiveStatus});
     } catch (e) {
       debugPrint(
           '[FirebaseFirestoreRepo] setActivityStatus failed for $userId: $e');

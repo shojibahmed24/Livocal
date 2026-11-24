@@ -14,6 +14,7 @@ import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/repositories/firebase_storage.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/shared/services/profile_privacy.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:livocal/shared/utils/secure_pin_service.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
@@ -88,7 +89,7 @@ class AuthController {
     );
 
     try {
-      await authRepository.registerUser(user.toPublicMap());
+      await authRepository.registerUser(ProfilePrivacy.publicMap(user));
     } catch (e) {
       debugPrint('[AuthService] registerUser failed in Firestore: $e');
       rethrow;
