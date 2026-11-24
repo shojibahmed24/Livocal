@@ -205,18 +205,7 @@ class _HomePageState extends ConsumerState<HomePage>
           'newChatTooltip',
           SharedPref.instance.getString('app_language') ?? 'en',
         ),
-        onPressed: () async {
-          if (!await hasPermission(Permission.contacts)) return;
-          if (!mounted) return;
-
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => ContactsPage(
-                user: widget.user,
-              ),
-            ),
-          );
-        },
+        onPressed: () => _openContactsPicker(ContactsIntent.chat),
         child: const Icon(Icons.chat),
       ),
       Column(
@@ -266,17 +255,7 @@ class _HomePageState extends ConsumerState<HomePage>
           'newCallTooltip',
           SharedPref.instance.getString('app_language') ?? 'en',
         ),
-        onPressed: () async {
-          if (!await hasPermission(Permission.contacts)) return;
-          if (!mounted) return;
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => ContactsPage(
-                user: widget.user,
-              ),
-            ),
-          );
-        },
+        onPressed: () => _openContactsPicker(ContactsIntent.call),
         child: const Icon(Icons.add_call),
       )
     ];
@@ -355,6 +334,26 @@ class _HomePageState extends ConsumerState<HomePage>
 
   void handleTabIndexChange() {
     setState(() {});
+  }
+
+  /// Guards against double navigation while the contacts permission dialog is
+  /// still on screen (which previously tripped Navigator's `!_debugLocked`).
+  bool _openingContacts = false;
+
+  Future<void> _openContactsPicker(ContactsIntent intent) async {
+    if (_openingContacts) return;
+    _openingContacts = true;
+    try {
+      if (!await hasPermission(Permission.contacts)) return;
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ContactsPage(user: widget.user, intent: intent),
+        ),
+      );
+    } finally {
+      _openingContacts = false;
+    }
   }
 
   Future<void> handleNotificationClick(RemoteMessage message) async {

@@ -336,7 +336,7 @@ class AppStrings {
           "Your preferred voice persona is securely saved on your device and applied automatically to all live translated calls.",
       'voicePreviewOffline': "Voice preview is unavailable offline.",
       'voiceSetSuccess': "Set \"{voiceId}\" as your live translation voice",
-      'trialRemainingBadge': "⏱️ Trial: {minutes} mins left",
+      'trialRemainingBadge': "Trial: {minutes} mins left",
       'balanceExhaustedBadge': "⚠️ Balance Exhausted (0 mins)",
       'balanceMinutesBadge': "💎 Balance: {minutes} mins",
       'trialDaysLeftNotice': "{days} days left • Free local calls",
@@ -1051,7 +1051,7 @@ class AppStrings {
       'voicePreviewOffline': "অফলাইনে ভয়েস প্রিভিউ অনুপলব্ধ।",
       'voiceSetSuccess':
           "লাইভ অনুবাদ ভয়েস হিসেবে \"{voiceId}\" সেট করা হয়েছে",
-      'trialRemainingBadge': "⏱️ ট্রায়াল: {minutes} মিনিট বাকি",
+      'trialRemainingBadge': "ট্রায়াল: {minutes} মিনিট বাকি",
       'balanceExhaustedBadge': "⚠️ ব্যালেন্স শেষ (০ মিনিট)",
       'balanceMinutesBadge': "💎 ব্যালেন্স: {minutes} মিনিট",
       'trialDaysLeftNotice': "{days} দিন অবশিষ্ট • লোকাল কল ফ্রি",
@@ -1769,7 +1769,7 @@ class AppStrings {
       'voicePreviewOffline': "वॉयस पूर्वावलोकन ऑफ़लाइन अनुपलब्ध है।",
       'voiceSetSuccess':
           "लाइव अनुवाद वॉयस के रूप में \"{voiceId}\" सेट किया गया",
-      'trialRemainingBadge': "⏱️ ट्रायल: {minutes} मिनट शेष",
+      'trialRemainingBadge': "ट्रायल: {minutes} मिनट शेष",
       'balanceExhaustedBadge': "⚠️ बैलेंस समाप्त (0 मिनट)",
       'balanceMinutesBadge': "💎 बैलेंस: {minutes} मिनट",
       'trialDaysLeftNotice': "{days} दिन शेष • लोकल कॉल मुफ्त",
@@ -2469,7 +2469,7 @@ class AppStrings {
           "يتم حفظ شخصية الصوت المفضلة لديك بأمان على جهازك وتطبيقها تلقائيًا على جميع المكالمات المترجمة المباشرة.",
       'voicePreviewOffline': "معاينة الصوت غير متاحة في وضع عدم الاتصال.",
       'voiceSetSuccess': "تم تعيين \"{voiceId}\" كصوت للترجمة المباشرة",
-      'trialRemainingBadge': "⏱️ تجريبي: تبقى {minutes} دقيقة",
+      'trialRemainingBadge': "تجريبي: تبقى {minutes} دقيقة",
       'balanceExhaustedBadge': "⚠️ نفد الرصيد (0 دقيقة)",
       'balanceMinutesBadge': "💎 الرصيد: {minutes} دقيقة",
       'trialDaysLeftNotice': "تبقى {days} يوم • مكالمات محلية مجانية",
@@ -3192,7 +3192,7 @@ class AppStrings {
           "La vista previa de voz no está disponible sin conexión.",
       'voiceSetSuccess':
           "Se estableció \"{voiceId}\" como tu voz de traducción en vivo",
-      'trialRemainingBadge': "⏱️ Prueba: quedan {minutes} mins",
+      'trialRemainingBadge': "Prueba: quedan {minutes} mins",
       'balanceExhaustedBadge': "⚠️ Saldo agotado (0 mins)",
       'balanceMinutesBadge': "💎 Saldo: {minutes} mins",
       'trialDaysLeftNotice': "Quedan {days} días • Llamadas locales gratis",
@@ -3939,7 +3939,7 @@ class AppStrings {
       'voicePreviewOffline': "L'aperçu vocal est indisponible hors ligne.",
       'voiceSetSuccess':
           "\"{voiceId}\" défini comme voix de traduction en direct",
-      'trialRemainingBadge': "⏱️ Essai: {minutes} min restantes",
+      'trialRemainingBadge': "Essai: {minutes} min restantes",
       'balanceExhaustedBadge': "⚠️ Solde épuisé (0 min)",
       'balanceMinutesBadge': "💎 Solde: {minutes} min",
       'trialDaysLeftNotice': "{days} jours restants • Appels locaux gratuits",
@@ -4689,7 +4689,7 @@ class AppStrings {
           "Ihre bevorzugte Sprach-Persona wird sicher auf Ihrem Gerät gespeichert und automatisch auf alle live übersetzten Anrufe angewendet.",
       'voicePreviewOffline': "Die Sprachvorschau ist offline nicht verfügbar.",
       'voiceSetSuccess': "\"{voiceId}\" als Live-Übersetzungsstimme festgelegt",
-      'trialRemainingBadge': "⏱️ Testphase: noch {minutes} Min.",
+      'trialRemainingBadge': "Testphase: noch {minutes} Min.",
       'balanceExhaustedBadge': "⚠️ Guthaben aufgebraucht (0 Min.)",
       'balanceMinutesBadge': "💎 Guthaben: {minutes} Min.",
       'trialDaysLeftNotice': "Noch {days} Tage • Lokale Anrufe kostenlos",
@@ -5241,8 +5241,8 @@ class AppStrings {
       'voicePersonaDesc':
           'This voice is what the other person hears when your speech is translated during a live call.',
       'allowScreenshots': 'Allow screenshots',
-      'allowScreenshotsSub':
-          'Chat and OTP screens are protected by default. Turn this on only while debugging.',
+      'allowScreenshotsSub': 'Protected by default. Enable only for debugging.',
+      'secureMessagingShort': 'Encrypted in transit · Calls use DTLS-SRTP',
     },
     'bn': {
       'updatesTab': 'আপডেট',
@@ -5358,6 +5358,7 @@ class AppStrings {
       'allowScreenshots': 'স্ক্রিনশটের অনুমতি দিন',
       'allowScreenshotsSub':
           'চ্যাট ও OTP স্ক্রিন ডিফল্টভাবে সুরক্ষিত। শুধু ডিবাগ করার সময় চালু করুন।',
+      'secureMessagingShort': 'ট্রান্সপোর্টে এনক্রিপ্টেড · কল DTLS-SRTP',
     },
     'hi': {
       'updatesTab': 'अपडेट',
@@ -5472,6 +5473,7 @@ class AppStrings {
       'allowScreenshots': 'स्क्रीनशॉट की अनुमति दें',
       'allowScreenshotsSub':
           'चैट और OTP स्क्रीन डिफ़ॉल्ट रूप से सुरक्षित हैं। केवल डिबग के समय चालू करें।',
+      'secureMessagingShort': 'ट्रांसपोर्ट में एन्क्रिप्टेड · कॉल DTLS-SRTP',
     },
     'ar': {
       'updatesTab': 'التحديثات',
@@ -5584,6 +5586,7 @@ class AppStrings {
       'allowScreenshots': 'السماح بلقطات الشاشة',
       'allowScreenshotsSub':
           'شاشات الدردشة وOTP محمية افتراضيًا. فعّل هذا فقط أثناء التصحيح.',
+      'secureMessagingShort': 'مشفّرة أثناء النقل · المكالمات تستخدم DTLS-SRTP',
     },
     'es': {
       'updatesTab': 'Novedades',
@@ -5699,6 +5702,7 @@ class AppStrings {
       'allowScreenshots': 'Permitir capturas de pantalla',
       'allowScreenshotsSub':
           'Las pantallas de chat y OTP están protegidas por defecto. Actívalo solo para depurar.',
+      'secureMessagingShort': 'Cifrado en tránsito · Llamadas con DTLS-SRTP',
     },
     'fr': {
       'updatesTab': 'Actus',
@@ -5814,6 +5818,7 @@ class AppStrings {
       'allowScreenshots': 'Autoriser les captures d’écran',
       'allowScreenshotsSub':
           'Les écrans de discussion et OTP sont protégés par défaut. Activez uniquement pour déboguer.',
+      'secureMessagingShort': 'Chiffré en transit · Appels en DTLS-SRTP',
     },
     'de': {
       'updatesTab': 'Updates',
@@ -5931,6 +5936,8 @@ class AppStrings {
       'allowScreenshots': 'Screenshots erlauben',
       'allowScreenshotsSub':
           'Chat- und OTP-Bildschirme sind standardmäßig geschützt. Nur zum Debuggen aktivieren.',
+      'secureMessagingShort':
+          'Verschlüsselt im Transport · Anrufe mit DTLS-SRTP',
     },
   };
 

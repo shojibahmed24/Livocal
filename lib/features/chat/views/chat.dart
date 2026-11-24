@@ -1615,12 +1615,13 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.radiusMd),
-            color:
-                isDarkTheme ? const Color(0xFF182228) : const Color(0xFFFFF9E6),
+            color: isDarkTheme
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.white.withValues(alpha: 0.92),
             border: Border.all(
               color: isDarkTheme
-                  ? const Color(0xFF22304D)
-                  : const Color(0xFFFFE082),
+                  ? Colors.white.withValues(alpha: 0.09)
+                  : const Color(0xFFE2E7F4),
               width: 1,
             ),
           ),
@@ -1629,20 +1630,18 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
               Icon(
                 Icons.lock_rounded,
                 size: 16,
-                color: isDarkTheme
-                    ? const Color(0xFFFFD279)
-                    : const Color(0xFF8D6E63),
+                color: AppColors.accent,
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Messages are encrypted in transit and stored securely. Calls use DTLS-SRTP.',
+                  AppStrings.tr(ref, 'secureMessagingShort'),
                   style: TextStyle(
                     fontSize: 12,
                     height: 1.3,
                     color: isDarkTheme
-                        ? const Color(0xFFFFD279)
-                        : const Color(0xFF5D4037),
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -1652,8 +1651,8 @@ class _ChatStreamState extends ConsumerState<ChatStream> {
                 Icons.chevron_right_rounded,
                 size: 18,
                 color: isDarkTheme
-                    ? const Color(0xFFFFD279)
-                    : const Color(0xFF8D6E63),
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
               ),
             ],
           ),
