@@ -2,23 +2,44 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:livocal/features/home/data/repositories/contact_repository.dart';
 import 'package:livocal/shared/models/contact.dart';
 import 'package:livocal/features/chat/views/chat.dart';
-import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
-import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/shared/utils/app_dialog.dart';
+import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/phone_normalizer.dart';
+import 'package:livocal/theme/app_colors.dart';
 
 final contactsProvider = FutureProvider<List<Contact>>((ref) async {
-  if (await isConnected()) {
-    await IsarDb.refreshContacts();
+  // Never block the picker on the network or a permission prompt: show the
+  // cached list immediately and refresh in the background.
+  List<Contact> cached = const [];
+  try {
+    cached = await IsarDb.getContacts().timeout(const Duration(seconds: 8));
+  } catch (e) {
+    debugPrint('[contactsProvider] cache read failed: $e');
   }
 
-  return IsarDb.getContacts();
+  if (cached.isEmpty) {
+    try {
+      await IsarDb.refreshContacts().timeout(const Duration(seconds: 10));
+    } catch (e) {
+      debugPrint('[contactsProvider] first refresh failed: $e');
+    }
+    try {
+      return await IsarDb.getContacts().timeout(const Duration(seconds: 8));
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  unawaited(IsarDb.refreshContacts());
+  return cached;
 });
 
 final contactPickerControllerProvider =
@@ -62,11 +83,61 @@ class ContactPickerController extends StateNotifier<List<Contact>> {
     ref.read(contactsRepositoryProvider).openContacts();
   }
 
-  Future<bool> requestContactsPermission() async {
-    final granted =
-        await ref.read(contactsRepositoryProvider).requestPermission();
-    if (granted) refreshContactsList();
-    return granted;
+  String _s(String key) =>
+      AppStrings.get(key, ref.read(appLocaleProvider).languageCode);
+
+  /// Asks for contacts access with a way back from a permanent denial.
+  Future<bool> requestContactsPermission(BuildContext context) async {
+    try {
+      final status = await Permission.contacts.status;
+      if (status.isGranted || status.isLimited) {
+        refreshContactsList();
+        return true;
+      }
+
+      if (status.isPermanentlyDenied) {
+        if (context.mounted) await _showOpenSettingsDialog(context);
+        return false;
+      }
+
+      final result = await Permission.contacts.request();
+      if (result.isGranted || result.isLimited) {
+        refreshContactsList();
+        return true;
+      }
+      if (result.isPermanentlyDenied && context.mounted) {
+        await _showOpenSettingsDialog(context);
+      }
+      return false;
+    } catch (e) {
+      debugPrint(
+          '[ContactPickerController] requestContactsPermission error: $e');
+      return false;
+    }
+  }
+
+  Future<void> _showOpenSettingsDialog(BuildContext context) async {
+    await showAppDialog(
+      context: context,
+      title: _s('contactsPermissionOffTitle'),
+      icon: Icons.lock_outline_rounded,
+      iconColor: AppColors.primary,
+      contentText: _s('contactsPermissionDenied'),
+      actions: [
+        AppDialogAction(
+          label: _s('cancel'),
+          onPressed: () => Navigator.pop(context),
+        ),
+        AppDialogAction(
+          label: _s('openSettings'),
+          isPrimary: true,
+          onPressed: () {
+            Navigator.pop(context);
+            openAppSettings();
+          },
+        ),
+      ],
+    );
   }
 
   void refreshContactsList() {
@@ -145,10 +216,27 @@ class ContactPickerController extends StateNotifier<List<Contact>> {
     );
   }
 
-  void showHelp() {
-    launchUrl(
-      Uri.parse(AppConfig.missingContactsHelpUrl),
-      mode: LaunchMode.externalApplication,
+  void showHelp(BuildContext context) {
+    showAppDialog(
+      context: context,
+      title: _s('contactsHelp'),
+      icon: Icons.contacts_rounded,
+      iconColor: AppColors.primary,
+      contentText: _s('contactsPermissionBody'),
+      actions: [
+        AppDialogAction(
+          label: _s('cancel'),
+          onPressed: () => Navigator.pop(context),
+        ),
+        AppDialogAction(
+          label: _s('openSettings'),
+          isPrimary: true,
+          onPressed: () {
+            Navigator.pop(context);
+            openAppSettings();
+          },
+        ),
+      ],
     );
   }
 

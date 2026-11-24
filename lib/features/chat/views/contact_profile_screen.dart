@@ -14,6 +14,7 @@ import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/ui/livocal_avatar.dart';
 import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/services/mute_service.dart';
+import 'package:livocal/shared/utils/phone_normalizer.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
@@ -123,6 +124,16 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
     } catch (e, st) {
       debugPrint('[ContactProfileScreen] _loadMediaCount error: $e\n$st');
     }
+  }
+
+  /// Legacy profiles stored numbers with a duplicate trunk zero (+880 0…).
+  /// Normalise for display so the hero always shows a clean E.164 number.
+  String get _displayPhone {
+    final parts = PhoneNormalizer.parse(
+      countryCode: '880',
+      input: widget.other.phone.rawNumber,
+    );
+    return parts?.e164 ?? widget.other.phone.getFormattedNumber();
   }
 
   @override
@@ -302,45 +313,80 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                 ),
                 child: SafeArea(
                   bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(22, 40, 22, 18),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        LivocalAvatar(
-                          name: widget.contactName,
-                          imageUrl: widget.other.avatarUrl,
-                          size: 92,
-                          ring: AvatarRing.brand,
-                        ),
-                        const SizedBox(height: 14),
-                        Text(
-                          widget.contactName,
-                          style: TextStyle(
-                            fontFamily: CustomTextTheme.display,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.3,
-                            color: isDark
-                                ? AppColors.darkTextPrimary
-                                : AppColors.lightTextPrimary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.other.phone.getFormattedNumber(),
-                          style: TextStyle(
-                            fontSize: 14.5,
-                            color: isDark
-                                ? AppColors.darkTextSecondary
-                                : AppColors.lightTextSecondary,
+                  child: Stack(
+                    children: [
+                      // Soft brand glow behind the avatar.
+                      Positioned(
+                        top: -30,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Container(
+                            width: 250,
+                            height: 250,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  AppColors.primary
+                                      .withValues(alpha: isDark ? 0.28 : 0.16),
+                                  AppColors.primary.withValues(alpha: 0),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 46, 24, 18),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              LivocalAvatar(
+                                name: widget.contactName,
+                                imageUrl: widget.other.avatarUrl,
+                                size: 104,
+                                ring: AvatarRing.brand,
+                              ),
+                              const SizedBox(height: 14),
+                              Text(
+                                widget.contactName,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontFamily: CustomTextTheme.display,
+                                  fontSize: 23,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.3,
+                                  color: isDark
+                                      ? AppColors.darkTextPrimary
+                                      : AppColors.lightTextPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                _displayPhone,
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: CustomTextTheme.body,
+                                  fontSize: 14,
+                                  letterSpacing: 0.2,
+                                  color: isDark
+                                      ? AppColors.darkTextSecondary
+                                      : AppColors.lightTextSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -467,19 +513,32 @@ class _ContactProfileScreenState extends ConsumerState<ContactProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    AppStrings.tr(
-                      ref,
-                      'onlineStatus',
-                      args: {'status': widget.other.activityStatus.value},
-                    ),
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: widget.other.activityStatus ==
-                              UserActivityStatus.online
-                          ? AppColors.primary
-                          : Colors.grey,
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: widget.other.activityStatus ==
+                                  UserActivityStatus.online
+                              ? AppColors.accent
+                              : AppColors.grey,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        widget.other.activityStatus.value,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: widget.other.activityStatus ==
+                                  UserActivityStatus.online
+                              ? AppColors.primary
+                              : AppColors.grey,
+                        ),
+                      ),
+                    ],
                   ),
                   const Divider(height: 24),
                   Row(

@@ -163,9 +163,9 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                           .copyWith(color: Colors.white),
                     )),
                 PopupMenuItem(
-                    onTap: ref
+                    onTap: () => ref
                         .read(contactPickerControllerProvider.notifier)
-                        .showHelp,
+                        .showHelp(context),
                     child: Text(
                       AppStrings.tr(ref, 'help'),
                       style: popupMenuTextStyle,
@@ -419,9 +419,9 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                       ),
                     ),
                     InkWell(
-                      onTap: ref
+                      onTap: () => ref
                           .read(contactPickerControllerProvider.notifier)
-                          .showHelp,
+                          .showHelp(context),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16.0,
@@ -847,7 +847,7 @@ class _ContactsEmptyState extends StatelessWidget {
   Future<void> _allowAccess(BuildContext context) async {
     final granted = await ref
         .read(contactPickerControllerProvider.notifier)
-        .requestContactsPermission();
+        .requestContactsPermission(context);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

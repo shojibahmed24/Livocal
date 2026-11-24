@@ -5236,6 +5236,10 @@ class AppStrings {
       'legalConsentShort': 'By continuing you agree to our policies.',
       'legalPrivacyPolicy': 'Privacy Policy',
       'legalTermsOfService': 'Terms of Service',
+      'contactsPermissionOffTitle': 'Contacts permission is off',
+      'openSettings': 'Open settings',
+      'voicePersonaDesc':
+          'This voice is what the other person hears when your speech is translated during a live call.',
     },
     'bn': {
       'updatesTab': 'আপডেট',
@@ -5344,6 +5348,10 @@ class AppStrings {
           'চালিয়ে যাওয়ার মাধ্যমে আপনি আমাদের নীতিমালায় সম্মত হচ্ছেন।',
       'legalPrivacyPolicy': 'গোপনীয়তা নীতি',
       'legalTermsOfService': 'ব্যবহারের শর্তাবলী',
+      'contactsPermissionOffTitle': 'কন্টাক্ট অনুমতি বন্ধ আছে',
+      'openSettings': 'সেটিংস খুলুন',
+      'voicePersonaDesc':
+          'লাইভ কলে আপনার কথা অনুবাদ হয়ে অন্য প্রান্তের মানুষ এই কণ্ঠেই শুনবে।',
     },
     'hi': {
       'updatesTab': 'अपडेट',
@@ -5451,6 +5459,10 @@ class AppStrings {
       'legalConsentShort': 'जारी रखकर आप हमारी नीतियों से सहमत होते हैं।',
       'legalPrivacyPolicy': 'गोपनीयता नीति',
       'legalTermsOfService': 'सेवा की शर्तें',
+      'contactsPermissionOffTitle': 'संपर्क अनुमति बंद है',
+      'openSettings': 'सेटिंग्स खोलें',
+      'voicePersonaDesc':
+          'लाइव कॉल में आपकी बात अनुवाद होकर सामने वाला इसी आवाज़ में सुनेगा।',
     },
     'ar': {
       'updatesTab': 'التحديثات',
@@ -5556,6 +5568,10 @@ class AppStrings {
       'legalConsentShort': 'بالمتابعة فإنك توافق على سياساتنا.',
       'legalPrivacyPolicy': 'سياسة الخصوصية',
       'legalTermsOfService': 'شروط الخدمة',
+      'contactsPermissionOffTitle': 'إذن جهات الاتصال مغلق',
+      'openSettings': 'فتح الإعدادات',
+      'voicePersonaDesc':
+          'هذا هو الصوت الذي يسمعه الطرف الآخر عند ترجمة كلامك في المكالمة الحية.',
     },
     'es': {
       'updatesTab': 'Novedades',
@@ -5664,6 +5680,10 @@ class AppStrings {
       'legalConsentShort': 'Al continuar aceptas nuestras políticas.',
       'legalPrivacyPolicy': 'Política de privacidad',
       'legalTermsOfService': 'Términos del servicio',
+      'contactsPermissionOffTitle': 'El permiso de contactos está desactivado',
+      'openSettings': 'Abrir ajustes',
+      'voicePersonaDesc':
+          'Esta es la voz que oirá la otra persona cuando se traduzca tu voz en una llamada.',
     },
     'fr': {
       'updatesTab': 'Actus',
@@ -5771,6 +5791,11 @@ class AppStrings {
       'legalConsentShort': 'En continuant, vous acceptez nos politiques.',
       'legalPrivacyPolicy': 'Politique de confidentialité',
       'legalTermsOfService': 'Conditions d’utilisation',
+      'contactsPermissionOffTitle':
+          'L’autorisation des contacts est désactivée',
+      'openSettings': 'Ouvrir les réglages',
+      'voicePersonaDesc':
+          'C’est la voix que l’autre personne entendra lorsque votre parole sera traduite.',
     },
     'de': {
       'updatesTab': 'Updates',
@@ -5881,6 +5906,10 @@ class AppStrings {
           'Wenn du fortfährst, stimmst du unseren Richtlinien zu.',
       'legalPrivacyPolicy': 'Datenschutzerklärung',
       'legalTermsOfService': 'Nutzungsbedingungen',
+      'contactsPermissionOffTitle': 'Kontaktberechtigung ist aus',
+      'openSettings': 'Einstellungen öffnen',
+      'voicePersonaDesc':
+          'Diese Stimme hört die andere Person, wenn deine Sprache im Anruf übersetzt wird.',
     },
   };
 

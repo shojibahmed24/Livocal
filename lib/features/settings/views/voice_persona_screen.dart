@@ -295,7 +295,8 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
       _currentlyPlayingId = null;
       _isLoadingAudio = false;
     });
-    final synced = await CallRepository.setMyLanguageCode(langCode, isExplicit: true);
+    final synced =
+        await CallRepository.setMyLanguageCode(langCode, isExplicit: true);
     if (!synced && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -371,8 +372,7 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
           if (response.statusCode == 200) {
             final json = jsonDecode(response.body);
             final parts = json['candidates']?[0]?['content']?['parts'] as List?;
-            final inlineData = parts?.firstWhere(
-                (p) => p['inlineData'] != null,
+            final inlineData = parts?.firstWhere((p) => p['inlineData'] != null,
                 orElse: () => null)?['inlineData'];
             final base64Audio = inlineData?['data'] as String?;
             if (base64Audio != null && base64Audio.isNotEmpty) {
@@ -482,7 +482,7 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
   }) {
     final isSelected =
         GeminiLiveTranslator.normalizeVoiceName(_selectedVoice).toLowerCase() ==
-        GeminiLiveTranslator.normalizeVoiceName(persona.id).toLowerCase();
+            GeminiLiveTranslator.normalizeVoiceName(persona.id).toLowerCase();
     final isPlaying = _currentlyPlayingId == persona.id;
 
     return AnimatedContainer(
@@ -685,9 +685,8 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
                                     ? Icons.stop_rounded
                                     : Icons.play_arrow_rounded,
                                 size: 18,
-                                color: isPlaying
-                                    ? persona.accentColor
-                                    : textColor,
+                                color:
+                                    isPlaying ? persona.accentColor : textColor,
                               ),
                             const SizedBox(width: 6),
                             Text(
@@ -697,9 +696,8 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
                               style: TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w600,
-                                color: isPlaying
-                                    ? persona.accentColor
-                                    : textColor,
+                                color:
+                                    isPlaying ? persona.accentColor : textColor,
                               ),
                             ),
                           ],
@@ -716,9 +714,8 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
                         fontSize: 11,
                         fontStyle: FontStyle.italic,
                         color: isSelected ? primary : subtitleColor,
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.normal,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                   ],
@@ -812,9 +809,7 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        isBangla
-                            ? 'ফোন বা ভিওআইপি কলে অপর প্রান্তের কথা যে কণ্ঠস্বরে বাংলায় অনুবাদ শুনতে চান, তা পছন্দ করুন।'
-                            : 'Select which voice persona speaks translated speech to you during live phone and VoIP calls.',
+                        AppStrings.tr(ref, 'voicePersonaDesc'),
                         style: TextStyle(
                           fontSize: 12.5,
                           color: subtitleColor,
@@ -886,8 +881,7 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
                     color: isSelected
                         ? Colors.white
                         : (isDark ? Colors.white70 : Colors.black87),
-                    fontWeight:
-                        isSelected ? FontWeight.bold : FontWeight.w500,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                     fontSize: 12.5,
                   ),
                   shape: RoundedRectangleBorder(
@@ -915,12 +909,11 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Row(
               children: [
-                const Icon(Icons.female_rounded, color: Color(0xFFFF6B8B), size: 18),
+                const Icon(Icons.female_rounded,
+                    color: Color(0xFFFF6B8B), size: 18),
                 const SizedBox(width: 6),
                 Text(
-                  isBangla
-                      ? 'নারী কণ্ঠস্বর (FEMALE VOICES)'
-                      : 'FEMALE VOICES',
+                  isBangla ? 'নারী কণ্ঠস্বর (FEMALE VOICES)' : 'FEMALE VOICES',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -950,12 +943,11 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Row(
               children: [
-                const Icon(Icons.male_rounded, color: Color(0xFF5B8DEF), size: 18),
+                const Icon(Icons.male_rounded,
+                    color: Color(0xFF5B8DEF), size: 18),
                 const SizedBox(width: 6),
                 Text(
-                  isBangla
-                      ? 'পুরুষ কণ্ঠস্বর (MALE VOICES)'
-                      : 'MALE VOICES',
+                  isBangla ? 'পুরুষ কণ্ঠস্বর (MALE VOICES)' : 'MALE VOICES',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,

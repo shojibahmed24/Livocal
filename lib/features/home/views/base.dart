@@ -1592,72 +1592,81 @@ class RecentChatWidget extends StatelessWidget {
         ),
       ),
       subtitle: _buildSubtitle(context, isDark, hasUnread),
-      trailing: Padding(
-        padding: const EdgeInsets.only(top: 2.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RecentChatTime(
-              chat: chat,
-              hasUnread: hasUnread,
-            ),
-            const SizedBox(height: 5.0),
-            Builder(
-              builder: (context) {
-                final isMuted = MuteService.isContactMuted(chat.user.id);
-                return Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (isMuted) ...[
-                      const Icon(
-                        Icons.volume_off_rounded,
-                        size: 15,
-                        color: Color(0xFF8A96B2),
-                      ),
-                      const SizedBox(width: 4),
-                    ],
-                    if (hasUnread)
-                      Container(
-                        constraints:
-                            const BoxConstraints(minWidth: 20, minHeight: 20),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6.5, vertical: 2.0),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF5B6CF9), Color(0xFF00D4C8)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF00D4C8)
-                                  .withValues(alpha: 0.35),
-                              blurRadius: 4,
-                              offset: const Offset(0, 1),
+      trailing: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 92),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 2.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerRight,
+                child: RecentChatTime(
+                  chat: chat,
+                  hasUnread: hasUnread,
+                ),
+              ),
+              const SizedBox(height: 5.0),
+              Builder(
+                builder: (context) {
+                  final isMuted = MuteService.isContactMuted(chat.user.id);
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isMuted) ...[
+                        const Icon(
+                          Icons.volume_off_rounded,
+                          size: 15,
+                          color: Color(0xFF8A96B2),
+                        ),
+                        const SizedBox(width: 4),
+                      ],
+                      if (hasUnread)
+                        Container(
+                          constraints:
+                              const BoxConstraints(minWidth: 20, minHeight: 20),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6.5, vertical: 2.0),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF5B6CF9), Color(0xFF00D4C8)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
-                          ],
-                        ),
-                        child: Text(
-                          chat.unreadCount > 99 ? '99+' : '${chat.unreadCount}',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.2,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF00D4C8)
+                                    .withValues(alpha: 0.35),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
                           ),
-                        ),
-                      )
-                    else if (!isMuted)
-                      const SizedBox(height: 20.0),
-                  ],
-                );
-              },
-            ),
-          ],
+                          child: Text(
+                            chat.unreadCount > 99
+                                ? '99+'
+                                : '${chat.unreadCount}',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                        )
+                      else if (!isMuted)
+                        const SizedBox(height: 20.0),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
