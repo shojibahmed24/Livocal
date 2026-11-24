@@ -229,6 +229,37 @@ const pushLimiter = rateLimit({
   message: { error: 'Too many push notification requests. Please slow down.' },
 });
 
+// Per-user quotas for cost-bearing endpoints, keyed by the verified Firebase UID
+// so a modified client cannot rotate IPs to keep spending the same budget.
+const makeUserLimiter = ({ windowMs, max, message }) =>
+  rateLimit({
+    windowMs,
+    max,
+    keyGenerator: (req) => req.user?.uid || req.ip,
+    validate: { keyGeneratorIpFallback: false },
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: message },
+  });
+
+const translateLimiter = makeUserLimiter({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: 'Too many translation requests. Please slow down.',
+});
+
+const contactsLimiter = makeUserLimiter({
+  windowMs: 60 * 60 * 1000,
+  max: 30,
+  message: 'Contact matching limit reached. Try again later.',
+});
+
+const voicePreviewLimiter = makeUserLimiter({
+  windowMs: 60 * 1000,
+  max: 6,
+  message: 'Too many voice previews. Please slow down.',
+});
+
 /**
  * Strict Zero-Trust Firebase ID Token Authentication Middleware.
  * No hardcoded secrets, no x-api-secret fallback, no environment bypass.
@@ -988,20 +1019,39 @@ app.get('/api/wallet/balance', authenticateRequest, async (req, res) => {
 // In-call 60s Heartbeat Minute Metering endpoint (Authoritative atomic transaction)
 app.post('/api/wallet/deduct-minute', authenticateRequest, async (req, res) => {
   const callerUid = req.user.uid;
-  const { callId, callerId, calleeId, isTranslatedCall, durationSeconds, minuteIndex } = req.body || {};
+  const { callId } = req.body || {};
 
-  // Validate callId format if provided
-  if (callId && (typeof callId !== 'string' || !/^[a-zA-Z0-9_\-]{6,128}$/.test(callId.trim()))) {
-    return res.status(400).json({ error: 'Invalid callId format' });
+  if (!callId || typeof callId !== 'string' || !/^[a-zA-Z0-9_\-]{6,128}$/.test(callId.trim())) {
+    return res.status(400).json({ error: 'Valid callId is required' });
   }
 
-  // Security: only authenticated caller can deduct from their own wallet
-  if (callerId && callerId !== callerUid) {
-    return res.status(403).json({ error: 'Forbidden: Caller ID mismatch' });
+  if (!firestoreDb) {
+    return res.status(503).json({ error: 'Firestore database service is currently unavailable' });
   }
 
-  // Free local call bypass: Same-language or non-translated calls are 100% free!
-  if (!isTranslatedCall) {
+  const cleanCallId = callId.trim();
+
+  // Server-side truth: ownership and the translation flag come from Firestore,
+  // never from the request body (a modified client must not be able to skip or
+  // replay billing by lying about the call).
+  let callData;
+  try {
+    const callSnap = await firestoreDb.collection('calls').doc(cleanCallId).get();
+    if (!callSnap.exists) {
+      return res.status(404).json({ error: 'Call session not found' });
+    }
+    callData = callSnap.data() || {};
+  } catch (verifyErr) {
+    console.error('[SaaS Billing] Call verification failed:', verifyErr.message);
+    return res.status(500).json({ error: 'Failed to verify call session' });
+  }
+
+  if (callData.callerId !== callerUid) {
+    return res.status(403).json({ error: 'Forbidden: caller mismatch' });
+  }
+
+  // Free local call bypass: translation explicitly disabled for this call.
+  if (callData.translationEnabled === false) {
     return res.json({
       success: true,
       deducted: 0,
@@ -1011,9 +1061,45 @@ app.post('/api/wallet/deduct-minute', authenticateRequest, async (req, res) => {
     });
   }
 
-  if (!firestoreDb) {
-    return res.status(503).json({ error: 'Firestore database service is currently unavailable' });
+  // Bound the billable minutes by the call's real age so replaying this call
+  // cannot drain or fabricate minutes beyond the elapsed time.
+  const parsedCreatedAt = (() => {
+    const value = callData.createdAt;
+    if (!value) return null;
+    if (typeof value?.toDate === 'function') return value.toDate().getTime();
+    if (typeof value === 'string') {
+      const ms = Date.parse(value);
+      return Number.isFinite(ms) ? ms : null;
+    }
+    return null;
+  })();
+  const elapsedMinutes = Math.floor(
+    (Date.now() - (parsedCreatedAt ?? Date.now())) / 60000,
+  ) + 1; // Telecom model: first minute is billed on connect
+
+  let alreadyBilled = 0;
+  try {
+    const billedSnap = await firestoreDb
+      .collection('call_billing_records')
+      .where('callId', '==', cleanCallId)
+      .get();
+    alreadyBilled = billedSnap.size;
+  } catch (countErr) {
+    console.error('[SaaS Billing] Billing lookup failed:', countErr.message);
+    return res.status(500).json({ error: 'Failed to read billing records' });
   }
+
+  if (alreadyBilled >= elapsedMinutes) {
+    return res.json({
+      success: true,
+      deducted: 0,
+      alreadyBilled: true,
+      remainingMinutes: null,
+      message: 'ALREADY_BILLED_FOR_THIS_MINUTE',
+    });
+  }
+
+  const billingMinuteIndex = alreadyBilled + 1;
 
   try {
     const walletRef = firestoreDb.collection('users').doc(callerUid).collection('wallet').doc('current');
@@ -1061,22 +1147,25 @@ app.post('/api/wallet/deduct-minute', authenticateRequest, async (req, res) => {
         updatedAt: now.toISOString(),
       });
 
-      // Audit ledger record in call_billing_records
-      const billingRef = firestoreDb.collection('call_billing_records').doc();
+      // Audit ledger record in call_billing_records (deterministic id prevents
+      // double billing when two requests race for the same minute).
+      const billingRef = firestoreDb
+        .collection('call_billing_records')
+        .doc(`${cleanCallId}_${billingMinuteIndex}`);
       const geminiCostUsd = 0.035; // Gemini 3.5 Live audio cost per minute (~$0.035)
       const retailBdt = 20.0;     // Freelancer retail price per minute (~৳20)
       const usdToBdt = 120.0;
       const costBdt = geminiCostUsd * usdToBdt; // ~4.2 BDT
       const netProfitBdt = retailBdt - costBdt; // ~15.8 BDT per minute (~79% profit margin)
 
-      t.set(billingRef, {
+      t.create(billingRef, {
         recordId: billingRef.id,
-        callId: callId || 'unknown',
+        callId: cleanCallId,
         callerId: callerUid,
-        calleeId: calleeId || '',
+        calleeId: callData.calleeId || '',
         isTranslatedCall: true,
-        durationSeconds: durationSeconds || 60,
-        minuteIndex: minuteIndex || newTotalUsed,
+        durationSeconds: 60,
+        minuteIndex: billingMinuteIndex,
         geminiCostUsd,
         retailBdt,
         costBdt,
@@ -1102,6 +1191,17 @@ app.post('/api/wallet/deduct-minute', authenticateRequest, async (req, res) => {
     console.log(`[SaaS Billing] Deducted 1 min from ${callerUid} for call ${callId}. Remaining: ${result.remainingMinutes}`);
     return res.json(result);
   } catch (err) {
+    const alreadyExists =
+      err?.code === 6 || /ALREADY_EXISTS/.test(err?.message || '');
+    if (alreadyExists) {
+      return res.json({
+        success: true,
+        deducted: 0,
+        alreadyBilled: true,
+        remainingMinutes: null,
+        message: 'ALREADY_BILLED_FOR_THIS_MINUTE',
+      });
+    }
     console.error('[SaaS Billing] Error deducting minute:', err.message);
     return res.status(500).json({ error: 'Failed to process minute deduction', message: err.message });
   }
@@ -3244,6 +3344,7 @@ app.post(
   '/api/contacts/match',
   apiLimiter,
   authenticateRequest,
+  contactsLimiter,
   validateBody(MatchContactsSchema),
   async (req, res) => {
     try {
@@ -3301,6 +3402,7 @@ app.post(
   '/api/translate',
   apiLimiter,
   authenticateRequest,
+  translateLimiter,
   validateBody(TranslateSchema),
   async (req, res) => {
     const { text, sourceLang, targetLang } = req.body;
@@ -3353,6 +3455,7 @@ app.post(
   '/api/voice-preview',
   apiLimiter,
   authenticateRequest,
+  voicePreviewLimiter,
   async (req, res) => {
     const { voice, text, model: requestedModel } = req.body || {};
     const rawVoice = (voice && ALLOWED_VOICES.has(voice)) ? voice : 'Aoede';
@@ -4019,6 +4122,33 @@ wss.on('connection', (clientWs, req) => {
         authenticatedUid = decodedUser.uid;
         clearTimeout(preAuthTimeout);
         const userSessions = activeUserSessions.get(authenticatedUid) || new Set();
+
+        // One live translated call per account: close any earlier verified
+        // session so the latest device wins (reconnects are not blocked because
+        // pre-handshake sockets are ignored).
+        for (const existingWs of [...userSessions]) {
+          if (existingWs === clientWs) continue;
+          const stillOpen = existingWs.readyState === WebSocket.OPEN;
+          if (stillOpen && existingWs._livocalLiveVerified === true) {
+            console.warn(
+              `[${clientId}] Closing previous live session for ${authenticatedUid} (one active call per account).`,
+            );
+            try {
+              existingWs.send(
+                JSON.stringify({
+                  type: 'error',
+                  code: 'ANOTHER_SESSION_ACTIVE',
+                  message:
+                    'Another live translation session started on this account.',
+                }),
+              );
+              existingWs.close(4409, 'ANOTHER_SESSION_ACTIVE');
+            } catch (closeErr) {
+              console.warn(`[${clientId}] Could not close previous session:`, closeErr.message);
+            }
+            userSessions.delete(existingWs);
+          }
+        }
         if (userSessions.size >= 2) {
           console.warn(`[${clientId}] Rate limit: User ${authenticatedUid} reached max concurrent sessions (${userSessions.size}).`);
           clientWs.send(
@@ -4163,6 +4293,7 @@ wss.on('connection', (clientWs, req) => {
         isVerifiedParticipant = true;
         isSetupComplete = true;
         isSetupInProgress = false;
+        clientWs._livocalLiveVerified = true;
 
         // Reconnect session linking (Role-Guarded):
         // Only the paying caller whose UID matches existingSession.callerUid may claim the billing socket!
