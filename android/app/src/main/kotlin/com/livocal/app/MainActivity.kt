@@ -5,8 +5,11 @@ import android.os.Bundle
 import android.view.WindowManager
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
 
 class MainActivity: FlutterFragmentActivity() {
+    private var secureScreenChannel: MethodChannel? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
@@ -29,5 +32,30 @@ class MainActivity: FlutterFragmentActivity() {
         if (!flutterEngine.plugins.has(NativeBridgePlugin::class.java)) {
             flutterEngine.plugins.add(NativeBridgePlugin())
         }
+
+        // Screenshot / screen-recording protection (FLAG_SECURE), toggled from Dart
+        secureScreenChannel = MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            "com.livocal.app/secure_screen"
+        )
+        secureScreenChannel?.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "enable" -> {
+                    window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                    result.success(true)
+                }
+                "disable" -> {
+                    window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                    result.success(true)
+                }
+                else -> result.notImplemented()
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        secureScreenChannel?.setMethodCallHandler(null)
+        secureScreenChannel = null
+        super.onDestroy()
     }
 }

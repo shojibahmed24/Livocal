@@ -6,6 +6,7 @@ import 'package:livocal/features/auth/domain/auth_service.dart';
 import 'package:livocal/features/auth/controllers/verification_controller.dart';
 import 'package:livocal/features/auth/views/login.dart';
 
+import 'package:livocal/shared/services/screen_security.dart';
 import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
@@ -32,6 +33,8 @@ class VerificationPage extends ConsumerStatefulWidget {
 class _VerificationPageState extends ConsumerState<VerificationPage> {
   @override
   void initState() {
+    // Block screenshots / screen recording of the OTP screen.
+    ScreenSecurity.enable();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(verificationControllerProvider).init(
             context,
@@ -40,6 +43,12 @@ class _VerificationPageState extends ConsumerState<VerificationPage> {
     });
 
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    ScreenSecurity.disable();
+    super.dispose();
   }
 
   @override

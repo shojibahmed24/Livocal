@@ -136,3 +136,27 @@ Then repeat with `{}` to delete the field. The endpoint is idempotent.
 Note: builds older than this change still send `phone` on register/update, so
 registration from an old APK will be rejected by the new rules. Install the
 current APK on every test device before deploying rules.
+
+## 8. Release build hardening
+
+Use the release script instead of a bare `flutter build`:
+
+```
+pwsh tool/build_release.ps1            # app bundle (Play)
+pwsh tool/build_release.ps1 -Target apk
+```
+
+It passes `--obfuscate --split-debug-info` and sets `RELAY_URL`, then prints the
+symbol folder. Keep the symbol folder private and use it to de-obfuscate
+Crashlytics traces with `flutter symbolize`.
+
+Checklist:
+- `android/key.properties` + upload keystore exist (release builds refuse to
+  fall back to debug signing).
+- Play App Signing enabled before the first upload.
+- Crashlytics collection on (already enabled for non-debug builds in main.dart).
+- Screenshot protection: OTP and chat screens call `ScreenSecurity.enable()`,
+  which sets Android `FLAG_SECURE`.
+
+Not covered yet: root/emulator detection and certificate pinning. Both are
+optional hardening; evaluate after the first production release.

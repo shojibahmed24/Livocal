@@ -27,6 +27,7 @@ import 'package:livocal/features/settings/services/block_service.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/services/screen_security.dart';
 import 'package:livocal/shared/utils/abc.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
@@ -64,10 +65,19 @@ class ChatPage extends ConsumerStatefulWidget {
 class _ChatPageState extends ConsumerState<ChatPage> {
   @override
   void initState() {
+    // Chat content is private: block screenshots, recording and the
+    // app-switcher preview while this screen (or a viewer opened from it) is up.
+    ScreenSecurity.enable();
     ref
         .read(chatControllerProvider.notifier)
         .initUsers(widget.self, widget.other, widget.otherUserContactName);
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    ScreenSecurity.disable();
+    super.dispose();
   }
 
   @override
