@@ -237,7 +237,8 @@ class AppStrings {
       'reactionNotificationsSub':
           "Show notifications for reactions to messages you send",
       'readReceipts': "Read receipts",
-      'readReceiptsSub': "If turned off, you won\\",
+      'readReceiptsSub':
+          "If turned off, you won't send or receive read receipts.",
       'received': "received",
       'receivedTraffic': "• Received: ",
       'requestAccountInfo': "Request account info",
