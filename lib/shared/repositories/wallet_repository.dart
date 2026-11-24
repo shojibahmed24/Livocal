@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:livocal/shared/models/user_wallet.dart';
+import 'package:livocal/shared/services/app_check_service.dart';
 import 'package:livocal/shared/services/device_fingerprint_service.dart';
 import 'package:livocal/shared/constants/app_config.dart';
 
@@ -15,7 +16,8 @@ final walletRepositoryProvider = Provider<WalletRepository>((ref) {
   );
 });
 
-final walletStreamProvider = StreamProvider.family<UserWallet, String>((ref, userId) {
+final walletStreamProvider =
+    StreamProvider.family<UserWallet, String>((ref, userId) {
   return ref.watch(walletRepositoryProvider).watchWallet(userId);
 });
 
@@ -30,7 +32,11 @@ class WalletRepository {
 
   DocumentReference<Map<String, dynamic>>? _walletRef(String userId) {
     if (firestore == null) return null;
-    return firestore!.collection('users').doc(userId).collection('wallet').doc('current');
+    return firestore!
+        .collection('users')
+        .doc(userId)
+        .collection('wallet')
+        .doc('current');
   }
 
   /// Streams realtime wallet balance & trial state for the authenticated user.
@@ -75,29 +81,35 @@ class WalletRepository {
 
       if (idToken != null && idToken.isNotEmpty) {
         final uri = Uri.parse(AppConfig.walletInitOrGetUrl);
-        final response = await http.post(
-          uri,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $idToken',
-          },
-          body: jsonEncode({
-            'deviceId': deviceId,
-            'phone': phone ?? currentUser?.phoneNumber ?? '',
-          }),
-        ).timeout(const Duration(seconds: 10));
+        final response = await http
+            .post(
+              uri,
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $idToken',
+                'X-Firebase-AppCheck': await AppCheckService.token() ?? '',
+              },
+              body: jsonEncode({
+                'deviceId': deviceId,
+                'phone': phone ?? currentUser?.phoneNumber ?? '',
+              }),
+            )
+            .timeout(const Duration(seconds: 10));
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
           if (data['wallet'] != null) {
-            return UserWallet.fromMap(Map<String, dynamic>.from(data['wallet']));
+            return UserWallet.fromMap(
+                Map<String, dynamic>.from(data['wallet']));
           }
         } else {
-          debugPrint('[WalletRepository] Backend init returned status ${response.statusCode}: ${response.body}');
+          debugPrint(
+              '[WalletRepository] Backend init returned status ${response.statusCode}: ${response.body}');
         }
       }
     } catch (e) {
-      debugPrint('[WalletRepository] Backend wallet init failed, checking local Firestore: $e');
+      debugPrint(
+          '[WalletRepository] Backend wallet init failed, checking local Firestore: $e');
     }
 
     // Direct Firestore fallback read
@@ -140,21 +152,24 @@ class WalletRepository {
       final idToken = await currentUser?.getIdToken();
       if (idToken != null) {
         final url = Uri.parse(AppConfig.walletDeductMinuteUrl);
-        final response = await http.post(
-          url,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $idToken',
-          },
-          body: jsonEncode({
-            'callId': callId,
-            'callerId': callerId,
-            'calleeId': calleeId ?? '',
-            'isTranslatedCall': true,
-            'durationSeconds': durationSeconds,
-            'minuteIndex': minuteIndex,
-          }),
-        ).timeout(const Duration(seconds: 10));
+        final response = await http
+            .post(
+              url,
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $idToken',
+                'X-Firebase-AppCheck': await AppCheckService.token() ?? '',
+              },
+              body: jsonEncode({
+                'callId': callId,
+                'callerId': callerId,
+                'calleeId': calleeId ?? '',
+                'isTranslatedCall': true,
+                'durationSeconds': durationSeconds,
+                'minuteIndex': minuteIndex,
+              }),
+            )
+            .timeout(const Duration(seconds: 10));
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
@@ -202,19 +217,22 @@ class WalletRepository {
       final idToken = await currentUser?.getIdToken();
       if (idToken != null) {
         final url = Uri.parse(AppConfig.walletCallEndUrl);
-        await http.post(
-          url,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $idToken',
-          },
-          body: jsonEncode({
-            'callId': callId,
-            'totalDurationSeconds': totalDurationSeconds,
-            'totalMinutesBilled': totalMinutesBilled,
-            'isTranslatedCall': isTranslatedCall,
-          }),
-        ).timeout(const Duration(seconds: 8));
+        await http
+            .post(
+              url,
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $idToken',
+                'X-Firebase-AppCheck': await AppCheckService.token() ?? '',
+              },
+              body: jsonEncode({
+                'callId': callId,
+                'totalDurationSeconds': totalDurationSeconds,
+                'totalMinutesBilled': totalMinutesBilled,
+                'isTranslatedCall': isTranslatedCall,
+              }),
+            )
+            .timeout(const Duration(seconds: 8));
       }
     } catch (e) {
       debugPrint('[WalletRepository] finalizeCallBilling error: $e');
@@ -239,22 +257,25 @@ class WalletRepository {
 
       if (idToken != null) {
         final url = Uri.parse(AppConfig.walletRechargeUrl);
-        final response = await http.post(
-          url,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $idToken',
-          },
-          body: jsonEncode({
-            'packId': packId,
-            'minutes': minutes,
-            'amount': amount,
-            'currency': currency,
-            'paymentMethod': paymentMethod,
-            'transactionId': transactionId,
-            'promoCode': promoCode,
-          }),
-        ).timeout(const Duration(seconds: 10));
+        final response = await http
+            .post(
+              url,
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $idToken',
+                'X-Firebase-AppCheck': await AppCheckService.token() ?? '',
+              },
+              body: jsonEncode({
+                'packId': packId,
+                'minutes': minutes,
+                'amount': amount,
+                'currency': currency,
+                'paymentMethod': paymentMethod,
+                'transactionId': transactionId,
+                'promoCode': promoCode,
+              }),
+            )
+            .timeout(const Duration(seconds: 10));
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
@@ -289,35 +310,41 @@ class WalletRepository {
 
       if (idToken != null) {
         final url = Uri.parse(AppConfig.walletPaymentRequestUrl);
-        final response = await http.post(
-          url,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $idToken',
-          },
-          body: jsonEncode({
-            'packId': packId,
-            'senderIdentifier': senderIdentifier,
-            'senderPhone': senderPhone ?? senderIdentifier,
-            'trxId': trxId,
-            'paymentMethod': paymentMethod,
-            'promoCode': promoCode,
-            'minutes': minutes,
-            'amount': amount,
-          }),
-        ).timeout(const Duration(seconds: 10));
+        final response = await http
+            .post(
+              url,
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $idToken',
+                'X-Firebase-AppCheck': await AppCheckService.token() ?? '',
+              },
+              body: jsonEncode({
+                'packId': packId,
+                'senderIdentifier': senderIdentifier,
+                'senderPhone': senderPhone ?? senderIdentifier,
+                'trxId': trxId,
+                'paymentMethod': paymentMethod,
+                'promoCode': promoCode,
+                'minutes': minutes,
+                'amount': amount,
+              }),
+            )
+            .timeout(const Duration(seconds: 10));
 
         final data = jsonDecode(response.body);
         if (response.statusCode == 200 && data['success'] == true) {
           return PaymentSubmissionResult(
             success: true,
             message: 'Payment request submitted successfully.',
-            paymentData: data['payment'] is Map<String, dynamic> ? data['payment'] : null,
+            paymentData: data['payment'] is Map<String, dynamic>
+                ? data['payment']
+                : null,
           );
         } else {
           return PaymentSubmissionResult(
             success: false,
-            message: data['error']?.toString() ?? 'Payment request could not be processed.',
+            message: data['error']?.toString() ??
+                'Payment request could not be processed.',
           );
         }
       }
@@ -344,10 +371,17 @@ class WalletRepository {
       if (idToken != null && idToken.isNotEmpty) {
         headers['Authorization'] = 'Bearer $idToken';
       }
-      final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 6));
+      final appCheckToken = await AppCheckService.token();
+      if (appCheckToken != null && appCheckToken.isNotEmpty) {
+        headers['X-Firebase-AppCheck'] = appCheckToken;
+      }
+      final response = await http
+          .get(url, headers: headers)
+          .timeout(const Duration(seconds: 6));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['success'] == true && data['depositInfo'] is Map<String, dynamic>) {
+        if (data['success'] == true &&
+            data['depositInfo'] is Map<String, dynamic>) {
           return data['depositInfo'] as Map<String, dynamic>;
         }
       }
@@ -375,9 +409,11 @@ class WalletRepository {
       );
     }
 
-    final fromSub = fromUserId.length > 8 ? fromUserId.substring(0, 8) : fromUserId;
+    final fromSub =
+        fromUserId.length > 8 ? fromUserId.substring(0, 8) : fromUserId;
     final toSub = toUserId.length > 8 ? toUserId.substring(0, 8) : toUserId;
-    final idemKey = idempotencyKey ?? 'p2p_${fromSub}_${toSub}_${minutes}_${DateTime.now().millisecondsSinceEpoch ~/ 60000}';
+    final idemKey = idempotencyKey ??
+        'p2p_${fromSub}_${toSub}_${minutes}_${DateTime.now().millisecondsSinceEpoch ~/ 60000}';
 
     // 1. Authoritative Backend Gateway
     try {
@@ -385,20 +421,24 @@ class WalletRepository {
       final idToken = await currentUser?.getIdToken();
       if (idToken != null && idToken.isNotEmpty) {
         final uri = Uri.parse(AppConfig.walletP2pTransferUrl);
-        final response = await http.post(
-          uri,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $idToken',
-          },
-          body: jsonEncode({
-            'toUserId': toUserId,
-            'minutes': minutes,
-            'note': note ?? '',
-            'idempotencyKey': idemKey,
-            if (messageId != null && messageId.isNotEmpty) 'messageId': messageId,
-          }),
-        ).timeout(const Duration(seconds: 10));
+        final response = await http
+            .post(
+              uri,
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $idToken',
+                'X-Firebase-AppCheck': await AppCheckService.token() ?? '',
+              },
+              body: jsonEncode({
+                'toUserId': toUserId,
+                'minutes': minutes,
+                'note': note ?? '',
+                'idempotencyKey': idemKey,
+                if (messageId != null && messageId.isNotEmpty)
+                  'messageId': messageId,
+              }),
+            )
+            .timeout(const Duration(seconds: 10));
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
@@ -411,17 +451,20 @@ class WalletRepository {
             );
           }
         } else {
-          debugPrint('[WalletRepository] Backend p2p transfer returned ${response.statusCode}: ${response.body}');
+          debugPrint(
+              '[WalletRepository] Backend p2p transfer returned ${response.statusCode}: ${response.body}');
           try {
             final errData = jsonDecode(response.body);
             return MinuteTransferResult(
               success: false,
-              message: errData['error'] as String? ?? 'Transfer rejected by server',
+              message:
+                  errData['error'] as String? ?? 'Transfer rejected by server',
             );
           } catch (_) {}
         }
       } else {
-        debugPrint('[WalletRepository] Missing authentication token for P2P transfer');
+        debugPrint(
+            '[WalletRepository] Missing authentication token for P2P transfer');
         return const MinuteTransferResult(
           success: false,
           message: 'Authentication required for minute transfer',

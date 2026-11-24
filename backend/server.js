@@ -11,6 +11,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { initializeApp, cert } from 'firebase-admin/app';
+import { getAppCheck } from 'firebase-admin/app-check';
 import { getMessaging } from 'firebase-admin/messaging';
 import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
@@ -217,6 +218,53 @@ const apiLimiter = rateLimit({
 });
 app.use('/api/', apiLimiter);
 
+// ---------------------------------------------------------------------------
+// Firebase App Check enforcement (opt-in via APP_CHECK_ENFORCE=true).
+// When enabled, client-facing endpoints require a valid App Check token so a
+// repackaged/modified client cannot spend AI budget or enumerate users.
+// Admin endpoints are intentionally excluded (they use ADMIN_SECRET).
+// ---------------------------------------------------------------------------
+const APP_CHECK_ENFORCE = process.env.APP_CHECK_ENFORCE === 'true';
+
+const APP_CHECK_PROTECTED_PATHS = new Set([
+  '/api/translate',
+  '/api/contacts/match',
+  '/api/voice-preview',
+  '/api/wallet/init-or-get',
+  '/api/wallet/balance',
+  '/api/wallet/deduct-minute',
+  '/api/wallet/call-end',
+  '/api/wallet/p2p-transfer',
+  '/api/wallet/deposit-info',
+  '/api/wallet/recipient-payment-settings',
+  '/api/wallet/my-payment-settings',
+  '/api/wallet/payment-request',
+]);
+
+async function verifyAppCheckToken(rawToken) {
+  if (!rawToken || typeof rawToken !== 'string' || rawToken.length < 20) {
+    return { ok: false, reason: 'missing' };
+  }
+  try {
+    await getAppCheck().verifyToken(rawToken.trim());
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, reason: err.message };
+  }
+}
+
+app.use(async (req, res, next) => {
+  if (!APP_CHECK_ENFORCE) return next();
+  if (!APP_CHECK_PROTECTED_PATHS.has(req.path)) return next();
+  const result = await verifyAppCheckToken(req.headers['x-firebase-appcheck']);
+  if (result.ok) return next();
+  console.warn(`[AppCheck] Rejected ${req.method} ${req.path}: ${result.reason}`);
+  return res.status(401).json({
+    error: 'App Check verification failed. Update the app to the latest version.',
+    code: 'APP_CHECK_REQUIRED',
+  });
+});
+
 // Specific rate limiter for push notification endpoints (prevent notification flooding)
 // Per-user rate limiting using authenticated UID (prevents collateral blocking behind reverse proxy)
 const pushLimiter = rateLimit({
@@ -307,6 +355,7 @@ app.get('/health', (req, res) => {
     ),
     liveModel: DEFAULT_MODEL,
     textModel: TEXT_MODEL,
+    appCheckEnforced: APP_CHECK_ENFORCE,
     privacyRoute: true,
     timestamp: new Date().toISOString(),
   });
@@ -4126,6 +4175,24 @@ wss.on('connection', (clientWs, req) => {
           );
           clientWs.close(4401, 'Unauthorized');
           return;
+        }
+
+        if (APP_CHECK_ENFORCE) {
+          const appCheckResult = await verifyAppCheckToken(msg.appCheckToken);
+          if (!appCheckResult.ok) {
+            console.warn(
+              `[${clientId}] App Check verification failed: ${appCheckResult.reason}`,
+            );
+            clientWs.send(
+              JSON.stringify({
+                type: 'error',
+                code: 'APP_CHECK_REQUIRED',
+                message: 'App Check verification failed. Update the app.',
+              }),
+            );
+            clientWs.close(4403, 'APP_CHECK_REQUIRED');
+            return;
+          }
         }
 
         // Rate Limiter: Max 2 concurrent sessions per authenticated user

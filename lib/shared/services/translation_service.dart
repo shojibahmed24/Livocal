@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:livocal/features/calls/services/gemini_live_translator.dart';
 import 'package:livocal/shared/constants/app_config.dart';
+import 'package:livocal/shared/services/app_check_service.dart';
 
 class TranslationService {
   static String get _backendRelayUrl => AppConfig.relayHttpBaseUrl;
@@ -40,18 +41,20 @@ class TranslationService {
       final token = await user?.getIdToken();
 
       if (token != null && token.isNotEmpty) {
-        final res = await http.post(
-          Uri.parse('$_backendRelayUrl/api/translate'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $token',
-          },
-          body: jsonEncode({
-            'text': cleanText,
-            'sourceLang': sourceLangName ?? 'auto',
-            'targetLang': targetLangName,
-          }),
-        ).timeout(const Duration(seconds: 10));
+        final res = await http
+            .post(
+              Uri.parse('$_backendRelayUrl/api/translate'),
+              headers: await AppCheckService.withAppCheck({
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $token',
+              }),
+              body: jsonEncode({
+                'text': cleanText,
+                'sourceLang': sourceLangName ?? 'auto',
+                'targetLang': targetLangName,
+              }),
+            )
+            .timeout(const Duration(seconds: 10));
 
         if (res.statusCode == 200) {
           final data = jsonDecode(res.body) as Map<String, dynamic>;
@@ -72,7 +75,8 @@ class TranslationService {
       );
     }
 
-    throw Exception('Unable to translate at this moment. Please check your network connection.');
+    throw Exception(
+        'Unable to translate at this moment. Please check your network connection.');
   }
 
   static Future<String> _callGeminiRestApi({
@@ -109,11 +113,13 @@ class TranslationService {
       }
     });
 
-    final res = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: body,
-    ).timeout(const Duration(seconds: 10));
+    final res = await http
+        .post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: body,
+        )
+        .timeout(const Duration(seconds: 10));
 
     if (res.statusCode == 200) {
       final json = jsonDecode(res.body) as Map<String, dynamic>;
@@ -129,7 +135,8 @@ class TranslationService {
         }
       }
     } else {
-      throw Exception('Gemini REST API returned HTTP ${res.statusCode}: ${res.body}');
+      throw Exception(
+          'Gemini REST API returned HTTP ${res.statusCode}: ${res.body}');
     }
 
     return '';

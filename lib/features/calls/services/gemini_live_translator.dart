@@ -9,6 +9,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:livocal/features/calls/models/call_language.dart';
 import 'package:livocal/features/calls/models/call_model.dart';
 import 'package:livocal/shared/constants/app_config.dart';
+import 'package:livocal/shared/services/app_check_service.dart';
 import 'package:livocal/shared/utils/network_tracker.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 
@@ -57,7 +58,9 @@ class GeminiLiveTranslator {
 
       // Safe migration: If key was previously in unencrypted SharedPreferences, move it to secure storage
       final legacy = SharedPref.instance.getString(prefApiKey)?.trim();
-      if ((_cachedApiKey == null || _cachedApiKey!.isEmpty) && legacy != null && legacy.isNotEmpty) {
+      if ((_cachedApiKey == null || _cachedApiKey!.isEmpty) &&
+          legacy != null &&
+          legacy.isNotEmpty) {
         _cachedApiKey = legacy;
         await _secureStorage.write(key: prefApiKey, value: legacy);
         await SharedPref.instance.remove(prefApiKey);
@@ -104,7 +107,8 @@ class GeminiLiveTranslator {
       // Ensure plaintext SharedPreferences never holds the secret key
       await SharedPref.instance.remove(prefApiKey);
     } catch (e, st) {
-      debugPrint('[GeminiLiveTranslator] saveApiKey secure storage error: $e\n$st');
+      debugPrint(
+          '[GeminiLiveTranslator] saveApiKey secure storage error: $e\n$st');
     }
   }
 
@@ -117,8 +121,9 @@ class GeminiLiveTranslator {
   }
 
   static Future<void> saveModelId(String modelId) async {
-    final normalized =
-        modelId.startsWith('models/') ? modelId.trim() : 'models/${modelId.trim()}';
+    final normalized = modelId.startsWith('models/')
+        ? modelId.trim()
+        : 'models/${modelId.trim()}';
     await SharedPref.instance.setString(prefModelId, normalized);
   }
 
@@ -177,7 +182,8 @@ class GeminiLiveTranslator {
   final StreamController<BillingUpdateEvent> _billingUpdateController =
       StreamController<BillingUpdateEvent>.broadcast();
 
-  Stream<Uint8List> get translatedAudioStream => _translatedPcmController.stream;
+  Stream<Uint8List> get translatedAudioStream =>
+      _translatedPcmController.stream;
   Stream<GeminiLiveState> get stateStream => _stateController.stream;
   Stream<LiveTranscriptEntry> get transcriptStream =>
       _transcriptController.stream;
@@ -255,7 +261,8 @@ CRITICAL OPERATING RULES:
 
   void _emitExhausted() {
     if (_exhaustedEmitted) {
-      debugPrint('[GeminiLiveTranslator] Deduplicated secondary isExhausted event.');
+      debugPrint(
+          '[GeminiLiveTranslator] Deduplicated secondary isExhausted event.');
       return;
     }
     _exhaustedEmitted = true;
@@ -301,6 +308,7 @@ CRITICAL OPERATING RULES:
     final voiceName = getSavedVoiceName();
     final relayUrl = getSavedRelayUrl();
     final apiKey = getSavedApiKey();
+    final appCheckToken = await AppCheckService.token();
 
     // 1. Try Backend Relay Server first (Zero-Trust Architecture) unless forced direct
     if (!forceDirect && relayUrl.isNotEmpty) {
@@ -338,15 +346,22 @@ CRITICAL OPERATING RULES:
             debugPrint('Relay WS closed (code: $code)');
             if (!_disposed && !_isExplicitDisconnect) {
               if (code == 4402) {
-                debugPrint('[GeminiLiveTranslator] Relay closed with code 4402 (MINUTES_EXHAUSTED / INSUFFICIENT_BALANCE)');
+                debugPrint(
+                    '[GeminiLiveTranslator] Relay closed with code 4402 (MINUTES_EXHAUSTED / INSUFFICIENT_BALANCE)');
                 _emitExhausted();
                 _stateController.add(GeminiLiveState.disconnected);
               } else if (code == 4403) {
-                debugPrint('[GeminiLiveTranslator] Relay rejected with code 4403 (MISSING_API_KEY)');
+                debugPrint(
+                    '[GeminiLiveTranslator] Relay rejected with code 4403 (MISSING_API_KEY)');
                 _stateController.add(GeminiLiveState.error);
                 if (apiKey.isNotEmpty) {
-                  debugPrint('Attempting auto-fallback to direct Gemini endpoint with saved API key');
-                  connect(langA: _langA, langB: _langB, forceDirect: true, callId: _callId);
+                  debugPrint(
+                      'Attempting auto-fallback to direct Gemini endpoint with saved API key');
+                  connect(
+                      langA: _langA,
+                      langB: _langB,
+                      forceDirect: true,
+                      callId: _callId);
                   return;
                 }
               } else if (code == 1000) {
@@ -362,6 +377,8 @@ CRITICAL OPERATING RULES:
         final setupPayload = {
           'type': 'setup',
           if (idToken != null) 'token': idToken,
+          if (appCheckToken != null && appCheckToken.isNotEmpty)
+            'appCheckToken': appCheckToken,
           if (_callId != null && _callId!.isNotEmpty) 'callId': _callId,
           'model': modelId,
           'voice': voiceName,
@@ -447,7 +464,9 @@ CRITICAL OPERATING RULES:
             'speechConfig': {
               'voiceConfig': {
                 'prebuiltVoiceConfig': {
-                  'voiceName': (voiceName == 'Sularis' ? 'Autonoe' : (voiceName == 'Perseus' ? 'Umbriel' : voiceName)),
+                  'voiceName': (voiceName == 'Sularis'
+                      ? 'Autonoe'
+                      : (voiceName == 'Perseus' ? 'Umbriel' : voiceName)),
                 },
               },
             },
@@ -492,7 +511,8 @@ CRITICAL OPERATING RULES:
   void _triggerReconnect() {
     if (_disposed || _isExplicitDisconnect || _isReconnecting) return;
     if (_reconnectAttempts >= maxReconnectAttempts) {
-      debugPrint('[GeminiLiveTranslator] Max reconnect attempts ($maxReconnectAttempts) exhausted. Falling back to offline direct audio.');
+      debugPrint(
+          '[GeminiLiveTranslator] Max reconnect attempts ($maxReconnectAttempts) exhausted. Falling back to offline direct audio.');
       _isReconnecting = false;
       _stateController.add(GeminiLiveState.disconnected);
       _stateController.add(GeminiLiveState.error);
@@ -502,7 +522,8 @@ CRITICAL OPERATING RULES:
     _isReconnecting = true;
     _reconnectAttempts++;
     final delaySeconds = 1 << (_reconnectAttempts - 1); // 1s, 2s, 4s
-    debugPrint('[GeminiLiveTranslator] Connection dropped mid-call. Retrying in ${delaySeconds}s (attempt $_reconnectAttempts/$maxReconnectAttempts)...');
+    debugPrint(
+        '[GeminiLiveTranslator] Connection dropped mid-call. Retrying in ${delaySeconds}s (attempt $_reconnectAttempts/$maxReconnectAttempts)...');
     _stateController.add(GeminiLiveState.connecting);
 
     _reconnectTimer?.cancel();
@@ -517,7 +538,8 @@ CRITICAL OPERATING RULES:
         } catch (_) {}
         _ws = null;
 
-        debugPrint('[GeminiLiveTranslator] Executing reconnect attempt #$_reconnectAttempts...');
+        debugPrint(
+            '[GeminiLiveTranslator] Executing reconnect attempt #$_reconnectAttempts...');
         final success = await connect(
           langA: _langA,
           langB: _langB,
@@ -526,9 +548,11 @@ CRITICAL OPERATING RULES:
           isReconnect: true,
         );
         if (success) {
-          debugPrint('[GeminiLiveTranslator] Reconnection #$_reconnectAttempts established successfully.');
+          debugPrint(
+              '[GeminiLiveTranslator] Reconnection #$_reconnectAttempts established successfully.');
         } else {
-          debugPrint('[GeminiLiveTranslator] Reconnection #$_reconnectAttempts failed.');
+          debugPrint(
+              '[GeminiLiveTranslator] Reconnection #$_reconnectAttempts failed.');
           if (!_disposed && !_isExplicitDisconnect) {
             _triggerReconnect();
           }
@@ -562,7 +586,10 @@ CRITICAL OPERATING RULES:
 
   /// Stream 16kHz PCM16 mono chunk from microphone to Gemini Live
   void sendAudioChunk(Uint8List pcm16kBytes) {
-    if (!_isConnected || !_setupCompleted || _ws == null || pcm16kBytes.isEmpty) {
+    if (!_isConnected ||
+        !_setupCompleted ||
+        _ws == null ||
+        pcm16kBytes.isEmpty) {
       return;
     }
     try {
@@ -640,7 +667,8 @@ CRITICAL OPERATING RULES:
         } else if (eventType == 'billing_update') {
           final billed = data['billedMinutes'] as int? ?? 1;
           final remaining = data['remainingMinutes'] as int? ?? 0;
-          final isWarning = data['lowBalanceWarning'] as bool? ?? (remaining <= 2);
+          final isWarning =
+              data['lowBalanceWarning'] as bool? ?? (remaining <= 2);
           final role = data['role']?.toString();
           _billingUpdateController.add(BillingUpdateEvent(
             billedMinutes: billed,
@@ -684,16 +712,23 @@ CRITICAL OPERATING RULES:
           return;
         } else if (eventType == 'error') {
           final errCode = data['code']?.toString();
-          debugPrint('Backend Relay Error: ${data['message']} (code: $errCode)');
-          if (errCode == 'MINUTES_EXHAUSTED' || errCode == 'INSUFFICIENT_BALANCE') {
+          debugPrint(
+              'Backend Relay Error: ${data['message']} (code: $errCode)');
+          if (errCode == 'MINUTES_EXHAUSTED' ||
+              errCode == 'INSUFFICIENT_BALANCE') {
             _emitExhausted();
           }
           _stateController.add(GeminiLiveState.error);
           if (errCode == 'MISSING_API_KEY') {
             final savedKey = getSavedApiKey();
             if (savedKey.isNotEmpty) {
-              debugPrint('MISSING_API_KEY received: falling back to direct API key');
-              connect(langA: _langA, langB: _langB, forceDirect: true, callId: _callId);
+              debugPrint(
+                  'MISSING_API_KEY received: falling back to direct API key');
+              connect(
+                  langA: _langA,
+                  langB: _langB,
+                  forceDirect: true,
+                  callId: _callId);
             }
           }
           return;
@@ -755,8 +790,7 @@ CRITICAL OPERATING RULES:
             if (inlineData != null && inlineData['data'] != null) {
               final mimeType = inlineData['mimeType']?.toString() ?? '';
               if (mimeType.contains('audio/pcm')) {
-                final audioBytes =
-                    base64Decode(inlineData['data'].toString());
+                final audioBytes = base64Decode(inlineData['data'].toString());
                 if (audioBytes.isNotEmpty) {
                   _stateController.add(GeminiLiveState.speaking);
                   _translatedPcmController.add(audioBytes);
@@ -809,11 +843,13 @@ CRITICAL OPERATING RULES:
     final byteData = ByteData(totalSamples * 2);
     for (int i = 0; i < totalSamples; i++) {
       final t = i / sampleRate;
-      final freq = i < totalSamples ~/ 2 ? 523.25 : 659.25; // C5 -> E5 pleasant chime
+      final freq =
+          i < totalSamples ~/ 2 ? 523.25 : 659.25; // C5 -> E5 pleasant chime
       final envelope = math.sin((i / totalSamples) * math.pi);
-      final sample = (math.sin(2 * math.pi * freq * t) * 0.25 * envelope * 32767)
-          .round()
-          .clamp(-32768, 32767);
+      final sample =
+          (math.sin(2 * math.pi * freq * t) * 0.25 * envelope * 32767)
+              .round()
+              .clamp(-32768, 32767);
       byteData.setInt16(i * 2, sample, Endian.little);
     }
     return byteData.buffer.asUint8List();

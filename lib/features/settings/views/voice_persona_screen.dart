@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/calls/repositories/call_repository.dart';
 import 'package:livocal/features/calls/services/gemini_live_translator.dart';
 import 'package:livocal/shared/constants/app_config.dart';
+import 'package:livocal/shared/services/app_check_service.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
@@ -403,10 +404,10 @@ class _VoicePersonaScreenState extends ConsumerState<VoicePersonaScreen> {
           final relayRes = await http
               .post(
                 Uri.parse(relayUrl),
-                headers: {
+                headers: await AppCheckService.withAppCheck({
                   'Content-Type': 'application/json',
                   if (idToken != null) 'Authorization': 'Bearer $idToken',
-                },
+                }),
                 body: jsonEncode({
                   'voice': persona.id,
                   'text': sampleText,

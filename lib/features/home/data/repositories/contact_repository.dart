@@ -8,6 +8,7 @@ import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/models/contact.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/services/app_check_service.dart';
 import 'package:livocal/shared/utils/phone_normalizer.dart';
 
 final contactsRepositoryProvider = Provider((ref) => ContactsRepository(ref));
@@ -108,7 +109,8 @@ class ContactsRepository {
       // Protects privacy by matching only contact numbers without dumping the /users collection
       final Map<String, _FirestoreUser> registeredByPhone = {};
       try {
-        final idToken = await auth.FirebaseAuth.instance.currentUser?.getIdToken();
+        final idToken =
+            await auth.FirebaseAuth.instance.currentUser?.getIdToken();
         if (idToken != null && allNormalized.isNotEmpty) {
           final allList = allNormalized.toList();
           for (int i = 0; i < allList.length; i += 500) {
@@ -116,16 +118,18 @@ class ContactsRepository {
               i,
               (i + 500 > allList.length) ? allList.length : i + 500,
             );
-            final response = await http.post(
-              Uri.parse(AppConfig.matchContactsUrl),
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer $idToken',
-              },
-              body: jsonEncode({
-                'phoneNumbers': batch,
-              }),
-            ).timeout(const Duration(seconds: 12));
+            final response = await http
+                .post(
+                  Uri.parse(AppConfig.matchContactsUrl),
+                  headers: await AppCheckService.withAppCheck({
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer $idToken',
+                  }),
+                  body: jsonEncode({
+                    'phoneNumbers': batch,
+                  }),
+                )
+                .timeout(const Duration(seconds: 12));
 
             if (response.statusCode == 200) {
               final data = jsonDecode(response.body);
@@ -155,7 +159,8 @@ class ContactsRepository {
                   phone: Phone(
                     code: code,
                     number: number,
-                    formattedNumber: rawNumber.isNotEmpty ? rawNumber : '$code$number',
+                    formattedNumber:
+                        rawNumber.isNotEmpty ? rawNumber : '$code$number',
                   ),
                   activityStatus: UserActivityStatus.online,
                 ));
@@ -166,17 +171,20 @@ class ContactsRepository {
                 for (final key in PhoneNormalizer.matchKeys(normalizedRaw)) {
                   registeredByPhone[key] = entry;
                 }
-                for (final key in PhoneNormalizer.matchKeys(normalizedCodeNum)) {
+                for (final key
+                    in PhoneNormalizer.matchKeys(normalizedCodeNum)) {
                   registeredByPhone[key] = entry;
                 }
               }
             } else {
-              debugPrint('[ContactsRepository] /api/contacts/match returned status: ${response.statusCode}');
+              debugPrint(
+                  '[ContactsRepository] /api/contacts/match returned status: ${response.statusCode}');
             }
           }
         }
       } catch (e) {
-        debugPrint('[ContactsRepository] backend /api/contacts/match error: $e');
+        debugPrint(
+            '[ContactsRepository] backend /api/contacts/match error: $e');
       }
 
       // Offline fallback: cross-reference with users already cached in local Isar database
@@ -232,8 +240,8 @@ class ContactsRepository {
 
           // Try suffix matching (last 10 digits)
           if (match == null && entry.normalizedPhone.length >= 10) {
-            final suffix = entry.normalizedPhone.substring(
-                entry.normalizedPhone.length - 10);
+            final suffix = entry.normalizedPhone
+                .substring(entry.normalizedPhone.length - 10);
             for (final key in registeredByPhone.keys) {
               if (key.length >= 10 && key.endsWith(suffix)) {
                 match = registeredByPhone[key];

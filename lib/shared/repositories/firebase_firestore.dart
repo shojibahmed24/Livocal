@@ -9,6 +9,7 @@ import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/features/chat/models/message.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/services/app_check_service.dart';
 import 'package:livocal/shared/utils/phone_normalizer.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/features/settings/services/block_service.dart';
@@ -40,31 +41,29 @@ class FirebaseFirestoreRepo {
           .doc(userId)
           .update({'activityStatus': statusValue});
     } catch (e) {
-      debugPrint('[FirebaseFirestoreRepo] setActivityStatus failed for $userId: $e');
+      debugPrint(
+          '[FirebaseFirestoreRepo] setActivityStatus failed for $userId: $e');
     }
   }
 
   Stream<UserActivityStatus> userActivityStatusStream({required userId}) {
-    return firestore
-        .collection('users')
-        .doc(userId)
-        .snapshots()
-        .map((event) {
-          final data = event.data();
-          if (data == null || data['activityStatus'] == null) {
-            return UserActivityStatus.online;
-          }
-          return UserActivityStatus.fromValue(data['activityStatus']);
-        })
-        .handleError((err) {
-          debugPrint('[FirebaseFirestoreRepo] userActivityStatusStream error for $userId: $err');
-          return UserActivityStatus.online;
-        });
+    return firestore.collection('users').doc(userId).snapshots().map((event) {
+      final data = event.data();
+      if (data == null || data['activityStatus'] == null) {
+        return UserActivityStatus.online;
+      }
+      return UserActivityStatus.fromValue(data['activityStatus']);
+    }).handleError((err) {
+      debugPrint(
+          '[FirebaseFirestoreRepo] userActivityStatusStream error for $userId: $err');
+      return UserActivityStatus.online;
+    });
   }
 
   Future<void> sendMessage(Message message) async {
     if (BlockService.isBlocked(message.receiverId)) {
-      debugPrint('[FirebaseFirestoreRepo] Cannot send message to blocked contact ${message.receiverId}');
+      debugPrint(
+          '[FirebaseFirestoreRepo] Cannot send message to blocked contact ${message.receiverId}');
       throw StateError('Cannot send message to a blocked contact');
     }
     try {
@@ -76,7 +75,8 @@ class FirebaseFirestoreRepo {
           .set(message.toMap())
           .timeout(const Duration(seconds: 4));
     } catch (e) {
-      debugPrint('[FirebaseFirestoreRepo] sendMessage failed for ${message.id}: $e');
+      debugPrint(
+          '[FirebaseFirestoreRepo] sendMessage failed for ${message.id}: $e');
       rethrow;
     }
   }
@@ -98,7 +98,8 @@ class FirebaseFirestoreRepo {
           .add(payload)
           .timeout(const Duration(seconds: 4));
     } catch (e) {
-      debugPrint('[FirebaseFirestoreRepo] sendSystemMessage failed for ${message.targetId}: $e');
+      debugPrint(
+          '[FirebaseFirestoreRepo] sendSystemMessage failed for ${message.targetId}: $e');
     }
   }
 
@@ -134,7 +135,8 @@ class FirebaseFirestoreRepo {
               SharedPref.instance.setString('client_device_id', deviceId);
             }
 
-            final processedBy = List<dynamic>.from(docData['processedBy'] ?? []);
+            final processedBy =
+                List<dynamic>.from(docData['processedBy'] ?? []);
             if (!processedBy.contains(deviceId)) {
               final msg = SystemMessage.fromMap(docData);
               switch (msg.action) {
@@ -148,7 +150,8 @@ class FirebaseFirestoreRepo {
               docChange.doc.reference.update({
                 'processedBy': FieldValue.arrayUnion([deviceId]),
               }).catchError((e) {
-                debugPrint('FirebaseFirestoreRepo update processedBy error: $e');
+                debugPrint(
+                    'FirebaseFirestoreRepo update processedBy error: $e');
               });
             }
             continue;
@@ -169,7 +172,8 @@ class FirebaseFirestoreRepo {
               expDate = expiresAtRaw.toDate();
             } else if (expiresAtRaw is Map) {
               final sec = expiresAtRaw['_seconds'] ?? expiresAtRaw['seconds'];
-              if (sec is int) expDate = DateTime.fromMillisecondsSinceEpoch(sec * 1000);
+              if (sec is int)
+                expDate = DateTime.fromMillisecondsSinceEpoch(sec * 1000);
             }
             if (expDate != null && expDate.isBefore(DateTime.now())) {
               docChange.doc.reference.delete().catchError((_) {});
@@ -178,8 +182,11 @@ class FirebaseFirestoreRepo {
           }
 
           final senderId = docData['senderId'] as String? ?? '';
-          if (senderId.isNotEmpty && senderId != ownId && BlockService.isBlocked(senderId)) {
-            debugPrint('[FirebaseFirestoreRepo] Dropping message stream item from blocked sender: $senderId');
+          if (senderId.isNotEmpty &&
+              senderId != ownId &&
+              BlockService.isBlocked(senderId)) {
+            debugPrint(
+                '[FirebaseFirestoreRepo] Dropping message stream item from blocked sender: $senderId');
             continue;
           }
 
@@ -209,16 +216,18 @@ class FirebaseFirestoreRepo {
       try {
         final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
         if (idToken != null) {
-          final response = await http.post(
-            Uri.parse(AppConfig.matchContactsUrl),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $idToken',
-            },
-            body: jsonEncode({
-              'phoneNumbers': candidates.toList(),
-            }),
-          ).timeout(const Duration(seconds: 4));
+          final response = await http
+              .post(
+                Uri.parse(AppConfig.matchContactsUrl),
+                headers: await AppCheckService.withAppCheck({
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer $idToken',
+                }),
+                body: jsonEncode({
+                  'phoneNumbers': candidates.toList(),
+                }),
+              )
+              .timeout(const Duration(seconds: 4));
 
           if (response.statusCode == 200) {
             final data = jsonDecode(response.body);
@@ -236,9 +245,11 @@ class FirebaseFirestoreRepo {
                 phone: Phone(
                   code: code,
                   number: number,
-                  formattedNumber: rawNumber.isNotEmpty ? rawNumber : '$code$number',
+                  formattedNumber:
+                      rawNumber.isNotEmpty ? rawNumber : '$code$number',
                 ),
-                activityStatus: UserActivityStatus.fromValue(m['activityStatus'] ?? 'online'),
+                activityStatus: UserActivityStatus.fromValue(
+                    m['activityStatus'] ?? 'online'),
               );
               await IsarDb.saveUser(resolvedUser);
               return resolvedUser;
@@ -246,7 +257,8 @@ class FirebaseFirestoreRepo {
           }
         }
       } catch (backendErr) {
-        debugPrint('[FirebaseFirestoreRepo] backend getUserByPhone error: $backendErr');
+        debugPrint(
+            '[FirebaseFirestoreRepo] backend getUserByPhone error: $backendErr');
       }
 
       return null;
@@ -265,13 +277,12 @@ class FirebaseFirestoreRepo {
       userId = user['id'];
       // Security: Store push token ONLY in private /fcmTokens/{userId} collection.
       // Do NOT store in public /users collection to prevent harvesting leaks.
-      await firestore
-          .collection('fcmTokens')
-          .doc(userId)
-          .set({'token': token, 'updatedAt': FieldValue.serverTimestamp()}, SetOptions(merge: true))
-          .timeout(const Duration(seconds: 4));
+      await firestore.collection('fcmTokens').doc(userId).set(
+          {'token': token, 'updatedAt': FieldValue.serverTimestamp()},
+          SetOptions(merge: true)).timeout(const Duration(seconds: 4));
     } catch (e) {
-      debugPrint('[FirebaseFirestoreRepo] saveFcmToken error for ${userId ?? "unknown"}: $e');
+      debugPrint(
+          '[FirebaseFirestoreRepo] saveFcmToken error for ${userId ?? "unknown"}: $e');
     }
   }
 

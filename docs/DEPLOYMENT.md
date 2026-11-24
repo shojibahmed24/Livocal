@@ -99,3 +99,19 @@ Use two Android phones (or one phone + emulator) with two different accounts:
 - Render free instances cold-start; the app warms `/health` at launch and the
   live WS timeout is 15 seconds, but a paid instance is the durable fix.
 - Public TURN fallback was removed; configure `TURN_URL`/`TURN_SECRET`.
+
+## 6. App Check enforcement
+
+The relay accepts an optional `X-Firebase-AppCheck` header on client endpoints
+(`/api/translate`, `/api/contacts/match`, `/api/voice-preview` and the client
+wallet routes) and an `appCheckToken` field in the live-call WebSocket setup.
+
+- `APP_CHECK_ENFORCE=false` (default): tokens are ignored, nothing breaks.
+- `APP_CHECK_ENFORCE=true`: those routes reject requests without a valid
+  Firebase App Check token (`401 APP_CHECK_REQUIRED`), and the WS closes with
+  `4403`.
+
+Rollout order: deploy this build, install the new APK on your test devices,
+confirm calls/translation still work, then set `APP_CHECK_ENFORCE=true` and
+enable enforcement for Firestore/Storage/Auth in the Firebase console.
+`/health` reports `appCheckEnforced`.
