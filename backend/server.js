@@ -1037,10 +1037,20 @@ app.post('/api/wallet/deduct-minute', authenticateRequest, async (req, res) => {
   let callData;
   try {
     const callSnap = await firestoreDb.collection('calls').doc(cleanCallId).get();
-    if (!callSnap.exists) {
-      return res.status(404).json({ error: 'Call session not found' });
+    if (callSnap.exists) {
+      callData = callSnap.data() || {};
+    } else {
+      // Call document may already be cleaned up; fall back to the summary so a
+      // legitimate final minute is still billable.
+      const summarySnap = await firestoreDb
+        .collection('call_summaries')
+        .doc(cleanCallId)
+        .get();
+      if (!summarySnap.exists) {
+        return res.status(404).json({ error: 'Call session not found' });
+      }
+      callData = summarySnap.data() || {};
     }
-    callData = callSnap.data() || {};
   } catch (verifyErr) {
     console.error('[SaaS Billing] Call verification failed:', verifyErr.message);
     return res.status(500).json({ error: 'Failed to verify call session' });
