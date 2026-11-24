@@ -3881,33 +3881,16 @@ function sanitizeLanguage(lang, fallback) {
 /**
  * Builds the strict, low-latency simultaneous voice interpreter system prompt.
  */
-function buildInterpreterPrompt(langA, langB, autoDetect = true) {
-  const safeA = sanitizeLanguage(langA, DEFAULT_LANG_A);
-  const safeB = sanitizeLanguage(langB, DEFAULT_LANG_B);
-  const langAName = safeA.englishName;
-  const langBName = safeB.englishName;
-  const langANative = safeA.nativeName;
-  const langBNative = safeB.nativeName;
-  const langAHint = safeA.speechStyleHint || 'spoken conversational Bengali';
-  const langBHint = safeB.speechStyleHint || 'clear conversational English';
-
+function buildInterpreterPrompt(targetLang) {
+  const target = sanitizeLanguage(targetLang, DEFAULT_LANG_B);
   return `
-SYSTEM ROLE: STRICT REAL-TIME BIDIRECTIONAL VOICE INTERPRETER (${langAName} [${langANative}] <-> ${langBName} [${langBNative}]).
+SYSTEM ROLE: REAL-TIME VOICE INTERPRETER.
 
-CRITICAL OPERATING RULES:
-1. AUTOMATIC BIDIRECTIONAL TRANSLATION:
-   - When you hear speech in ${langAName} (${langANative}), immediately speak the translation in ${langBHint} (${langBNative}).
-   - When you hear speech in ${langBName} (${langBNative}), immediately speak the translation in ${langAHint} (${langANative}).
-   - If the speaker mixes both languages, translate the entire utterance into the opposite target language.
-2. NEVER ANSWER OR CONVERSE:
-   - You are NOT a virtual assistant. You are an invisible, transparent translation bridge on a live phone call.
-   - If a caller asks "How are you?" or "Who are you?", DO NOT answer. Translate the question verbatim in the first/second person ("I", "you") into the other language.
-3. ZERO COMMENTARY OR META-TEXT:
-   - Never say "Here is the translation" or add explanations. Output ONLY the translated audio.
-4. PRESERVE EMOTION & TONE:
-   - Match the speaker's emotional tone, urgency, warmth, and natural speech rhythm.
-5. SILENCE ON NOISE:
-   - If you hear only background static, coughing, breathing, or silence, remain completely silent.
+Translate every utterance you hear into ${target.englishName} (${target.nativeName}) and speak only that translation.
+- Never answer questions, never add commentary or meta text.
+- Keep names, numbers and the speaker's tone intact.
+- If the speech is already in ${target.englishName}, repeat it naturally (passthrough).
+- Stay completely silent for background noise or silence.
 `.trim();
 }
 
@@ -4600,24 +4583,26 @@ wss.on('connection', (clientWs, req) => {
       geminiWs.on('open', () => {
         console.log(`[${clientId}] Connected to Gemini Live upstream! Sending setup handshake...`);
 
-        const systemPrompt = buildInterpreterPrompt(
-          sessionConfig.langA,
-          sessionConfig.langB,
-          sessionConfig.autoDetect
-        );
+        const systemPrompt = buildInterpreterPrompt(sessionConfig.langB);
 
         const setupPayload = {
           setup: {
             model: sessionConfig.model,
             generationConfig: {
               responseModalities: ['AUDIO'],
-              temperature: 0.2,
               speechConfig: {
                 voiceConfig: {
                   prebuiltVoiceConfig: {
                     voiceName: sessionConfig.voice,
                   },
                 },
+              },
+              // Required by gemini-3.5-live-translate-preview. Each session
+              // carries one speaker, so the target is always the peer's
+              // language: the translated audio is forwarded to that peer.
+              translationConfig: {
+                targetLanguageCode: sessionConfig.langB.code,
+                echoTargetLanguage: true,
               },
             },
             systemInstruction: {
