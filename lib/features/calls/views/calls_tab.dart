@@ -263,7 +263,10 @@ class _CallsTabState extends ConsumerState<CallsTab>
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => ContactsPage(user: widget.user),
+                        builder: (_) => ContactsPage(
+                          user: widget.user,
+                          intent: ContactsIntent.call,
+                        ),
                       ),
                     );
                   },

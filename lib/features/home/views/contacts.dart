@@ -19,9 +19,17 @@ import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/text_theme.dart';
 import 'package:livocal/theme/theme.dart';
 
+enum ContactsIntent { chat, call }
+
 class ContactsPage extends ConsumerStatefulWidget {
   final User user;
-  const ContactsPage({super.key, required this.user});
+  final ContactsIntent intent;
+
+  const ContactsPage({
+    super.key,
+    required this.user,
+    this.intent = ContactsIntent.chat,
+  });
 
   @override
   ConsumerState<ContactsPage> createState() => _ContactsPageState();
@@ -504,6 +512,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
         user: widget.user,
         contactsOnLivocal: contactsOnLivocal,
         sectionKeys: _sectionKeys,
+        intent: widget.intent,
         ref: ref,
       )
     ];
@@ -625,6 +634,7 @@ class LivocalContactsList extends StatelessWidget {
   final User user;
   final List<Contact> contactsOnLivocal;
   final Map<String, GlobalKey> sectionKeys;
+  final ContactsIntent intent;
   final WidgetRef ref;
 
   const LivocalContactsList({
@@ -632,6 +642,7 @@ class LivocalContactsList extends StatelessWidget {
     required this.user,
     required this.contactsOnLivocal,
     required this.sectionKeys,
+    required this.intent,
     required this.ref,
   });
 
@@ -656,6 +667,7 @@ class LivocalContactsList extends StatelessWidget {
             _LivocalContactRow(
               user: user,
               contact: contact,
+              intent: intent,
               ref: ref,
             ),
         ],
@@ -667,13 +679,34 @@ class LivocalContactsList extends StatelessWidget {
 class _LivocalContactRow extends StatelessWidget {
   final User user;
   final Contact contact;
+  final ContactsIntent intent;
   final WidgetRef ref;
 
   const _LivocalContactRow({
     required this.user,
     required this.contact,
+    required this.intent,
     required this.ref,
   });
+
+  Future<void> _startCall(BuildContext context) async {
+    final receiver = await IsarDb.getUserById(contact.userId!);
+    if (receiver != null && context.mounted) {
+      await initiateSmartCall(
+        context,
+        ref,
+        caller: user,
+        callee: receiver,
+        calleeDisplayName: contact.displayName,
+      );
+    }
+  }
+
+  void _openChat(BuildContext context) {
+    ref
+        .read(contactPickerControllerProvider.notifier)
+        .pickContact(context, user, contact);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -684,9 +717,9 @@ class _LivocalContactRow extends StatelessWidget {
     );
     final lang = CallLanguageRegistry.fromCode(langCode);
     return InkWell(
-      onTap: () => ref
-          .read(contactPickerControllerProvider.notifier)
-          .pickContact(context, user, contact),
+      onTap: () => intent == ContactsIntent.call
+          ? _startCall(context)
+          : _openChat(context),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Row(
@@ -745,23 +778,18 @@ class _LivocalContactRow extends StatelessWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(
-                Icons.call_rounded,
+              icon: Icon(
+                intent == ContactsIntent.call
+                    ? Icons.chat_bubble_outline_rounded
+                    : Icons.call_rounded,
                 color: AppColors.primary,
               ),
-              tooltip: 'Call with Live AI Translation',
-              onPressed: () async {
-                final receiver = await IsarDb.getUserById(contact.userId!);
-                if (receiver != null && context.mounted) {
-                  await initiateSmartCall(
-                    context,
-                    ref,
-                    caller: user,
-                    callee: receiver,
-                    calleeDisplayName: contact.displayName,
-                  );
-                }
-              },
+              tooltip: intent == ContactsIntent.call
+                  ? AppStrings.tr(ref, 'messageHint')
+                  : 'Call with Live AI Translation',
+              onPressed: () => intent == ContactsIntent.call
+                  ? _openChat(context)
+                  : _startCall(context),
             ),
           ],
         ),

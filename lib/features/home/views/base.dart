@@ -903,7 +903,10 @@ class _AiCallHero extends ConsumerWidget {
               ),
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => ContactsPage(user: user),
+                  builder: (_) => ContactsPage(
+                    user: user,
+                    intent: ContactsIntent.call,
+                  ),
                 ),
               ),
               icon: const Icon(Icons.call_rounded, size: 18),
