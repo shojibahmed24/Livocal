@@ -160,9 +160,10 @@ function adminUiAuth(req, res, next) {
     if (password === secret) {
       // Short-lived HttpOnly session so the dashboard's API calls are
       // authenticated without shipping the secret on every request.
+      const secure = req.secure || req.headers['x-forwarded-proto'] === 'https';
       res.setHeader(
         'Set-Cookie',
-        `${ADMIN_SESSION_COOKIE}=${adminSessionToken()}; Path=/; HttpOnly; SameSite=Strict; Max-Age=28800`,
+        `${ADMIN_SESSION_COOKIE}=${adminSessionToken()}; Path=/; HttpOnly; SameSite=Strict; Max-Age=28800${secure ? '; Secure' : ''}`,
       );
       return next();
     }
