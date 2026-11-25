@@ -936,13 +936,21 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                 ),
               ),
 
-              // 6. Bottom WhatsApp Call Controls Dock
+              // 6. Bottom Call Controls Dock
               Container(
                 margin: EdgeInsets.only(top: 6),
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                padding: EdgeInsets.fromLTRB(16, 12, 16, 12),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surfaceContainer,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+                  border: Border(
+                    top: BorderSide(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .outlineVariant
+                          .withValues(alpha: 0.5),
+                    ),
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1219,7 +1227,7 @@ class _CallControlButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               CircleAvatar(
-                radius: 24,
+                radius: 27,
                 backgroundColor: isActive
                     ? activeColor.withValues(alpha: 0.25)
                     : Theme.of(context).colorScheme.surfaceContainerHigh,
@@ -1228,18 +1236,18 @@ class _CallControlButton extends StatelessWidget {
                   color: isActive
                       ? activeColor
                       : Theme.of(context).colorScheme.onSurface,
-                  size: 22,
+                  size: 24,
                 ),
               ),
-              SizedBox(height: 4),
+              SizedBox(height: 5),
               Text(
                 label,
                 style: TextStyle(
                   color: isActive
                       ? activeColor
                       : Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontSize: 11,
-                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 11.5,
+                  fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
                 ),
               ),
             ],
