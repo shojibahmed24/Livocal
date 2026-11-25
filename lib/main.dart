@@ -35,6 +35,8 @@ import 'package:livocal/theme/theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  ErrorWidget.builder = (details) => CustomErrorWidget(details: details);
+
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -47,31 +49,6 @@ void main() async {
     } catch (fcmErr) {
       debugPrint("FCM background handler registration error: $fcmErr");
     }
-
-    // Firebase App Check is ON for release builds. Debug builds opt in with
-    //   flutter run --dart-define=ENABLE_APP_CHECK=true
-    // after registering the debug token in Firebase Console → App Check.
-    // Release can be temporarily disabled with DISABLE_APP_CHECK=true.
-    const bool appCheckEnabled = kReleaseMode
-        ? !bool.fromEnvironment('DISABLE_APP_CHECK')
-        : bool.fromEnvironment('ENABLE_APP_CHECK');
-    if (appCheckEnabled) {
-      try {
-        await FirebaseAppCheck.instance.activate(
-          androidProvider: kDebugMode
-              ? AndroidProvider.debug
-              : AndroidProvider.playIntegrity,
-          appleProvider:
-              kDebugMode ? AppleProvider.debug : AppleProvider.deviceCheck,
-        );
-      } catch (e, st) {
-        debugPrint('App Check activation error: $e\n$st');
-      }
-    }
-
-    // Explicitly enable Crashlytics collection in production
-    await FirebaseCrashlytics.instance
-        .setCrashlyticsCollectionEnabled(!kDebugMode);
 
     // Pass all uncaught "fatal" errors from the framework to Crashlytics
     FlutterError.onError = (errorDetails) {
@@ -87,41 +64,80 @@ void main() async {
   } catch (e, st) {
     debugPrint("Firebase init error: $e\n$st");
   }
+
+  // Local prefs are needed synchronously by the very first screens.
   try {
     await SharedPref.init();
-    await GeminiLiveTranslator.initSecureStorage();
-    await AppVersion.load();
-    BlockService.syncFromFirestore();
-    NativeChannel.createNotificationChannels();
   } catch (e, st) {
-    debugPrint("SharedPref / SecureStorage init error: $e\n$st");
+    debugPrint("SharedPref init error: $e\n$st");
   }
 
+  // Paint the first frame now; the rest of the bootstrap (App Check network
+  // call, secure storage, Isar, notifications, relay warm-up) runs afterwards.
+  runApp(
+    const ProviderScope(
+      child: Livocal(),
+    ),
+  );
+
+  unawaited(_bootstrapDeferred());
+}
+
+Future<void> _safeBootstrap(Future<void> Function() task, String label) async {
   try {
+    await task();
+  } catch (e, st) {
+    debugPrint('[Bootstrap] $label failed: $e\n$st');
+  }
+}
+
+Future<void> _bootstrapDeferred() async {
+  // Let the first frame and any immediate navigation settle first.
+  await Future<void>.delayed(const Duration(milliseconds: 120));
+
+  // Firebase App Check is ON for release builds. Debug builds opt in with
+  //   flutter run --dart-define=ENABLE_APP_CHECK=true
+  // after registering the debug token in Firebase Console → App Check.
+  // Release can be temporarily disabled with DISABLE_APP_CHECK=true.
+  const bool appCheckEnabled = kReleaseMode
+      ? !bool.fromEnvironment('DISABLE_APP_CHECK')
+      : bool.fromEnvironment('ENABLE_APP_CHECK');
+  if (appCheckEnabled) {
+    await _safeBootstrap(() async {
+      await FirebaseAppCheck.instance.activate(
+        androidProvider: kDebugMode
+            ? AndroidProvider.debug
+            : AndroidProvider.playIntegrity,
+        appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.deviceCheck,
+      );
+    }, 'app check');
+  }
+
+  await _safeBootstrap(
+    () async => FirebaseCrashlytics.instance
+        .setCrashlyticsCollectionEnabled(!kDebugMode),
+    'crashlytics',
+  );
+
+  // Independent, local-only work in parallel.
+  await Future.wait([
+    _safeBootstrap(GeminiLiveTranslator.initSecureStorage, 'secure storage'),
+    _safeBootstrap(AppVersion.load, 'app version'),
+    _safeBootstrap(DeviceStorage.init, 'device storage'),
+  ]);
+
+  unawaited(BlockService.syncFromFirestore());
+  NativeChannel.createNotificationChannels();
+
+  await _safeBootstrap(() async {
     await IsarDb.init();
     await IsarDb.purgeDisappearingMessages();
-  } catch (e, st) {
-    debugPrint("IsarDb init error: $e\n$st");
-  }
-
-  try {
-    await DeviceStorage.init();
-  } catch (e, st) {
-    debugPrint("DeviceStorage init error: $e\n$st");
-  }
-
-  ErrorWidget.builder = (details) => CustomErrorWidget(details: details);
+  }, 'isar');
 
   // Render free instances cold-start in 10-30s. Wake the relay while the user
   // is still on the login/home screen so the first translated call does not
   // pay the cold-start penalty (and fail its 15s connect timeout).
   unawaited(_warmUpRelay());
-
-  return runApp(
-    const ProviderScope(
-      child: Livocal(),
-    ),
-  );
 }
 
 Future<void> _warmUpRelay() async {

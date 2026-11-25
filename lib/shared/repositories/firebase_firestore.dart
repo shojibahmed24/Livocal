@@ -16,8 +16,13 @@ import 'package:livocal/features/settings/services/block_service.dart';
 
 final firebaseFirestoreRepositoryProvider = Provider(
   (ref) => FirebaseFirestoreRepo(
+    // Offline persistence keeps the chat list and messages readable from the
+    // local cache on cold start instead of waiting for the network.
     firestore: FirebaseFirestore.instance
-      ..settings = const Settings(persistenceEnabled: false),
+      ..settings = const Settings(
+        persistenceEnabled: true,
+        cacheSizeBytes: 100 * 1024 * 1024,
+      ),
     ref: ref,
   ),
 );

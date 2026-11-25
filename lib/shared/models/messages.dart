@@ -12,7 +12,7 @@ class StoredMessage {
   @Index(unique: true, replace: true)
   String messageId;
 
-  @Index()
+  @Index(composite: [CompositeIndex('timestamp')])
   String chatId;
 
   String content;

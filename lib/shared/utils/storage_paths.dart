@@ -9,7 +9,7 @@ class DeviceStorage {
   static late final String tempDirPath;
   static late final String mediaDirPath;
 
-  static init() async {
+  static Future<void> init() async {
     appDocsDirPath = (await getApplicationDocumentsDirectory()).path;
     tempDirPath = (await getTemporaryDirectory()).path;
     mediaDirPath = await initMediaDir();

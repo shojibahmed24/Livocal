@@ -25,6 +25,8 @@ enum UserActivityStatus {
 @collection
 class User {
   Id isarId = Isar.autoIncrement;
+
+  @Index()
   final String id;
   final String name;
   final String avatarUrl;
