@@ -676,6 +676,27 @@ class IsarDb {
     return isarInstance.users.where().findAll();
   }
 
+  static const String _contactsStampKey = 'contacts_cached_at';
+  static const Duration _contactsCacheTtl = Duration(hours: 24);
+
+  /// True when the cached contact list was never saved or is older than the TTL.
+  /// The picker only pays for a device scan when this is true.
+  static bool get contactsCacheIsStale {
+    if (!SharedPref.isInitialized) return true;
+    final prefs = SharedPref.instance;
+    final stamp = prefs.getInt(_contactsStampKey) ?? 0;
+    if (stamp <= 0) return true;
+    return DateTime.now()
+            .difference(DateTime.fromMillisecondsSinceEpoch(stamp)) >
+        _contactsCacheTtl;
+  }
+
+  static Future<void> _markContactsCached() async {
+    if (!SharedPref.isInitialized) return;
+    await SharedPref.instance
+        .setInt(_contactsStampKey, DateTime.now().millisecondsSinceEpoch);
+  }
+
   static Future<void> addContacts() async {
     final providerContainer = ProviderContainer();
     final self = getCurrentUser();
@@ -690,10 +711,26 @@ class IsarDb {
           .getDeviceContacts(self: self)
           .timeout(const Duration(seconds: 25));
       if (localContacts.isNotEmpty) {
+        // Save in chunks and give the UI a frame between them: writing a few
+        // thousand rows in one transaction froze the app on low-RAM phones.
+        const chunkSize = 200;
         await isar.writeTxn(() async {
           await isar.contacts.clear();
-          await isar.contacts.putAll(localContacts);
         });
+        for (var i = 0; i < localContacts.length; i += chunkSize) {
+          final end = (i + chunkSize > localContacts.length)
+              ? localContacts.length
+              : i + chunkSize;
+          final chunk = localContacts.sublist(i, end);
+          await isar.writeTxn(() async {
+            await isar.contacts.putAll(chunk);
+          });
+          await Future<void>.delayed(Duration.zero);
+        }
+        await _markContactsCached();
+        debugPrint(
+          '[IsarDb] contacts scan cached ${localContacts.length} rows',
+        );
       }
     } catch (e) {
       debugPrint('[IsarDb] addContacts (local) error: $e');

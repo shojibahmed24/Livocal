@@ -22,6 +22,7 @@ import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/repositories/upload_service.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
+import 'package:livocal/shared/utils/text_safe.dart';
 import 'package:livocal/shared/utils/attachment_utils.dart';
 import 'package:livocal/shared/utils/storage_paths.dart';
 import 'package:livocal/shared/widgets/camera.dart';
@@ -127,6 +128,7 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
   void clearReplyingMessage() {
     state = state.copyWith(clearReplying: true);
   }
+
   User? _self;
   User? _other;
   String? _otherUserContactName;
@@ -298,7 +300,8 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
       recordingStream?.cancel();
       recordingStream = null;
 
-      final samples = state.recordingSamples.map((e) => e.decibels ?? 0).toList();
+      final samples =
+          state.recordingSamples.map((e) => e.decibels ?? 0).toList();
 
       state = state.copyWith(
         recordingSamples: [],
@@ -332,7 +335,9 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
                 type: AttachmentType.voice,
                 url: "",
                 fileName: fileName,
-                fileSize: savedFile.existsSync() ? savedFile.lengthSync() : recordedFile.lengthSync(),
+                fileSize: savedFile.existsSync()
+                    ? savedFile.lengthSync()
+                    : recordedFile.lengthSync(),
                 fileExtension: ext,
                 uploadStatus: UploadStatus.uploading,
                 autoDownload: true,
@@ -395,7 +400,7 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
             : replyMsg.attachment!.type.name;
       }
       if (snippet.length > 80) {
-        snippet = '${snippet.substring(0, 77)}...';
+        snippet = truncateRunes(snippet, 77, ellipsis: '...');
       }
       replyToData = ReplyToMessage(
         messageId: replyMsg.id,
@@ -408,18 +413,22 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
     }
 
     final chatId = getChatId(sender.id, receiver.id);
-    final disappearingTimer = SharedPref.instance.getString('chat_disappearing_$chatId') ??
+    final disappearingTimer = SharedPref.instance
+            .getString('chat_disappearing_$chatId') ??
         SharedPref.instance.getString('contact_disappearing_${receiver.id}') ??
         SharedPref.instance.getString('privacy_disappearing') ??
         'Off';
 
     Timestamp? expiresAt;
     if (disappearingTimer == '24 hours') {
-      expiresAt = Timestamp.fromDate(DateTime.now().add(const Duration(hours: 24)));
+      expiresAt =
+          Timestamp.fromDate(DateTime.now().add(const Duration(hours: 24)));
     } else if (disappearingTimer == '7 days') {
-      expiresAt = Timestamp.fromDate(DateTime.now().add(const Duration(days: 7)));
+      expiresAt =
+          Timestamp.fromDate(DateTime.now().add(const Duration(days: 7)));
     } else if (disappearingTimer == '90 days') {
-      expiresAt = Timestamp.fromDate(DateTime.now().add(const Duration(days: 90)));
+      expiresAt =
+          Timestamp.fromDate(DateTime.now().add(const Duration(days: 90)));
     }
 
     sendMessageNoAttachments(
@@ -431,7 +440,8 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
         receiverId: receiver.id,
         timestamp: Timestamp.now(),
         expiresAt: expiresAt,
-        disappearingDuration: disappearingTimer != 'Off' ? disappearingTimer : null,
+        disappearingDuration:
+            disappearingTimer != 'Off' ? disappearingTimer : null,
         replyTo: replyToData,
       ),
     );
@@ -445,18 +455,23 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
   Message _applyDisappearingSettingsIfNeeded(Message message) {
     if (message.expiresAt != null) return message;
     final chatId = getChatId(message.senderId, message.receiverId);
-    final disappearingTimer = SharedPref.instance.getString('chat_disappearing_$chatId') ??
-        SharedPref.instance.getString('contact_disappearing_${message.receiverId}') ??
-        SharedPref.instance.getString('privacy_disappearing') ??
-        'Off';
+    final disappearingTimer =
+        SharedPref.instance.getString('chat_disappearing_$chatId') ??
+            SharedPref.instance
+                .getString('contact_disappearing_${message.receiverId}') ??
+            SharedPref.instance.getString('privacy_disappearing') ??
+            'Off';
 
     Timestamp? expiresAt;
     if (disappearingTimer == '24 hours') {
-      expiresAt = Timestamp.fromDate(DateTime.now().add(const Duration(hours: 24)));
+      expiresAt =
+          Timestamp.fromDate(DateTime.now().add(const Duration(hours: 24)));
     } else if (disappearingTimer == '7 days') {
-      expiresAt = Timestamp.fromDate(DateTime.now().add(const Duration(days: 7)));
+      expiresAt =
+          Timestamp.fromDate(DateTime.now().add(const Duration(days: 7)));
     } else if (disappearingTimer == '90 days') {
-      expiresAt = Timestamp.fromDate(DateTime.now().add(const Duration(days: 90)));
+      expiresAt =
+          Timestamp.fromDate(DateTime.now().add(const Duration(days: 90)));
     }
 
     if (expiresAt != null) {
@@ -471,7 +486,8 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
   Future<void> sendMessageNoAttachments(Message message) async {
     message = _applyDisappearingSettingsIfNeeded(message);
     if (BlockService.isBlocked(message.receiverId)) {
-      debugPrint('[ChatController] Cannot send message: contact ${message.receiverId} is blocked');
+      debugPrint(
+          '[ChatController] Cannot send message: contact ${message.receiverId} is blocked');
       return;
     }
     if (_other != null) await IsarDb.saveUser(_other!);
@@ -486,7 +502,8 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
         IsarDb.updateMessage(message.id, status: MessageStatus.sent);
         ref.read(pushNotificationsRepoProvider).sendPushNotification(message);
       }).catchError((e) {
-        debugPrint('Message saved locally; sending offline (status pending): $e');
+        debugPrint(
+            'Message saved locally; sending offline (status pending): $e');
         IsarDb.updateMessage(message.id, status: MessageStatus.pending);
       });
     });
@@ -514,7 +531,8 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
     try {
       final pendingMessages = await IsarDb.getPendingMessages();
       if (pendingMessages.isEmpty) return;
-      debugPrint('[ChatController] Flushing ${pendingMessages.length} pending offline messages');
+      debugPrint(
+          '[ChatController] Flushing ${pendingMessages.length} pending offline messages');
       for (final msg in pendingMessages) {
         if (msg.attachment == null) {
           await retrySendMessage(msg);
@@ -533,7 +551,8 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
   void sendMessageWithAttachments(Message message) async {
     message = _applyDisappearingSettingsIfNeeded(message);
     if (BlockService.isBlocked(message.receiverId)) {
-      debugPrint('[ChatController] Cannot send media: contact ${message.receiverId} is blocked');
+      debugPrint(
+          '[ChatController] Cannot send media: contact ${message.receiverId} is blocked');
       return;
     }
     if (_other != null) await IsarDb.saveUser(_other!);
@@ -691,7 +710,8 @@ class ChatStateNotifier extends StateNotifier<ChatState> {
         hasAccess = await hasPermission(Permission.photos);
       }
     } catch (e, st) {
-      debugPrint('[ChatController] PhotoManager permission check error: $e\n$st');
+      debugPrint(
+          '[ChatController] PhotoManager permission check error: $e\n$st');
       hasAccess = true;
     }
 

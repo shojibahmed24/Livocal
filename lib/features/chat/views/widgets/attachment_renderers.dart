@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:open_file_plus/open_file_plus.dart';
 import 'package:video_player/video_player.dart';
 import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/shared/utils/text_safe.dart';
 import 'package:livocal/theme/theme.dart';
 
 import '../../models/attachement.dart';
@@ -285,7 +286,7 @@ class DocumentViewer extends StatelessWidget {
   Widget build(BuildContext context) {
     String fileName = document.path.split("/").last;
     if (fileName.length > 20) {
-      fileName = "${fileName.substring(0, 15)}...${fileName.substring(15)}";
+      fileName = truncateRunes(fileName, 15, ellipsis: "...");
     }
     final fileSizeStr = strFormattedSize(document.lengthSync());
     final fileExtension = fileName.split(".").last;

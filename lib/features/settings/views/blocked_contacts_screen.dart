@@ -5,6 +5,7 @@ import 'package:livocal/features/settings/services/block_service.dart';
 import 'package:livocal/shared/models/contact.dart';
 import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
+import 'package:livocal/shared/utils/text_safe.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
 import 'package:livocal/theme/app_colors.dart';
@@ -163,7 +164,8 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
                                         .withValues(alpha: 0.15),
                                     child: Text(
                                       c.displayName.isNotEmpty
-                                          ? c.displayName[0].toUpperCase()
+                                          ? firstRune(c.displayName)
+                                              .toUpperCase()
                                           : '?',
                                       style: const TextStyle(
                                         color: AppColors.primary,
@@ -355,7 +357,7 @@ class _BlockedContactsScreenState extends ConsumerState<BlockedContactsScreen> {
                               child: item.avatarUrl.isEmpty
                                   ? Text(
                                       item.name.isNotEmpty
-                                          ? item.name[0].toUpperCase()
+                                          ? firstRune(item.name).toUpperCase()
                                           : '?',
                                       style: const TextStyle(
                                         color: AppColors.primary,

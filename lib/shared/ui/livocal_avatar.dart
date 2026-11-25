@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:livocal/shared/utils/text_safe.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/text_theme.dart';
 
@@ -34,15 +35,7 @@ class LivocalAvatar extends StatelessWidget {
     Color(0xFF43A047),
   ];
 
-  String get _initials {
-    final clean = name.trim();
-    if (clean.isEmpty) return '?';
-    final parts = clean.split(RegExp(r'\s+'));
-    if (parts.length >= 2 && parts[1].isNotEmpty) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return clean.substring(0, clean.length.clamp(1, 2)).toUpperCase();
-  }
+  String get _initials => initialsOf(name);
 
   Color get _fallbackColor => _palette[name.hashCode.abs() % _palette.length];
 

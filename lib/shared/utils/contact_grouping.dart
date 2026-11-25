@@ -1,3 +1,5 @@
+import 'package:livocal/shared/utils/text_safe.dart';
+
 /// Alphabetical grouping shared by the contact picker and the contacts tab.
 class ContactGrouping {
   ContactGrouping._();
@@ -22,7 +24,7 @@ class ContactGrouping {
     final groups = <String, List<T>>{};
     for (final item in sorted) {
       final name = nameOf(item).trim();
-      final initial = name.isEmpty ? '#' : name[0].toUpperCase();
+      final initial = name.isEmpty ? '#' : firstRune(name).toUpperCase();
       groups.putIfAbsent(initial, () => <T>[]).add(item);
     }
     return groups;

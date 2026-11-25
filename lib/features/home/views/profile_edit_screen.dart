@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
+import 'package:livocal/shared/utils/text_safe.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/attachment_utils.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
@@ -350,7 +351,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                             _currentUser.avatarUrl.isEmpty)
                         ? Text(
                             _currentUser.name.isNotEmpty
-                                ? _currentUser.name[0].toUpperCase()
+                                ? firstRune(_currentUser.name).toUpperCase()
                                 : '?',
                             style: const TextStyle(
                               fontSize: 54,

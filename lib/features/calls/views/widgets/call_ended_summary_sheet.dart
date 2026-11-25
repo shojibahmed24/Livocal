@@ -8,6 +8,7 @@ import 'package:livocal/features/chat/views/chat.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/wallet_repository.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
+import 'package:livocal/shared/utils/text_safe.dart';
 import 'package:livocal/theme/app_colors.dart';
 
 class CallEndedSummarySheet extends ConsumerWidget {
@@ -233,7 +234,7 @@ class CallEndedSummarySheet extends ConsumerWidget {
                       child: peerUser.avatarUrl.isEmpty
                           ? Text(
                               peerUser.name.isNotEmpty
-                                  ? peerUser.name[0].toUpperCase()
+                                  ? firstRune(peerUser.name).toUpperCase()
                                   : 'U',
                               style: const TextStyle(
                                 fontSize: 18,

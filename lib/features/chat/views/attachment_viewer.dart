@@ -15,6 +15,7 @@ import 'package:livocal/shared/repositories/download_service.dart';
 import 'package:livocal/shared/services/media_download_policy.dart';
 import 'package:livocal/shared/repositories/upload_service.dart';
 import 'package:livocal/shared/utils/storage_paths.dart';
+import 'package:livocal/shared/utils/text_safe.dart';
 import 'package:livocal/theme/color_theme.dart';
 import 'package:livocal/theme/theme.dart';
 
@@ -1037,10 +1038,8 @@ class _AttachedDocumentViewerState
         : Theme.of(context).custom.colorTheme.incomingEmbedColor;
 
     String fileName = attachment.fileName;
-    final len = fileName.length;
     if (fileName.length > 20) {
-      fileName =
-          "${fileName.substring(0, 15)}....${fileName.substring(len - 6, len)}";
+      fileName = truncateRunes(fileName, 15, ellipsis: "....");
     }
 
     return GestureDetector(

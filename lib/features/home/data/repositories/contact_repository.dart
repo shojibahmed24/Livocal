@@ -324,7 +324,13 @@ class ContactsRepository {
       final selfNormalized = _normalize(self.phone.rawNumber);
       final seenContacts = <String>{};
 
-      for (final contact in contacts) {
+      for (var i = 0; i < contacts.length; i++) {
+        final contact = contacts[i];
+        // Yield every so often: parsing a few thousand contacts in one go
+        // froze the UI thread and made taps feel dead.
+        if (i % 100 == 0) {
+          await Future<void>.delayed(Duration.zero);
+        }
         if (seenContacts.contains(contact.id)) continue;
         for (final phone in contact.phones) {
           final normalized = _normalize(phone.number);

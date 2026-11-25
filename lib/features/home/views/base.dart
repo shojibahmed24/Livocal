@@ -32,6 +32,7 @@ import 'package:livocal/shared/repositories/wallet_repository.dart';
 import 'package:livocal/shared/ui/livocal_app_bar.dart';
 import 'package:livocal/shared/ui/livocal_tabs.dart';
 import 'package:livocal/shared/utils/abc.dart';
+import 'package:livocal/shared/utils/text_safe.dart';
 import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/time_ticker.dart';
 import 'package:livocal/shared/widgets/shimmer_skeleton.dart';
@@ -106,6 +107,15 @@ class _HomePageState extends ConsumerState<HomePage>
           userId: widget.user.id,
           phone: widget.user.phoneNumber,
         );
+
+    // Warm the contact cache once a day so the "New call / message" picker
+    // opens instantly instead of scanning the address book on first tap.
+    // Delayed a few seconds so the home screen stays responsive first.
+    if (IsarDb.contactsCacheIsStale) {
+      Future<void>.delayed(const Duration(seconds: 4), () {
+        unawaited(IsarDb.refreshContacts());
+      });
+    }
 
     messageListener = firestore.getChatStream(widget.user.id).listen(
       (messages) async {
@@ -338,13 +348,15 @@ class _HomePageState extends ConsumerState<HomePage>
 
   /// Guards against double navigation while the contacts permission dialog is
   /// still on screen (which previously tripped Navigator's `!_debugLocked`).
+  ///
+  /// The permission check now happens inside the picker, so the screen opens on
+  /// the first tap instead of waiting for a platform round-trip.
   bool _openingContacts = false;
 
   Future<void> _openContactsPicker(ContactsIntent intent) async {
     if (_openingContacts) return;
     _openingContacts = true;
     try {
-      if (!await hasPermission(Permission.contacts)) return;
       if (!mounted) return;
       await Navigator.of(context).push(
         MaterialPageRoute(
@@ -735,7 +747,56 @@ class ChatsTabWithHero extends StatelessWidget {
         Expanded(
           child: RecentChatsBody(user: user, searchQuery: searchQuery),
         ),
+        const _SecureFooter(),
       ],
+    );
+  }
+}
+
+/// Pinned to the bottom of the chat list, so the privacy line no longer floats
+/// in the middle of an almost-empty screen.
+class _SecureFooter extends StatelessWidget {
+  const _SecureFooter();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 6, 20, 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.lock_rounded,
+            size: 12,
+            color: isDark ? const Color(0xFF8A96B2) : const Color(0xFF5B6785),
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: RichText(
+              textAlign: TextAlign.center,
+              text: TextSpan(
+                style: TextStyle(
+                  fontSize: 11.0,
+                  color: isDark
+                      ? const Color(0xFF8A96B2)
+                      : const Color(0xFF5B6785),
+                ),
+                children: const [
+                  TextSpan(text: 'Your personal messages are '),
+                  TextSpan(
+                    text: 'encrypted in transit and stored securely',
+                    style: TextStyle(
+                      color: Color(0xFF00D4C8),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -758,16 +819,16 @@ class _AiCallHero extends ConsumerWidget {
     );
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-      padding: const EdgeInsets.all(18),
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 2),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
         gradient: AppColors.brandGradient,
         borderRadius: BorderRadius.circular(AppRadius.radiusXl),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.28),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: AppColors.primary.withValues(alpha: 0.24),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -777,7 +838,7 @@ class _AiCallHero extends ConsumerWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.16),
                   shape: BoxShape.circle,
@@ -785,22 +846,22 @@ class _AiCallHero extends ConsumerWidget {
                 child: const Icon(
                   Icons.auto_awesome_rounded,
                   color: Colors.white,
-                  size: 15,
+                  size: 13,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 7),
               const Text(
                 'LIVE AI TRANSLATION',
                 style: TextStyle(
                   color: Colors.white70,
-                  fontSize: 10,
+                  fontSize: 9.5,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: 1.1,
+                  letterSpacing: 1.0,
                 ),
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.16),
                   borderRadius: AppRadius.full,
@@ -811,14 +872,14 @@ class _AiCallHero extends ConsumerWidget {
                     const Icon(
                       Icons.timer_outlined,
                       color: Colors.white,
-                      size: 12,
+                      size: 11,
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 3),
                     Text(
                       minutes == null ? '…' : '$minutes min',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 10.5,
+                        fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -827,31 +888,35 @@ class _AiCallHero extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             AppStrings.tr(ref, 'heroTitle'),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 19,
+              fontSize: 17,
               fontWeight: FontWeight.w800,
-              height: 1.2,
+              height: 1.18,
               letterSpacing: -0.2,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             AppStrings.tr(ref, 'heroSubtitle'),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.84),
-              fontSize: 12.5,
-              height: 1.35,
+              color: Colors.white.withValues(alpha: 0.82),
+              fontSize: 11.5,
+              height: 1.25,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.16),
                   borderRadius: AppRadius.full,
@@ -861,59 +926,65 @@ class _AiCallHero extends ConsumerWidget {
                   children: [
                     Text(
                       myLang.flagEmoji,
-                      style: const TextStyle(fontSize: 12),
+                      style: const TextStyle(fontSize: 11),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       myLang.nativeName,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 11,
+                        fontSize: 10.5,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               const Icon(
                 Icons.arrow_forward_rounded,
                 color: Colors.white70,
-                size: 15,
+                size: 13,
               ),
-              const SizedBox(width: 8),
-              const Text(
-                '70+ languages',
-                style: TextStyle(color: Colors.white70, fontSize: 11),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.radiusMd),
+              const SizedBox(width: 6),
+              const Expanded(
+                child: Text(
+                  '70+ languages',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: Colors.white70, fontSize: 10.5),
                 ),
               ),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => ContactsPage(
-                    user: user,
-                    intent: ContactsIntent.call,
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppColors.primary,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  minimumSize: const Size(0, 36),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.radiusMd),
+                  ),
+                ),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ContactsPage(
+                      user: user,
+                      intent: ContactsIntent.call,
+                    ),
+                  ),
+                ),
+                icon: const Icon(Icons.call_rounded, size: 15),
+                label: Text(
+                  AppStrings.tr(ref, 'newCall'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12.5,
                   ),
                 ),
               ),
-              icon: const Icon(Icons.call_rounded, size: 18),
-              label: Text(
-                AppStrings.tr(ref, 'newCall'),
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
+            ],
           ),
         ],
       ),
@@ -1081,9 +1152,7 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
                           horizontal: 24, vertical: 14),
                       elevation: 2,
                     ),
-                    onPressed: () async {
-                      if (!await hasPermission(Permission.contacts)) return;
-                      if (!context.mounted) return;
+                    onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => ContactsPage(
@@ -1109,8 +1178,8 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
 
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return ListView.separated(
-          padding: const EdgeInsets.only(top: 6.0, bottom: 20.0),
-          itemCount: chats.length + (chats.isNotEmpty ? 1 : 0),
+          padding: const EdgeInsets.only(top: 6.0, bottom: 8.0),
+          itemCount: chats.length,
           separatorBuilder: (context, index) {
             if (index >= chats.length - 1) return const SizedBox.shrink();
             return Divider(
@@ -1124,49 +1193,6 @@ class _RecentChatsBodyState extends ConsumerState<RecentChatsBody>
             );
           },
           itemBuilder: (context, index) {
-            if (index == chats.length) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(
-                    vertical: 20.0, horizontal: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.lock_rounded,
-                      size: 13,
-                      color: isDark
-                          ? const Color(0xFF8A96B2)
-                          : const Color(0xFF5B6785),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: RichText(
-                        textAlign: TextAlign.center,
-                        text: TextSpan(
-                          style: TextStyle(
-                            fontSize: 12.0,
-                            color: isDark
-                                ? const Color(0xFF8A96B2)
-                                : const Color(0xFF5B6785),
-                          ),
-                          children: const [
-                            TextSpan(text: 'Your personal messages are '),
-                            TextSpan(
-                              text: 'encrypted in transit and stored securely',
-                              style: TextStyle(
-                                color: Color(0xFF00D4C8),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
-
             RecentChat chat = chats[index];
             Message msg = chat.message;
             String msgContent = chat.message.content;
@@ -1333,9 +1359,8 @@ class RecentChatWidget extends StatelessWidget {
     final avatarUrl = chat.user.avatarUrl;
     final displayName =
         title.trim().isNotEmpty ? title.trim() : chat.user.name.trim();
-    final initial = displayName.isNotEmpty
-        ? displayName.substring(0, 1).toUpperCase()
-        : '?';
+    final initial =
+        displayName.isNotEmpty ? firstRune(displayName).toUpperCase() : '?';
     final gradient = _getGradientForName(displayName);
 
     Widget avatarContent;

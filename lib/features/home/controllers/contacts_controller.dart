@@ -16,8 +16,8 @@ import 'package:livocal/shared/utils/phone_normalizer.dart';
 import 'package:livocal/theme/app_colors.dart';
 
 final contactsProvider = FutureProvider<List<Contact>>((ref) async {
-  // Never block the picker on the network or a permission prompt: show the
-  // cached list immediately and refresh in the background.
+  // Never block the picker on the network or a device scan: show the cached
+  // list immediately and refresh only when the cache is empty or 24 h old.
   List<Contact> cached = const [];
   try {
     cached = await IsarDb.getContacts().timeout(const Duration(seconds: 8));
@@ -25,21 +25,34 @@ final contactsProvider = FutureProvider<List<Contact>>((ref) async {
     debugPrint('[contactsProvider] cache read failed: $e');
   }
 
-  if (cached.isEmpty) {
+  final shouldRefresh = cached.isEmpty || IsarDb.contactsCacheIsStale;
+
+  if (cached.isNotEmpty) {
+    if (shouldRefresh) {
+      unawaited(IsarDb.refreshContacts().then((_) {
+        // Re-read once the background scan has saved fresh rows.
+        try {
+          ref.invalidateSelf();
+        } catch (_) {}
+      }));
+    }
+    return cached;
+  }
+
+  // No cache at all (first run on this device): scan once, with a hard cap so
+  // the spinner cannot hang for half a minute.
+  if (shouldRefresh) {
     try {
-      await IsarDb.refreshContacts().timeout(const Duration(seconds: 25));
+      await IsarDb.refreshContacts().timeout(const Duration(seconds: 30));
     } catch (e) {
       debugPrint('[contactsProvider] first refresh failed: $e');
     }
-    try {
-      return await IsarDb.getContacts().timeout(const Duration(seconds: 8));
-    } catch (_) {
-      return const [];
-    }
   }
-
-  unawaited(IsarDb.refreshContacts());
-  return cached;
+  try {
+    return await IsarDb.getContacts().timeout(const Duration(seconds: 8));
+  } catch (_) {
+    return const [];
+  }
 });
 
 final contactPickerControllerProvider =

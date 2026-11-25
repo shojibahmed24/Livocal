@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:livocal/features/status/models/status_model.dart';
 import 'package:livocal/features/status/services/status_service.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
+import 'package:livocal/shared/utils/text_safe.dart';
 import 'package:livocal/theme/app_colors.dart';
 
 class StatusViewScreen extends StatefulWidget {
@@ -142,7 +143,9 @@ class _StatusViewScreenState extends State<StatusViewScreen>
       radius: 18,
       backgroundColor: AppColors.primary,
       child: Text(
-        status.userName.isNotEmpty ? status.userName[0].toUpperCase() : '?',
+        status.userName.isNotEmpty
+            ? firstRune(status.userName).toUpperCase()
+            : '?',
         style: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,
@@ -184,8 +187,8 @@ class _StatusViewScreenState extends State<StatusViewScreen>
                     ? CachedNetworkImage(
                         imageUrl: status.mediaUrl!,
                         fit: BoxFit.contain,
-                        placeholder: (_, __) =>
-                            const CircularProgressIndicator(color: Colors.white),
+                        placeholder: (_, __) => const CircularProgressIndicator(
+                            color: Colors.white),
                         errorWidget: (ctx, __, ___) => Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
@@ -229,7 +232,8 @@ class _StatusViewScreenState extends State<StatusViewScreen>
                   left: 16,
                   right: 16,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.65),
                       borderRadius: BorderRadius.circular(16),
@@ -258,7 +262,8 @@ class _StatusViewScreenState extends State<StatusViewScreen>
                       children: List.generate(widget.statuses.length, (index) {
                         return Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 2.0),
                             child: AnimatedBuilder(
                               animation: _progressController,
                               builder: (context, _) {
@@ -276,7 +281,8 @@ class _StatusViewScreenState extends State<StatusViewScreen>
                                   child: LinearProgressIndicator(
                                     value: progress,
                                     backgroundColor: Colors.white30,
-                                    valueColor: const AlwaysStoppedAnimation<Color>(
+                                    valueColor:
+                                        const AlwaysStoppedAnimation<Color>(
                                       Colors.white,
                                     ),
                                     minHeight: 2.5,
