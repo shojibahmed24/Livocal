@@ -1789,6 +1789,19 @@
   <button class="side-nav-item" id="sideNavGateways" onclick="switchTab('gateways')">
     <span class="side-ico">🏦</span><span class="side-label">Deposit Gateways</span>
   </button>
+  <div class="side-section-label">Operations</div>
+  <button class="side-nav-item" id="sideNavUsers" onclick="switchTab('users')">
+    <span class="side-ico">👥</span><span class="side-label">Users</span>
+  </button>
+  <button class="side-nav-item" id="sideNavReports" onclick="switchTab('reports')">
+    <span class="side-ico">🚩</span><span class="side-label">Reports</span>
+  </button>
+  <button class="side-nav-item" id="sideNavHealth" onclick="switchTab('health')">
+    <span class="side-ico">💚</span><span class="side-label">System Health</span>
+  </button>
+  <button class="side-nav-item" id="sideNavAudit" onclick="switchTab('audit')">
+    <span class="side-ico">🧾</span><span class="side-label">Audit Log</span>
+  </button>
   <div class="side-section-label">Display</div>
   <button class="side-nav-item" id="sideThemeToggle" onclick="toggleAdminTheme()">
     <span class="side-ico" id="sideThemeIcon">🌙</span><span class="side-label" id="sideThemeLabel">Light mode</span>
@@ -2311,6 +2324,138 @@
         </div>
       </div>
     </div>
+
+    <!-- TAB: Users -->
+    <div class="tab-content" id="tab-users" style="display: none;">
+      <div class="content-card">
+        <div class="card-header-bar">
+          <div class="card-title-group">
+            <h2>👥 User Directory</h2>
+            <p>Search any account, then open its wallet, recent calls and billing rows.</p>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <input type="text" id="userSearchInput" placeholder="Name, phone or UID…"
+                   oninput="debouncedLoadUsers()" style="min-width:240px;">
+            <button class="btn btn-secondary" onclick="loadUsers()">🔄 Refresh</button>
+            <button class="btn btn-secondary" onclick="exportUsersCsv()">⬇ CSV</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>UID</th>
+                <th>Phone</th>
+                <th>Language</th>
+                <th>Presence</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <tr>
+                <td colspan="6" style="text-align:center; padding:28px; color:var(--text-muted);">
+                  Search to load users…
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="content-card" id="userDetailCard" style="display: none;">
+        <div class="card-header-bar">
+          <div class="card-title-group">
+            <h2 id="userDetailTitle">User</h2>
+            <p id="userDetailSub"></p>
+          </div>
+          <button class="btn btn-secondary" onclick="hideUserDetail()">✕ Close</button>
+        </div>
+        <div id="userDetailBody"></div>
+      </div>
+    </div>
+
+    <!-- TAB: Reports -->
+    <div class="tab-content" id="tab-reports" style="display: none;">
+      <div class="content-card">
+        <div class="card-header-bar">
+          <div class="card-title-group">
+            <h2>🚩 User Reports</h2>
+            <p>Moderation queue for abuse reports raised from chats and calls.</p>
+          </div>
+          <button class="btn btn-secondary" onclick="loadReports()">🔄 Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Reported</th>
+                <th>Reporter</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="reportsTableBody">
+              <tr>
+                <td colspan="6" style="text-align:center; padding:28px; color:var(--text-muted);">
+                  Loading reports…
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: System Health -->
+    <div class="tab-content" id="tab-health" style="display: none;">
+      <div class="content-card">
+        <div class="card-header-bar">
+          <div class="card-title-group">
+            <h2>💚 System Health</h2>
+            <p>Relay, translation model, TURN and App Check status in one place.</p>
+          </div>
+          <button class="btn btn-secondary" onclick="loadHealth()">🔄 Refresh</button>
+        </div>
+        <div id="healthGrid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin-bottom:16px;"></div>
+        <div id="healthRaw" style="font-size:12px; color:var(--text-muted); word-break:break-all;"></div>
+      </div>
+    </div>
+
+    <!-- TAB: Audit Log -->
+    <div class="tab-content" id="tab-audit" style="display: none;">
+      <div class="content-card">
+        <div class="card-header-bar">
+          <div class="card-title-group">
+            <h2>🧾 Admin Audit Log</h2>
+            <p>Every privileged write: who called what, from which IP, and when.</p>
+          </div>
+          <button class="btn btn-secondary" onclick="loadAudit()">🔄 Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Method</th>
+                <th>Path</th>
+                <th>IP</th>
+                <th>Client</th>
+              </tr>
+            </thead>
+            <tbody id="auditTableBody">
+              <tr>
+                <td colspan="5" style="text-align:center; padding:28px; color:var(--text-muted);">
+                  Loading audit trail…
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </main>
   </div><!-- /.app-shell -->
 
@@ -2350,6 +2495,26 @@
     <button class="mobile-nav-item" id="mobNavGateways" onclick="switchTab('gateways')">
       <span class="icon">🏦</span>
       <span>Gateways</span>
+    </button>
+
+    <button class="mobile-nav-item" id="mobNavUsers" onclick="switchTab('users')">
+      <span class="icon">👥</span>
+      <span>Users</span>
+    </button>
+
+    <button class="mobile-nav-item" id="mobNavReports" onclick="switchTab('reports')">
+      <span class="icon">🚩</span>
+      <span>Reports</span>
+    </button>
+
+    <button class="mobile-nav-item" id="mobNavHealth" onclick="switchTab('health')">
+      <span class="icon">💚</span>
+      <span>Health</span>
+    </button>
+
+    <button class="mobile-nav-item" id="mobNavAudit" onclick="switchTab('audit')">
+      <span class="icon">🧾</span>
+      <span>Audit</span>
     </button>
   </nav>
 
@@ -2648,11 +2813,12 @@
       document.querySelectorAll('.tab-content').forEach(card => card.style.display = 'none');
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.mobile-nav-item').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.side-nav-item').forEach(btn => btn.classList.remove('active'));
 
       const targetTab = document.getElementById(`tab-${tabId}`);
       if (targetTab) targetTab.style.display = 'block';
 
-      // Desktop active tab
+      // Desktop active tab (some tabs live only in the sidebar)
       const desktopBtnMap = {
         'payments': 'tabBtnPayments',
         'wallets': 'tabBtnWallets',
@@ -2666,6 +2832,22 @@
         if (dBtn) dBtn.classList.add('active');
       }
 
+      const sideBtnMap = {
+        'overview': 'sideNavOverview',
+        'payments': 'sideNavPayments',
+        'wallets': 'sideNavWallets',
+        'p2p': 'sideNavP2P',
+        'recharges': 'sideNavRecharges',
+        'ledger': 'sideNavLedger',
+        'gateways': 'sideNavGateways',
+        'users': 'sideNavUsers',
+        'reports': 'sideNavReports',
+        'health': 'sideNavHealth',
+        'audit': 'sideNavAudit',
+      };
+      const sBtn = document.getElementById(sideBtnMap[tabId]);
+      if (sBtn) sBtn.classList.add('active');
+
       // Mobile active item
       const mobBtnMap = {
         'payments': 'mobNavPayments',
@@ -2674,11 +2856,21 @@
         'recharges': 'mobNavRecharges',
         'ledger': 'mobNavRecharges',
         'gateways': 'mobNavGateways',
+        'users': 'mobNavUsers',
+        'reports': 'mobNavReports',
+        'health': 'mobNavHealth',
+        'audit': 'mobNavAudit',
       };
       if (mobBtnMap[tabId]) {
         const mBtn = document.getElementById(mobBtnMap[tabId]);
         if (mBtn) mBtn.classList.add('active');
       }
+
+      // Lazy load the operations tabs
+      if (tabId === 'users') loadUsers();
+      if (tabId === 'reports') loadReports();
+      if (tabId === 'health') loadHealth();
+      if (tabId === 'audit') loadAudit();
 
       // Scroll smoothly to top on mobile tab switch
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -3868,6 +4060,256 @@
   labelTables();
 })();
 
+    </script>
+
+    <!-- Operations tabs: users, reports, health, audit -->
+    <script>
+      (function () {
+        'use strict';
+
+        function adminHeaders() {
+          var secret = (typeof getAdminSecret === 'function') ? getAdminSecret() : '';
+          return secret ? { 'x-admin-secret': secret } : {};
+        }
+
+        async function adminGet(path) {
+          var res = await fetch(path, { headers: adminHeaders() });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        }
+
+        function esc(v) {
+          return String(v == null ? '' : v)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+        }
+
+        function timeAgo(value) {
+          if (!value) return '—';
+          var d = (typeof value === 'number') ? new Date(value)
+            : new Date(String(value).replace(' ', 'T'));
+          if (isNaN(d.getTime())) return String(value);
+          var mins = Math.round((Date.now() - d.getTime()) / 60000);
+          if (mins < 1) return 'just now';
+          if (mins < 60) return mins + 'm ago';
+          if (mins < 1440) return Math.round(mins / 60) + 'h ago';
+          return Math.round(mins / 1440) + 'd ago';
+        }
+
+        function downloadCsv(filename, rows) {
+          var csv = rows.map(function (row) {
+            return row.map(function (cell) {
+              var s = String(cell == null ? '' : cell).replace(/"/g, '""');
+              return '"' + s + '"';
+            }).join(',');
+          }).join('\r\n');
+          var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+
+        /* ---------------- Users ---------------- */
+        var usersCache = [];
+        var usersTimer = null;
+
+        window.debouncedLoadUsers = function () {
+          clearTimeout(usersTimer);
+          usersTimer = setTimeout(function () { window.loadUsers(); }, 300);
+        };
+
+        window.loadUsers = async function () {
+          var input = document.getElementById('userSearchInput');
+          var q = input ? input.value.trim() : '';
+          var body = document.getElementById('usersTableBody');
+          if (!body) return;
+          body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:26px;color:var(--text-muted)">Loading users…</td></tr>';
+          try {
+            var data = await adminGet('/api/admin/users?q=' + encodeURIComponent(q) + '&limit=60');
+            usersCache = data.users || [];
+            if (!usersCache.length) {
+              body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:26px;color:var(--text-muted)">No users matched.</td></tr>';
+              return;
+            }
+            body.innerHTML = usersCache.map(function (u) {
+              return '<tr>' +
+                '<td><b>' + esc(u.name || '(no name)') + '</b></td>' +
+                '<td style="font-family:monospace;font-size:11.5px;color:var(--text-muted)">' + esc(u.id) + '</td>' +
+                '<td>' + esc(u.phoneMasked || '—') + '</td>' +
+                '<td>' + esc(u.spokenLanguage || '—') + '</td>' +
+                '<td>' + esc(u.activityStatus || 'offline') + '</td>' +
+                '<td><button class="btn btn-secondary" onclick="viewUser(\'' + esc(u.id) + '\')">Open</button></td>' +
+                '</tr>';
+            }).join('');
+          } catch (err) {
+            body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:26px;color:#f87171">Could not load users: ' + esc(err.message) + '</td></tr>';
+          }
+        };
+
+        window.exportUsersCsv = function () {
+          if (!usersCache.length) return;
+          var rows = [['Name', 'UID', 'Phone', 'Language', 'Presence']];
+          usersCache.forEach(function (u) {
+            rows.push([u.name, u.id, u.phoneMasked, u.spokenLanguage, u.activityStatus]);
+          });
+          downloadCsv('livocal-users.csv', rows);
+        };
+
+        window.viewUser = async function (uid) {
+          var card = document.getElementById('userDetailCard');
+          var body = document.getElementById('userDetailBody');
+          if (!card || !body) return;
+          card.style.display = 'block';
+          document.getElementById('userDetailTitle').textContent = 'Loading…';
+          document.getElementById('userDetailSub').textContent = uid;
+          body.innerHTML = '<div style="padding:20px;color:var(--text-muted)">Loading profile…</div>';
+          try {
+            var data = await adminGet('/api/admin/users/' + encodeURIComponent(uid));
+            var u = data.user || {};
+            var w = data.wallet || {};
+            document.getElementById('userDetailTitle').textContent = u.name || '(no name)';
+            document.getElementById('userDetailSub').textContent = u.id;
+
+            var walletRows = Object.keys(w).slice(0, 12).map(function (k) {
+              return '<tr><td style="color:var(--text-muted)">' + esc(k) + '</td><td>' + esc(w[k]) + '</td></tr>';
+            }).join('') || '<tr><td colspan="2" style="color:var(--text-muted)">No wallet document.</td></tr>';
+
+            var callRows = (data.calls || []).map(function (c) {
+              return '<tr><td>' + esc((c.callerId || '').slice(0, 10)) + '…</td><td>' + esc(c.status) + '</td><td>' + esc(c.durationSeconds) + 's</td><td>' + esc(timeAgo(c.createdAt)) + '</td></tr>';
+            }).join('') || '<tr><td colspan="4" style="color:var(--text-muted)">No calls found.</td></tr>';
+
+            var ledgerRows = (data.ledger || []).map(function (l) {
+              return '<tr><td>' + esc(l.minutes) + ' min</td><td>' + esc(l.cost) + '</td><td>' + esc(timeAgo(l.at)) + '</td></tr>';
+            }).join('') || '<tr><td colspan="3" style="color:var(--text-muted)">No billing rows.</td></tr>';
+
+            body.innerHTML =
+              '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;">' +
+                '<div><h3 style="margin:0 0 8px;font-size:13px;color:var(--text-muted);text-transform:uppercase">Wallet</h3>' +
+                  '<div class="table-wrap"><table><tbody>' + walletRows + '</tbody></table></div></div>' +
+                '<div><h3 style="margin:0 0 8px;font-size:13px;color:var(--text-muted);text-transform:uppercase">Recent calls</h3>' +
+                  '<div class="table-wrap"><table><thead><tr><th>Peer</th><th>Status</th><th>Duration</th><th>When</th></tr></thead><tbody>' + callRows + '</tbody></table></div></div>' +
+                '<div><h3 style="margin:0 0 8px;font-size:13px;color:var(--text-muted);text-transform:uppercase">Billing ledger</h3>' +
+                  '<div class="table-wrap"><table><thead><tr><th>Minutes</th><th>Cost</th><th>When</th></tr></thead><tbody>' + ledgerRows + '</tbody></table></div></div>' +
+              '</div>';
+          } catch (err) {
+            body.innerHTML = '<div style="padding:20px;color:#f87171">Could not load profile: ' + esc(err.message) + '</div>';
+          }
+        };
+
+        window.hideUserDetail = function () {
+          var card = document.getElementById('userDetailCard');
+          if (card) card.style.display = 'none';
+        };
+
+        /* ---------------- Reports ---------------- */
+        window.loadReports = async function () {
+          var body = document.getElementById('reportsTableBody');
+          if (!body) return;
+          body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:26px;color:var(--text-muted)">Loading reports…</td></tr>';
+          try {
+            var data = await adminGet('/api/admin/reports?limit=100');
+            var reports = data.reports || [];
+            if (!reports.length) {
+              body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:26px;color:var(--text-muted)">No reports yet.</td></tr>';
+              return;
+            }
+            body.innerHTML = reports.map(function (r) {
+              var badge = r.status === 'pending_review'
+                ? 'color:#fbbf24' : (r.status === 'resolved' ? 'color:#34d399' : 'color:var(--text-muted)');
+              return '<tr>' +
+                '<td style="font-family:monospace;font-size:11.5px">' + esc(r.reportedUserId || r.targetId || '—') + '</td>' +
+                '<td style="font-family:monospace;font-size:11.5px">' + esc(r.reporterId || '—') + '</td>' +
+                '<td>' + esc(r.reason || r.category || '—') + '</td>' +
+                '<td style="' + badge + '">' + esc(r.status || '—') + '</td>' +
+                '<td>' + esc(timeAgo(r.createdAt)) + '</td>' +
+                '<td style="white-space:nowrap">' +
+                  '<button class="btn btn-secondary" onclick="reviewReport(\'' + esc(r.id) + '\',\'resolved\')">Resolve</button> ' +
+                  '<button class="btn btn-secondary" onclick="reviewReport(\'' + esc(r.id) + '\',\'dismissed\')">Dismiss</button>' +
+                '</td></tr>';
+            }).join('');
+          } catch (err) {
+            body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:26px;color:#f87171">Could not load reports: ' + esc(err.message) + '</td></tr>';
+          }
+        };
+
+        window.reviewReport = async function (id, status) {
+          try {
+            var res = await fetch('/api/admin/reports/' + encodeURIComponent(id) + '/action', {
+              method: 'POST',
+              headers: Object.assign({ 'Content-Type': 'application/json' }, adminHeaders()),
+              body: JSON.stringify({ status: status }),
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            window.loadReports();
+          } catch (err) {
+            alert('Could not update report: ' + err.message);
+          }
+        };
+
+        /* ---------------- Health ---------------- */
+        window.loadHealth = async function () {
+          var grid = document.getElementById('healthGrid');
+          var raw = document.getElementById('healthRaw');
+          if (!grid) return;
+          grid.innerHTML = '<div style="padding:16px;color:var(--text-muted)">Checking services…</div>';
+          try {
+            var res = await fetch('/health');
+            var h = await res.json();
+            var cards = [
+              ['Relay', h.status === 'ok' ? 'ONLINE' : 'DOWN', h.status === 'ok'],
+              ['Gemini key', h.hasApiKey ? 'CONFIGURED' : 'MISSING', !!h.hasApiKey],
+              ['TURN', h.hasTurn ? (h.turnProvider || 'configured') : 'NOT SET', !!h.hasTurn],
+              ['App Check', h.appCheckEnforced ? 'ENFORCED' : 'OFF', !!h.appCheckEnforced],
+              ['Live model', h.liveModel || '—', true],
+              ['Text model', h.textModel || '—', true],
+              ['Uptime', (h.uptime || 0) + 's', true],
+            ];
+            grid.innerHTML = cards.map(function (c) {
+              var color = c[2] ? '#34d399' : '#fbbf24';
+              return '<div style="background:var(--bg-glass);border:1px solid var(--border-color);border-radius:12px;padding:14px;">' +
+                '<div style="font-size:11px;text-transform:uppercase;color:var(--text-muted);font-weight:700">' + esc(c[0]) + '</div>' +
+                '<div style="font-size:16px;font-weight:800;color:' + color + ';margin-top:6px;word-break:break-all">' + esc(c[1]) + '</div>' +
+                '</div>';
+            }).join('');
+            if (raw) raw.textContent = JSON.stringify(h);
+          } catch (err) {
+            grid.innerHTML = '<div style="padding:16px;color:#f87171">Health check failed: ' + esc(err.message) + '</div>';
+          }
+        };
+
+        /* ---------------- Audit ---------------- */
+        window.loadAudit = async function () {
+          var body = document.getElementById('auditTableBody');
+          if (!body) return;
+          body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:26px;color:var(--text-muted)">Loading audit trail…</td></tr>';
+          try {
+            var data = await adminGet('/api/admin/audit?limit=200');
+            var entries = data.entries || [];
+            if (!entries.length) {
+              body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:26px;color:var(--text-muted)">No privileged actions recorded yet.</td></tr>';
+              return;
+            }
+            body.innerHTML = entries.map(function (e) {
+              return '<tr>' +
+                '<td>' + esc(timeAgo(e.atMs || e.at)) + '</td>' +
+                '<td>' + esc(e.method || '') + '</td>' +
+                '<td style="font-family:monospace;font-size:11.5px">' + esc(e.path || '') + '</td>' +
+                '<td>' + esc(e.ip || '') + '</td>' +
+                '<td style="font-size:11px;color:var(--text-muted)">' + esc((e.ua || '').slice(0, 60)) + '</td>' +
+                '</tr>';
+            }).join('');
+          } catch (err) {
+            body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:26px;color:#f87171">Could not load audit log: ' + esc(err.message) + '</td></tr>';
+          }
+        };
+      })();
     </script>
     <div id="toastStack"></div>
   </body>

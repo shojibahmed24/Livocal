@@ -1608,10 +1608,30 @@ const safeCompareSecrets = (provided, target) => {
 };
 
 // Admin Authorization Middleware (Strict: Headers only, No query params, Timing-safe)
+const logAdminAction = (req) => {
+  if (!firestoreDb) return;
+  if (req.method === 'GET') return; // keep the log to state-changing actions
+  try {
+    const path = String(req.originalUrl || req.url || '').split('?')[0];
+    firestoreDb
+      .collection('admin_audit')
+      .add({
+        method: req.method,
+        path,
+        ip: req.ip || '',
+        at: new Date().toISOString(),
+        atMs: Date.now(),
+        ua: String(req.headers['user-agent'] || '').slice(0, 180),
+      })
+      .catch(() => {});
+  } catch (_) {}
+};
+
 const authenticateAdmin = async (req, res, next) => {
   const providedSecret = req.headers['x-admin-secret'];
 
   if (providedSecret && safeCompareSecrets(providedSecret, effectiveAdminSecret)) {
+    logAdminAction(req);
     return next();
   }
 
@@ -1622,6 +1642,7 @@ const authenticateAdmin = async (req, res, next) => {
       const decoded = await authService.verifyIdToken(token);
       if (decoded.admin === true || decoded.uid === process.env.SUPER_ADMIN_UID) {
         req.adminUser = decoded;
+        logAdminAction(req);
         return next();
       }
     } catch (err) {
@@ -3571,10 +3592,128 @@ app.post('/api/admin/reports/:id/action', authenticateAdmin, async (req, res) =>
 });
 
 /**
- * POST /api/contacts/match
- * Securely matches user's local phonebook against registered users in Firestore.
- * Prevents client-side scraping of /users collection while enabling instant contact discovery.
+ * GET /api/admin/users?q=&limit=
+ * Admin user directory. The public client can never list users; this endpoint
+ * exists only behind the admin secret and masks phone numbers.
  */
+app.get('/api/admin/users', authenticateAdmin, async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore unavailable' });
+  const q = String(req.query.q || '').trim().toLowerCase();
+  const limit = Math.min(parseInt(req.query.limit || '40', 10) || 40, 200);
+
+  try {
+    const snap = await firestoreDb.collection('users').limit(500).get();
+    const rows = [];
+    for (const doc of snap.docs) {
+      const d = doc.data() || {};
+      const rawPhone = typeof d.phone === 'string'
+        ? d.phone
+        : (d.phone && typeof d.phone === 'object' ? `${d.phone.code || ''}${d.phone.number || ''}` : '');
+      const name = String(d.name || '');
+      const haystack = `${name} ${rawPhone} ${doc.id}`.toLowerCase();
+      if (q && !haystack.includes(q)) continue;
+      rows.push({
+        id: doc.id,
+        name,
+        avatarUrl: d.avatarUrl || '',
+        activityStatus: d.activityStatus || 'offline',
+        spokenLanguage: d.spokenLanguage || '',
+        phoneMasked: rawPhone ? `••••${rawPhone.slice(-4)}` : '',
+      });
+    }
+    res.json({ users: rows.slice(0, limit), total: rows.length });
+  } catch (err) {
+    console.error('[AdminUsers] list error:', err.message);
+    res.status(500).json({ error: 'Failed to list users' });
+  }
+});
+
+/**
+ * GET /api/admin/users/:uid
+ * One-screen profile for support: wallet, recent calls, billing rows.
+ */
+app.get('/api/admin/users/:uid', authenticateAdmin, async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore unavailable' });
+  const uid = String(req.params.uid || '').trim();
+  if (!uid || uid.length > 128) return res.status(400).json({ error: 'Invalid uid' });
+
+  try {
+    const userSnap = await firestoreDb.collection('users').doc(uid).get();
+    if (!userSnap.exists) return res.status(404).json({ error: 'User not found' });
+
+    const d = userSnap.data() || {};
+    const [walletSnap, outgoing, incoming, billing] = await Promise.all([
+      firestoreDb.collection('users').doc(uid).collection('wallet').doc('current').get(),
+      firestoreDb.collection('calls').where('callerId', '==', uid).limit(20).get(),
+      firestoreDb.collection('calls').where('calleeId', '==', uid).limit(20).get(),
+      firestoreDb.collection('call_billing_records').where('userId', '==', uid).limit(20).get().catch(() => null),
+    ]);
+
+    const calls = [];
+    for (const doc of [...outgoing.docs, ...incoming.docs]) {
+      const c = doc.data() || {};
+      calls.push({
+        id: doc.id,
+        callerId: c.callerId || '',
+        calleeId: c.calleeId || '',
+        status: c.status || '',
+        durationSeconds: c.durationSeconds || 0,
+        createdAt: c.createdAt || null,
+      });
+    }
+    calls.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+
+    const ledger = (billing?.docs || []).map((doc) => {
+      const b = doc.data() || {};
+      return {
+        id: doc.id,
+        minutes: b.minutes || b.deductedMinutes || 0,
+        cost: b.cost || 0,
+        at: b.createdAt || b.timestamp || null,
+      };
+    });
+
+    res.json({
+      user: {
+        id: uid,
+        name: d.name || '',
+        avatarUrl: d.avatarUrl || '',
+        activityStatus: d.activityStatus || 'offline',
+        spokenLanguage: d.spokenLanguage || '',
+        defaultDisappearingTimer: d.defaultDisappearingTimer || 'Off',
+      },
+      wallet: walletSnap.exists ? walletSnap.data() : null,
+      calls: calls.slice(0, 20),
+      ledger: ledger.slice(0, 20),
+    });
+  } catch (err) {
+    console.error('[AdminUsers] detail error:', err.message);
+    res.status(500).json({ error: 'Failed to load user' });
+  }
+});
+
+/**
+ * GET /api/admin/audit
+ * Recent privileged actions (written by authenticateAdmin).
+ */
+app.get('/api/admin/audit', authenticateAdmin, async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'Firestore unavailable' });
+  const limit = Math.min(parseInt(req.query.limit || '100', 10) || 100, 300);
+  try {
+    const snap = await firestoreDb
+      .collection('admin_audit')
+      .orderBy('atMs', 'desc')
+      .limit(limit)
+      .get();
+    const entries = snap.docs.map((doc) => ({ id: doc.id, ...(doc.data() || {}) }));
+    res.json({ entries });
+  } catch (err) {
+    console.error('[AdminAudit] list error:', err.message);
+    res.json({ entries: [] });
+  }
+});
+
+
 app.post(
   '/api/contacts/match',
   apiLimiter,
