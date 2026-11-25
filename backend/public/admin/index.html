@@ -2361,6 +2361,11 @@
             </tbody>
           </table>
         </div>
+        <div style="padding:12px; text-align:center;">
+          <button class="btn btn-secondary" id="usersLoadMoreBtn" onclick="loadMoreUsers()" style="display:none;">
+            Load more
+          </button>
+        </div>
       </div>
 
       <div class="content-card" id="userDetailCard" style="display: none;">
@@ -2695,6 +2700,8 @@
     function logoutAdmin() {
       sessionStorage.removeItem('livocal_admin_secret');
       localStorage.removeItem('livocal_admin_secret');
+      // Drop the HttpOnly session cookie as well.
+      fetch('/admin/logout', { method: 'POST' }).catch(() => {});
       const input = document.getElementById('adminSecretInput');
       if (input) input.value = '';
       const modalInput = document.getElementById('modalSecretInput');
@@ -2732,7 +2739,19 @@
         document.getElementById('adminSecretInput').value = activeSecret;
         fetchDashboardData();
       } else {
-        showToast('Please enter Admin Secret to load live dashboard data.', true);
+        // No secret stored: the Basic-auth gate already set an HttpOnly session
+        // cookie, so the dashboard can load without asking for the secret.
+        fetch('/api/admin/whoami')
+          .then((r) => {
+            if (r.ok) {
+              fetchDashboardData();
+            } else {
+              showToast('Please enter Admin Secret to load live dashboard data.', true);
+            }
+          })
+          .catch(() => {
+            showToast('Please enter Admin Secret to load live dashboard data.', true);
+          });
       }
       loadDepositInfo();
 
@@ -3962,6 +3981,10 @@
     { group: 'Tabs', icon: '💳', label: 'Recharge ledger', hint: 'tab', run: function () { switchTab('recharges'); } },
     { group: 'Tabs', icon: '📊', label: 'Call billing ledger', hint: 'tab', run: function () { switchTab('ledger'); } },
     { group: 'Tabs', icon: '🏦', label: 'Deposit gateways', hint: 'tab', run: function () { switchTab('gateways'); } },
+    { group: 'Tabs', icon: '👥', label: 'User directory', hint: 'tab', run: function () { switchTab('users'); } },
+    { group: 'Tabs', icon: '🚩', label: 'User reports', hint: 'tab', run: function () { switchTab('reports'); } },
+    { group: 'Tabs', icon: '💚', label: 'System health', hint: 'tab', run: function () { switchTab('health'); } },
+    { group: 'Tabs', icon: '🧾', label: 'Admin audit log', hint: 'tab', run: function () { switchTab('audit'); } },
     { group: 'Actions', icon: '⚙️', label: 'Configure deposit gateways', hint: 'action', run: function () { if (window.openEditGatewaysModal) openEditGatewaysModal(); } },
     { group: 'Actions', icon: '➕', label: 'Credit minutes (quick top-up)', hint: 'action', run: function () { if (window.openTopUpModal) openTopUpModal(); } },
     { group: 'Actions', icon: '🔄', label: 'Refresh dashboard data', hint: 'action', run: function () { if (window.fetchDashboardData) fetchDashboardData(); } },
@@ -4118,8 +4141,15 @@
         /* ---------------- Users ---------------- */
         var usersCache = [];
         var usersTimer = null;
+        var usersLimit = 60;
+
+        window.loadMoreUsers = function () {
+          usersLimit = Math.min(usersLimit + 60, 200);
+          window.loadUsers();
+        };
 
         window.debouncedLoadUsers = function () {
+          usersLimit = 60;
           clearTimeout(usersTimer);
           usersTimer = setTimeout(function () { window.loadUsers(); }, 300);
         };
@@ -4128,11 +4158,16 @@
           var input = document.getElementById('userSearchInput');
           var q = input ? input.value.trim() : '';
           var body = document.getElementById('usersTableBody');
+          var moreBtn = document.getElementById('usersLoadMoreBtn');
           if (!body) return;
           body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:26px;color:var(--text-muted)">Loading users…</td></tr>';
           try {
-            var data = await adminGet('/api/admin/users?q=' + encodeURIComponent(q) + '&limit=60');
+            var data = await adminGet('/api/admin/users?q=' + encodeURIComponent(q) + '&limit=' + usersLimit);
             usersCache = data.users || [];
+            if (moreBtn) {
+              moreBtn.style.display =
+                (data.total || 0) > usersCache.length ? 'inline-flex' : 'none';
+            }
             if (!usersCache.length) {
               body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:26px;color:var(--text-muted)">No users matched.</td></tr>';
               return;

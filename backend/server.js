@@ -157,12 +157,27 @@ function adminUiAuth(req, res, next) {
     const decoded = Buffer.from(header.slice(6), 'base64').toString('utf8');
     const separator = decoded.indexOf(':');
     const password = separator >= 0 ? decoded.slice(separator + 1) : decoded;
-    if (password === secret) return next();
+    if (password === secret) {
+      // Short-lived HttpOnly session so the dashboard's API calls are
+      // authenticated without shipping the secret on every request.
+      res.setHeader(
+        'Set-Cookie',
+        `${ADMIN_SESSION_COOKIE}=${adminSessionToken()}; Path=/; HttpOnly; SameSite=Strict; Max-Age=28800`,
+      );
+      return next();
+    }
   }
 
   res.setHeader('WWW-Authenticate', 'Basic realm="Livocal Admin", charset="UTF-8"');
   return res.status(401).send('Authentication required');
 }
+app.post('/admin/logout', (req, res) => {
+  res.setHeader(
+    'Set-Cookie',
+    `${ADMIN_SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0`,
+  );
+  res.json({ ok: true });
+});
 app.use('/admin', adminUiAuth, express.static(path.join(__dirname, 'public/admin')));
 
 // Secure CORS configuration: Restrict origins, allow mobile apps without Origin header
@@ -1607,6 +1622,27 @@ const safeCompareSecrets = (provided, target) => {
   return crypto.timingSafeEqual(providedBuf, targetBuf);
 };
 
+const ADMIN_SESSION_COOKIE = 'livocal_admin_session';
+const adminSessionToken = () => {
+  const secret = process.env.ADMIN_SECRET || '';
+  if (!secret) return '';
+  return crypto
+    .createHmac('sha256', secret)
+    .update('livocal-admin-session-v1')
+    .digest('hex');
+};
+const readCookie = (req, name) => {
+  const raw = req.headers.cookie || '';
+  for (const part of raw.split(';')) {
+    const idx = part.indexOf('=');
+    if (idx < 0) continue;
+    if (part.slice(0, idx).trim() === name) {
+      return part.slice(idx + 1).trim();
+    }
+  }
+  return '';
+};
+
 // Admin Authorization Middleware (Strict: Headers only, No query params, Timing-safe)
 const logAdminAction = (req) => {
   if (!firestoreDb) return;
@@ -1631,6 +1667,13 @@ const authenticateAdmin = async (req, res, next) => {
   const providedSecret = req.headers['x-admin-secret'];
 
   if (providedSecret && safeCompareSecrets(providedSecret, effectiveAdminSecret)) {
+    logAdminAction(req);
+    return next();
+  }
+
+  // Browser session established by the /admin Basic-auth gate.
+  const sessionCookie = readCookie(req, ADMIN_SESSION_COOKIE);
+  if (sessionCookie && safeCompareSecrets(sessionCookie, adminSessionToken())) {
     logAdminAction(req);
     return next();
   }
@@ -3589,6 +3632,15 @@ app.post('/api/admin/reports/:id/action', authenticateAdmin, async (req, res) =>
     console.error('[AdminReports] Error updating report:', err.message);
     return res.status(500).json({ error: 'Failed to update report status' });
   }
+});
+
+/**
+ * GET /api/admin/whoami
+ * Lets the dashboard detect an existing session cookie without asking for the
+ * secret again.
+ */
+app.get('/api/admin/whoami', authenticateAdmin, (req, res) => {
+  res.json({ ok: true });
 });
 
 /**
