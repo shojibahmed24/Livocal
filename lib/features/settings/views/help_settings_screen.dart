@@ -9,6 +9,7 @@ import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/shared/utils/app_version.dart';
 import 'package:livocal/shared/utils/snackbars.dart';
+import 'package:livocal/shared/widgets/settings_group.dart';
 import 'package:livocal/shared/widgets/settings_row.dart';
 import 'package:livocal/theme/app_colors.dart';
 
@@ -169,7 +170,7 @@ class HelpSettingsScreen extends ConsumerWidget {
           ),
         ),
       ),
-      body: ListView(
+      body: SettingsGroupedList(
         children: [
           SettingsSectionHeader(
               title: AppStrings.tr(ref, 'supportAndKnowledge')),
