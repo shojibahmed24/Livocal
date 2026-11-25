@@ -1364,9 +1364,9 @@ class _MessageCardState extends ConsumerState<MessageCard>
                 color: isDark
                     ? Colors.black.withValues(alpha: 0.28)
                     : Colors.black.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(8.0),
-                border: const Border(
-                  left: BorderSide(
+                borderRadius: BorderRadiusDirectional.circular(8.0),
+                border: const BorderDirectional(
+                  start: BorderSide(
                     color: AppColors.primary,
                     width: 3.5,
                   ),
@@ -1582,8 +1582,10 @@ class _MessageCardState extends ConsumerState<MessageCard>
       child: SlideTransition(
         position: _slideAnim,
         child: GestureDetector(
-          onLongPress: () =>
-              _showMessageActionSheet(context, isSentMessageCard),
+          onLongPress: () {
+            HapticFeedback.selectionClick();
+            _showMessageActionSheet(context, isSentMessageCard);
+          },
           child: Align(
             alignment: isSentMessageCard
                 ? AlignmentDirectional.centerEnd
@@ -1602,11 +1604,11 @@ class _MessageCardState extends ConsumerState<MessageCard>
                 isFirstOfRun: widget.special,
                 isLastOfRun: widget.isLastInGroup,
               ),
-              margin: const EdgeInsets.only(
-                bottom: 3.0,
-                top: 3.0,
-                left: 12.0,
-                right: 12.0,
+              margin: EdgeInsetsDirectional.only(
+                start: 12.0,
+                end: 12.0,
+                top: widget.special ? 6.0 : 2.0,
+                bottom: widget.isLastInGroup ? 10.0 : 2.0,
               ),
               padding: hasAttachment
                   ? attachmentType == AttachmentType.audio && !messageHasText
@@ -1624,11 +1626,11 @@ class _MessageCardState extends ConsumerState<MessageCard>
                           right:
                               widget.special && isSentMessageCard ? 14.0 : 4.0,
                         )
-                  : EdgeInsets.only(
-                      left: 10,
-                      right: widget.special && isSentMessageCard ? 16 : 10,
-                      top: 4,
-                      bottom: 6,
+                  : EdgeInsetsDirectional.only(
+                      start: 12,
+                      end: widget.special && isSentMessageCard ? 16 : 12,
+                      top: 7,
+                      bottom: 8,
                     ),
               child: Stack(
                 alignment: AlignmentDirectional.centerStart,
