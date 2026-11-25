@@ -130,6 +130,19 @@ class CallScaffold extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
+          Container(
+            width: size * 1.6,
+            height: size * 1.6,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  AppColors.primary.withValues(alpha: 0.16),
+                  AppColors.primary.withValues(alpha: 0.0),
+                ],
+              ),
+            ),
+          ),
           if (pulseAnimation != null)
             AnimatedBuilder(
               animation: pulseAnimation!,
@@ -223,7 +236,7 @@ class CallScaffold extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final compact = constraints.maxHeight < 650;
-              final avatarSize = compact ? 92.0 : 116.0;
+              final avatarSize = compact ? 104.0 : 132.0;
               return Column(
                 children: [
                   Padding(
@@ -243,9 +256,9 @@ class CallScaffold extends StatelessWidget {
                       peerName,
                       style: TextStyle(
                         color: textPrimary,
-                        fontSize: compact ? 24 : 28,
+                        fontSize: compact ? 26 : 30,
                         fontWeight: FontWeight.w700,
-                        letterSpacing: -0.4,
+                        letterSpacing: -0.6,
                       ),
                       textAlign: TextAlign.center,
                       maxLines: 1,
@@ -259,34 +272,65 @@ class CallScaffold extends StatelessWidget {
                       style: TextStyle(color: textSecondary, fontSize: 14),
                     ),
                   ],
-                  const SizedBox(height: 4),
-                  Text(
-                    statusText,
-                    style: TextStyle(
-                      color: isDark ? AppColors.accent : AppColors.primary,
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.2,
+                  const SizedBox(height: 6),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: (isDark ? AppColors.accent : AppColors.primary)
+                          .withValues(alpha: 0.12),
+                      borderRadius: AppRadius.full,
+                      border: Border.all(
+                        color: (isDark ? AppColors.accent : AppColors.primary)
+                            .withValues(alpha: 0.28),
+                      ),
                     ),
-                    textAlign: TextAlign.center,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color:
+                                isDark ? AppColors.accent : AppColors.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 7),
+                        Text(
+                          statusText,
+                          style: TextStyle(
+                            color:
+                                isDark ? AppColors.accent : AppColors.primary,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   if (subStatus != null) ...[
                     const SizedBox(height: 8),
                     subStatus!,
                   ],
                   Expanded(
-                    child: SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      child: Column(
-                        children: [
-                          SizedBox(height: compact ? 12 : 22),
-                          _buildPulsingAvatar(avatarSize, isDark),
-                          if (middleWidget != null) ...[
-                            const SizedBox(height: 16),
-                            middleWidget!,
+                    child: Center(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(height: 8),
+                            _buildPulsingAvatar(avatarSize, isDark),
+                            if (middleWidget != null) ...[
+                              const SizedBox(height: 22),
+                              middleWidget!,
+                            ],
+                            const SizedBox(height: 24),
                           ],
-                          const SizedBox(height: 16),
-                        ],
+                        ),
                       ),
                     ),
                   ),
