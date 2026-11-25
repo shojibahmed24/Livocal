@@ -579,7 +579,7 @@ class _AlbumViewState extends ConsumerState<AlbumView> {
                             itemBuilder: (context, index) {
                               return Padding(
                                 key: ValueKey(selectedAssets[index].asset.id),
-                                padding: const EdgeInsets.only(right: 10.0),
+                                padding: const EdgeInsetsDirectional.only(end: 10.0),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(4),
                                   child: SizedBox(

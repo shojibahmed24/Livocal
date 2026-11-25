@@ -1089,7 +1089,7 @@ class _MinuteRechargeSheetState extends ConsumerState<MinuteRechargeSheet> {
             ),
             const SizedBox(height: 6),
             Padding(
-              padding: const EdgeInsets.only(left: 30),
+              padding: const EdgeInsetsDirectional.only(start: 30),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

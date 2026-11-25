@@ -955,7 +955,7 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
     }
 
     return Container(
-      margin: const EdgeInsets.only(left: 6.0, right: 6.0, bottom: 6.0),
+      margin: const EdgeInsets.only(bottom: 6.0),
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF16203A) : const Color(0xFFEFEFEF),
@@ -1036,32 +1036,52 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
         },
         textController: ref.read(chatControllerProvider).messageController,
         actions: [
-          InkWell(
-            onTap: () {
-              onAttachmentsIconPressed(
-                context,
-              );
-            },
-            child: Transform.rotate(
-              angle: -0.8,
-              child: const Icon(
-                Icons.attach_file_rounded,
-                size: 26.0,
+          Semantics(
+            button: true,
+            label: AppStrings.tr(ref, 'attachFile'),
+            child: InkWell(
+              onTap: () {
+                onAttachmentsIconPressed(
+                  context,
+                );
+              },
+              child: SizedBox(
+                width: 44,
+                height: 44,
+                child: Center(
+                  child: Transform.rotate(
+                    angle: -0.8,
+                    child: const Icon(
+                      Icons.attach_file_rounded,
+                      size: 24.0,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
           if (!hideElements)
-            InkWell(
-              onTap: () {
-                ref
-                    .read(
-                      chatControllerProvider.notifier,
-                    )
-                    .navigateToCameraView(context);
-              },
-              child: const Icon(
-                Icons.camera_alt_rounded,
-                size: 24.0,
+            Semantics(
+              button: true,
+              label: AppStrings.tr(ref, 'camera'),
+              child: InkWell(
+                onTap: () {
+                  ref
+                      .read(
+                        chatControllerProvider.notifier,
+                      )
+                      .navigateToCameraView(context);
+                },
+                child: const SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: Center(
+                    child: Icon(
+                      Icons.camera_alt_rounded,
+                      size: 23.0,
+                    ),
+                  ),
+                ),
               ),
             ),
         ]);

@@ -190,7 +190,7 @@ class _DialerTabState extends ConsumerState<DialerTab> {
       return Container(
         height: 54,
         padding: const EdgeInsets.symmetric(horizontal: 22),
-        alignment: Alignment.centerLeft,
+        alignment: AlignmentDirectional.centerStart,
         child: Row(
           children: [
             Icon(

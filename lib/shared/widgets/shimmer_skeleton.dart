@@ -69,12 +69,10 @@ class _AppShimmerState extends State<AppShimmer>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final baseColor = isDark
-        ? const Color(0xFF1E2A30)
-        : const Color(0xFFE5E7EB);
-    final highlightColor = isDark
-        ? const Color(0xFF1E2A47)
-        : const Color(0xFFF3F4F6);
+    final baseColor =
+        isDark ? const Color(0xFF1E2A30) : const Color(0xFFE5E7EB);
+    final highlightColor =
+        isDark ? const Color(0xFF1E2A47) : const Color(0xFFF3F4F6);
 
     return AnimatedBuilder(
       animation: _animation,
@@ -187,7 +185,7 @@ class ChatBubbleShimmerSkeleton extends StatelessWidget {
 
         // Incoming bubble 1
         Align(
-          alignment: Alignment.centerLeft,
+          alignment: AlignmentDirectional.centerStart,
           child: AppShimmer(
             width: screenWidth * 0.58,
             height: 52,
@@ -203,7 +201,7 @@ class ChatBubbleShimmerSkeleton extends StatelessWidget {
 
         // Outgoing bubble 1
         Align(
-          alignment: Alignment.centerRight,
+          alignment: AlignmentDirectional.centerEnd,
           child: AppShimmer(
             width: screenWidth * 0.65,
             height: 64,
@@ -219,7 +217,7 @@ class ChatBubbleShimmerSkeleton extends StatelessWidget {
 
         // Incoming bubble 2 (shorter)
         Align(
-          alignment: Alignment.centerLeft,
+          alignment: AlignmentDirectional.centerStart,
           child: AppShimmer(
             width: screenWidth * 0.42,
             height: 44,
@@ -235,7 +233,7 @@ class ChatBubbleShimmerSkeleton extends StatelessWidget {
 
         // Outgoing bubble 2
         Align(
-          alignment: Alignment.centerRight,
+          alignment: AlignmentDirectional.centerEnd,
           child: AppShimmer(
             width: screenWidth * 0.50,
             height: 48,
@@ -251,7 +249,7 @@ class ChatBubbleShimmerSkeleton extends StatelessWidget {
 
         // Incoming bubble 3 (media-sized)
         Align(
-          alignment: Alignment.centerLeft,
+          alignment: AlignmentDirectional.centerStart,
           child: AppShimmer(
             width: screenWidth * 0.68,
             height: 120,
@@ -345,5 +343,3 @@ class StarredMessagesShimmerSkeleton extends StatelessWidget {
     );
   }
 }
-
-

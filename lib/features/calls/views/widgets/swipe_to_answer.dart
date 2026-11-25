@@ -122,7 +122,8 @@ class _SwipeToAnswerState extends State<SwipeToAnswer> {
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    final maxDrag = constraints.maxWidth - thumbSize - (thumbPadding * 2);
+                    final maxDrag =
+                        constraints.maxWidth - thumbSize - (thumbPadding * 2);
 
                     return GestureDetector(
                       // Allow dragging on the track itself too (not just thumb)
@@ -143,7 +144,7 @@ class _SwipeToAnswerState extends State<SwipeToAnswer> {
                           ),
                         ),
                         child: Stack(
-                          alignment: Alignment.centerLeft,
+                          alignment: AlignmentDirectional.centerStart,
                           children: [
                             // Track shimmer text
                             Center(
@@ -173,7 +174,10 @@ class _SwipeToAnswerState extends State<SwipeToAnswer> {
                                     Icons.arrow_forward_ios_rounded,
                                     size: 13,
                                     color: AppColors.primary.withValues(
-                                      alpha: (1.0 - (_dragPosition / maxDrag).clamp(0.0, 1.0)) * 0.85,
+                                      alpha: (1.0 -
+                                              (_dragPosition / maxDrag)
+                                                  .clamp(0.0, 1.0)) *
+                                          0.85,
                                     ),
                                   ),
                                 ],
@@ -183,7 +187,8 @@ class _SwipeToAnswerState extends State<SwipeToAnswer> {
                             Positioned(
                               left: thumbPadding + _dragPosition,
                               child: GestureDetector(
-                                onTap: _onAccept, // Tap thumb to answer directly
+                                onTap:
+                                    _onAccept, // Tap thumb to answer directly
                                 onHorizontalDragUpdate: (details) =>
                                     _onHorizontalDragUpdate(details, maxDrag),
                                 onHorizontalDragEnd: (details) =>
@@ -196,7 +201,8 @@ class _SwipeToAnswerState extends State<SwipeToAnswer> {
                                     shape: BoxShape.circle,
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.primary.withValues(alpha: 0.45),
+                                        color: AppColors.primary
+                                            .withValues(alpha: 0.45),
                                         blurRadius: 10,
                                         offset: const Offset(0, 2),
                                       ),
@@ -262,4 +268,3 @@ class _SwipeToAnswerState extends State<SwipeToAnswer> {
     );
   }
 }
-

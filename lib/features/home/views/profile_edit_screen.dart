@@ -409,7 +409,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(left: 72, right: 16, bottom: 16),
+              padding: const EdgeInsetsDirectional.only(
+                  start: 72, end: 16, bottom: 16),
               child: Text(
                 AppStrings.tr(ref, 'nameVisibilityHint'),
                 style: const TextStyle(fontSize: 12, color: Colors.grey),

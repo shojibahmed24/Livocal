@@ -498,7 +498,7 @@ class _AttachedVoiceViewerState extends ConsumerState<AttachedVoiceViewer> {
                               builder: (context, val, waveform) => SizedBox(
                                 height: maxHeight,
                                 child: Stack(
-                                  alignment: Alignment.centerLeft,
+                                  alignment: AlignmentDirectional.centerStart,
                                   children: [
                                     AnimatedContainer(
                                       width: player.state == PlayerState.playing

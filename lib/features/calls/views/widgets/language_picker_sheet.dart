@@ -160,7 +160,7 @@ class _UniversalLanguagePickerSheetState
                   padding:
                       const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
                   child: Align(
-                    alignment: Alignment.centerLeft,
+                    alignment: AlignmentDirectional.centerStart,
                     child: Text(
                       AppStrings.get('popularLanguages', langCode),
                       style: TextStyle(

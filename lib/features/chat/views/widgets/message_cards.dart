@@ -1586,8 +1586,8 @@ class _MessageCardState extends ConsumerState<MessageCard>
               _showMessageActionSheet(context, isSentMessageCard),
           child: Align(
             alignment: isSentMessageCard
-                ? Alignment.centerRight
-                : Alignment.centerLeft,
+                ? AlignmentDirectional.centerEnd
+                : AlignmentDirectional.centerStart,
             child: Container(
               constraints: BoxConstraints(
                 minHeight: 34,
@@ -1631,7 +1631,7 @@ class _MessageCardState extends ConsumerState<MessageCard>
                       bottom: 6,
                     ),
               child: Stack(
-                alignment: Alignment.centerLeft,
+                alignment: AlignmentDirectional.centerStart,
                 children: [
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1653,7 +1653,8 @@ class _MessageCardState extends ConsumerState<MessageCard>
                       if (messageHasText || isDeleted) ...[
                         Padding(
                           padding: hasAttachment
-                              ? const EdgeInsets.only(left: 4.0, top: 4.0)
+                              ? const EdgeInsetsDirectional.only(
+                                  start: 4.0, top: 4.0)
                               : widget.special && !isSentMessageCard
                                   ? EdgeInsets.only(
                                       left: 10,

@@ -338,7 +338,7 @@ class _CustomEmojiPickerState extends ConsumerState<CustomEmojiPicker> {
                     final emojiWrapperRow = allEmojiRows[index];
                     if (emojiWrapperRow == null) {
                       return Container(
-                        margin: const EdgeInsets.only(left: 4),
+                        margin: const EdgeInsetsDirectional.only(start: 4),
                         height: headerHeight,
                         child: Text(
                           categoryNames[

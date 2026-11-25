@@ -1089,7 +1089,9 @@ class _TranscriptBubbleCard extends StatelessWidget {
     final isSelf = entry.isSelf;
 
     return Align(
-      alignment: isSelf ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: isSelf
+          ? AlignmentDirectional.centerEnd
+          : AlignmentDirectional.centerStart,
       child: Container(
         margin: EdgeInsets.symmetric(vertical: 5),
         padding: EdgeInsets.all(11),

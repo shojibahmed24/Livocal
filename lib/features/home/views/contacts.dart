@@ -220,7 +220,7 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
               controller: _scrollController,
               physics: const BouncingScrollPhysics(),
               shrinkWrap: true,
-              padding: const EdgeInsets.only(right: 18, bottom: 24),
+              padding: const EdgeInsetsDirectional.only(end: 18, bottom: 24),
               children: [
                 if (searchQuery.isEmpty)
                   Padding(

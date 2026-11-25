@@ -80,8 +80,9 @@ class _SwipeToReplyState extends State<SwipeToReply> {
           Positioned.fill(
             child: IgnorePointer(
               child: Align(
-                alignment:
-                    _drag >= 0 ? Alignment.centerLeft : Alignment.centerRight,
+                alignment: _drag >= 0
+                    ? AlignmentDirectional.centerStart
+                    : AlignmentDirectional.centerEnd,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 18),
                   child: Opacity(
