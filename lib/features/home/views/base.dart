@@ -762,7 +762,7 @@ class _SecureFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 6, 20, 8),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 84),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

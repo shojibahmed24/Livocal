@@ -28,16 +28,22 @@ class StatusService {
               .toList();
 
           if (privacySetting == 'except') {
-            final excluded = SharedPref.instance.getStringList('status_privacy_excluded') ?? [];
-            allowedRecipients = registeredUids.where((u) => !excluded.contains(u)).toList();
+            final excluded =
+                SharedPref.instance.getStringList('status_privacy_excluded') ??
+                    [];
+            allowedRecipients =
+                registeredUids.where((u) => !excluded.contains(u)).toList();
           } else if (privacySetting == 'only') {
-            final only = SharedPref.instance.getStringList('status_privacy_only') ?? [];
-            allowedRecipients = registeredUids.where((u) => only.contains(u)).toList();
+            final only =
+                SharedPref.instance.getStringList('status_privacy_only') ?? [];
+            allowedRecipients =
+                registeredUids.where((u) => only.contains(u)).toList();
           } else {
             allowedRecipients = registeredUids;
           }
         } catch (e) {
-          debugPrint('[StatusService] Error getting contacts for status privacy: $e');
+          debugPrint(
+              '[StatusService] Error getting contacts for status privacy: $e');
         }
       }
 
@@ -61,7 +67,8 @@ class StatusService {
         'privacy': privacySetting,
         'allowedUserIds': allowedRecipients,
       };
-      await SharedPref.instance.setString('my_last_status', jsonEncode(myStatusMap));
+      await SharedPref.instance
+          .setString('my_last_status', jsonEncode(myStatusMap));
     } catch (e) {
       debugPrint('[StatusService] postStatus error: $e');
       final myStatusMap = {
@@ -74,7 +81,8 @@ class StatusService {
         'colorValue': status.colorValue,
         'timestamp': status.timestamp.toIso8601String(),
       };
-      await SharedPref.instance.setString('my_last_status', jsonEncode(myStatusMap));
+      await SharedPref.instance
+          .setString('my_last_status', jsonEncode(myStatusMap));
     }
   }
 
@@ -104,16 +112,22 @@ class StatusService {
             .toList();
 
         if (privacySetting == 'except') {
-          final excluded = SharedPref.instance.getStringList('status_privacy_excluded') ?? [];
-          allowedRecipients = registeredUids.where((u) => !excluded.contains(u)).toList();
+          final excluded =
+              SharedPref.instance.getStringList('status_privacy_excluded') ??
+                  [];
+          allowedRecipients =
+              registeredUids.where((u) => !excluded.contains(u)).toList();
         } else if (privacySetting == 'only') {
-          final only = SharedPref.instance.getStringList('status_privacy_only') ?? [];
-          allowedRecipients = registeredUids.where((u) => only.contains(u)).toList();
+          final only =
+              SharedPref.instance.getStringList('status_privacy_only') ?? [];
+          allowedRecipients =
+              registeredUids.where((u) => only.contains(u)).toList();
         } else {
           allowedRecipients = registeredUids;
         }
       } catch (e) {
-        debugPrint('[StatusService] Error getting contacts for status metadata: $e');
+        debugPrint(
+            '[StatusService] Error getting contacts for status metadata: $e');
       }
 
       // 2. Upload to Firebase Storage under /statuses/{userId}/{fileName} with allowedUserIds metadata
@@ -166,46 +180,49 @@ class StatusService {
 
   static Stream<StatusModel?> getMyStatusStream(String currentUserId) {
     final cutoff = DateTime.now().subtract(const Duration(hours: 24));
+    // Equality-only filter: it uses the automatic single-field index, while
+    // `where(userId) + where(timestamp) + orderBy` required a composite index
+    // that was never created (the Updates tab failed with failed-precondition).
     return _firestore
         .collection('statuses')
         .where('userId', isEqualTo: currentUserId)
-        .where('timestamp', isGreaterThan: Timestamp.fromDate(cutoff))
-        .orderBy('timestamp', descending: true)
-        .limit(1)
         .snapshots()
         .map((snap) {
-          if (snap.docs.isEmpty) return getMyLocalStatus();
-          final doc = snap.docs.first;
-          final status = StatusModel.fromMap(doc.data(), doc.id);
-          if (status.isExpired) return null;
-          return status;
-        })
-        .handleError((err) {
-          debugPrint('[StatusService] getMyStatusStream error: $err');
-          return getMyLocalStatus();
-        });
+      final fresh = snap.docs
+          .map((doc) => StatusModel.fromMap(doc.data(), doc.id))
+          .where(
+              (status) => !status.isExpired && status.timestamp.isAfter(cutoff))
+          .toList()
+        ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+      if (fresh.isEmpty) return getMyLocalStatus();
+      return fresh.first;
+    }).handleError((err) {
+      debugPrint('[StatusService] getMyStatusStream error: $err');
+      return getMyLocalStatus();
+    });
   }
 
-  static Stream<List<StatusModel>> getRecentStatusesStream(String currentUserId) {
+  static Stream<List<StatusModel>> getRecentStatusesStream(
+      String currentUserId) {
     return _firestore
         .collection('statuses')
         .where('allowedUserIds', arrayContains: currentUserId)
         .snapshots()
         .map((snap) {
-          final list = <StatusModel>[];
-          for (final doc in snap.docs) {
-            final st = StatusModel.fromMap(doc.data(), doc.id);
-            if (st.userId != currentUserId && !st.isExpired) {
-              list.add(st);
-            }
-          }
-          list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-          return list;
-        })
-        .handleError((err) {
-          debugPrint('[StatusService] getRecentStatusesStream error: $err');
-          return <StatusModel>[];
-        });
+      final list = <StatusModel>[];
+      for (final doc in snap.docs) {
+        final st = StatusModel.fromMap(doc.data(), doc.id);
+        if (st.userId != currentUserId && !st.isExpired) {
+          list.add(st);
+        }
+      }
+      list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      return list;
+    }).handleError((err) {
+      debugPrint('[StatusService] getRecentStatusesStream error: $err');
+      return <StatusModel>[];
+    });
   }
 
   static Set<String> getViewedStatusIds() {
@@ -222,7 +239,8 @@ class StatusService {
     if (statusId.isEmpty) return;
     try {
       final set = getViewedStatusIds()..add(statusId);
-      await SharedPref.instance.setStringList('viewed_status_ids', set.toList());
+      await SharedPref.instance
+          .setStringList('viewed_status_ids', set.toList());
     } catch (e) {
       debugPrint('[StatusService] markStatusAsViewed error: $e');
     }

@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'dart:isolate';
+import 'dart:ui' show RootIsolateToken;
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show BackgroundIsolateBinaryMessenger;
 import 'package:flutter_contacts/flutter_contacts.dart' show FlutterContacts;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -10,6 +13,49 @@ import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/services/app_check_service.dart';
 import 'package:livocal/shared/utils/phone_normalizer.dart';
+
+/// Plain, isolate-friendly copy of a device contact.
+class DeviceContactRow {
+  final String id;
+  final String name;
+  final List<String> phones;
+
+  const DeviceContactRow({
+    required this.id,
+    required this.name,
+    required this.phones,
+  });
+}
+
+/// Reads the address book on a worker isolate.
+///
+/// `FlutterContacts.getContacts` decodes a few thousand rows in Dart, which
+/// blocked the UI thread for ~5 s on a 2077-contact phone and triggered an ANR.
+Future<List<DeviceContactRow>> _readContactsOnWorker() async {
+  final token = RootIsolateToken.instance;
+  if (token == null) return const [];
+
+  return Isolate.run(() async {
+    BackgroundIsolateBinaryMessenger.ensureInitialized(token);
+    final contacts = await FlutterContacts.getContacts(
+      withProperties: true,
+      withThumbnail: false,
+      withPhoto: false,
+      withGroups: false,
+      withAccounts: false,
+      sorted: false,
+    );
+    return contacts
+        .map((contact) => DeviceContactRow(
+              id: contact.id,
+              name: contact.displayName,
+              phones: contact.phones
+                  .map((phone) => phone.number)
+                  .toList(growable: false),
+            ))
+        .toList(growable: false);
+  });
+}
 
 final contactsRepositoryProvider = Provider((ref) => ContactsRepository(ref));
 
@@ -304,7 +350,8 @@ class ContactsRepository {
   /// This is deliberately separate from the server matching step: with a few
   /// thousand contacts a single read is already heavy on low-RAM phones, and
   /// doing it twice (once for the list, once for matching) got the app killed
-  /// by the low-memory killer.
+  /// by the low-memory killer. The read itself runs on a worker isolate so the
+  /// UI thread never blocks (an ANR came from doing it inline).
   Future<List<Contact>> getDeviceContacts({required User self}) async {
     final result = <Contact>[];
     try {
@@ -312,36 +359,50 @@ class ContactsRepository {
           await FlutterContacts.requestPermission(readonly: true);
       if (!hasPermission) return result;
 
-      final contacts = await FlutterContacts.getContacts(
-        withProperties: true,
-        withThumbnail: false,
-        withPhoto: false,
-        withGroups: false,
-        withAccounts: false,
-        sorted: false,
-      );
+      List<DeviceContactRow> rows;
+      try {
+        rows = await _readContactsOnWorker();
+      } catch (e) {
+        debugPrint('[ContactsRepository] worker read failed ($e), inline read');
+        final contacts = await FlutterContacts.getContacts(
+          withProperties: true,
+          withThumbnail: false,
+          withPhoto: false,
+          withGroups: false,
+          withAccounts: false,
+          sorted: false,
+        );
+        rows = contacts
+            .map((contact) => DeviceContactRow(
+                  id: contact.id,
+                  name: contact.displayName,
+                  phones: contact.phones
+                      .map((phone) => phone.number)
+                      .toList(growable: false),
+                ))
+            .toList(growable: false);
+      }
 
       final selfNormalized = _normalize(self.phone.rawNumber);
       final seenContacts = <String>{};
 
-      for (var i = 0; i < contacts.length; i++) {
-        final contact = contacts[i];
-        // Yield every so often: parsing a few thousand contacts in one go
-        // froze the UI thread and made taps feel dead.
+      for (var i = 0; i < rows.length; i++) {
+        final row = rows[i];
+        // Yield every so often so a long list never stalls a frame.
         if (i % 100 == 0) {
           await Future<void>.delayed(Duration.zero);
         }
-        if (seenContacts.contains(contact.id)) continue;
-        for (final phone in contact.phones) {
-          final normalized = _normalize(phone.number);
+        if (seenContacts.contains(row.id)) continue;
+        for (final number in row.phones) {
+          final normalized = _normalize(number);
           if (normalized.isEmpty) continue;
           if (_isSelfNumber(normalized, selfNormalized)) continue;
 
-          seenContacts.add(contact.id);
+          seenContacts.add(row.id);
           result.add(Contact(
-            contactId: contact.id,
-            displayName: contact.displayName,
-            phoneNumber: phone.number,
+            contactId: row.id,
+            displayName: row.name,
+            phoneNumber: number,
           ));
           break;
         }

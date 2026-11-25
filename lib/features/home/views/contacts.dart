@@ -43,14 +43,34 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
   final ScrollController _scrollController = ScrollController();
   final Map<String, GlobalKey> _sectionKeys = {};
 
+  /// Building 2000+ contact rows at once took several seconds on a 3 GB phone.
+  /// Render a small page first and grow it as the user scrolls.
+  static const int _pageSize = 60;
+  int _visibleCount = _pageSize;
+
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
   }
 
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 600) {
+      _loadMore();
+    }
+  }
+
+  void _loadMore() {
+    if (!mounted) return;
+    setState(() => _visibleCount += _pageSize);
+  }
+
   @override
   void initState() {
+    _scrollController.addListener(_onScroll);
     ref.read(contactPickerControllerProvider.notifier).init();
     super.initState();
   }
@@ -343,9 +363,15 @@ class _ContactsPageState extends ConsumerState<ContactsPage> {
                     (!showInvite || contactsNotOnLivocal.isEmpty))
                   _ContactsEmptyState(ref: ref),
                 if (contactsOnLivocal.isNotEmpty)
-                  ..._buildLivocalContactsList(context, contactsOnLivocal),
+                  ..._buildLivocalContactsList(
+                    context,
+                    contactsOnLivocal.take(_visibleCount).toList(),
+                  ),
                 if (contactsNotOnLivocal.isNotEmpty)
-                  ..._buildLocalContactsList(context, contactsNotOnLivocal),
+                  ..._buildLocalContactsList(
+                    context,
+                    contactsNotOnLivocal.take(_visibleCount).toList(),
+                  ),
                 if (searchQuery.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(
