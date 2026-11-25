@@ -818,179 +818,136 @@ class _AiCallHero extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final myLang =
         CallLanguageRegistry.fromCode(CallRepository.getMyLanguageCode());
-    final walletAsync = ref.watch(walletStreamProvider(user.id));
-    final minutes = walletAsync.maybeWhen(
-      data: (wallet) => wallet.effectiveRemainingMinutes,
-      orElse: () => null,
-    );
+    final minutes = ref.watch(walletStreamProvider(user.id)).maybeWhen(
+          data: (wallet) => wallet.effectiveRemainingMinutes,
+          orElse: () => null,
+        );
 
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 8, 12, 2),
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         gradient: AppColors.brandGradient,
-        borderRadius: BorderRadius.circular(AppRadius.radiusXl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusLg),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.24),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
+            color: AppColors.primary.withValues(alpha: 0.20),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(5),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.16),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.auto_awesome_rounded,
-                  color: Colors.white,
-                  size: 13,
-                ),
-              ),
-              const SizedBox(width: 7),
-              const Text(
-                'LIVE AI TRANSLATION',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.0,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.16),
-                  borderRadius: AppRadius.full,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.timer_outlined,
-                      color: Colors.white,
-                      size: 11,
-                    ),
-                    const SizedBox(width: 3),
-                    Text(
-                      minutes == null ? '…' : '$minutes min',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            AppStrings.tr(ref, 'heroTitle'),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+          Container(
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.18),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.translate_rounded,
               color: Colors.white,
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              height: 1.18,
-              letterSpacing: -0.2,
+              size: 13,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            AppStrings.tr(ref, 'heroSubtitle'),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.82),
-              fontSize: 11.5,
-              height: 1.25,
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.16),
+              borderRadius: AppRadius.full,
             ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.16),
-                  borderRadius: AppRadius.full,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      myLang.flagEmoji,
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      myLang.nativeName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 6),
-              const Icon(
-                Icons.arrow_forward_rounded,
-                color: Colors.white70,
-                size: 13,
-              ),
-              const SizedBox(width: 6),
-              const Expanded(
-                child: Text(
-                  '70+ languages',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: Colors.white70, fontSize: 10.5),
-                ),
-              ),
-              FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: AppColors.primary,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  minimumSize: const Size(0, 36),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.radiusMd),
-                  ),
-                ),
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => ContactsPage(
-                      user: user,
-                      intent: ContactsIntent.call,
-                    ),
-                  ),
-                ),
-                icon: const Icon(Icons.call_rounded, size: 15),
-                label: Text(
-                  AppStrings.tr(ref, 'newCall'),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(myLang.flagEmoji, style: const TextStyle(fontSize: 11)),
+                const SizedBox(width: 4),
+                Text(
+                  myLang.nativeName,
                   style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12.5,
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          const Icon(
+            Icons.arrow_forward_rounded,
+            color: Colors.white70,
+            size: 12,
+          ),
+          const SizedBox(width: 4),
+          const Expanded(
+            child: Text(
+              '70+',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: Colors.white70, fontSize: 10.5),
+            ),
+          ),
+          if (minutes != null) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.16),
+                borderRadius: AppRadius.full,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.timer_outlined,
+                    color: Colors.white,
+                    size: 10,
+                  ),
+                  const SizedBox(width: 3),
+                  Text(
+                    '$minutes min',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 6),
+          ],
+          SizedBox(
+            height: 32,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                minimumSize: const Size(0, 32),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.radiusSm),
+                ),
+              ),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ContactsPage(
+                    user: user,
+                    intent: ContactsIntent.call,
                   ),
                 ),
               ),
-            ],
+              icon: const Icon(Icons.call_rounded, size: 13),
+              label: Text(
+                AppStrings.tr(ref, 'newCall'),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11.5,
+                ),
+              ),
+            ),
           ),
         ],
       ),
