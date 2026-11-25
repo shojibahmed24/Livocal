@@ -330,15 +330,15 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final statusText = switch (status) {
-      CallStateStatus.dialing => 'Calling...',
-      CallStateStatus.ringing => 'Ringing...',
+      CallStateStatus.dialing => AppStrings.tr(ref, 'callStatusCalling'),
+      CallStateStatus.ringing => AppStrings.tr(ref, 'callStatusRinging'),
       CallStateStatus.connectingAi ||
       CallStateStatus.connected =>
-        'Connecting AI interpreter...',
-      CallStateStatus.rejected => 'Call declined',
-      CallStateStatus.busy => 'User busy',
-      CallStateStatus.missed => 'No answer',
-      _ => 'Calling...',
+        AppStrings.tr(ref, 'callStatusConnectingAi'),
+      CallStateStatus.rejected => AppStrings.tr(ref, 'callStatusDeclined'),
+      CallStateStatus.busy => AppStrings.tr(ref, 'callStatusBusy'),
+      CallStateStatus.missed => AppStrings.tr(ref, 'callStatusNoAnswer'),
+      _ => AppStrings.tr(ref, 'callStatusCalling'),
     };
 
     final effectiveTrans = session != null
@@ -364,8 +364,8 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
         peerPhone: widget.callee.phone.getFormattedNumber(),
         statusText: statusText,
         badgeText: isTranslatedCall
-            ? 'AI translated call • Gemini Live'
-            : 'Free direct call • DTLS-SRTP',
+            ? AppStrings.tr(ref, 'callBadgeTranslated')
+            : AppStrings.tr(ref, 'callBadgeDirect'),
         badgeIcon: isTranslatedCall
             ? Icons.auto_awesome_rounded
             : Icons.lock_outline_rounded,
@@ -377,8 +377,9 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
           children: [
             _Chip(
               icon: Icons.translate_rounded,
-              label:
-                  isTranslatedCall ? 'AI translation ON' : 'Free direct call',
+              label: isTranslatedCall
+                  ? AppStrings.tr(ref, 'callChipAiOn')
+                  : AppStrings.tr(ref, 'callChipFree'),
               color: isTranslatedCall ? AppColors.accent : AppColors.success,
               isDark: isDark,
             ),
