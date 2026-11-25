@@ -1,3 +1,4 @@
+import 'package:livocal/shared/services/crash_reporting.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -886,12 +887,17 @@ class CallController extends StateNotifier<CallControllerState> {
         } else {
           debugPrint(
               '[CallController] WebRTC offer was never available after retries. Aborting call.');
+          CrashReporting.record(
+            'WebRTC offer unavailable after retries',
+            reason: 'call_connect_failed',
+          );
           state = state.copyWith(error: 'CALL_CONNECTION_FAILED');
           await endCall(endStatus: CallStateStatus.ended);
           return;
         }
-      } catch (e) {
+      } catch (e, st) {
         debugPrint('[CallController] WebRTC answerIncomingCall error: $e');
+        CrashReporting.record(e, stack: st, reason: 'call_connect_failed');
         state = state.copyWith(error: 'CALL_CONNECTION_FAILED');
         await endCall(endStatus: CallStateStatus.ended);
         return;

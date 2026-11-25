@@ -44,6 +44,7 @@ import 'package:livocal/features/auth/domain/auth_service.dart';
 import 'package:livocal/features/home/views/settings_screen.dart';
 import 'package:livocal/features/settings/services/block_service.dart';
 import 'package:livocal/shared/services/mute_service.dart';
+import 'package:livocal/shared/services/crash_reporting.dart';
 import 'package:camera/camera.dart';
 import 'package:livocal/features/home/views/status_tab.dart';
 import 'package:livocal/shared/widgets/camera.dart';
@@ -107,6 +108,10 @@ class _HomePageState extends ConsumerState<HomePage>
           userId: widget.user.id,
           phone: widget.user.phoneNumber,
         );
+
+    // Crash triage context (opaque id only, no PII).
+    CrashReporting.setUser(widget.user.id);
+    CrashReporting.setKey('screen', 'home');
 
     // Warm the contact cache once a day so the "New call / message" picker
     // opens instantly instead of scanning the address book on first tap.
@@ -762,7 +767,8 @@ class _SecureFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 84),
+      // Right inset keeps the line clear of the floating action button.
+      padding: const EdgeInsets.fromLTRB(20, 6, 84, 14),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

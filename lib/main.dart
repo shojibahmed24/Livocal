@@ -87,7 +87,6 @@ void main() async {
   } catch (e, st) {
     debugPrint("Firebase init error: $e\n$st");
   }
-
   try {
     await SharedPref.init();
     await GeminiLiveTranslator.initSecureStorage();

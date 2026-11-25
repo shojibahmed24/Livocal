@@ -6,13 +6,13 @@ service firebase.storage {
     match /avatars/{fileName} {
       allow read: if request.auth != null;
       allow write: if request.auth != null
-        && fileName.matches(request.auth.uid + '.*')
+        && fileName.matches(request.auth.uid + '\\.(jpg|jpeg|png|webp)')
         && request.resource.size > 0
         && request.resource.size <= 5 * 1024 * 1024
         && request.resource.contentType.matches('^image/.*');
     }
 
-    match /userAvatars/{userId} {
+    match /userAvatars/{userId}/{fileName} {
       allow read: if request.auth != null;
       allow write: if request.auth != null
         && request.auth.uid == userId
@@ -32,7 +32,9 @@ service firebase.storage {
         && request.resource.size <= 25 * 1024 * 1024
         && fileName.size() <= 128
         && request.resource.contentType.matches('^(image|video|audio|application/pdf|text/plain).*');
-      allow update, delete: if false;
+      // Uploads are immutable (no update), but the sender may remove their own.
+      allow update: if false;
+      allow delete: if request.auth != null && request.auth.uid == senderId;
     }
 
     // Deprecated legacy root attachments: Deny new uploads; read/delete permitted only if authenticated user is the sender/receiver or filename matches caller UID

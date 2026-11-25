@@ -145,8 +145,25 @@ app.use(helmet({
   contentSecurityPolicy: false,
 }));
 
-// Admin Control Room Web Dashboard static files
-app.use('/admin', express.static(path.join(__dirname, 'public/admin')));
+// Admin Control Room Web Dashboard static files.
+// The dashboard was publicly readable (154 KB of admin UI); it now asks for the
+// admin secret via HTTP Basic before serving anything.
+function adminUiAuth(req, res, next) {
+  const secret = process.env.ADMIN_SECRET;
+  if (!secret) return res.status(404).end();
+
+  const header = req.headers.authorization || '';
+  if (header.startsWith('Basic ')) {
+    const decoded = Buffer.from(header.slice(6), 'base64').toString('utf8');
+    const separator = decoded.indexOf(':');
+    const password = separator >= 0 ? decoded.slice(separator + 1) : decoded;
+    if (password === secret) return next();
+  }
+
+  res.setHeader('WWW-Authenticate', 'Basic realm="Livocal Admin", charset="UTF-8"');
+  return res.status(401).send('Authentication required');
+}
+app.use('/admin', adminUiAuth, express.static(path.join(__dirname, 'public/admin')));
 
 // Secure CORS configuration: Restrict origins, allow mobile apps without Origin header
 const defaultAllowedOrigins = [
@@ -172,7 +189,9 @@ app.use(cors({
     if (process.env.NODE_ENV === 'development' && (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) {
       return callback(null, true);
     }
-    return callback(new Error('CORS policy: Access denied'));
+    // Reject without throwing: a thrown error here surfaced as a 500 page on
+    // every cross-origin preflight.
+    return callback(null, false);
   },
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'idempotency-key'],
