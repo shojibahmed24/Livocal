@@ -74,7 +74,7 @@ class ContactPickerController extends StateNotifier<List<Contact>> {
 
   Future<void> init() async {
     _contacts = await ref.read(contactsProvider.future);
-    state = _contacts;
+    updateSearchResults(searchController.text);
 
     ref.listen(contactsProvider, (previous, next) {
       next.whenData(
@@ -261,12 +261,21 @@ class ContactPickerController extends StateNotifier<List<Contact>> {
   void updateSearchResults(String query) {
     query = query.toLowerCase().trim();
 
-    state = _contacts.where((contact) {
+    final filtered = _contacts.where((contact) {
       final nameMatches = contact.displayName.toLowerCase().contains(query);
       final cleanQuery = query.replaceAll(RegExp(r'\s+'), '');
       final cleanPhone = contact.phoneNumber.replaceAll(RegExp(r'\s+'), '');
       final phoneMatches = cleanPhone.contains(cleanQuery);
       return nameMatches || phoneMatches;
     }).toList();
+
+    // Sort globally, before the picker slices its first page: otherwise a
+    // random 60-row subset was shown and the alphabetical order jumped around.
+    filtered.sort(
+      (a, b) =>
+          a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
+    );
+
+    state = filtered;
   }
 }
