@@ -79,6 +79,33 @@ const DEFAULT_VOICE = process.env.DEFAULT_VOICE?.trim() || 'Aoede';
 const TEXT_MODEL =
     process.env.GEMINI_TEXT_MODEL?.trim() || 'gemini-2.5-flash';
 
+// Metered TURN: when an API key is configured the relay fetches short-lived ICE
+// servers per request instead of shipping static credentials to every client.
+// Falls back to the static TURN_URL/TURN_SECRET setup when absent.
+const METERED_API_KEY = process.env.METERED_API_KEY?.trim() || '';
+const METERED_DOMAIN = (process.env.METERED_DOMAIN?.trim() || 'livocal.metered.live')
+    .replace(/^https?:\/\//, '')
+    .replace(/\/$/, '');
+let meteredIceCache = { at: 0, servers: null };
+
+async function fetchMeteredIceServers() {
+  const now = Date.now();
+  if (meteredIceCache.servers && now - meteredIceCache.at < 10 * 60 * 1000) {
+    return meteredIceCache.servers;
+  }
+  const res = await fetch(
+    `https://${METERED_DOMAIN}/api/v1/turn/credentials?apiKey=${encodeURIComponent(METERED_API_KEY)}`,
+    { signal: AbortSignal.timeout(6000) }
+  );
+  if (!res.ok) throw new Error(`Metered HTTP ${res.status}`);
+  const list = await res.json();
+  if (!Array.isArray(list) || list.length === 0) {
+    throw new Error('Metered returned no TURN servers');
+  }
+  meteredIceCache = { at: now, servers: list };
+  return list;
+}
+
 function sanitizeBoundedNote(val, maxLen = 500) {
   if (val === undefined || val === null) return '';
   return String(val).trim().slice(0, maxLen);
@@ -332,10 +359,12 @@ app.get('/health', (req, res) => {
     uptime: Math.round(process.uptime()),
     hasApiKey: Boolean(GEMINI_API_KEY),
     hasTurn: Boolean(
-      process.env.TURN_URL &&
-        (process.env.TURN_SECRET ||
-          (process.env.TURN_USERNAME && process.env.TURN_CREDENTIAL))
+      METERED_API_KEY ||
+        (process.env.TURN_URL &&
+          (process.env.TURN_SECRET ||
+            (process.env.TURN_USERNAME && process.env.TURN_CREDENTIAL)))
     ),
+    turnProvider: METERED_API_KEY ? 'metered' : 'static',
     liveModel: DEFAULT_MODEL,
     textModel: TEXT_MODEL,
     appCheckEnforced: APP_CHECK_ENFORCE,
@@ -996,13 +1025,25 @@ app.post(
   }
 );
 
-// Secure ICE Servers endpoint (Provides STUN / TURN servers with Ephemeral HMAC-SHA1 support)
-app.get(['/api/webrtc/ice-servers', '/api/turn-credentials'], authenticateRequest, (req, res) => {
+// Secure ICE Servers endpoint (Metered TURN, coturn HMAC or static credentials)
+app.get(['/api/webrtc/ice-servers', '/api/turn-credentials'], authenticateRequest, async (req, res) => {
   const iceServers = [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
     { urls: 'stun:stun2.l.google.com:19302' },
   ];
+
+  if (METERED_API_KEY) {
+    try {
+      const metered = await fetchMeteredIceServers();
+      // Metered returns [{ urls, username, credential }, ...]
+      iceServers.push(...metered);
+      res.setHeader('X-Turn-Provider', 'metered');
+      return res.json({ iceServers });
+    } catch (err) {
+      console.warn('[ICE] Metered TURN fetch failed, falling back:', err.message);
+    }
+  }
 
   if (process.env.TURN_URL && process.env.TURN_SECRET) {
     // RFC 5766 / Coturn REST API Ephemeral Time-Limited TURN Credentials (HMAC-SHA1, 2-hour TTL)
