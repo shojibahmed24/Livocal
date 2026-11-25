@@ -51,7 +51,7 @@ dependencies:
   audio_session: ^0.2.4
   camera: ^0.10.5+3
   photo_manager: ^3.0.0-dev.2
-  flutter_webrtc: 0.12.5
+  flutter_webrtc: 1.6.3
   flutter_callkit_incoming: 2.0.4
   flutter_secure_storage: ^10.3.4
   local_auth: ^3.0.2
