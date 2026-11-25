@@ -59,7 +59,7 @@ service cloud.firestore {
         && !('bkashNumber' in request.resource.data)
         && !('nagadNumber' in request.resource.data);
       allow update: if isAuthenticated() && request.auth.uid == userId && request.resource.data.id == resource.data.id
-        && !(request.resource.data.diff(resource.data).affectedKeys().hasAny(['phone']))
+        && !(request.resource.data.diff(resource.data).affectedKeys().hasAny(['phone', 'isAdmin', 'admin', 'role']))
         && paymentFieldClean('binancePayId')
         && paymentFieldClean('cryptoUsdtTrc20')
         && paymentFieldClean('cryptoUsdtBep20')
@@ -182,6 +182,9 @@ service cloud.firestore {
       // Enforcement: Caller cannot initiate call to a recipient who has blocked them
       allow create: if isAuthenticated()
         && request.resource.data.callerId == request.auth.uid
+        && request.resource.data.calleeId is string
+        && request.resource.data.calleeId.size() > 0
+        && request.resource.data.calleeId.size() <= 128
         && !exists(/databases/$(database)/documents/users/$(request.resource.data.calleeId)/blocked_users/$(request.auth.uid));
       // Both participants (caller & verified callee) can observe and update call state
       // Security: Caller & Callee IDs cannot be spoofed or mutated to hijack existing calls
@@ -224,7 +227,12 @@ service cloud.firestore {
         resource.data.userId == request.auth.uid ||
         (resource.data.allowedUserIds != null && request.auth.uid in resource.data.allowedUserIds)
       );
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 700
+        && request.resource.data.allowedUserIds is list
+        && request.resource.data.allowedUserIds.size() <= 500;
       allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
 
