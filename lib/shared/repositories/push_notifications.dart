@@ -30,9 +30,8 @@ class PushNotificationsRepo {
 
   PushNotificationsRepo(this.instance, this.ref);
 
-  Future<void> init({
-    required Future<void> Function(RemoteMessage) onMessageOpenedApp,
-  }) async {
+  /// Shows the OS notification prompt (Android 13+ / iOS).
+  Future<void> requestPermissionNow() async {
     try {
       await instance.requestPermission(
         alert: true,
@@ -46,22 +45,34 @@ class PushNotificationsRepo {
     } catch (e, st) {
       debugPrint('[PushNotificationsRepo] requestPermission error: $e\n$st');
     }
+  }
+
+  Future<void> init({
+    required Future<void> Function(RemoteMessage) onMessageOpenedApp,
+    bool requestPermission = true,
+  }) async {
+    if (requestPermission) {
+      await requestPermissionNow();
+    }
 
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     FirebaseMessaging.onMessageOpenedApp.listen(onMessageOpenedApp);
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint('[PushNotificationsRepo] Foreground notification received: ${message.data}');
+      debugPrint(
+          '[PushNotificationsRepo] Foreground notification received: ${message.data}');
       final contactId = message.data['authorId'] as String? ??
           message.data['senderId'] as String? ??
           message.data['callerId'] as String?;
       if (contactId != null && BlockService.isBlocked(contactId)) {
-        debugPrint('[PushNotificationsRepo] Suppressing foreground notification from blocked contact: $contactId');
+        debugPrint(
+            '[PushNotificationsRepo] Suppressing foreground notification from blocked contact: $contactId');
         return;
       }
       if (contactId != null &&
           SharedPref.isInitialized &&
           MuteService.isContactMuted(contactId)) {
-        debugPrint('[PushNotificationsRepo] Suppressing foreground notification tone for muted contact: $contactId');
+        debugPrint(
+            '[PushNotificationsRepo] Suppressing foreground notification tone for muted contact: $contactId');
         return;
       }
       if (message.data['type'] != 'INCOMING_CALL') {
@@ -116,10 +127,12 @@ class PushNotificationsRepo {
         body: messageJson,
       );
       if (res.statusCode != 200) {
-        debugPrint('[PushNotificationsRepo] push notification returned status ${res.statusCode}: ${res.body}');
+        debugPrint(
+            '[PushNotificationsRepo] push notification returned status ${res.statusCode}: ${res.body}');
       }
     } catch (e) {
-      debugPrint('[PushNotificationsRepo] sendPushNotification failed for msg ${message.id}: $e');
+      debugPrint(
+          '[PushNotificationsRepo] sendPushNotification failed for msg ${message.id}: $e');
     }
   }
 
@@ -155,7 +168,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
   } catch (e) {
-    debugPrint('[PushNotificationsRepo] Background Firebase.initializeApp error: $e');
+    debugPrint(
+        '[PushNotificationsRepo] Background Firebase.initializeApp error: $e');
   }
 
   try {
@@ -175,11 +189,13 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         try {
           blocked = BlockService.isBlocked(callerId);
         } catch (blockErr) {
-          debugPrint('[PushNotificationsRepo] isBlocked check error: $blockErr');
+          debugPrint(
+              '[PushNotificationsRepo] isBlocked check error: $blockErr');
           blocked = false;
         }
         if (blocked) {
-          debugPrint('[PushNotificationsRepo] Suppressing background call from blocked caller: $callerId');
+          debugPrint(
+              '[PushNotificationsRepo] Suppressing background call from blocked caller: $callerId');
           return;
         }
       }
@@ -188,16 +204,20 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     }
 
     try {
-      if (callerId.isNotEmpty && data['isMuted'] == 'true' && SharedPref.isInitialized) {
+      if (callerId.isNotEmpty &&
+          data['isMuted'] == 'true' &&
+          SharedPref.isInitialized) {
         await SharedPref.instance.setBool('contact_muted_$callerId', true);
       }
       final isMuted = data['isMuted'] == 'true' ||
           (callerId.isNotEmpty &&
               SharedPref.isInitialized &&
-              (SharedPref.instance.getBool('contact_muted_$callerId') ?? false));
+              (SharedPref.instance.getBool('contact_muted_$callerId') ??
+                  false));
 
       if (isMuted) {
-        debugPrint('[PushNotificationsRepo] Completely suppressing CallKit popup for muted caller: $callerId');
+        debugPrint(
+            '[PushNotificationsRepo] Completely suppressing CallKit popup for muted caller: $callerId');
         return;
       }
 
@@ -213,7 +233,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         callerAvatar: callerAvatar,
       );
     } catch (e, st) {
-      debugPrint('[PushNotificationsRepo] CallKitService showIncomingCall error: $e\n$st');
+      debugPrint(
+          '[PushNotificationsRepo] CallKitService showIncomingCall error: $e\n$st');
     }
     return;
   }
@@ -237,7 +258,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       }
       await IsarDb.purgeDisappearingMessages();
     } catch (e) {
-      debugPrint('[PushNotificationsRepo] Background delete message sync error: $e');
+      debugPrint(
+          '[PushNotificationsRepo] Background delete message sync error: $e');
     }
     return;
   }
@@ -262,7 +284,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       await IsarDb.purgeDisappearingMessages();
 
       final msgId = data['messageId'] as String;
-      final content = data['messageContent'] as String? ?? data['body'] as String? ?? '';
+      final content =
+          data['messageContent'] as String? ?? data['body'] as String? ?? '';
       String currentUid = '';
       if (SharedPref.isInitialized) {
         final rawUser = SharedPref.instance.getString('user');
@@ -296,7 +319,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         ));
       }
     } catch (e) {
-      debugPrint('[PushNotificationsRepo] Background message Isar save error: $e');
+      debugPrint(
+          '[PushNotificationsRepo] Background message Isar save error: $e');
     }
 
     try {
@@ -311,7 +335,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
             receiverId: data['authorId'],
           );
     } catch (e) {
-      debugPrint('[PushNotificationsRepo] Background delivered status update error: $e');
+      debugPrint(
+          '[PushNotificationsRepo] Background delivered status update error: $e');
     }
   }
 }

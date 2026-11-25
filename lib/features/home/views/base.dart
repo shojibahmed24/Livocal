@@ -197,10 +197,15 @@ class _HomePageState extends ConsumerState<HomePage>
     );
 
     ref.read(pushNotificationsRepoProvider).init(
-      onMessageOpenedApp: (message) async {
-        await handleNotificationClick(message);
-      },
-    );
+          requestPermission: false,
+          onMessageOpenedApp: (message) async {
+            await handleNotificationClick(message);
+          },
+        );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _maybeAskForNotifications();
+    });
 
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -349,6 +354,75 @@ class _HomePageState extends ConsumerState<HomePage>
 
   void handleTabIndexChange() {
     setState(() {});
+  }
+
+  /// Explains notifications once per install before the OS prompt appears.
+  Future<void> _maybeAskForNotifications() async {
+    if (!mounted) return;
+    final prefs = SharedPref.instance;
+    if (prefs.getBool('notif_rationale_shown') ?? false) return;
+    await prefs.setBool('notif_rationale_shown', true);
+    if (!mounted) return;
+
+    final allow = await showModalBottomSheet<bool>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.notifications_active_outlined,
+                      color: AppColors.primary, size: 22),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      AppStrings.tr(ref, 'notifRationaleTitle'),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                AppStrings.tr(ref, 'notifRationaleBody'),
+                style: const TextStyle(fontSize: 13.5, height: 1.4),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(ctx).pop(false),
+                      child: Text(AppStrings.tr(ref, 'cancel')),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                      child: Text(AppStrings.tr(ref, 'allow')),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (allow == true) {
+      await ref.read(pushNotificationsRepoProvider).requestPermissionNow();
+    }
   }
 
   /// Guards against double navigation while the contacts permission dialog is

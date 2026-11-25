@@ -526,6 +526,9 @@ class AppStrings {
       'micPermissionBody':
           "Livocal needs your microphone so the other person can hear you during the call.",
       'allow': "Allow",
+      'notifRationaleTitle': "Turn on notifications",
+      'notifRationaleBody':
+          "Get message alerts and incoming calls even when Livocal is closed. You can change this later in Settings.",
       'gallery': "Gallery",
       'removePhoto': "Remove Photo",
       'nameLabel': "Name",
@@ -1277,6 +1280,9 @@ class AppStrings {
       'micPermissionBody':
           "কলের সময় অন্য প্রান্তে আপনার কথা পৌঁছাতে Livocal-কে মাইক্রোফোন ব্যবহার করতে দিতে হবে।",
       'allow': "অনুমতি দিন",
+      'notifRationaleTitle': "নোটিফিকেশন চালু করুন",
+      'notifRationaleBody':
+          "Livocal বন্ধ থাকলেও বার্তা ও ইনকামিং কলের খবর পাবেন। পরে Settings থেকে বদলাতে পারবেন।",
       'gallery': "গ্যালারি",
       'removePhoto': "ছবি সরান",
       'nameLabel': "নাম",
@@ -2021,6 +2027,9 @@ class AppStrings {
       'micPermissionBody':
           "कॉल के दौरान दूसरे व्यक्ति को आपकी आवाज़ सुनाई दे, इसके लिए Livocal को माइक्रोफ़ोन चाहिए।",
       'allow': "अनुमति दें",
+      'notifRationaleTitle': "सूचनाएँ चालू करें",
+      'notifRationaleBody':
+          "Livocal बंद होने पर भी संदेश और कॉल की सूचना पाएँ। बाद में Settings से बदल सकते हैं।",
       'gallery': "गैलरी",
       'removePhoto': "फ़ोटो हटाएँ",
       'nameLabel': "नाम",
@@ -2748,6 +2757,9 @@ class AppStrings {
       'micPermissionBody':
           "يحتاج Livocal إلى الميكروفون ليسمع الطرف الآخر صوتك أثناء المكالمة.",
       'allow': "السماح",
+      'notifRationaleTitle': "تفعيل الإشعارات",
+      'notifRationaleBody':
+          "احصل على تنبيهات الرسائل والمكالمات حتى عند إغلاق Livocal. يمكنك تغيير ذلك لاحقًا من الإعدادات.",
       'gallery': "المعرض",
       'removePhoto': "إزالة الصورة",
       'nameLabel': "الاسم",
@@ -3520,6 +3532,9 @@ class AppStrings {
       'micPermissionBody':
           "Livocal necesita el micrófono para que la otra persona te escuche durante la llamada.",
       'allow': "Permitir",
+      'notifRationaleTitle': "Activar notificaciones",
+      'notifRationaleBody':
+          "Recibe avisos de mensajes y llamadas aunque Livocal esté cerrado. Puedes cambiarlo en Ajustes.",
       'gallery': "Galería",
       'removePhoto': "Quitar foto",
       'nameLabel': "Nombre",
@@ -4301,6 +4316,9 @@ class AppStrings {
       'micPermissionBody':
           "Livocal a besoin du microphone pour que votre interlocuteur vous entende pendant l'appel.",
       'allow': "Autoriser",
+      'notifRationaleTitle': "Activer les notifications",
+      'notifRationaleBody':
+          "Recevez les alertes de messages et d'appels même quand Livocal est fermé. Modifiable dans les Réglages.",
       'gallery': "Galerie",
       'removePhoto': "Supprimer la photo",
       'nameLabel': "Nom",
@@ -5083,6 +5101,9 @@ class AppStrings {
       'micPermissionBody':
           "Livocal benötigt das Mikrofon, damit dich die andere Person während des Anrufs hört.",
       'allow': "Erlauben",
+      'notifRationaleTitle': "Benachrichtigungen aktivieren",
+      'notifRationaleBody':
+          "Erhalte Hinweise zu Nachrichten und Anrufen, auch wenn Livocal geschlossen ist. Später in den Einstellungen änderbar.",
       'gallery': "Galerie",
       'removePhoto': "Foto entfernen",
       'nameLabel': "Name",
