@@ -4098,8 +4098,7 @@
           return Math.round(mins / 1440) + 'd ago';
         }
 
-        function downloadCsv(filename, rows) {
-          var csv = rows.map(function (row) {
+        function downloadCsv(filename, rows) {          var csv = rows.map(function (row) {
             return row.map(function (cell) {
               var s = String(cell == null ? '' : cell).replace(/"/g, '""');
               return '"' + s + '"';
@@ -4160,6 +4159,27 @@
             rows.push([u.name, u.id, u.phoneMasked, u.spokenLanguage, u.activityStatus]);
           });
           downloadCsv('livocal-users.csv', rows);
+        };
+
+        /** Exports the first table rendered inside a tab (wallets, ledger, …). */
+        window.exportTabCsv = function (tabId, filename) {
+          var tab = document.getElementById('tab-' + tabId);
+          var table = tab ? tab.querySelector('table') : null;
+          if (!table) return;
+          var rows = [];
+          var headCells = table.querySelectorAll('thead th');
+          if (headCells.length) {
+            rows.push(Array.prototype.map.call(headCells, function (th) {
+              return th.innerText.trim();
+            }));
+          }
+          table.querySelectorAll('tbody tr').forEach(function (tr) {
+            var cells = Array.prototype.map.call(tr.querySelectorAll('td'), function (td) {
+              return td.innerText.trim().replace(/\s+/g, ' ');
+            });
+            if (cells.length) rows.push(cells);
+          });
+          downloadCsv(filename, rows);
         };
 
         window.viewUser = async function (uid) {
@@ -4284,7 +4304,6 @@
           }
         };
 
-        /* ---------------- Audit ---------------- */
         window.loadAudit = async function () {
           var body = document.getElementById('auditTableBody');
           if (!body) return;
@@ -4309,6 +4328,29 @@
             body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:26px;color:#f87171">Could not load audit log: ' + esc(err.message) + '</td></tr>';
           }
         };
+
+        /* ---------------- CSV buttons on the existing financial tabs ---------- */
+        function injectCsvButtons() {
+          ['wallets', 'recharges', 'ledger'].forEach(function (tabId) {
+            var tabEl = document.getElementById('tab-' + tabId);
+            if (!tabEl) return;
+            var bar = tabEl.querySelector('.card-header-bar') || tabEl.querySelector('.card-title-group');
+            if (!bar || bar.querySelector('.csv-export-btn')) return;
+            var btn = document.createElement('button');
+            btn.className = 'btn btn-secondary csv-export-btn';
+            btn.textContent = '⬇ CSV';
+            btn.addEventListener('click', function () {
+              window.exportTabCsv(tabId, 'livocal-' + tabId + '.csv');
+            });
+            bar.appendChild(btn);
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectCsvButtons);
+        } else {
+          injectCsvButtons();
+        }
       })();
     </script>
     <div id="toastStack"></div>
