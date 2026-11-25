@@ -1,11 +1,18 @@
 import 'package:flutter/services.dart';
+import 'package:livocal/shared/utils/shared_pref.dart';
 
 class NativeChannel {
-  static const MethodChannel _channel = MethodChannel('com.livocal.app/native_channel');
+  static const MethodChannel _channel =
+      MethodChannel('com.livocal.app/native_channel');
 
   static Future<void> createNotificationChannels() async {
     try {
-      await _channel.invokeMethod('createNotificationChannels');
+      final language = SharedPref.isInitialized
+          ? (SharedPref.instance.getString('app_language') ?? 'en')
+          : 'en';
+      await _channel.invokeMethod('createNotificationChannels', {
+        'language': language,
+      });
     } catch (_) {}
   }
 
@@ -23,7 +30,8 @@ class NativeChannel {
 
   static Future<void> setCallkitChannelVibration(bool enabled) async {
     try {
-      await _channel.invokeMethod('setCallkitChannelVibration', {'enabled': enabled});
+      await _channel
+          .invokeMethod('setCallkitChannelVibration', {'enabled': enabled});
     } catch (_) {}
   }
 }

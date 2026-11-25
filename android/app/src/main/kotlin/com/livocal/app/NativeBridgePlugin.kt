@@ -37,17 +37,18 @@ class NativeBridgePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             } catch (_: Exception) {}
         }
 
-        fun createNotificationChannels(ctx: Context) {
+        fun createNotificationChannels(ctx: Context, language: String = "en") {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val notificationManager = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                val s = channelStrings(language)
 
                 // 1. High Priority Channel for Heads-Up / Urgent Chat Messages
                 val highChannel = NotificationChannel(
                     "livocal_high_importance",
-                    "High Priority Messages",
+                    s[0],
                     NotificationManager.IMPORTANCE_HIGH
                 ).apply {
-                    description = "Urgent incoming chat messages and translation notifications"
+                    description = s[1]
                     enableLights(true)
                     lightColor = Color.GREEN
                     enableVibration(true)
@@ -60,10 +61,10 @@ class NativeBridgePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                 // 2. Default Priority Channel for Standard Chat Messages
                 val defaultChannel = NotificationChannel(
                     "livocal_default",
-                    "Standard Messages",
+                    s[2],
                     NotificationManager.IMPORTANCE_DEFAULT
                 ).apply {
-                    description = "Standard incoming chat messages"
+                    description = s[3]
                     enableLights(true)
                     setShowBadge(true)
                 }
@@ -80,10 +81,10 @@ class NativeBridgePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                     }
                     val newCallChannel = NotificationChannel(
                         "callkit_incoming_channel_id",
-                        "Livocal Incoming Calls",
+                        s[4],
                         NotificationManager.IMPORTANCE_HIGH
                     ).apply {
-                        description = "Incoming voice call notifications"
+                        description = s[5]
                         enableLights(true)
                         lightColor = Color.GREEN
                         enableVibration(false)
@@ -94,6 +95,82 @@ class NativeBridgePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                 }
             }
         }
+
+        /**
+         * Channel names are user-visible in Android settings, so they follow the
+         * app language: [highName, highDesc, defaultName, defaultDesc, callName, callDesc].
+         */
+        private fun channelStrings(language: String): Array<String> = when (language) {
+            "bn" -> arrayOf(
+                "উচ্চ গুরুত্বপূর্ণ বার্তা",
+                "জরুরি চ্যাট বার্তা ও অনুবাদ নোটিফিকেশন",
+                "সাধারণ বার্তা",
+                "সাধারণ চ্যাট বার্তা",
+                "Livocal ইনকামিং কল",
+                "ইনকামিং ভয়েস কল নোটিফিকেশন"
+            )
+            "hi" -> arrayOf(
+                "उच्च प्राथमिकता संदेश",
+                "तत्काल चैट संदेश और अनुवाद सूचनाएँ",
+                "सामान्य संदेश",
+                "सामान्य चैट संदेश",
+                "Livocal इनकमिंग कॉल",
+                "इनकमिंग वॉइस कॉल सूचनाएँ"
+            )
+            "ar" -> arrayOf(
+                "رسائل عالية الأولوية",
+                "رسائل دردشة عاجلة وإشعارات الترجمة",
+                "رسائل عادية",
+                "رسائل دردشة عادية",
+                "مكالمات Livocal الواردة",
+                "إشعارات المكالمات الصوتية الواردة"
+            )
+            "es" -> arrayOf(
+                "Mensajes prioritarios",
+                "Mensajes urgentes y avisos de traducción",
+                "Mensajes estándar",
+                "Mensajes de chat estándar",
+                "Llamadas entrantes de Livocal",
+                "Avisos de llamadas de voz entrantes"
+            )
+            "fr" -> arrayOf(
+                "Messages prioritaires",
+                "Messages urgents et notifications de traduction",
+                "Messages standard",
+                "Messages de discussion standard",
+                "Appels entrants Livocal",
+                "Notifications d'appels vocaux entrants"
+            )
+            "de" -> arrayOf(
+                "Wichtige Nachrichten",
+                "Dringende Chat-Nachrichten und Übersetzungshinweise",
+                "Standardnachrichten",
+                "Normale Chat-Nachrichten",
+                "Eingehende Livocal-Anrufe",
+                "Hinweise zu eingehenden Sprachanrufen"
+            )
+            else -> arrayOf(
+                "High Priority Messages",
+                "Urgent incoming chat messages and translation notifications",
+                "Standard Messages",
+                "Standard incoming chat messages",
+                "Livocal Incoming Calls",
+                "Incoming voice call notifications"
+            )
+        }
+    }
+
+    /**
+     * Reads the Flutter-owned SharedPreferences so the very first launch (before
+     * any MethodChannel call) can still create localized channels.
+     */
+    private fun currentAppLanguage(): String = try {
+        context
+            ?.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+            ?.getString("flutter.app_language", "en")
+            ?: "en"
+    } catch (_: Exception) {
+        "en"
     }
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
@@ -101,7 +178,7 @@ class NativeBridgePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         channel = MethodChannel(binding.binaryMessenger, CHANNEL_NAME)
         channel?.setMethodCallHandler(this)
         instance = this
-        createNotificationChannels(binding.applicationContext)
+        createNotificationChannels(binding.applicationContext, currentAppLanguage())
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
@@ -119,7 +196,9 @@ class NativeBridgePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         }
         when (call.method) {
             "createNotificationChannels" -> {
-                createNotificationChannels(ctx)
+                val language = call.argument<String>("language")
+                    ?: currentAppLanguage()
+                createNotificationChannels(ctx, language)
                 result.success(true)
             }
             "stopCallkitVibration" -> {
