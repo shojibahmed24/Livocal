@@ -1716,6 +1716,149 @@
       .ov-grid, .ov-grid-2 { grid-template-columns: 1fr 1fr; }
     }
 
+    /* ================================================================
+       Professional polish layer — typography, tables, states, pills
+       ================================================================ */
+    :root {
+      --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+      --ring: 0 0 0 3px rgba(34, 211, 238, 0.28);
+    }
+
+    body {
+      font-family: var(--font-ui);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    table td, table th { font-variant-numeric: tabular-nums; }
+
+    /* Cards */
+    .content-card {
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+    }
+    .card-header-bar { gap: 12px; flex-wrap: wrap; }
+    .card-title-group h2 { letter-spacing: -0.2px; }
+
+    /* Tables */
+    .table-wrap {
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      overflow: auto;
+    }
+    .table-wrap table { border-collapse: separate; border-spacing: 0; width: 100%; }
+    .table-wrap thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: var(--bg-surface);
+      font-size: 10.5px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-muted);
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+    .table-wrap tbody td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.045);
+      font-size: 12.5px;
+      vertical-align: middle;
+    }
+    .table-wrap tbody tr:last-child td { border-bottom: 0; }
+    .table-wrap tbody tr:hover td { background: rgba(255, 255, 255, 0.025); }
+    .table-wrap td.num, .table-wrap th.num { text-align: right; }
+
+    /* Buttons */
+    .btn {
+      border-radius: 10px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      transition: transform 0.12s ease, background 0.18s ease, box-shadow 0.18s ease;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn:focus-visible { outline: none; box-shadow: var(--ring); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-deep));
+      border: 1px solid transparent;
+    }
+    .btn-primary:hover { box-shadow: 0 6px 18px var(--primary-glow); }
+    .btn-secondary { border: 1px solid var(--border-color); }
+
+    /* Sidebar */
+    .side-nav-item { position: relative; border-radius: 10px; }
+    .side-nav-item.active { background: var(--primary-light); color: var(--primary); }
+    .side-nav-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 8px;
+      bottom: 8px;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: var(--primary);
+    }
+    .side-section-label { letter-spacing: 0.1em; }
+
+    /* Status pills */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .status-pill.ok { color: #34d399; background: rgba(52, 211, 153, 0.12); border-color: rgba(52, 211, 153, 0.28); }
+    .status-pill.warn { color: #fbbf24; background: rgba(251, 191, 36, 0.12); border-color: rgba(251, 191, 36, 0.28); }
+    .status-pill.bad { color: #f87171; background: rgba(248, 113, 113, 0.12); border-color: rgba(248, 113, 113, 0.28); }
+    .status-pill.neutral { color: var(--text-muted); background: rgba(139, 152, 173, 0.1); border-color: var(--border-color); }
+
+    /* KPI cards */
+    .ops-kpi {
+      background: var(--bg-glass);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+    .ops-kpi .kpi-label {
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+    .ops-kpi .kpi-value {
+      margin-top: 6px;
+      font-size: 16px;
+      font-weight: 800;
+      word-break: break-word;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Utilities */
+    .mono { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-muted); }
+    .muted { color: var(--text-muted); }
+    .table-actions { display: inline-flex; gap: 6px; white-space: nowrap; }
+
+    /* Scrollbars */
+    .table-wrap::-webkit-scrollbar { height: 8px; width: 8px; }
+    .table-wrap::-webkit-scrollbar-thumb { background: rgba(139, 152, 173, 0.35); border-radius: 8px; }
+    .table-wrap::-webkit-scrollbar-track { background: transparent; }
+
+    /* Light theme */
+    [data-theme="light"] .table-wrap tbody tr:hover td { background: rgba(15, 23, 42, 0.03); }
+    [data-theme="light"] .ops-kpi { background: #fff; }
+    [data-theme="light"] .status-pill.neutral { background: rgba(15, 23, 42, 0.05); }
+
     </style>
 </head>
 <body>
@@ -4173,12 +4316,14 @@
               return;
             }
             body.innerHTML = usersCache.map(function (u) {
+              var presence = (u.activityStatus || 'offline').toLowerCase();
+              var tone = presence === 'online' ? 'ok' : 'neutral';
               return '<tr>' +
                 '<td><b>' + esc(u.name || '(no name)') + '</b></td>' +
-                '<td style="font-family:monospace;font-size:11.5px;color:var(--text-muted)">' + esc(u.id) + '</td>' +
+                '<td class="mono">' + esc(u.id) + '</td>' +
                 '<td>' + esc(u.phoneMasked || '—') + '</td>' +
                 '<td>' + esc(u.spokenLanguage || '—') + '</td>' +
-                '<td>' + esc(u.activityStatus || 'offline') + '</td>' +
+                '<td><span class="status-pill ' + tone + '">' + esc(presence) + '</span></td>' +
                 '<td><button class="btn btn-secondary" onclick="viewUser(\'' + esc(u.id) + '\')">Open</button></td>' +
                 '</tr>';
             }).join('');
@@ -4276,18 +4421,18 @@
               return;
             }
             body.innerHTML = reports.map(function (r) {
-              var badge = r.status === 'pending_review'
-                ? 'color:#fbbf24' : (r.status === 'resolved' ? 'color:#34d399' : 'color:var(--text-muted)');
+              var tone = r.status === 'pending_review'
+                ? 'warn' : (r.status === 'resolved' ? 'ok' : 'neutral');
               return '<tr>' +
-                '<td style="font-family:monospace;font-size:11.5px">' + esc(r.reportedUserId || r.targetId || r.targetUserId || '—') + '</td>' +
-                '<td style="font-family:monospace;font-size:11.5px">' + esc(r.reporterId || '—') + '</td>' +
+                '<td class="mono">' + esc(r.reportedUserId || r.targetId || r.targetUserId || '—') + '</td>' +
+                '<td class="mono">' + esc(r.reporterId || '—') + '</td>' +
                 '<td>' + esc(r.reason || r.category || r.message || '—') + '</td>' +
-                '<td style="' + badge + '">' + esc(r.status || '—') + '</td>' +
+                '<td><span class="status-pill ' + tone + '">' + esc(r.status || '—') + '</span></td>' +
                 '<td>' + esc(timeAgo(r.timestamp || r.createdAt)) + '</td>' +
-                '<td style="white-space:nowrap">' +
-                  '<button class="btn btn-secondary" onclick="reviewReport(\'' + esc(r.id) + '\',\'resolved\')">Resolve</button> ' +
+                '<td><span class="table-actions">' +
+                  '<button class="btn btn-secondary" onclick="reviewReport(\'' + esc(r.id) + '\',\'resolved\')">Resolve</button>' +
                   '<button class="btn btn-secondary" onclick="reviewReport(\'' + esc(r.id) + '\',\'dismissed\')">Dismiss</button>' +
-                '</td></tr>';
+                '</span></td></tr>';
             }).join('');
           } catch (err) {
             body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:26px;color:#f87171">Could not load reports: ' + esc(err.message) + '</td></tr>';
@@ -4327,10 +4472,10 @@
               ['Uptime', (h.uptime || 0) + 's', true],
             ];
             grid.innerHTML = cards.map(function (c) {
-              var color = c[2] ? '#34d399' : '#fbbf24';
-              return '<div style="background:var(--bg-glass);border:1px solid var(--border-color);border-radius:12px;padding:14px;">' +
-                '<div style="font-size:11px;text-transform:uppercase;color:var(--text-muted);font-weight:700">' + esc(c[0]) + '</div>' +
-                '<div style="font-size:16px;font-weight:800;color:' + color + ';margin-top:6px;word-break:break-all">' + esc(c[1]) + '</div>' +
+              var tone = c[2] ? 'ok' : 'warn';
+              return '<div class="ops-kpi">' +
+                '<div class="kpi-label">' + esc(c[0]) + '</div>' +
+                '<div class="kpi-value"><span class="status-pill ' + tone + '">' + esc(c[1]) + '</span></div>' +
                 '</div>';
             }).join('');
             if (raw) raw.textContent = JSON.stringify(h);
@@ -4351,12 +4496,13 @@
               return;
             }
             body.innerHTML = entries.map(function (e) {
+              var tone = e.method === 'DELETE' ? 'bad' : (e.method === 'POST' ? 'warn' : 'neutral');
               return '<tr>' +
                 '<td>' + esc(timeAgo(e.atMs || e.at)) + '</td>' +
-                '<td>' + esc(e.method || '') + '</td>' +
-                '<td style="font-family:monospace;font-size:11.5px">' + esc(e.path || '') + '</td>' +
-                '<td>' + esc(e.ip || '') + '</td>' +
-                '<td style="font-size:11px;color:var(--text-muted)">' + esc((e.ua || '').slice(0, 60)) + '</td>' +
+                '<td><span class="status-pill ' + tone + '">' + esc(e.method || '') + '</span></td>' +
+                '<td class="mono">' + esc(e.path || '') + '</td>' +
+                '<td class="mono">' + esc(e.ip || '') + '</td>' +
+                '<td class="muted" style="font-size:11px">' + esc((e.ua || '').slice(0, 60)) + '</td>' +
                 '</tr>';
             }).join('');
           } catch (err) {
