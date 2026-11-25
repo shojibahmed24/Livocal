@@ -298,6 +298,166 @@ class ContactsRepository {
 
     return result;
   }
+
+  /// Reads the device address book only — no network, no photos.
+  ///
+  /// This is deliberately separate from the server matching step: with a few
+  /// thousand contacts a single read is already heavy on low-RAM phones, and
+  /// doing it twice (once for the list, once for matching) got the app killed
+  /// by the low-memory killer.
+  Future<List<Contact>> getDeviceContacts({required User self}) async {
+    final result = <Contact>[];
+    try {
+      final hasPermission =
+          await FlutterContacts.requestPermission(readonly: true);
+      if (!hasPermission) return result;
+
+      final contacts = await FlutterContacts.getContacts(
+        withProperties: true,
+        withThumbnail: false,
+        withPhoto: false,
+        withGroups: false,
+        withAccounts: false,
+        sorted: false,
+      );
+
+      final selfNormalized = _normalize(self.phone.rawNumber);
+      final seenContacts = <String>{};
+
+      for (final contact in contacts) {
+        if (seenContacts.contains(contact.id)) continue;
+        for (final phone in contact.phones) {
+          final normalized = _normalize(phone.number);
+          if (normalized.isEmpty) continue;
+          if (_isSelfNumber(normalized, selfNormalized)) continue;
+
+          seenContacts.add(contact.id);
+          result.add(Contact(
+            contactId: contact.id,
+            displayName: contact.displayName,
+            phoneNumber: phone.number,
+          ));
+          break;
+        }
+      }
+    } catch (e) {
+      debugPrint('[ContactsRepository] getDeviceContacts error: $e');
+    }
+    return result;
+  }
+
+  /// Matches already-loaded device contacts against registered Livocal users.
+  ///
+  /// Runs entirely off the cached contact list, so it never re-reads the
+  /// address book. Mutates `userId`/`avatarUrl` in place; the caller persists
+  /// the updated rows.
+  Future<List<Contact>> applyRegisteredMatches({
+    required List<Contact> contacts,
+    Duration timeout = const Duration(seconds: 20),
+  }) async {
+    if (contacts.isEmpty) return contacts;
+
+    try {
+      final allKeys = <String>{};
+      for (final contact in contacts) {
+        allKeys
+            .addAll(PhoneNormalizer.matchKeys(_normalize(contact.phoneNumber)));
+      }
+      if (allKeys.isEmpty) return contacts;
+
+      final idToken =
+          await auth.FirebaseAuth.instance.currentUser?.getIdToken();
+      if (idToken == null) return contacts;
+
+      final registeredByPhone = <String, _FirestoreUser>{};
+      final keys = allKeys.toList();
+      for (var i = 0; i < keys.length; i += 500) {
+        final end = (i + 500 > keys.length) ? keys.length : i + 500;
+        final batch = keys.sublist(i, end);
+
+        final response = await http
+            .post(
+              Uri.parse(AppConfig.matchContactsUrl),
+              headers: await AppCheckService.withAppCheck({
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $idToken',
+              }),
+              body: jsonEncode({'phoneNumbers': batch}),
+            )
+            .timeout(timeout);
+
+        if (response.statusCode != 200) continue;
+
+        final data = jsonDecode(response.body);
+        final matches = data['matches'] as List<dynamic>? ?? [];
+        for (final raw in matches) {
+          final map = raw as Map<String, dynamic>;
+          final userId = map['id'] as String?;
+          if (userId == null) continue;
+
+          final phoneData = map['phone'] as Map<String, dynamic>?;
+          final rawNumber = phoneData?['rawNumber'] as String? ?? '';
+          final code = phoneData?['code'] as String? ?? '';
+          final number = phoneData?['number'] as String? ?? '';
+          final avatarUrl = map['avatarUrl'] as String? ?? '';
+          final name = map['name'] as String? ?? '';
+
+          final entry = _FirestoreUser(
+            userId: userId,
+            avatarUrl: avatarUrl,
+            name: name,
+          );
+
+          await IsarDb.saveUser(User(
+            id: userId,
+            name: name,
+            avatarUrl: avatarUrl,
+            phone: Phone(
+              code: code,
+              number: number,
+              formattedNumber:
+                  rawNumber.isNotEmpty ? rawNumber : '$code$number',
+            ),
+            activityStatus: UserActivityStatus.online,
+          ));
+
+          for (final key in PhoneNormalizer.matchKeys(_normalize(rawNumber))) {
+            registeredByPhone[key] = entry;
+          }
+          for (final key
+              in PhoneNormalizer.matchKeys(_normalize('$code$number'))) {
+            registeredByPhone[key] = entry;
+          }
+        }
+      }
+
+      if (registeredByPhone.isEmpty) return contacts;
+
+      for (final contact in contacts) {
+        if (contact.userId != null) continue;
+        for (final key
+            in PhoneNormalizer.matchKeys(_normalize(contact.phoneNumber))) {
+          final match = registeredByPhone[key];
+          if (match != null) {
+            contact.userId = match.userId;
+            contact.avatarUrl = match.avatarUrl;
+            break;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[ContactsRepository] applyRegisteredMatches error: $e');
+    }
+
+    return contacts;
+  }
+
+  static bool _isSelfNumber(String normalized, String selfNormalized) {
+    if (selfNormalized.isEmpty) return false;
+    return normalized == selfNormalized ||
+        normalized.endsWith(selfNormalized) ||
+        selfNormalized.endsWith(normalized);
+  }
 }
 
 class _RawContactEntry {

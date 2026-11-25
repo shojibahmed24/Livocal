@@ -687,8 +687,8 @@ class IsarDb {
     // with thousands of contacts, and the picker can render immediately.
     try {
       final localContacts = await repository
-          .getContacts(self: self, matchRegistered: false)
-          .timeout(const Duration(seconds: 20));
+          .getDeviceContacts(self: self)
+          .timeout(const Duration(seconds: 25));
       if (localContacts.isNotEmpty) {
         await isar.writeTxn(() async {
           await isar.contacts.clear();
@@ -699,16 +699,20 @@ class IsarDb {
       debugPrint('[IsarDb] addContacts (local) error: $e');
     }
 
-    // 2. Registered-user matching runs detached; the list upgrades itself when
-    // the backend answers instead of blocking the first paint.
+    // 2. Registered-user matching runs detached and reuses the cached rows:
+    // re-reading the whole address book here doubled the memory peak and the
+    // low-memory killer closed the app on a 3 GB phone.
     unawaited(() async {
       try {
-        final matched = await repository
-            .getContacts(self: self, matchRegistered: true)
-            .timeout(const Duration(seconds: 90));
+        final cached = await isar.contacts.where().findAll();
+        if (cached.isEmpty) return;
+
+        final matched = await repository.applyRegisteredMatches(
+          contacts: cached,
+          timeout: const Duration(seconds: 30),
+        );
         if (matched.isNotEmpty) {
           await isar.writeTxn(() async {
-            await isar.contacts.clear();
             await isar.contacts.putAll(matched);
           });
         }

@@ -367,7 +367,7 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
           SettingsSectionHeader(title: AppStrings.tr(ref, 'display')),
           SettingsRow(
             icon: Icons.brightness_6_rounded,
-            title: AppStrings.tr(ref, 'theme'),
+            title: AppStrings.tr(ref, 'themeLabel'),
             subtitle: themeTitle,
             onTap: _showThemeDialog,
           ),

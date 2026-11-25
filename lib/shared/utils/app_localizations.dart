@@ -538,6 +538,7 @@ class AppStrings {
       'chatSettings': "Chat settings",
       'enterIsSend': "Enter is send",
       'enterIsSendSub': "Enter key will send your message",
+      'themeLabel': "Theme",
       'wallpaperResetDefault': "Wallpaper reset to default",
       'customPhoto': "Custom Photo",
       'solidColor': "Solid Color",
@@ -1283,6 +1284,7 @@ class AppStrings {
       'chatSettings': "চ্যাট সেটিংস",
       'enterIsSend': "এন্টার চাপে পাঠান",
       'enterIsSendSub': "এন্টার কী চাপলে বার্তা পাঠানো হবে",
+      'themeLabel': "থিম",
       'wallpaperResetDefault': "ওয়ালপেপার ডিফল্টে রিসেট হয়েছে",
       'customPhoto': "কাস্টম ছবি",
       'solidColor': "সলিড কালার",
@@ -2021,6 +2023,7 @@ class AppStrings {
       'chatSettings': "चैट सेटिंग्स",
       'enterIsSend': "एंटर से भेजें",
       'enterIsSendSub': "एंटर कुंजी दबाने पर संदेश भेजा जाएगा",
+      'themeLabel': "थीम",
       'contactNotOnLivocal':
           "यह नंबर अभी Livocal पर नहीं है। पहले आमंत्रित करें।",
       'wallpaperResetDefault': "वॉलपेपर डिफ़ॉल्ट पर रीसेट हो गया",
@@ -2742,6 +2745,7 @@ class AppStrings {
       'chatSettings': "إعدادات الدردشة",
       'enterIsSend': "الإرسال بمفتاح Enter",
       'enterIsSendSub': "سيتم إرسال الرسالة عند الضغط على Enter",
+      'themeLabel': "المظهر",
       'contactNotOnLivocal': "هذا الرقم ليس على Livocal بعد. قم بدعوته أولًا.",
       'wallpaperResetDefault': "تمت إعادة تعيين الخلفية إلى الافتراضي",
       'customPhoto': "صورة مخصصة",
@@ -3508,6 +3512,7 @@ class AppStrings {
       'chatSettings': "Ajustes de chat",
       'enterIsSend': "Enter para enviar",
       'enterIsSendSub': "La tecla Enter enviará tu mensaje",
+      'themeLabel': "Tema",
       'contactNotOnLivocal':
           "Este número aún no está en Livocal. Invítalo primero.",
       'wallpaperResetDefault': "Fondo restablecido al predeterminado",
@@ -4283,6 +4288,7 @@ class AppStrings {
       'chatSettings': "Paramètres de discussion",
       'enterIsSend': "Entrée pour envoyer",
       'enterIsSendSub': "La touche Entrée enverra votre message",
+      'themeLabel': "Thème",
       'contactNotOnLivocal':
           "Ce numéro n'est pas encore sur Livocal. Invitez-le d'abord.",
       'wallpaperResetDefault': "Fond réinitialisé par défaut",
@@ -5059,6 +5065,7 @@ class AppStrings {
       'chatSettings': "Chat-Einstellungen",
       'enterIsSend': "Enter zum Senden",
       'enterIsSendSub': "Die Eingabetaste sendet deine Nachricht",
+      'themeLabel': "Design",
       'contactNotOnLivocal':
           "Diese Nummer ist noch nicht bei Livocal. Lade die Person zuerst ein.",
       'wallpaperResetDefault': "Hintergrund auf Standard zurückgesetzt",
