@@ -1,3 +1,4 @@
+import 'package:permission_handler/permission_handler.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -67,6 +68,12 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
+
+      // Explain why the mic is needed before the OS dialog appears — this is
+      // the first trust-sensitive permission a caller meets.
+      final micReady = await _ensureMicPermission();
+      if (!micReady || !mounted) return;
+
       final session =
           await ref.read(callControllerProvider.notifier).startOutgoingCall(
                 caller: widget.caller,
@@ -210,6 +217,48 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
   void dispose() {
     _ringController.dispose();
     super.dispose();
+  }
+
+  /// Asks for the microphone with an explanation first. Returns false when the
+  /// caller declines, in which case the call is abandoned instead of connecting
+  /// with no audio.
+  Future<bool> _ensureMicPermission() async {
+    final status = await Permission.microphone.status;
+    if (status.isGranted) return true;
+    if (!mounted) return false;
+
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(AppStrings.tr(ref, 'micPermissionTitle')),
+        content: Text(AppStrings.tr(ref, 'micPermissionBody')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(AppStrings.tr(ref, 'cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(AppStrings.tr(ref, 'allow')),
+          ),
+        ],
+      ),
+    );
+    if (proceed != true) {
+      if (mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+      return false;
+    }
+
+    final result = await Permission.microphone.request();
+    if (!result.isGranted) {
+      if (mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+      return false;
+    }
+    return true;
   }
 
   Future<void> _endCall() async {

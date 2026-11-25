@@ -281,10 +281,10 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                           ),
                           if (MuteService.isContactMuted(other.id)) ...[
                             const SizedBox(width: 4),
-                            const Icon(
+                            Icon(
                               Icons.volume_off_rounded,
                               size: 14,
-                              color: Colors.white70,
+                              color: appBarFg.withValues(alpha: 0.7),
                             ),
                           ],
                         ],
