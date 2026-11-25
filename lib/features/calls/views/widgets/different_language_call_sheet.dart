@@ -15,7 +15,7 @@ import 'package:livocal/theme/app_colors.dart';
 ///   -> Displays an elegant bottom sheet asking if user wants AI Live Voice Translation.
 Future<void> initiateSmartCall(
   BuildContext context,
-  WidgetRef ref, {
+  WidgetRef? ref, {
   required User caller,
   required User callee,
   required String calleeDisplayName,
@@ -34,15 +34,22 @@ Future<void> initiateSmartCall(
   String calleeLangCode = callee.spokenLanguage.trim();
   if (!callee.hasExplicitSpokenLanguage) {
     try {
-      final fsRepo = ref.read(firebaseFirestoreRepositoryProvider);
+      // The caller may have been disposed (e.g. the end-of-call sheet closed
+      // before this runs), so fall back to the app-wide container.
+      final fsRepo = ref != null
+          ? ref.read(firebaseFirestoreRepositoryProvider)
+          : ProviderScope.containerOf(context, listen: false)
+              .read(firebaseFirestoreRepositoryProvider);
       final fetchedCallee = await fsRepo.getUserById(callee.id);
       if (fetchedCallee != null && fetchedCallee.hasExplicitSpokenLanguage) {
         calleeLangCode = fetchedCallee.spokenLanguage;
       } else {
-        calleeLangCode = CallLanguageRegistry.inferLanguageFromPhone(callee.phone);
+        calleeLangCode =
+            CallLanguageRegistry.inferLanguageFromPhone(callee.phone);
       }
     } catch (_) {
-      calleeLangCode = CallLanguageRegistry.inferLanguageFromPhone(callee.phone);
+      calleeLangCode =
+          CallLanguageRegistry.inferLanguageFromPhone(callee.phone);
     }
   }
   if (calleeLangCode.isEmpty) {
@@ -68,7 +75,8 @@ Future<void> initiateSmartCall(
   }
 
   // 3. Normalization (e.g. 'bn-BD' vs 'bn' are both Bengali)
-  final isSameLang = CallLanguageRegistry.isSameLanguageFamily(callerLangCode, calleeLangCode);
+  final isSameLang =
+      CallLanguageRegistry.isSameLanguageFamily(callerLangCode, calleeLangCode);
 
   if (isSameLang) {
     // Both users speak the same language: 100% Automatic Free Direct Voice Call!
@@ -128,7 +136,8 @@ class DifferentLanguageCallSheet extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final langCode = Localizations.localeOf(context).languageCode;
     final bgColor = isDark ? const Color(0xFF1B2730) : Colors.white;
-    final cardColor = isDark ? const Color(0xFF101D25) : const Color(0xFFF0F4F8);
+    final cardColor =
+        isDark ? const Color(0xFF101D25) : const Color(0xFFF0F4F8);
 
     return Container(
       decoration: BoxDecoration(

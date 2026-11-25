@@ -107,49 +107,54 @@ class CallScaffold extends StatelessWidget {
     );
   }
 
+  Widget _ring(double diameter, Color color, double width) {
+    return Container(
+      width: diameter,
+      height: diameter,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: color, width: width),
+      ),
+    );
+  }
+
   Widget _buildPulsingAvatar(double size, bool isDark) {
     final avatar = _buildAvatar(size, isDark);
-    if (pulseAnimation == null) return avatar;
+    // Fixed box: the pulse rings used to be painted outside the Stack bounds
+    // and overlapped the chips above and the pill below.
+    final box = size * 1.66;
 
-    return AnimatedBuilder(
-      animation: pulseAnimation!,
-      builder: (context, child) {
-        final scale = 1.0 + (pulseAnimation!.value * 0.06);
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            Transform.scale(
-              scale: scale * 1.28,
-              child: Container(
-                width: size * 1.22,
-                height: size * 1.22,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.accent.withValues(alpha: 0.28),
-                    width: 1.5,
-                  ),
-                ),
-              ),
+    return SizedBox(
+      width: box,
+      height: box,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          if (pulseAnimation != null)
+            AnimatedBuilder(
+              animation: pulseAnimation!,
+              builder: (context, child) {
+                final scale = 1.0 + (pulseAnimation!.value * 0.08);
+                return Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    _ring(
+                      size * 1.52 * scale,
+                      AppColors.accent.withValues(alpha: 0.20),
+                      1.4,
+                    ),
+                    _ring(
+                      size * 1.26 * scale,
+                      AppColors.primary.withValues(alpha: 0.30),
+                      1.8,
+                    ),
+                  ],
+                );
+              },
             ),
-            Transform.scale(
-              scale: scale * 1.12,
-              child: Container(
-                width: size * 1.08,
-                height: size * 1.08,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.35),
-                    width: 2,
-                  ),
-                ),
-              ),
-            ),
-            avatar,
-          ],
-        );
-      },
+          avatar,
+        ],
+      ),
     );
   }
 

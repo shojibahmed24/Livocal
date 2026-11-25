@@ -522,14 +522,21 @@ class CallEndedSummarySheet extends ConsumerWidget {
                         ),
                       ),
                       onPressed: () {
-                        Navigator.of(context).pop();
-                        initiateSmartCall(
-                          context,
-                          ref,
-                          caller: currentUser,
-                          callee: peerUser,
-                          calleeDisplayName: peerUser.name,
-                        );
+                        // The sheet's own context dies with the pop; keep the
+                        // root navigator's context so the new call can start.
+                        final nav = Navigator.of(context, rootNavigator: true);
+                        final navCtx = nav.context;
+                        nav.pop();
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (!navCtx.mounted) return;
+                          initiateSmartCall(
+                            navCtx,
+                            null,
+                            caller: currentUser,
+                            callee: peerUser,
+                            calleeDisplayName: peerUser.name,
+                          );
+                        });
                       },
                     ),
                   ),
@@ -558,16 +565,19 @@ class CallEndedSummarySheet extends ConsumerWidget {
                         ),
                       ),
                       onPressed: () {
-                        Navigator.of(context).pop();
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => ChatPage(
-                              self: currentUser,
-                              other: peerUser,
-                              otherUserContactName: peerUser.name,
+                        final nav = Navigator.of(context, rootNavigator: true);
+                        nav.pop();
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          nav.push(
+                            MaterialPageRoute(
+                              builder: (_) => ChatPage(
+                                self: currentUser,
+                                other: peerUser,
+                                otherUserContactName: peerUser.name,
+                              ),
                             ),
-                          ),
-                        );
+                          );
+                        });
                       },
                     ),
                   ),

@@ -321,87 +321,35 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
             ? Icons.auto_awesome_rounded
             : Icons.lock_outline_rounded,
         pulseAnimation: _ringController,
-        subStatus: Column(
+        subStatus: Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 8,
+          runSpacing: 6,
           children: [
-            _StatusTimeline(isDark: isDark, status: status),
-            const SizedBox(height: 8),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                _Chip(
-                  icon: Icons.translate_rounded,
-                  label: isTranslatedCall
-                      ? 'AI translation ON'
-                      : 'Free direct call',
-                  color:
-                      isTranslatedCall ? AppColors.accent : AppColors.success,
-                  isDark: isDark,
-                ),
-                ref.watch(walletStreamProvider(widget.caller.id)).when(
-                      data: (wallet) => _Chip(
-                        icon: Icons.timer_outlined,
-                        label: AppStrings.tr(
-                          ref,
-                          'minutesLeft',
-                          args: {
-                            'minutes': '${wallet.effectiveRemainingMinutes}',
-                          },
-                        ),
-                        color: AppColors.primary,
-                        isDark: isDark,
-                      ),
-                      loading: () => const SizedBox.shrink(),
-                      error: (_, __) => const SizedBox.shrink(),
-                    ),
-              ],
+            _Chip(
+              icon: Icons.translate_rounded,
+              label:
+                  isTranslatedCall ? 'AI translation ON' : 'Free direct call',
+              color: isTranslatedCall ? AppColors.accent : AppColors.success,
+              isDark: isDark,
             ),
-          ],
-        ),
-        middleWidget: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurfaceContainer : Colors.white,
-              borderRadius: BorderRadius.circular(AppRadius.radiusXl),
-              border: Border.all(
-                color: (isTranslatedCall ? AppColors.accent : AppColors.primary)
-                    .withValues(alpha: 0.35),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  isTranslatedCall
-                      ? Icons.auto_awesome_rounded
-                      : Icons.lock_outline_rounded,
-                  color:
-                      isTranslatedCall ? AppColors.accent : AppColors.primary,
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    isTranslatedCall
-                        ? '${myLang.flagEmoji} ${myLang.nativeName} ⇄ ${peerLang.flagEmoji} ${peerLang.nativeName}'
-                        : 'Secure direct voice call',
-                    style: TextStyle(
-                      color: isDark
-                          ? AppColors.darkTextPrimary
-                          : AppColors.lightTextPrimary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+            ref.watch(walletStreamProvider(widget.caller.id)).when(
+                  data: (wallet) => _Chip(
+                    icon: Icons.timer_outlined,
+                    label: AppStrings.tr(
+                      ref,
+                      'minutesLeft',
+                      args: {
+                        'minutes': '${wallet.effectiveRemainingMinutes}',
+                      },
                     ),
-                    overflow: TextOverflow.ellipsis,
+                    color: AppColors.primary,
+                    isDark: isDark,
                   ),
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
                 ),
-              ],
-            ),
-          ),
+          ],
         ),
         bottomWidget: Container(
           margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -463,80 +411,6 @@ class _OutgoingCallScreenState extends ConsumerState<OutgoingCallScreen>
           ),
         ),
       ),
-    );
-  }
-}
-
-class _StatusTimeline extends StatelessWidget {
-  final bool isDark;
-  final CallStateStatus status;
-
-  const _StatusTimeline({required this.isDark, required this.status});
-
-  int get _activeIndex {
-    switch (status) {
-      case CallStateStatus.dialing:
-        return 0;
-      case CallStateStatus.ringing:
-        return 1;
-      case CallStateStatus.connectingAi:
-        return 2;
-      case CallStateStatus.connected:
-        return 3;
-      default:
-        return -1;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    const labels = ['Dial', 'Ring', 'AI', 'Live'];
-    final inactive =
-        isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(labels.length, (index) {
-        final active = _activeIndex >= index;
-        return Row(
-          children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: active
-                    ? AppColors.primary
-                    : inactive.withValues(alpha: 0.35),
-                boxShadow: active
-                    ? [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.45),
-                          blurRadius: 6,
-                        ),
-                      ]
-                    : null,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              labels[index],
-              style: TextStyle(
-                fontSize: 9.5,
-                color: active ? AppColors.primary : inactive,
-                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-              ),
-            ),
-            if (index != labels.length - 1)
-              Container(
-                width: 18,
-                height: 1,
-                margin: const EdgeInsets.symmetric(horizontal: 6),
-                color: (_activeIndex > index ? AppColors.primary : inactive)
-                    .withValues(alpha: 0.35),
-              ),
-          ],
-        );
-      }),
     );
   }
 }
