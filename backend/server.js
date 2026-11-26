@@ -647,6 +647,114 @@ app.get(['/privacy-policy', '/privacy'], (req, res) => {
 });
 
 // Public freelancer profile: shareable page that works without the app.
+// ── Public share snapshots (invoices, proposals) ────────────────────────────
+const InvoiceShareSchema = z.object({
+  ownerName: z.string().max(80).optional(),
+  number: z.string().min(1).max(40),
+  clientName: z.string().max(80).optional(),
+  items: z
+    .array(
+      z.object({
+        description: z.string().max(300),
+        qty: z.number().min(0).max(100000),
+        rate: z.number().min(0).max(10000000),
+      })
+    )
+    .max(50),
+  currency: z.string().max(8).optional(),
+  taxPct: z.number().min(0).max(100).optional(),
+  discount: z.number().min(0).max(10000000).optional(),
+  total: z.number().min(0).max(100000000),
+  status: z.string().max(16).optional(),
+  dueDate: z.string().max(40).optional().nullable(),
+  notes: z.string().max(1000).optional(),
+});
+
+const ProposalShareSchema = z.object({
+  ownerName: z.string().max(80).optional(),
+  clientName: z.string().max(80).optional(),
+  headline: z.string().min(1).max(2000),
+  scope: z.string().max(4000).optional(),
+  timeline: z.string().max(1000).optional(),
+  price: z.string().max(1000).optional(),
+  terms: z.string().max(2000).optional(),
+});
+
+function shareToken() {
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let token = '';
+  for (let i = 0; i < 24; i += 1) {
+    token += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return token;
+}
+
+app.post(
+  '/api/share/invoice',
+  apiLimiter,
+  authenticateRequest,
+  validateBody(InvoiceShareSchema),
+  async (req, res) => {
+    const uid = req.user?.uid;
+    if (!uid) return res.status(401).json({ error: 'Unauthorized' });
+    if (!firestoreDb) return res.status(503).json({ error: 'unavailable' });
+    try {
+      let ownerName = req.body.ownerName || '';
+      if (!ownerName) {
+        const userSnap = await firestoreDb.collection('users').doc(uid).get();
+        ownerName = userSnap.exists ? (userSnap.data()?.name || '') : '';
+      }
+      const token = shareToken();
+      await firestoreDb
+        .collection('public_invoices')
+        .doc(token)
+        .set({
+          ...req.body,
+          ownerUid: uid,
+          ownerName,
+          createdAt: new Date().toISOString(),
+        });
+      return res.json({ ok: true, token });
+    } catch (err) {
+      console.error('[Share] invoice error:', err.message);
+      return res.status(500).json({ error: 'failed' });
+    }
+  }
+);
+
+app.post(
+  '/api/share/proposal',
+  apiLimiter,
+  authenticateRequest,
+  validateBody(ProposalShareSchema),
+  async (req, res) => {
+    const uid = req.user?.uid;
+    if (!uid) return res.status(401).json({ error: 'Unauthorized' });
+    if (!firestoreDb) return res.status(503).json({ error: 'unavailable' });
+    try {
+      let ownerName = req.body.ownerName || '';
+      if (!ownerName) {
+        const userSnap = await firestoreDb.collection('users').doc(uid).get();
+        ownerName = userSnap.exists ? (userSnap.data()?.name || '') : '';
+      }
+      const token = shareToken();
+      await firestoreDb
+        .collection('public_proposals')
+        .doc(token)
+        .set({
+          ...req.body,
+          ownerUid: uid,
+          ownerName,
+          createdAt: new Date().toISOString(),
+        });
+      return res.json({ ok: true, token });
+    } catch (err) {
+      console.error('[Share] proposal error:', err.message);
+      return res.status(500).json({ error: 'failed' });
+    }
+  }
+);
+
 // ── Username (custom profile link) ──────────────────────────────────────────
 const PROFILE_RESERVED = new Set([
   'admin', 'api', 'app', 'book', 'u', 'p', 'help', 'support', 'login',
