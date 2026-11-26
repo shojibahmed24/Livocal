@@ -742,6 +742,7 @@ app.get('/api/public/profile/:slug', async (req, res) => {
       rate: p.rate || null,
       availability: p.availability || '',
       portfolio: Array.isArray(p.portfolio) ? p.portfolio : [],
+      services: Array.isArray(p.services) ? p.services : [],
       avatarUrl: p.avatarUrl || '',
       ratingAvg: Number(p.ratingAvg || 0),
       ratingCount: Number(p.ratingCount || 0),
