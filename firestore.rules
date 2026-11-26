@@ -32,6 +32,19 @@ service cloud.firestore {
     }
 
     // 1. User Profiles & Realtime Presence
+    // Public booking requests: the relay creates them; only the host may read
+    // or change status (guest data is never writable by clients).
+    match /bookings/{bookingId} {
+      allow read: if isAuthenticated() && resource.data.hostUid == request.auth.uid;
+      allow update: if isAuthenticated()
+        && resource.data.hostUid == request.auth.uid
+        && request.resource.data.hostUid == resource.data.hostUid
+        && request.resource.data.guestName == resource.data.guestName
+        && request.resource.data.guestContact == resource.data.guestContact
+        && request.resource.data.status in ['pending', 'confirmed', 'cancelled'];
+      allow create, delete: if false;
+    }
+
     // Public freelancer profiles: published docs are world-readable, drafts are
     // owner-only. Fields are validated so a published page cannot leak contact
     // data (phone/email are not part of the allowed shape).
@@ -118,6 +131,11 @@ service cloud.firestore {
         allow read, write: if isAuthenticated() && request.auth.uid == userId;
       }
       match /counters/{counterId} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
+
+      // Freelancer weekly availability (public read happens through the relay)
+      match /availability/{dayOfWeek} {
         allow read, write: if isAuthenticated() && request.auth.uid == userId;
       }
 

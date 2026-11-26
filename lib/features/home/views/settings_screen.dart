@@ -13,7 +13,10 @@ import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/widgets/settings_row.dart';
 import 'package:livocal/features/freelancer/views/freelancer_profile_screen.dart';
+import 'package:livocal/features/freelancer/views/availability_screen.dart';
+import 'package:livocal/features/freelancer/views/bookings_screen.dart';
 import 'package:livocal/features/freelancer/views/invoices_screen.dart';
+import 'package:livocal/features/freelancer/views/pipeline_screen.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/text_theme.dart';
 import 'package:livocal/theme/theme.dart';
@@ -292,6 +295,45 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (_) => InvoicesScreen(user: _currentUser),
+                    ),
+                  );
+                },
+              ),
+              SettingsRow(
+                icon: Icons.event_available_outlined,
+                title: AppStrings.tr(ref, 'availability'),
+                subtitle: AppStrings.tr(ref, 'availabilitySub'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AvailabilityScreen(user: _currentUser),
+                    ),
+                  );
+                },
+              ),
+              SettingsRow(
+                icon: Icons.calendar_month_outlined,
+                title: AppStrings.tr(ref, 'bookings'),
+                subtitle: AppStrings.tr(ref, 'bookingPending'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BookingsScreen(user: _currentUser),
+                    ),
+                  );
+                },
+              ),
+              SettingsRow(
+                icon: Icons.filter_alt_outlined,
+                title: AppStrings.tr(ref, 'pipeline'),
+                subtitle: AppStrings.tr(ref, 'pipelineSub'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PipelineScreen(user: _currentUser),
                     ),
                   );
                 },

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import 'package:livocal/features/freelancer/models/crm_entry.dart';
 import 'package:livocal/features/freelancer/services/crm_service.dart';
+import 'package:livocal/features/freelancer/services/reminder_service.dart';
 import 'package:livocal/features/freelancer/widgets/client_details_form.dart';
 import 'package:livocal/features/freelancer/widgets/follow_up_field.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
@@ -98,6 +99,15 @@ class _ClientDetailsSheetState extends State<ClientDetailsSheet> {
     final entry = _entry;
     if (entry == null) return;
     await CrmService.save(entry);
+    if (entry.followUpAt != null) {
+      await ReminderService.scheduleFollowUp(
+        id: entry.id,
+        clientName: widget.peerName,
+        at: entry.followUpAt!,
+      );
+    } else {
+      await ReminderService.cancelReminder(entry.id);
+    }
     if (!mounted) return;
     setState(() => _savedRecently = true);
     await Future<void>.delayed(const Duration(milliseconds: 1400));

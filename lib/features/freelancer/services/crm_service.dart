@@ -43,6 +43,14 @@ class CrmService {
     });
   }
 
+  static Stream<List<CrmEntry>> watchAll(String ownerUid) {
+    return IsarDb.isar.crmEntrys
+        .filter()
+        .ownerUidEqualTo(ownerUid)
+        .watch(fireImmediately: true)
+        .map((rows) => List<CrmEntry>.from(rows));
+  }
+
   static Future<CrmEntry?> read(String ownerUid, String peerUid) async {
     final rows = await IsarDb.isar.crmEntrys
         .filter()

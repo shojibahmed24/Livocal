@@ -755,6 +755,349 @@ app.get('/p/:slug', async (req, res) => {
   }
 });
 
+// Public booking: shareable page and request endpoint (no app or login).
+const bookingLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many booking attempts, please try again later.' },
+});
+
+function parseHm(value) {
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(String(value || ''));
+  if (!match) return null;
+  return Number(match[1]) * 60 + Number(match[2]);
+}
+
+function bookingWeekday(date) {
+  const day = date.getUTCDay();
+  return day === 0 ? 7 : day;
+}
+
+function ymd(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+async function loadHostBySlug(rawSlug) {
+  if (!firestoreDb) return null;
+  const slug = String(rawSlug || '').trim().toLowerCase();
+  if (!/^[a-z0-9-]{3,32}$/.test(slug)) return null;
+  const claim = await firestoreDb.collection('profiles_slug').doc(slug).get();
+  const uid = claim.exists ? (claim.data()?.uid || '') : '';
+  if (!uid) return null;
+  const snap = await firestoreDb.collection('profiles').doc(uid).get();
+  if (!snap.exists) return null;
+  const profile = snap.data() || {};
+  if (profile.published !== true) return null;
+  return { uid, slug, profile };
+}
+
+async function computeBookingDays(uid) {
+  const availSnap = await firestoreDb
+    .collection('users')
+    .doc(uid)
+    .collection('availability')
+    .get();
+  const availability = {};
+  availSnap.docs.forEach((doc) => {
+    availability[doc.id] = doc.data();
+  });
+
+  const bookingsSnap = await firestoreDb
+    .collection('bookings')
+    .where('hostUid', '==', uid)
+    .get();
+  const booked = bookingsSnap.docs
+    .map((doc) => doc.data())
+    .filter((row) => row.status !== 'cancelled')
+    .map((row) => ({ start: Date.parse(row.startAt), end: Date.parse(row.endAt) }))
+    .filter((row) => Number.isFinite(row.start) && Number.isFinite(row.end));
+
+  const days = [];
+  const now = new Date();
+  for (let i = 0; i < 14; i++) {
+    const date = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + i)
+    );
+    const config = availability[String(bookingWeekday(date))];
+    if (!config || config.enabled !== true) continue;
+
+    const slots = (Array.isArray(config.slots) ? config.slots : [])
+      .filter((slot) => {
+        const start = parseHm(slot.start);
+        const end = parseHm(slot.end);
+        return start !== null && end !== null && start < end;
+      })
+      .filter((slot) => {
+        const start = Date.parse(`${ymd(date)}T${slot.start}:00Z`);
+        const end = Date.parse(`${ymd(date)}T${slot.end}:00Z`);
+        if (!Number.isFinite(start) || start < Date.now()) return false;
+        return !booked.some((row) => row.start < end && row.end > start);
+      });
+
+    if (slots.length > 0) {
+      days.push({
+        date: ymd(date),
+        label: date.toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          weekday: 'short',
+          timeZone: 'UTC',
+        }),
+        slots: slots.map((slot) => ({ start: slot.start, end: slot.end })),
+      });
+    }
+  }
+  return days;
+}
+
+app.get('/api/public/availability/:slug', async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'unavailable' });
+  try {
+    const host = await loadHostBySlug(req.params.slug);
+    if (!host) return res.status(404).json({ error: 'not_found' });
+    const days = await computeBookingDays(host.uid);
+    res.setHeader('Cache-Control', 'no-store');
+    return res.json({ displayName: host.profile.displayName || '', days });
+  } catch (err) {
+    console.error('[Booking] availability error:', err.message);
+    return res.status(500).json({ error: 'failed' });
+  }
+});
+
+app.get('/book/:slug', async (req, res) => {
+  if (!firestoreDb) return res.status(503).send('unavailable');
+  try {
+    const host = await loadHostBySlug(req.params.slug);
+    if (!host) return res.status(404).send('Not found');
+    const days = await computeBookingDays(host.uid);
+
+    const esc = (value) =>
+      String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+
+    const rate = host.profile.rate && Number(host.profile.rate.amount) > 0
+      ? `${esc(host.profile.rate.currency || 'USD')} ${esc(host.profile.rate.amount)} / ${
+          host.profile.rate.basis === 'project' ? 'project' : 'hour'
+        }`
+      : '';
+
+    const dayHtml = days
+      .map((day) => {
+        const slots = day.slots
+          .map(
+            (slot) =>
+              `<label class="slot"><input type="radio" name="slot" value="${day.date}T${slot.start}">` +
+              `<span>${slot.start} – ${slot.end}</span></label>`
+          )
+          .join('');
+        return `<div class="day"><div class="date">${esc(day.label)}</div><div class="slots">${slots}</div></div>`;
+      })
+      .join('');
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
+    return res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book a call — ${esc(host.profile.displayName || 'Livocal')}</title>
+<style>
+  :root { --primary:#34d399; --bg:#04070d; --card:#0c1424; --text:#f1f5f9; --muted:#8b98ad; --border:rgba(255,255,255,.08); }
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.55}
+  .wrap{max-width:640px;margin:0 auto;padding:28px 18px 56px}
+  h1{font-size:24px;margin:0 0 6px} .sub{color:var(--muted);font-size:13px;margin:0 0 4px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;margin-top:18px}
+  .day{margin-bottom:14px} .date{font-size:12px;font-weight:700;color:var(--primary);margin-bottom:6px}
+  .slots{display:flex;flex-wrap:wrap;gap:8px}
+  .slot{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border:1px solid var(--border);border-radius:999px;font-size:12.5px;cursor:pointer;background:rgba(255,255,255,.03)}
+  .slot input{accent-color:var(--primary)}
+  label{display:block;margin:10px 0 4px;font-size:12px;color:var(--muted)}
+  input[type=text],textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0a1220;color:var(--text);font-size:13px}
+  button{width:100%;margin-top:16px;padding:12px;border:0;border-radius:12px;background:var(--primary);color:#04120c;font-weight:800;font-size:14px;cursor:pointer}
+  .ok{color:var(--primary);font-weight:700} .err{color:#ff6b6b;font-weight:700} .empty{color:var(--muted);font-size:13px}
+  footer{margin-top:22px;text-align:center;color:var(--muted);font-size:11px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Book a call with ${esc(host.profile.displayName || 'a freelancer')}</h1>
+  <p class="sub">${esc(host.profile.headline || '')}</p>
+  ${rate ? `<p class="sub">${rate}</p>` : ''}
+  <form id="f" class="card">
+    <label>Your name</label>
+    <input type="text" name="guestName" maxlength="80" required>
+    <label>WhatsApp or email</label>
+    <input type="text" name="guestContact" maxlength="120" required>
+    <label>Note (optional)</label>
+    <textarea name="note" rows="3" maxlength="500"></textarea>
+    <label>Pick a slot (UTC)</label>
+    ${dayHtml || '<p class="empty">No open slots right now. Please check back later.</p>'}
+    <button type="submit" ${days.length ? '' : 'disabled'}>Request booking</button>
+    <p id="msg" class="empty"></p>
+  </form>
+  <footer>Powered by Livocal · live voice translation for freelancers</footer>
+</div>
+<script>
+  var SLUG = ${JSON.stringify(host.slug)};
+  document.getElementById('f').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    var form = event.target;
+    var msg = document.getElementById('msg');
+    var slot = form.querySelector('input[name=slot]:checked');
+    if (!slot) { msg.className = 'err'; msg.textContent = 'Please pick a slot.'; return; }
+    msg.className = 'empty';
+    msg.textContent = 'Sending...';
+    try {
+      var response = await fetch('/api/public/book/' + SLUG, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          guestName: form.guestName.value,
+          guestContact: form.guestContact.value,
+          note: form.note.value,
+          slot: slot.value
+        })
+      });
+      var data = await response.json().catch(function () { return {}; });
+      if (!response.ok) {
+        msg.className = 'err';
+        msg.textContent = data.error === 'slot_taken'
+          ? 'That slot was just taken. Please pick another.'
+          : 'Could not send the request. Please try again.';
+        return;
+      }
+      form.innerHTML = '<p class="ok">Request sent! You will get a confirmation soon.</p>';
+    } catch (error) {
+      msg.className = 'err';
+      msg.textContent = 'Network error. Please try again.';
+    }
+  });
+</script>
+</body>
+</html>`);
+  } catch (err) {
+    console.error('[Booking] page error:', err.message);
+    return res.status(500).send('error');
+  }
+});
+
+app.post('/api/public/book/:slug', bookingLimiter, async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'unavailable' });
+  try {
+    const host = await loadHostBySlug(req.params.slug);
+    if (!host) return res.status(404).json({ error: 'not_found' });
+
+    const body = req.body || {};
+    const guestName = String(body.guestName || '').trim().slice(0, 80);
+    const guestContact = String(body.guestContact || '').trim().slice(0, 120);
+    const note = String(body.note || '').trim().slice(0, 500);
+    const slot = String(body.slot || '');
+    const match = /^(\d{4}-\d{2}-\d{2})T([01]\d|2[0-3]):([0-5]\d)$/.exec(slot);
+    if (!guestName || !guestContact || !match) {
+      return res.status(400).json({ error: 'invalid' });
+    }
+
+    const date = match[1];
+    const startHm = `${match[2]}:${match[3]}`;
+    const [year, month, day] = date.split('-').map(Number);
+    const dateObj = new Date(Date.UTC(year, month - 1, day));
+    if (!Number.isFinite(dateObj.getTime())) {
+      return res.status(400).json({ error: 'invalid' });
+    }
+
+    const config = await firestoreDb
+      .collection('users')
+      .doc(host.uid)
+      .collection('availability')
+      .doc(String(bookingWeekday(dateObj)))
+      .get();
+    const slotConfig = config.exists
+      ? (Array.isArray(config.data().slots) ? config.data().slots : []).find(
+          (row) => row.start === startHm
+        )
+      : null;
+    if (
+      !config.exists ||
+      config.data().enabled !== true ||
+      !slotConfig ||
+      parseHm(slotConfig.end) === null ||
+      parseHm(slotConfig.end) <= parseHm(startHm)
+    ) {
+      return res.status(400).json({ error: 'slot_unavailable' });
+    }
+
+    const startAt = new Date(`${date}T${startHm}:00Z`);
+    const endAt = new Date(`${date}T${slotConfig.end}:00Z`);
+    if (startAt.getTime() < Date.now() - 60 * 1000) {
+      return res.status(400).json({ error: 'slot_unavailable' });
+    }
+
+    const existingSnap = await firestoreDb
+      .collection('bookings')
+      .where('hostUid', '==', host.uid)
+      .get();
+    const conflict = existingSnap.docs
+      .map((doc) => doc.data())
+      .filter((row) => row.status !== 'cancelled')
+      .some(
+        (row) =>
+          Date.parse(row.startAt) < endAt.getTime() &&
+          Date.parse(row.endAt) > startAt.getTime()
+      );
+    if (conflict) return res.status(409).json({ error: 'slot_taken' });
+
+    const created = await firestoreDb.collection('bookings').add({
+      hostUid: host.uid,
+      guestName,
+      guestContact,
+      note,
+      startAt: startAt.toISOString(),
+      endAt: endAt.toISOString(),
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    });
+
+    try {
+      if (messagingService) {
+        const tokenDoc = await firestoreDb.collection('fcmTokens').doc(host.uid).get();
+        const token = tokenDoc.exists ? tokenDoc.data().token : null;
+        if (token) {
+          await messagingService.send({
+            token,
+            notification: {
+              title: 'New booking request',
+              body: `${guestName} · ${startAt.toISOString().slice(0, 16).replace('T', ' ')} UTC`,
+            },
+            data: { type: 'BOOKING_REQUEST', bookingId: created.id },
+            android: {
+              priority: 'high',
+              notification: { channelId: 'livocal_messages', defaultSound: true },
+            },
+          });
+        }
+      }
+    } catch (pushErr) {
+      console.error('[Booking] push failed:', pushErr.message);
+    }
+
+    return res.json({
+      ok: true,
+      id: created.id,
+      startAt: startAt.toISOString(),
+      endAt: endAt.toISOString(),
+    });
+  } catch (err) {
+    console.error('[Booking] create error:', err.message);
+    return res.status(500).json({ error: 'failed' });
+  }
+});
+
 // Hosted Public Terms of Service Page for Google Play & App Store Compliance
 app.get(['/terms-of-service', '/terms'], (req, res) => {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
