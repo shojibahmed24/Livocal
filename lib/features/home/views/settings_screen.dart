@@ -13,6 +13,7 @@ import 'package:livocal/shared/utils/app_dialog.dart';
 import 'package:livocal/shared/utils/shared_pref.dart';
 import 'package:livocal/shared/widgets/settings_row.dart';
 import 'package:livocal/features/freelancer/views/freelancer_profile_screen.dart';
+import 'package:livocal/features/freelancer/views/invoices_screen.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/text_theme.dart';
 import 'package:livocal/theme/theme.dart';
@@ -278,6 +279,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     MaterialPageRoute(
                       builder: (_) =>
                           FreelancerProfileScreen(user: _currentUser),
+                    ),
+                  );
+                },
+              ),
+              SettingsRow(
+                icon: Icons.receipt_long_outlined,
+                title: AppStrings.tr(ref, 'invoices'),
+                subtitle: AppStrings.tr(ref, 'newInvoice'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => InvoicesScreen(user: _currentUser),
                     ),
                   );
                 },

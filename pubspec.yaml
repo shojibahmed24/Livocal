@@ -59,6 +59,7 @@ dependencies:
   crypto: ^3.0.3
   firebase_app_check: ^0.2.2
   package_info_plus: ^9.0.1
+  pdf: ^3.12.0
 
 dev_dependencies:
   flutter_test:
@@ -91,6 +92,8 @@ flutter:
     - assets/images/dark/chat_bg.png
     - assets/images/chat_bg.png
     - assets/images/logo.png
+    - assets/fonts/NotoSansBengali-Regular.ttf
+    - assets/fonts/NotoSans-Regular.ttf
     - assets/images/avatar.png
 
   fonts:

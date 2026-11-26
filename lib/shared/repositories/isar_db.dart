@@ -15,6 +15,7 @@ import 'package:livocal/shared/models/messages.dart';
 import 'package:livocal/features/freelancer/models/crm_entry.dart';
 import 'package:livocal/features/freelancer/models/quick_reply.dart';
 import 'package:livocal/features/freelancer/models/freelancer_profile.dart';
+import 'package:livocal/features/freelancer/models/invoice.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/utils/abc.dart';
@@ -57,7 +58,8 @@ class IsarDb {
           UserSchema,
           CrmEntrySchema,
           QuickReplySchema,
-          FreelancerProfileSchema
+          FreelancerProfileSchema,
+          InvoiceSchema,
         ],
         directory: dir.path,
         inspector: false,
@@ -77,7 +79,8 @@ class IsarDb {
                 UserSchema,
                 CrmEntrySchema,
                 QuickReplySchema,
-                FreelancerProfileSchema
+                FreelancerProfileSchema,
+                InvoiceSchema,
               ],
               directory: dir.path,
               inspector: false,

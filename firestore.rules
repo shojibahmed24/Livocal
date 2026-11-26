@@ -113,6 +113,14 @@ service cloud.firestore {
         allow read, write: if isAuthenticated() && request.auth.uid == userId;
       }
 
+      // Freelancer invoices and the sequential number counter
+      match /invoices/{invoiceId} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
+      match /counters/{counterId} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
+
       // SaaS Freelancer Minute Wallet & Payment Settings
       // Owner can ONLY read and manage their own private wallet subcollection.
       // Third-party access is strictly prohibited (preventing bulk scraping of bKash/Nagad/Crypto addresses).

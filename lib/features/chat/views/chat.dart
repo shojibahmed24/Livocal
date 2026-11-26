@@ -48,6 +48,8 @@ import 'widgets/chat_translation_sheet.dart';
 import 'widgets/send_payment_sheet.dart';
 import 'widgets/swipe_to_reply.dart';
 import 'package:livocal/features/freelancer/views/client_details_sheet.dart';
+import 'package:livocal/features/freelancer/views/invoice_editor_screen.dart';
+import 'package:livocal/features/freelancer/services/invoice_service.dart';
 import 'package:livocal/features/freelancer/services/quick_reply_service.dart';
 import 'package:livocal/features/freelancer/views/quick_replies_sheet.dart';
 import 'widgets/unread_banner.dart';
@@ -445,6 +447,17 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                     peerName: widget.otherUserContactName,
                   );
                   break;
+                case 'invoice':
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => InvoiceEditorScreen(
+                        user: self,
+                        clientUid: other.id,
+                        clientName: widget.otherUserContactName,
+                      ),
+                    ),
+                  );
+                  break;
                 case 'search':
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -605,6 +618,16 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                       const Icon(Icons.work_outline_rounded, size: 18),
                       const SizedBox(width: 10),
                       Text(AppStrings.tr(ref, 'clientDetails')),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'invoice',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.receipt_long_outlined, size: 18),
+                      const SizedBox(width: 10),
+                      Text(AppStrings.tr(ref, 'invoice')),
                     ],
                   ),
                 ),
@@ -1161,7 +1184,7 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
             : '';
         final noteStr = note.isNotEmpty ? '\nNote: $note' : '';
         final paymentMsg =
-            '💰 Payment sent: \$amount$methodStr$refStr$idStr$noteStr';
+            '💰 Payment sent: \$$amount$methodStr$refStr$idStr$noteStr';
         ref.read(chatControllerProvider.notifier).sendMessageNoAttachments(
               Message(
                 id: clientMessageId ?? const Uuid().v4(),
@@ -1172,6 +1195,13 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
                 timestamp: Timestamp.now(),
               ),
             );
+        // A matching sent invoice flips to Paid automatically.
+        InvoiceService.autoMarkPaid(
+          ownerUid: widget.self.id,
+          clientUid: widget.other.id,
+          amount: double.tryParse(amount.replaceAll(',', '')) ?? 0,
+          messageId: clientMessageId,
+        );
       },
     );
   }
