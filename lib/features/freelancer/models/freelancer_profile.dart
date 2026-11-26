@@ -34,8 +34,11 @@ class FreelancerProfile {
   /// `full_time` | `part_time` | `busy`
   String availability;
 
-  /// JSON encoded `{"label": "...", "url": "..."}` strings.
+  /// JSON encoded `{"label": "...", "url": "...", "imageUrl": "..."}` strings.
   List<String> portfolio;
+
+  /// JSON encoded `{"title": "...", "from": 100}` strings.
+  List<String> services;
 
   String avatarUrl;
   bool published;
@@ -61,6 +64,7 @@ class FreelancerProfile {
     this.rateBasis = 'hourly',
     this.availability = 'full_time',
     List<String> portfolio = const <String>[],
+    List<String> services = const <String>[],
     this.avatarUrl = '',
     this.published = false,
     this.ratingAvg = 0,
@@ -69,7 +73,8 @@ class FreelancerProfile {
     this.synced = false,
   })  : skills = List<String>.from(skills),
         languages = List<String>.from(languages),
-        portfolio = List<String>.from(portfolio);
+        portfolio = List<String>.from(portfolio),
+        services = List<String>.from(services);
 
   @ignore
   String get handle => username.isNotEmpty ? username : slug;
@@ -87,6 +92,19 @@ class FreelancerProfile {
       }).toList();
 
   @ignore
+  List<Map<String, String>> get serviceEntries => services.map((raw) {
+        try {
+          final map = jsonDecode(raw) as Map<String, dynamic>;
+          return {
+            'title': (map['title'] ?? '').toString(),
+            'from': (map['from'] ?? '').toString(),
+          };
+        } catch (_) {
+          return {'title': raw, 'from': ''};
+        }
+      }).toList();
+
+  @ignore
   List<Map<String, String>> get portfolioEntries => portfolio.map((raw) {
         try {
           final map = jsonDecode(raw) as Map<String, dynamic>;
@@ -96,7 +114,7 @@ class FreelancerProfile {
             'imageUrl': (map['imageUrl'] ?? '').toString(),
           };
         } catch (_) {
-          return {'label': raw, 'url': ''};
+          return {'label': raw, 'url': '', 'imageUrl': ''};
         }
       }).toList();
 
@@ -115,6 +133,7 @@ class FreelancerProfile {
         },
         'availability': availability,
         'portfolio': portfolioEntries,
+        'services': serviceEntries,
         'avatarUrl': avatarUrl,
         'published': published,
         'updatedAt': updatedAt.toIso8601String(),
@@ -125,6 +144,7 @@ class FreelancerProfile {
     final rawSkills = map['skills'];
     final rawLanguages = map['languages'];
     final rawPortfolio = map['portfolio'];
+    final rawServices = map['services'];
 
     return FreelancerProfile(
       ownerUid: ownerUid,
@@ -159,6 +179,18 @@ class FreelancerProfile {
                 return jsonEncode({
                   'label': (item['label'] ?? '').toString(),
                   'url': (item['url'] ?? '').toString(),
+                  'imageUrl': (item['imageUrl'] ?? '').toString(),
+                });
+              }
+              return item.toString();
+            }).toList()
+          : const <String>[],
+      services: rawServices is List
+          ? rawServices.map((item) {
+              if (item is Map) {
+                return jsonEncode({
+                  'title': (item['title'] ?? '').toString(),
+                  'from': (item['from'] ?? '').toString(),
                 });
               }
               return item.toString();

@@ -1,0 +1,75 @@
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+
+import 'package:livocal/features/freelancer/models/freelancer_profile.dart';
+import 'package:livocal/features/freelancer/widgets/portfolio_dialog.dart';
+import 'package:livocal/features/freelancer/widgets/portfolio_section.dart';
+import 'package:livocal/features/freelancer/widgets/service_dialog.dart';
+import 'package:livocal/features/freelancer/widgets/services_section.dart';
+
+/// Portfolio + services editors (self-contained dialogs and mutations).
+class ProfileSections extends StatelessWidget {
+  final FreelancerProfile profile;
+  final String Function(String key) t;
+  final Color textColor;
+  final Color muted;
+  final void Function(void Function(FreelancerProfile)) mutate;
+
+  const ProfileSections({
+    super.key,
+    required this.profile,
+    required this.t,
+    required this.textColor,
+    required this.muted,
+    required this.mutate,
+  });
+
+  Future<void> _addPortfolio(BuildContext context) async {
+    final result = await showPortfolioDialog(context);
+    if (result == null) return;
+    mutate(
+      (p) => p.portfolio = [...p.portfolio, jsonEncode(result)],
+    );
+  }
+
+  void _removePortfolio(int index) {
+    mutate((p) => p.portfolio = [...p.portfolio]..removeAt(index));
+  }
+
+  Future<void> _addService(BuildContext context) async {
+    final result = await showServiceDialog(context);
+    if (result == null) return;
+    mutate((p) => p.services = [...p.services, jsonEncode(result)]);
+  }
+
+  void _removeService(int index) {
+    mutate((p) => p.services = [...p.services]..removeAt(index));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ServicesSection(
+          entries: profile.serviceEntries,
+          t: t,
+          textColor: textColor,
+          muted: muted,
+          currency: profile.rateCurrency,
+          onAdd: () => _addService(context),
+          onRemove: _removeService,
+        ),
+        PortfolioSection(
+          entries: profile.portfolioEntries,
+          t: t,
+          textColor: textColor,
+          muted: muted,
+          onAdd: () => _addPortfolio(context),
+          onRemove: _removePortfolio,
+        ),
+      ],
+    );
+  }
+}

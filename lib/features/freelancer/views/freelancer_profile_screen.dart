@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,8 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:livocal/features/freelancer/models/freelancer_profile.dart';
 import 'package:livocal/features/freelancer/services/freelancer_profile_service.dart';
-import 'package:livocal/features/freelancer/widgets/portfolio_dialog.dart';
-import 'package:livocal/features/freelancer/widgets/portfolio_section.dart';
+import 'package:livocal/features/freelancer/widgets/profile_sections.dart';
 import 'package:livocal/features/freelancer/widgets/profile_form_fields.dart';
 import 'package:livocal/features/freelancer/widgets/profile_header.dart';
 import 'package:livocal/features/freelancer/widgets/regenerate_confirm.dart';
@@ -154,21 +152,6 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
     if (mounted) setState(() {});
   }
 
-  Future<void> _addPortfolio() async {
-    final result = await showPortfolioDialog(context);
-    if (result == null) return;
-    _mutate(
-      (profile) =>
-          profile.portfolio = [...profile.portfolio, jsonEncode(result)],
-    );
-  }
-
-  void _removePortfolio(int index) {
-    _mutate(
-      (profile) => profile.portfolio = [...profile.portfolio]..removeAt(index),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -237,13 +220,12 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
                   mutate: _mutate,
                 ),
                 const SizedBox(height: 16),
-                PortfolioSection(
-                  entries: profile.portfolioEntries,
+                ProfileSections(
+                  profile: profile,
                   t: _t,
                   textColor: textColor,
                   muted: muted,
-                  onAdd: _addPortfolio,
-                  onRemove: _removePortfolio,
+                  mutate: _mutate,
                 ),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
