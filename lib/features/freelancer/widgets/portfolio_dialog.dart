@@ -10,6 +10,7 @@ Future<Map<String, String>?> showPortfolioDialog(
   final lang = Localizations.localeOf(context).languageCode;
   final titleCtrl = TextEditingController(text: existing?['label'] ?? '');
   final urlCtrl = TextEditingController(text: existing?['url'] ?? '');
+  final imageCtrl = TextEditingController(text: existing?['imageUrl'] ?? '');
 
   return showDialog<Map<String, String>>(
     context: context,
@@ -35,6 +36,16 @@ Future<Map<String, String>?> showPortfolioDialog(
               hintText: 'https://',
             ),
           ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: imageCtrl,
+            keyboardType: TextInputType.url,
+            decoration: InputDecoration(
+              isDense: true,
+              labelText: AppStrings.get('portfolioImage', lang),
+              hintText: 'https://',
+            ),
+          ),
         ],
       ),
       actions: [
@@ -48,7 +59,14 @@ Future<Map<String, String>?> showPortfolioDialog(
             final url = urlCtrl.text.trim();
             if (label.isEmpty || url.isEmpty) return;
             final normalized = url.startsWith('http') ? url : 'https://$url';
-            Navigator.of(ctx).pop({'label': label, 'url': normalized});
+            final image = imageCtrl.text.trim();
+            final normalizedImage =
+                image.isEmpty || image.startsWith('http') ? image : 'https://';
+            Navigator.of(ctx).pop({
+              'label': label,
+              'url': normalized,
+              'imageUrl': normalizedImage,
+            });
           },
           child: Text(AppStrings.get('save', lang)),
         ),

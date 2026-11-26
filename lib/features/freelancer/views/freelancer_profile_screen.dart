@@ -12,6 +12,7 @@ import 'package:livocal/features/freelancer/widgets/portfolio_dialog.dart';
 import 'package:livocal/features/freelancer/widgets/portfolio_section.dart';
 import 'package:livocal/features/freelancer/widgets/profile_form_fields.dart';
 import 'package:livocal/features/freelancer/widgets/profile_header.dart';
+import 'package:livocal/features/freelancer/widgets/regenerate_confirm.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/theme/app_colors.dart';
@@ -147,24 +148,7 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
   Future<void> _regenerateSlug() async {
     final profile = _profile;
     if (profile == null) return;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(_t('regenerateLinkTitle')),
-        content: Text(_t('regenerateLinkBody')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(_t('cancel')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(_t('generateProposal')),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
+    if (!await confirmRegenerateLink(context, _t)) return;
     _saveTimer?.cancel();
     await FreelancerProfileService.regenerateSlug(profile);
     if (mounted) setState(() {});
@@ -236,6 +220,8 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
                   profile: profile,
                   t: _t,
                   textColor: textColor,
+                  muted: muted,
+                  onUpdated: () => setState(() {}),
                   onCopy: _copyLink,
                   onShare: _shareLink,
                   onPreview: _preview,

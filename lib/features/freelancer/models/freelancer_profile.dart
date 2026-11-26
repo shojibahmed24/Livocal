@@ -15,6 +15,7 @@ class FreelancerProfile {
   String ownerUid;
 
   String slug;
+  String username;
   String displayName;
   String headline;
   String bio;
@@ -49,6 +50,7 @@ class FreelancerProfile {
   FreelancerProfile({
     required this.ownerUid,
     required this.slug,
+    this.username = '',
     required this.displayName,
     this.headline = '',
     this.bio = '',
@@ -70,7 +72,10 @@ class FreelancerProfile {
         portfolio = List<String>.from(portfolio);
 
   @ignore
-  String get publicUrl => '${AppConfig.relayHttpBaseUrl}/p/$slug';
+  String get handle => username.isNotEmpty ? username : slug;
+
+  @ignore
+  String get publicUrl => '${AppConfig.relayHttpBaseUrl}/u/$handle';
 
   @ignore
   List<Map<String, String>> get languageEntries => languages.map((raw) {
@@ -88,6 +93,7 @@ class FreelancerProfile {
           return {
             'label': (map['label'] ?? '').toString(),
             'url': (map['url'] ?? '').toString(),
+            'imageUrl': (map['imageUrl'] ?? '').toString(),
           };
         } catch (_) {
           return {'label': raw, 'url': ''};
@@ -96,6 +102,7 @@ class FreelancerProfile {
 
   Map<String, dynamic> toMap() => {
         'slug': slug,
+        'username': handle,
         'displayName': displayName,
         'headline': headline,
         'bio': bio,
@@ -122,6 +129,8 @@ class FreelancerProfile {
     return FreelancerProfile(
       ownerUid: ownerUid,
       slug: (map['slug'] as String?) ?? '',
+      username:
+          (map['username'] as String?) ?? ((map['slug'] as String?) ?? ''),
       displayName: (map['displayName'] as String?) ?? '',
       headline: (map['headline'] as String?) ?? '',
       bio: (map['bio'] as String?) ?? '',
