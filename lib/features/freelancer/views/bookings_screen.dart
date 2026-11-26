@@ -63,7 +63,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(_t('statusVoid')),
+            child: Text(_t('keepBooking')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
