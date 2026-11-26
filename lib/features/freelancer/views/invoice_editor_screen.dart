@@ -183,6 +183,31 @@ class _InvoiceEditorScreenState extends ConsumerState<InvoiceEditorScreen> {
     }
   }
 
+  Future<void> _sendReminder() async {
+    final invoice = _invoice;
+    if (invoice == null) return;
+    final token =
+        await InvoiceService.ensureShareToken(invoice, widget.user.name);
+    if (!mounted) return;
+    final link = '${AppConfig.relayHttpBaseUrl}/i/$token';
+    final due =
+        invoice.dueDate == null ? '-' : Invoice.formatDate(invoice.dueDate!);
+    final content =
+        '🔔 ${_t('sendReminder')}: ${_t('invoice')} ${invoice.number} • '
+        '${invoice.totalLabel} • ${_t('dueDate')}: $due\n$link';
+    ref.read(chatControllerProvider.notifier).sendMessageNoAttachments(
+          Message(
+            id: const Uuid().v4(),
+            content: content,
+            status: MessageStatus.pending,
+            senderId: widget.user.id,
+            receiverId: widget.clientUid,
+            timestamp: Timestamp.now(),
+          ),
+        );
+    _snack(_t('reminderSent'));
+  }
+
   Future<void> _markPaid() async {
     final invoice = await _save();
     if (invoice == null) return;
@@ -232,6 +257,12 @@ class _InvoiceEditorScreenState extends ConsumerState<InvoiceEditorScreen> {
           style: const TextStyle(fontSize: 16),
         ),
         actions: [
+          if (_invoice?.status == 'sent' && _invoice?.isPaid == false)
+            IconButton(
+              onPressed: _sendReminder,
+              tooltip: _t('sendReminder'),
+              icon: const Icon(Icons.notifications_active_outlined),
+            ),
           IconButton(
             onPressed: () => _pdfAction(share: true),
             tooltip: _t('sharePdf'),
