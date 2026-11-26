@@ -4,7 +4,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import { z } from 'zod';
-import { renderProfilePage } from './pages/profile_page.js';
+import { renderProfilePage, renderCvPage } from './pages/profile_page.js';
 import { renderBookingPage, bookingIcs } from './pages/booking_page.js';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -770,6 +770,21 @@ app.get('/api/public/profile/:slug', async (req, res) => {
   }
 });
 
+app.get('/cv/:slug', async (req, res) => {
+  if (!firestoreDb) return res.status(503).send('unavailable');
+  try {
+    const host = await loadHostBySlug(req.params.slug);
+    if (!host) return res.status(404).send('Not found');
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=60');
+    return res.send(
+      renderCvPage({ profile: host.profile, username: host.slug })
+    );
+  } catch (err) {
+    console.error('[CV] page error:', err.message);
+    return res.status(500).send('error');
+  }
+});
 app.get('/p/:slug', (req, res) => {
   const slug = String(req.params.slug || '').trim();
   return res.redirect(301, /u/ + encodeURIComponent(slug));

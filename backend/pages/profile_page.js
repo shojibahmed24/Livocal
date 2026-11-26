@@ -520,6 +520,7 @@ ${p.avatarUrl ? `<meta property="og:image" content="${esc(p.avatarUrl)}">` : ''}
       <div class="cta-row">
         <a class="btn btn-primary" href="${bookingUrl}">Book a call</a>
         <button class="btn btn-ghost" id="shareBtn" type="button">Share profile</button>
+        <a class="btn btn-ghost" href="/cv/${esc(username)}">View CV</a>
         ${socials}
       </div>
     </div>
@@ -564,3 +565,111 @@ ${p.avatarUrl ? `<meta property="og:image" content="${esc(p.avatarUrl)}">` : ''}
 }
 
 
+
+export function renderCvPage({ profile, username }) {
+  const p = profile || {};
+  const name = p.displayName || 'Freelancer';
+  const rate = rateLine(p.rate);
+  const skills = (Array.isArray(p.skills) ? p.skills : []).join(' · ');
+  const languages = (Array.isArray(p.languages) ? p.languages : [])
+    .map((l) => `${l.code || l}${l.level ? ` (${l.level})` : ''}`)
+    .join(' · ');
+
+  const block = (title, body) =>
+    body
+      ? `<section><h2>${esc(title)}</h2>${body}</section>`
+      : '';
+
+  const experienceHtml = (Array.isArray(p.experience) ? p.experience : [])
+    .map((item) => `<div class="row">
+      <div><strong>${esc(item.role || '')}</strong>${item.company ? ` — ${esc(item.company)}` : ''}</div>
+      <div class="when">${esc(item.start || '')}${item.start && item.end ? ' – ' : ''}${esc(item.end || (item.start ? 'Present' : ''))}</div>
+      ${item.summary ? `<p>${esc(item.summary)}</p>` : ''}
+    </div>`)
+    .join('');
+
+  const educationHtml = (Array.isArray(p.education) ? p.education : [])
+    .map((item) => `<div class="row">
+      <div><strong>${esc(item.school || '')}</strong>${item.degree ? ` — ${esc(item.degree)}` : ''}</div>
+      <div class="when">${esc(item.start || '')}${item.start && item.end ? ' – ' : ''}${esc(item.end || '')}</div>
+    </div>`)
+    .join('');
+
+  const certHtml = (Array.isArray(p.certifications) ? p.certifications : [])
+    .map((item) => `<li>${esc(item.name || '')}${item.issuer ? ` — ${esc(item.issuer)}` : ''}${item.year ? ` (${esc(item.year)})` : ''}</li>`)
+    .join('');
+
+  const workHtml = (Array.isArray(p.caseStudies) ? p.caseStudies : [])
+    .map((item) => `<div class="row">
+      <div><strong>${esc(item.title || '')}</strong>${item.client ? ` — ${esc(item.client)}` : ''}</div>
+      ${item.result ? `<p>${esc(item.result)}</p>` : ''}
+    </div>`)
+    .join('');
+
+  const links = (Array.isArray(p.portfolio) ? p.portfolio : [])
+    .map((item) => `${esc(item.label || '')}${item.url ? ` — ${esc(item.url)}` : ''}`)
+    .join('<br>');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${esc(name)} — CV</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#eef2f7;color:#0b1220;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans Bengali',sans-serif;line-height:1.55}
+  .sheet{max-width:820px;margin:24px auto;background:#fff;border-radius:14px;padding:36px;box-shadow:0 12px 40px rgba(15,40,70,.12)}
+  header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;border-bottom:2px solid #0f766e;padding-bottom:14px}
+  h1{font-size:30px;margin:0;letter-spacing:-.5px}
+  .headline{color:#0f766e;font-weight:700;font-size:13px;margin:2px 0 0}
+  .meta{color:#64748b;font-size:11.5px;text-align:right}
+  section{margin-top:18px}
+  h2{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#0f766e;margin:0 0 8px;border-bottom:1px solid #e2e8f0;padding-bottom:4px}
+  p{margin:4px 0 0;font-size:12px}
+  .row{margin-bottom:10px}
+  .row strong{font-size:13px}
+  .when{color:#64748b;font-size:11px}
+  ul{margin:0;padding-left:16px;font-size:12px}
+  .skills{font-size:12px}
+  .actions{display:flex;gap:10px;margin-bottom:8px}
+  .btn{border:0;background:#0f9d76;color:#fff;border-radius:10px;padding:10px 16px;font-weight:800;font-size:12.5px;cursor:pointer;text-decoration:none}
+  footer{margin-top:22px;text-align:center;color:#94a3b8;font-size:10.5px}
+  @media(max-width:600px){.sheet{margin:10px;padding:20px}header{flex-direction:column}.meta{text-align:left}h1{font-size:24px}}
+  @media print{body{background:#fff}.sheet{box-shadow:none;margin:0;border-radius:0;padding:0}.actions{display:none}}
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="actions">
+    <button class="btn" onclick="window.print()">Print / Save PDF</button>
+    <a class="btn" style="background:#0b1220" href="/u/${esc(username)}">View profile</a>
+  </div>
+  <header>
+    <div>
+      <h1>${esc(name)}</h1>
+      <p class="headline">${esc(p.headline || '')}</p>
+    </div>
+    <div class="meta">
+      ${esc(`livocal.app/u/${username}`)}<br>
+      ${rate ? `${esc(rate)}<br>` : ''}
+      ${p.githubUrl ? `${esc(p.githubUrl)}<br>` : ''}
+      ${p.linkedinUrl ? `${esc(p.linkedinUrl)}<br>` : ''}
+      ${p.websiteUrl ? esc(p.websiteUrl) : ''}
+    </div>
+  </header>
+
+  ${block('Summary', p.bio ? `<p>${esc(p.bio)}</p>` : '')}
+  ${block('Skills', skills ? `<p class="skills">${esc(skills)}</p>` : '')}
+  ${block('Experience', experienceHtml)}
+  ${block('Education', educationHtml)}
+  ${block('Certifications', certHtml ? `<ul>${certHtml}</ul>` : '')}
+  ${block('Selected work', workHtml)}
+  ${block('Links', links ? `<p>${links}</p>` : '')}
+  ${block('Languages', languages ? `<p>${esc(languages)}</p>` : '')}
+
+  <footer>Generated from Livocal · livocal.app/u/${esc(username)}</footer>
+</div>
+</body>
+</html>`;
+}
