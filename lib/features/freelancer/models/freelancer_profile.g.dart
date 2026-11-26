@@ -77,23 +77,33 @@ const FreelancerProfileSchema = CollectionSchema(
       name: r'rateCurrency',
       type: IsarType.string,
     ),
-    r'skills': PropertySchema(
+    r'ratingAvg': PropertySchema(
       id: 12,
+      name: r'ratingAvg',
+      type: IsarType.double,
+    ),
+    r'ratingCount': PropertySchema(
+      id: 13,
+      name: r'ratingCount',
+      type: IsarType.long,
+    ),
+    r'skills': PropertySchema(
+      id: 14,
       name: r'skills',
       type: IsarType.stringList,
     ),
     r'slug': PropertySchema(
-      id: 13,
+      id: 15,
       name: r'slug',
       type: IsarType.string,
     ),
     r'synced': PropertySchema(
-      id: 14,
+      id: 16,
       name: r'synced',
       type: IsarType.bool,
     ),
     r'updatedAt': PropertySchema(
-      id: 15,
+      id: 17,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -183,10 +193,12 @@ void _freelancerProfileSerialize(
   writer.writeDouble(offsets[9], object.rateAmount);
   writer.writeString(offsets[10], object.rateBasis);
   writer.writeString(offsets[11], object.rateCurrency);
-  writer.writeStringList(offsets[12], object.skills);
-  writer.writeString(offsets[13], object.slug);
-  writer.writeBool(offsets[14], object.synced);
-  writer.writeDateTime(offsets[15], object.updatedAt);
+  writer.writeDouble(offsets[12], object.ratingAvg);
+  writer.writeLong(offsets[13], object.ratingCount);
+  writer.writeStringList(offsets[14], object.skills);
+  writer.writeString(offsets[15], object.slug);
+  writer.writeBool(offsets[16], object.synced);
+  writer.writeDateTime(offsets[17], object.updatedAt);
 }
 
 FreelancerProfile _freelancerProfileDeserialize(
@@ -208,10 +220,12 @@ FreelancerProfile _freelancerProfileDeserialize(
     rateAmount: reader.readDoubleOrNull(offsets[9]) ?? 0,
     rateBasis: reader.readStringOrNull(offsets[10]) ?? 'hourly',
     rateCurrency: reader.readStringOrNull(offsets[11]) ?? 'USD',
-    skills: reader.readStringList(offsets[12]) ?? const <String>[],
-    slug: reader.readString(offsets[13]),
-    synced: reader.readBoolOrNull(offsets[14]) ?? false,
-    updatedAt: reader.readDateTime(offsets[15]),
+    ratingAvg: reader.readDoubleOrNull(offsets[12]) ?? 0,
+    ratingCount: reader.readLongOrNull(offsets[13]) ?? 0,
+    skills: reader.readStringList(offsets[14]) ?? const <String>[],
+    slug: reader.readString(offsets[15]),
+    synced: reader.readBoolOrNull(offsets[16]) ?? false,
+    updatedAt: reader.readDateTime(offsets[17]),
   );
   object.id = id;
   return object;
@@ -249,12 +263,16 @@ P _freelancerProfileDeserializeProp<P>(
     case 11:
       return (reader.readStringOrNull(offset) ?? 'USD') as P;
     case 12:
-      return (reader.readStringList(offset) ?? const <String>[]) as P;
+      return (reader.readDoubleOrNull(offset) ?? 0) as P;
     case 13:
-      return (reader.readString(offset)) as P;
+      return (reader.readLongOrNull(offset) ?? 0) as P;
     case 14:
-      return (reader.readBoolOrNull(offset) ?? false) as P;
+      return (reader.readStringList(offset) ?? const <String>[]) as P;
     case 15:
+      return (reader.readString(offset)) as P;
+    case 16:
+      return (reader.readBoolOrNull(offset) ?? false) as P;
+    case 17:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -2129,6 +2147,128 @@ extension FreelancerProfileQueryFilter
   }
 
   QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      ratingAvgEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'ratingAvg',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      ratingAvgGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'ratingAvg',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      ratingAvgLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'ratingAvg',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      ratingAvgBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'ratingAvg',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      ratingCountEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'ratingCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      ratingCountGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'ratingCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      ratingCountLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'ratingCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      ratingCountBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'ratingCount',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
       skillsElementEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -2704,6 +2844,34 @@ extension FreelancerProfileQuerySortBy
   }
 
   QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByRatingAvg() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ratingAvg', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByRatingAvgDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ratingAvg', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByRatingCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ratingCount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByRatingCountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ratingCount', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
       sortBySlug() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'slug', Sort.asc);
@@ -2901,6 +3069,34 @@ extension FreelancerProfileQuerySortThenBy
   }
 
   QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByRatingAvg() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ratingAvg', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByRatingAvgDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ratingAvg', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByRatingCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ratingCount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByRatingCountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ratingCount', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
       thenBySlug() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'slug', Sort.asc);
@@ -3030,6 +3226,20 @@ extension FreelancerProfileQueryWhereDistinct
   }
 
   QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
+      distinctByRatingAvg() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'ratingAvg');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
+      distinctByRatingCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'ratingCount');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
       distinctBySkills() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'skills');
@@ -3143,6 +3353,19 @@ extension FreelancerProfileQueryProperty
       rateCurrencyProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'rateCurrency');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, double, QQueryOperations>
+      ratingAvgProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'ratingAvg');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, int, QQueryOperations> ratingCountProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'ratingCount');
     });
   }
 

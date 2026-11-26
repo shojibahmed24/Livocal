@@ -18,6 +18,7 @@ import 'package:livocal/features/freelancer/models/freelancer_profile.dart';
 import 'package:livocal/features/freelancer/models/invoice.dart';
 import 'package:livocal/features/freelancer/models/availability_day.dart';
 import 'package:livocal/features/freelancer/models/booking.dart';
+import 'package:livocal/features/freelancer/models/time_entry.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/utils/abc.dart';
@@ -64,6 +65,7 @@ class IsarDb {
           InvoiceSchema,
           AvailabilityDaySchema,
           BookingSchema,
+          TimeEntrySchema,
         ],
         directory: dir.path,
         inspector: false,
@@ -87,6 +89,7 @@ class IsarDb {
                 InvoiceSchema,
                 AvailabilityDaySchema,
                 BookingSchema,
+                TimeEntrySchema,
               ],
               directory: dir.path,
               inspector: false,

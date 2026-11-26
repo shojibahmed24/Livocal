@@ -11,7 +11,7 @@ import 'package:livocal/features/freelancer/services/freelancer_profile_service.
 import 'package:livocal/features/freelancer/widgets/portfolio_dialog.dart';
 import 'package:livocal/features/freelancer/widgets/portfolio_section.dart';
 import 'package:livocal/features/freelancer/widgets/profile_form_fields.dart';
-import 'package:livocal/features/freelancer/widgets/profile_link_card.dart';
+import 'package:livocal/features/freelancer/widgets/profile_header.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/theme/app_colors.dart';
@@ -214,10 +214,10 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
                   style: TextStyle(fontSize: 12.5, color: muted),
                 ),
                 const SizedBox(height: 12),
-                ProfileLinkCard(
-                  url: profile.publicUrl,
-                  published: profile.published,
+                ProfileHeader(
+                  profile: profile,
                   t: _t,
+                  textColor: textColor,
                   onCopy: _copyLink,
                   onShare: _shareLink,
                   onPreview: _preview,

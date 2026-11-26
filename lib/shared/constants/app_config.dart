@@ -39,6 +39,8 @@ class AppConfig {
 
   static String get callSummaryUrl => '$relayHttpBaseUrl/api/call/summary';
 
+  static String get callReviewUrl => '$relayHttpBaseUrl/api/call/review';
+
   static String get privacyPolicyUrl => '$relayHttpBaseUrl/privacy-policy';
 
   static String get termsOfServiceUrl => '$relayHttpBaseUrl/terms-of-service';

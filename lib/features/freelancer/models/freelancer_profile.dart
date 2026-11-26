@@ -38,6 +38,11 @@ class FreelancerProfile {
 
   String avatarUrl;
   bool published;
+
+  /// Server-managed review aggregates (never pushed back).
+  double ratingAvg;
+  int ratingCount;
+
   DateTime updatedAt;
   bool synced;
 
@@ -56,6 +61,8 @@ class FreelancerProfile {
     List<String> portfolio = const <String>[],
     this.avatarUrl = '',
     this.published = false,
+    this.ratingAvg = 0,
+    this.ratingCount = 0,
     required this.updatedAt,
     this.synced = false,
   })  : skills = List<String>.from(skills),
@@ -150,6 +157,8 @@ class FreelancerProfile {
           : const <String>[],
       avatarUrl: (map['avatarUrl'] as String?) ?? '',
       published: map['published'] == true,
+      ratingAvg: (map['ratingAvg'] as num?)?.toDouble() ?? 0,
+      ratingCount: (map['ratingCount'] as num?)?.toInt() ?? 0,
       updatedAt: DateTime.tryParse((map['updatedAt'] as String?) ?? '') ??
           DateTime.now(),
       synced: true,

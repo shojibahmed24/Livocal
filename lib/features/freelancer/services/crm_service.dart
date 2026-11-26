@@ -51,6 +51,14 @@ class CrmService {
         .map((rows) => List<CrmEntry>.from(rows));
   }
 
+  static Future<List<CrmEntry>> readAll(String ownerUid) async {
+    final rows = await IsarDb.isar.crmEntrys
+        .filter()
+        .ownerUidEqualTo(ownerUid)
+        .findAll();
+    return List<CrmEntry>.from(rows);
+  }
+
   static Future<CrmEntry?> read(String ownerUid, String peerUid) async {
     final rows = await IsarDb.isar.crmEntrys
         .filter()

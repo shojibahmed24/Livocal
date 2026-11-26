@@ -669,6 +669,9 @@ app.get('/api/public/profile/:slug', async (req, res) => {
       availability: p.availability || '',
       portfolio: Array.isArray(p.portfolio) ? p.portfolio : [],
       avatarUrl: p.avatarUrl || '',
+      ratingAvg: Number(p.ratingAvg || 0),
+      ratingCount: Number(p.ratingCount || 0),
+      verified: p.published === true && Number(p.ratingCount || 0) > 0,
     });
   } catch (err) {
     console.error('[PublicProfile] error:', err.message);
@@ -703,6 +706,14 @@ app.get('/p/:slug', async (req, res) => {
       .map((item) => `<li><a href="${esc(item.url || '#')}" rel="noopener nofollow" target="_blank">${esc(item.label || item.url || '')}</a></li>`).join('');
     const availability = p.availability
       ? `<span class="pill">${esc(String(p.availability).replace(/_/g, ' '))}</span>` : '';
+    const ratingCount = Number(p.ratingCount || 0);
+    const ratingAvg = Number(p.ratingAvg || 0);
+    const ratingBlock = ratingCount > 0
+      ? `<span class="pill">★ ${ratingAvg.toFixed(1)} · ${ratingCount}</span>` : '';
+    const verifiedBlock =
+      p.published === true && ratingCount > 0
+        ? '<span class="pill">✓ Verified</span>'
+        : '';
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=60');
@@ -738,6 +749,8 @@ app.get('/p/:slug', async (req, res) => {
       <h1>${esc(p.displayName || 'Freelancer')}</h1>
       <p class="headline">${esc(p.headline || '')}</p>
       ${availability}
+      ${ratingBlock}
+      ${verifiedBlock}
     </div>
   </div>
   ${p.bio ? `<div class="card"><h2>About</h2><p>${esc(p.bio)}</p></div>` : ''}
@@ -4537,6 +4550,84 @@ app.post(
       },
       source,
     });
+  }
+);
+
+const ReviewSchema = z.object({
+  callId: z.string().min(1, 'callId is required').max(128),
+  targetUid: z.string().min(1, 'targetUid is required').max(128),
+  rating: z.number().int().min(1, 'rating must be 1-5').max(5),
+  comment: z.string().max(500).optional(),
+});
+
+/**
+ * POST /api/call/review
+ * One rating per participant per call. Aggregates live on profiles/{uid} so
+ * the public page can show them without exposing individual reviews.
+ */
+app.post(
+  '/api/call/review',
+  apiLimiter,
+  authenticateRequest,
+  validateBody(ReviewSchema),
+  async (req, res) => {
+    const uid = req.user?.uid;
+    if (!uid) return res.status(401).json({ error: 'Unauthorized' });
+    if (!firestoreDb) return res.status(503).json({ error: 'unavailable' });
+
+    const { callId, targetUid, rating } = req.body;
+    const comment = String(req.body.comment || '').trim().slice(0, 500);
+    if (targetUid === uid) return res.status(400).json({ error: 'invalid_target' });
+
+    try {
+      const callSnap = await firestoreDb.collection('calls').doc(callId).get();
+      if (!callSnap.exists) return res.status(403).json({ error: 'forbidden' });
+      const call = callSnap.data() || {};
+      const parties = [String(call.callerId || ''), String(call.calleeId || '')];
+      if (!parties.includes(uid) || !parties.includes(targetUid)) {
+        return res.status(403).json({ error: 'forbidden' });
+      }
+
+      const reviewId = `${callId}_${uid}`;
+      const reviewRef = firestoreDb.collection('reviews').doc(reviewId);
+      const profileRef = firestoreDb.collection('profiles').doc(targetUid);
+      let duplicate = false;
+
+      await firestoreDb.runTransaction(async (transaction) => {
+        const existing = await transaction.get(reviewRef);
+        if (existing.exists) {
+          duplicate = true;
+          return;
+        }
+        const profileSnap = await transaction.get(profileRef);
+        const profile = profileSnap.exists ? profileSnap.data() || {} : {};
+        const count = Number(profile.ratingCount || 0) + 1;
+        const sum = Number(profile.ratingSum || 0) + rating;
+
+        transaction.set(reviewRef, {
+          callId,
+          raterUid: uid,
+          targetUid,
+          rating,
+          comment,
+          createdAt: new Date().toISOString(),
+        });
+        if (profileSnap.exists) {
+          transaction.update(profileRef, {
+            ratingCount: count,
+            ratingSum: sum,
+            ratingAvg: Math.round((sum / count) * 100) / 100,
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      });
+
+      if (duplicate) return res.status(409).json({ error: 'already_reviewed' });
+      return res.json({ ok: true });
+    } catch (err) {
+      console.error('[Review] error:', err.message);
+      return res.status(500).json({ error: 'failed' });
+    }
   }
 );
 

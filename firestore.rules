@@ -45,6 +45,15 @@ service cloud.firestore {
       allow create, delete: if false;
     }
 
+    // Call reviews are written by the relay only; participants may read their own.
+    match /reviews/{reviewId} {
+      allow read: if isAuthenticated() && (
+        resource.data.raterUid == request.auth.uid ||
+        resource.data.targetUid == request.auth.uid
+      );
+      allow write: if false;
+    }
+
     // Public freelancer profiles: published docs are world-readable, drafts are
     // owner-only. Fields are validated so a published page cannot leak contact
     // data (phone/email are not part of the allowed shape).
@@ -131,6 +140,11 @@ service cloud.firestore {
         allow read, write: if isAuthenticated() && request.auth.uid == userId;
       }
       match /counters/{counterId} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
+
+      // Freelancer time entries (call minutes per client)
+      match /time_entries/{entryId} {
         allow read, write: if isAuthenticated() && request.auth.uid == userId;
       }
 

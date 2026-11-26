@@ -17,6 +17,7 @@ import 'package:livocal/features/freelancer/views/availability_screen.dart';
 import 'package:livocal/features/freelancer/views/bookings_screen.dart';
 import 'package:livocal/features/freelancer/views/invoices_screen.dart';
 import 'package:livocal/features/freelancer/views/pipeline_screen.dart';
+import 'package:livocal/features/freelancer/views/time_reports_screen.dart';
 import 'package:livocal/theme/app_colors.dart';
 import 'package:livocal/theme/text_theme.dart';
 import 'package:livocal/theme/theme.dart';
@@ -334,6 +335,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (_) => PipelineScreen(user: _currentUser),
+                    ),
+                  );
+                },
+              ),
+              SettingsRow(
+                icon: Icons.query_stats_rounded,
+                title: AppStrings.tr(ref, 'timeReports'),
+                subtitle: AppStrings.tr(ref, 'timeReportsSub'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TimeReportsScreen(user: _currentUser),
                     ),
                   );
                 },

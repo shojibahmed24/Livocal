@@ -7,6 +7,7 @@ import 'package:livocal/features/chat/models/call_log_helper.dart';
 import 'package:livocal/features/chat/models/message.dart';
 import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/features/freelancer/services/time_tracking_service.dart';
 import 'package:livocal/shared/utils/abc.dart';
 
 import 'package:flutter/foundation.dart';
@@ -1691,6 +1692,25 @@ class CallController extends StateNotifier<CallControllerState> {
         }
 
         lastEndedRecord = record;
+
+        try {
+          final ownerId =
+              current.isIncoming ? current.calleeId : current.callerId;
+          final clientId =
+              current.isIncoming ? current.callerId : current.calleeId;
+          if (!isMissed) {
+            await TimeTrackingService.recordCall(
+              ownerUid: ownerId,
+              callId: current.callId,
+              clientUid: clientId,
+              clientName: current.peerName,
+              durationSeconds: duration,
+              at: record.timestamp,
+            );
+          }
+        } catch (e) {
+          debugPrint('[CallController] time tracking failed: $e');
+        }
       }
 
       await _cleanupActiveResources();
