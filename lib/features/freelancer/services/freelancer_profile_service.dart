@@ -87,6 +87,50 @@ class FreelancerProfileService {
       final remote =
           FreelancerProfile.fromMap(ownerUid, doc.data() ?? const {});
       final local = await read(ownerUid);
+      if (local != null) {
+        var changed = false;
+        if (local.coverUrl.isEmpty && remote.coverUrl.isNotEmpty) {
+          local.coverUrl = remote.coverUrl;
+          changed = true;
+        }
+        if (local.responseTime.isEmpty && remote.responseTime.isNotEmpty) {
+          local.responseTime = remote.responseTime;
+          changed = true;
+        }
+        if (local.githubUrl.isEmpty && remote.githubUrl.isNotEmpty) {
+          local.githubUrl = remote.githubUrl;
+          changed = true;
+        }
+        if (local.linkedinUrl.isEmpty && remote.linkedinUrl.isNotEmpty) {
+          local.linkedinUrl = remote.linkedinUrl;
+          changed = true;
+        }
+        if (local.websiteUrl.isEmpty && remote.websiteUrl.isNotEmpty) {
+          local.websiteUrl = remote.websiteUrl;
+          changed = true;
+        }
+        if (local.cvUrl.isEmpty && remote.cvUrl.isNotEmpty) {
+          local.cvUrl = remote.cvUrl;
+          changed = true;
+        }
+        if (local.projectsDone == 0 && remote.projectsDone > 0) {
+          local.projectsDone = remote.projectsDone;
+          changed = true;
+        }
+        if (local.yearsExperience == 0 && remote.yearsExperience > 0) {
+          local.yearsExperience = remote.yearsExperience;
+          changed = true;
+        }
+        if (local.clientsCount == 0 && remote.clientsCount > 0) {
+          local.clientsCount = remote.clientsCount;
+          changed = true;
+        }
+        if (changed) {
+          await IsarDb.isar.writeTxn(
+            () => IsarDb.isar.freelancerProfiles.put(local),
+          );
+        }
+      }
       if (local != null && !remote.updatedAt.isAfter(local.updatedAt)) return;
       // Never drop an unsynced local slug: it may not be claimed remotely yet.
       if (local != null && !local.synced && remote.slug != local.slug) return;
@@ -147,6 +191,27 @@ class FreelancerProfileService {
     } catch (e) {
       debugPrint('[FreelancerProfileService] username failed: $e');
       return 'summaryFailed';
+    }
+  }
+
+  /// Direct cloud read used when the local cache is stale or incomplete.
+  static Future<FreelancerProfile?> fetchRemote(String ownerUid) async {
+    try {
+      final doc = await _profiles
+          .doc(ownerUid)
+          .get(const GetOptions(source: Source.server))
+          .timeout(const Duration(seconds: 8));
+      if (!doc.exists) return null;
+      final profile =
+          FreelancerProfile.fromMap(ownerUid, doc.data() ?? const {});
+      profile.synced = true;
+      await IsarDb.isar.writeTxn(
+        () => IsarDb.isar.freelancerProfiles.put(profile),
+      );
+      return profile;
+    } catch (e) {
+      debugPrint('[FreelancerProfileService] fetchRemote failed: $e');
+      return null;
     }
   }
 

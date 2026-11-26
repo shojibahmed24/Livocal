@@ -57,12 +57,13 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
       AppStrings.get(key, Localizations.localeOf(context).languageCode);
 
   Future<void> _load() async {
-    await FreelancerProfileService.refresh(widget.user.id);
-    final profile = await FreelancerProfileService.ensure(
-      widget.user.id,
-      displayName: widget.user.name,
-      avatarUrl: widget.user.avatarUrl,
-    );
+    final remote = await FreelancerProfileService.fetchRemote(widget.user.id);
+    final profile = remote ??
+        await FreelancerProfileService.ensure(
+          widget.user.id,
+          displayName: widget.user.name,
+          avatarUrl: widget.user.avatarUrl,
+        );
     if (!mounted) return;
     setState(() {
       _profile = profile;
