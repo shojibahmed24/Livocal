@@ -50,6 +50,7 @@ class _PipelineScreenState extends State<PipelineScreen> {
   }
 
   String _name(CrmEntry entry) {
+    if (entry.clientName.trim().isNotEmpty) return entry.clientName;
     final name = _names[entry.peerUid];
     if (name != null && name.isNotEmpty) return name;
     return entry.peerUid.length > 8

@@ -15,6 +15,9 @@ class CrmEntry {
 
   String peerUid;
 
+  /// Display name captured from the chat contact.
+  String clientName;
+
   /// `prospect` | `client` | `archived`
   String tag;
 
@@ -42,6 +45,7 @@ class CrmEntry {
   CrmEntry({
     required this.ownerUid,
     required this.peerUid,
+    this.clientName = '',
     this.tag = 'prospect',
     this.stage = 'new',
     this.rateAmount = 0,
@@ -59,6 +63,7 @@ class CrmEntry {
   bool get isProspect => tag == 'prospect';
 
   Map<String, dynamic> toMap() => {
+        'clientName': clientName,
         'tag': tag,
         'stage': stage,
         'rateAmount': rateAmount,
@@ -79,6 +84,7 @@ class CrmEntry {
     return CrmEntry(
       ownerUid: ownerUid,
       peerUid: peerUid,
+      clientName: (map['clientName'] as String?) ?? '',
       tag: (map['tag'] as String?) ?? 'prospect',
       stage: (map['stage'] as String?) ?? 'new',
       rateAmount: (map['rateAmount'] as num?)?.toDouble() ?? 0,

@@ -17,78 +17,83 @@ const CrmEntrySchema = CollectionSchema(
   name: r'CrmEntry',
   id: -3485472243301205762,
   properties: {
-    r'followUpAt': PropertySchema(
+    r'clientName': PropertySchema(
       id: 0,
+      name: r'clientName',
+      type: IsarType.string,
+    ),
+    r'followUpAt': PropertySchema(
+      id: 1,
       name: r'followUpAt',
       type: IsarType.dateTime,
     ),
     r'isArchived': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'isArchived',
       type: IsarType.bool,
     ),
     r'isClient': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'isClient',
       type: IsarType.bool,
     ),
     r'isProspect': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'isProspect',
       type: IsarType.bool,
     ),
     r'lastContactedAt': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'lastContactedAt',
       type: IsarType.dateTime,
     ),
     r'notes': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'notes',
       type: IsarType.stringList,
     ),
     r'ownerUid': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'ownerUid',
       type: IsarType.string,
     ),
     r'peerUid': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'peerUid',
       type: IsarType.string,
     ),
     r'rateAmount': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'rateAmount',
       type: IsarType.double,
     ),
     r'rateBasis': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'rateBasis',
       type: IsarType.string,
     ),
     r'rateCurrency': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'rateCurrency',
       type: IsarType.string,
     ),
     r'stage': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'stage',
       type: IsarType.string,
     ),
     r'synced': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'synced',
       type: IsarType.bool,
     ),
     r'tag': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'tag',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -132,6 +137,7 @@ int _crmEntryEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  bytesCount += 3 + object.clientName.length * 3;
   bytesCount += 3 + object.notes.length * 3;
   {
     for (var i = 0; i < object.notes.length; i++) {
@@ -154,21 +160,22 @@ void _crmEntrySerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeDateTime(offsets[0], object.followUpAt);
-  writer.writeBool(offsets[1], object.isArchived);
-  writer.writeBool(offsets[2], object.isClient);
-  writer.writeBool(offsets[3], object.isProspect);
-  writer.writeDateTime(offsets[4], object.lastContactedAt);
-  writer.writeStringList(offsets[5], object.notes);
-  writer.writeString(offsets[6], object.ownerUid);
-  writer.writeString(offsets[7], object.peerUid);
-  writer.writeDouble(offsets[8], object.rateAmount);
-  writer.writeString(offsets[9], object.rateBasis);
-  writer.writeString(offsets[10], object.rateCurrency);
-  writer.writeString(offsets[11], object.stage);
-  writer.writeBool(offsets[12], object.synced);
-  writer.writeString(offsets[13], object.tag);
-  writer.writeDateTime(offsets[14], object.updatedAt);
+  writer.writeString(offsets[0], object.clientName);
+  writer.writeDateTime(offsets[1], object.followUpAt);
+  writer.writeBool(offsets[2], object.isArchived);
+  writer.writeBool(offsets[3], object.isClient);
+  writer.writeBool(offsets[4], object.isProspect);
+  writer.writeDateTime(offsets[5], object.lastContactedAt);
+  writer.writeStringList(offsets[6], object.notes);
+  writer.writeString(offsets[7], object.ownerUid);
+  writer.writeString(offsets[8], object.peerUid);
+  writer.writeDouble(offsets[9], object.rateAmount);
+  writer.writeString(offsets[10], object.rateBasis);
+  writer.writeString(offsets[11], object.rateCurrency);
+  writer.writeString(offsets[12], object.stage);
+  writer.writeBool(offsets[13], object.synced);
+  writer.writeString(offsets[14], object.tag);
+  writer.writeDateTime(offsets[15], object.updatedAt);
 }
 
 CrmEntry _crmEntryDeserialize(
@@ -178,18 +185,19 @@ CrmEntry _crmEntryDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = CrmEntry(
-    followUpAt: reader.readDateTimeOrNull(offsets[0]),
-    lastContactedAt: reader.readDateTimeOrNull(offsets[4]),
-    notes: reader.readStringList(offsets[5]) ?? const <String>[],
-    ownerUid: reader.readString(offsets[6]),
-    peerUid: reader.readString(offsets[7]),
-    rateAmount: reader.readDoubleOrNull(offsets[8]) ?? 0,
-    rateBasis: reader.readStringOrNull(offsets[9]) ?? 'hourly',
-    rateCurrency: reader.readStringOrNull(offsets[10]) ?? 'USD',
-    stage: reader.readStringOrNull(offsets[11]) ?? 'new',
-    synced: reader.readBoolOrNull(offsets[12]) ?? false,
-    tag: reader.readStringOrNull(offsets[13]) ?? 'prospect',
-    updatedAt: reader.readDateTime(offsets[14]),
+    clientName: reader.readStringOrNull(offsets[0]) ?? '',
+    followUpAt: reader.readDateTimeOrNull(offsets[1]),
+    lastContactedAt: reader.readDateTimeOrNull(offsets[5]),
+    notes: reader.readStringList(offsets[6]) ?? const <String>[],
+    ownerUid: reader.readString(offsets[7]),
+    peerUid: reader.readString(offsets[8]),
+    rateAmount: reader.readDoubleOrNull(offsets[9]) ?? 0,
+    rateBasis: reader.readStringOrNull(offsets[10]) ?? 'hourly',
+    rateCurrency: reader.readStringOrNull(offsets[11]) ?? 'USD',
+    stage: reader.readStringOrNull(offsets[12]) ?? 'new',
+    synced: reader.readBoolOrNull(offsets[13]) ?? false,
+    tag: reader.readStringOrNull(offsets[14]) ?? 'prospect',
+    updatedAt: reader.readDateTime(offsets[15]),
   );
   object.id = id;
   return object;
@@ -203,34 +211,36 @@ P _crmEntryDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 1:
-      return (reader.readBool(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 2:
       return (reader.readBool(offset)) as P;
     case 3:
       return (reader.readBool(offset)) as P;
     case 4:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 5:
-      return (reader.readStringList(offset) ?? const <String>[]) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 6:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringList(offset) ?? const <String>[]) as P;
     case 7:
       return (reader.readString(offset)) as P;
     case 8:
-      return (reader.readDoubleOrNull(offset) ?? 0) as P;
+      return (reader.readString(offset)) as P;
     case 9:
-      return (reader.readStringOrNull(offset) ?? 'hourly') as P;
+      return (reader.readDoubleOrNull(offset) ?? 0) as P;
     case 10:
-      return (reader.readStringOrNull(offset) ?? 'USD') as P;
+      return (reader.readStringOrNull(offset) ?? 'hourly') as P;
     case 11:
-      return (reader.readStringOrNull(offset) ?? 'new') as P;
+      return (reader.readStringOrNull(offset) ?? 'USD') as P;
     case 12:
-      return (reader.readBoolOrNull(offset) ?? false) as P;
+      return (reader.readStringOrNull(offset) ?? 'new') as P;
     case 13:
-      return (reader.readStringOrNull(offset) ?? 'prospect') as P;
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 14:
+      return (reader.readStringOrNull(offset) ?? 'prospect') as P;
+    case 15:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -504,6 +514,137 @@ extension CrmEntryQueryWhere on QueryBuilder<CrmEntry, CrmEntry, QWhereClause> {
 
 extension CrmEntryQueryFilter
     on QueryBuilder<CrmEntry, CrmEntry, QFilterCondition> {
+  QueryBuilder<CrmEntry, CrmEntry, QAfterFilterCondition> clientNameEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'clientName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CrmEntry, CrmEntry, QAfterFilterCondition> clientNameGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'clientName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CrmEntry, CrmEntry, QAfterFilterCondition> clientNameLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'clientName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CrmEntry, CrmEntry, QAfterFilterCondition> clientNameBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'clientName',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CrmEntry, CrmEntry, QAfterFilterCondition> clientNameStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'clientName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CrmEntry, CrmEntry, QAfterFilterCondition> clientNameEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'clientName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CrmEntry, CrmEntry, QAfterFilterCondition> clientNameContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'clientName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CrmEntry, CrmEntry, QAfterFilterCondition> clientNameMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'clientName',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CrmEntry, CrmEntry, QAfterFilterCondition> clientNameIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'clientName',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<CrmEntry, CrmEntry, QAfterFilterCondition>
+      clientNameIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'clientName',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<CrmEntry, CrmEntry, QAfterFilterCondition> followUpAtIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1867,6 +2008,18 @@ extension CrmEntryQueryLinks
     on QueryBuilder<CrmEntry, CrmEntry, QFilterCondition> {}
 
 extension CrmEntryQuerySortBy on QueryBuilder<CrmEntry, CrmEntry, QSortBy> {
+  QueryBuilder<CrmEntry, CrmEntry, QAfterSortBy> sortByClientName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'clientName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CrmEntry, CrmEntry, QAfterSortBy> sortByClientNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'clientName', Sort.desc);
+    });
+  }
+
   QueryBuilder<CrmEntry, CrmEntry, QAfterSortBy> sortByFollowUpAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'followUpAt', Sort.asc);
@@ -2038,6 +2191,18 @@ extension CrmEntryQuerySortBy on QueryBuilder<CrmEntry, CrmEntry, QSortBy> {
 
 extension CrmEntryQuerySortThenBy
     on QueryBuilder<CrmEntry, CrmEntry, QSortThenBy> {
+  QueryBuilder<CrmEntry, CrmEntry, QAfterSortBy> thenByClientName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'clientName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CrmEntry, CrmEntry, QAfterSortBy> thenByClientNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'clientName', Sort.desc);
+    });
+  }
+
   QueryBuilder<CrmEntry, CrmEntry, QAfterSortBy> thenByFollowUpAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'followUpAt', Sort.asc);
@@ -2221,6 +2386,13 @@ extension CrmEntryQuerySortThenBy
 
 extension CrmEntryQueryWhereDistinct
     on QueryBuilder<CrmEntry, CrmEntry, QDistinct> {
+  QueryBuilder<CrmEntry, CrmEntry, QDistinct> distinctByClientName(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'clientName', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<CrmEntry, CrmEntry, QDistinct> distinctByFollowUpAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'followUpAt');
@@ -2323,6 +2495,12 @@ extension CrmEntryQueryProperty
   QueryBuilder<CrmEntry, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<CrmEntry, String, QQueryOperations> clientNameProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'clientName');
     });
   }
 

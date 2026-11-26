@@ -6,7 +6,8 @@ import 'package:livocal/features/calls/services/webrtc_call_client.dart';
 
 void main() {
   group('WebRtcCallClient.tuneAudioSdp (A1. Opus FEC & DTX)', () {
-    test('Injects useinbandfec=1 and usedtx=1 when fmtp line does not exist', () {
+    test('Injects useinbandfec=1 and usedtx=1 when fmtp line does not exist',
+        () {
       const originalSdp = '''
 v=0
 o=- 123456 2 IN IP4 127.0.0.1
@@ -26,7 +27,8 @@ a=sendrecv
       expect(tuned.contains('minptime=10'), isTrue);
     });
 
-    test('Updates existing fmtp line to enforce useinbandfec=1 and usedtx=1', () {
+    test('Updates existing fmtp line to enforce useinbandfec=1 and usedtx=1',
+        () {
       const originalSdp = '''
 v=0
 m=audio 9 UDP/TLS/RTP/SAVPF 111 0 8
@@ -79,7 +81,9 @@ a=rtpmap:8 PCMA/8000
       expect(CallAudioMode.originalOnly.value, equals('original_only'));
     });
 
-    test('CallAudioPipeline initializes cleanly with single AI player, tuned VAD & barge-in thresholds', () {
+    test(
+        'CallAudioPipeline initializes cleanly with single AI player, tuned VAD & barge-in thresholds',
+        () {
       final pipeline = CallAudioPipeline();
       expect(pipeline.isInitialized, isFalse);
       expect(pipeline.isMuted, isFalse);
@@ -92,7 +96,9 @@ a=rtpmap:8 PCMA/8000
   });
 
   group('Low Internet Speed & Bandwidth Resilience (B1-B6)', () {
-    test('B1 & B2: tuneAudioSdp enforces maxaveragebitrate=32000 for voice clarity and low bandwidth', () {
+    test(
+        'B1 & B2: tuneAudioSdp enforces maxaveragebitrate=32000 for voice clarity and low bandwidth',
+        () {
       const originalSdp = '''
 m=audio 9 UDP/TLS/RTP/SAVPF 111
 a=rtpmap:111 opus/48000/2
@@ -102,7 +108,9 @@ a=rtpmap:111 opus/48000/2
       expect(tuned.contains('usedtx=1'), isTrue);
     });
 
-    test('B5 & D1: CallNetworkQuality enum represents 3-tier quality states with labels and emojis', () {
+    test(
+        'B5 & D1: CallNetworkQuality enum represents 3-tier quality states with labels and emojis',
+        () {
       expect(CallNetworkQuality.values, contains(CallNetworkQuality.good));
       expect(CallNetworkQuality.values, contains(CallNetworkQuality.fair));
       expect(CallNetworkQuality.values, contains(CallNetworkQuality.poor));
@@ -116,7 +124,9 @@ a=rtpmap:111 opus/48000/2
       expect(CallNetworkQuality.poor.emoji, equals('🔴'));
     });
 
-    test('B5 & D2: CallControllerState handles networkQuality and isLowDataMode', () {
+    test(
+        'B5 & D2: CallControllerState handles networkQuality and isLowDataMode',
+        () {
       const state = CallControllerState(
         myLangCode: 'bn',
         peerLangCode: 'en',

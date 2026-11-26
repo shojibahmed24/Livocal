@@ -30,7 +30,9 @@ void main() {
       expect(revived.isExpired, isFalse);
     });
 
-    test('StatusModel correctly identifies expired statuses older than 24 hours', () {
+    test(
+        'StatusModel correctly identifies expired statuses older than 24 hours',
+        () {
       final past = DateTime.now().subtract(const Duration(hours: 25));
       final expiredStatus = StatusModel(
         id: 'status_old',
@@ -45,7 +47,9 @@ void main() {
       expect(expiredStatus.isExpired, isTrue);
     });
 
-    test('StatusModel preserves privacy and allowedUserIds across serialization', () {
+    test(
+        'StatusModel preserves privacy and allowedUserIds across serialization',
+        () {
       final status = StatusModel(
         id: 'status_priv',
         userId: 'user_789',

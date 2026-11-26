@@ -41,7 +41,9 @@ void main() {
       expect(wallet.daysRemainingInTrial, 0);
     });
 
-    test('Expired trial correctly zeroes trial minutes while preserving paid balance', () {
+    test(
+        'Expired trial correctly zeroes trial minutes while preserving paid balance',
+        () {
       final pastDate = DateTime.now().subtract(const Duration(days: 15));
       final wallet = UserWallet(
         balanceMinutes: 45,
@@ -55,13 +57,16 @@ void main() {
       );
 
       expect(wallet.isTrialExpired, isTrue);
-      expect(wallet.effectiveTrialMinutes, 0); // Trial expired: 0 usable trial minutes
+      expect(wallet.effectiveTrialMinutes,
+          0); // Trial expired: 0 usable trial minutes
       expect(wallet.effectiveRemainingMinutes, 45); // Paid balance preserved
       expect(wallet.hasMinutes, isTrue);
       expect(wallet.daysRemainingInTrial, 0);
     });
 
-    test('Expired trial with 0 paid balance correctly reports hasMinutes == false', () {
+    test(
+        'Expired trial with 0 paid balance correctly reports hasMinutes == false',
+        () {
       final pastDate = DateTime.now().subtract(const Duration(days: 1));
       final wallet = UserWallet(
         balanceMinutes: 0,

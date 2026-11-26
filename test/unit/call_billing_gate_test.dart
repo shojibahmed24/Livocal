@@ -48,7 +48,8 @@ void main() {
   });
 
   group('CallSession isTranslatedCall (Paid vs Free) Logic', () {
-    test('Different languages with translation enabled is a Translated Call', () {
+    test('Different languages with translation enabled is a Translated Call',
+        () {
       final session = CallSession(
         callId: 'call_1',
         callerId: 'u1',
@@ -94,7 +95,8 @@ void main() {
       expect(session.toMap()['isTranslatedCall'], isFalse);
     });
 
-    test('Different languages with translation disabled is a Free Local Call', () {
+    test('Different languages with translation disabled is a Free Local Call',
+        () {
       final session = CallSession(
         callId: 'call_3',
         callerId: 'u1',
@@ -180,7 +182,8 @@ void main() {
       activityStatus: UserActivityStatus.online,
     );
 
-    test('Zero minutes blocks translated call (myLang bn -> peerLang en)', () async {
+    test('Zero minutes blocks translated call (myLang bn -> peerLang en)',
+        () async {
       final fakeCallRepo = FakeCallRepository();
       final emptyWallet = UserWallet.noTrial(); // 0 minutes
       final fakeWalletRepo = FakeWalletRepository(emptyWallet);
@@ -203,7 +206,8 @@ void main() {
       expect(controller.state.activeSession, isNull);
     });
 
-    test('Active trial/paid minutes allows translated call to proceed', () async {
+    test('Active trial/paid minutes allows translated call to proceed',
+        () async {
       final fakeCallRepo = FakeCallRepository();
       final activeWallet = UserWallet.newTrial(); // 20 minutes
       final fakeWalletRepo = FakeWalletRepository(activeWallet);
@@ -226,7 +230,8 @@ void main() {
       expect(session!.isTranslatedCall, isTrue);
     });
 
-    test('Zero minutes does NOT block same-language call (Free Local Call)', () async {
+    test('Zero minutes does NOT block same-language call (Free Local Call)',
+        () async {
       final fakeCallRepo = FakeCallRepository();
       final emptyWallet = UserWallet.noTrial(); // 0 minutes
       final fakeWalletRepo = FakeWalletRepository(emptyWallet);
@@ -249,7 +254,9 @@ void main() {
       expect(session!.isTranslatedCall, isFalse);
     });
 
-    test('Zero minutes does NOT block call when translationEnabled is false (Free Local Call)', () async {
+    test(
+        'Zero minutes does NOT block call when translationEnabled is false (Free Local Call)',
+        () async {
       final fakeCallRepo = FakeCallRepository();
       final emptyWallet = UserWallet.noTrial(); // 0 minutes
       final fakeWalletRepo = FakeWalletRepository(emptyWallet);

@@ -128,7 +128,9 @@ void main() {
       activityStatus: UserActivityStatus.online,
     );
 
-    test('deductMinute on non-translated call returns FREE_LOCAL_CALL with 0 deduction', () async {
+    test(
+        'deductMinute on non-translated call returns FREE_LOCAL_CALL with 0 deduction',
+        () async {
       final mockWallet = MockWalletRepo(remainingMinutes: 20);
 
       final result = await mockWallet.deductMinute(
@@ -145,7 +147,9 @@ void main() {
       expect(mockWallet.remainingMinutes, 20); // Unchanged
     });
 
-    test('deductMinute on translated call deducts 1 minute and preserves ledger balance', () async {
+    test(
+        'deductMinute on translated call deducts 1 minute and preserves ledger balance',
+        () async {
       final mockWallet = MockWalletRepo(remainingMinutes: 10);
 
       final result = await mockWallet.deductMinute(
@@ -163,7 +167,8 @@ void main() {
       expect(result.exhausted, isFalse);
     });
 
-    test('Low-balance warning triggers when remaining minutes hit 2 minutes', () async {
+    test('Low-balance warning triggers when remaining minutes hit 2 minutes',
+        () async {
       final mockWallet = MockWalletRepo(remainingMinutes: 3);
 
       final result = await mockWallet.deductMinute(
@@ -180,7 +185,9 @@ void main() {
       expect(result.exhausted, isFalse);
     });
 
-    test('Zero minutes remaining flags exhausted: true and auto-disconnects call', () async {
+    test(
+        'Zero minutes remaining flags exhausted: true and auto-disconnects call',
+        () async {
       final mockCall = MockCallRepo();
       final mockWallet = MockWalletRepo(remainingMinutes: 1); // 1 minute left
 
@@ -223,7 +230,8 @@ void main() {
       expect(result2.remainingMinutes, 0);
     });
 
-    test('Ending call triggers finalizeCallBilling for billing records ledger', () async {
+    test('Ending call triggers finalizeCallBilling for billing records ledger',
+        () async {
       final mockCall = MockCallRepo();
       final mockWallet = MockWalletRepo(remainingMinutes: 15);
 

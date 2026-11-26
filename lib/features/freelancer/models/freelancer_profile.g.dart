@@ -17,105 +17,185 @@ const FreelancerProfileSchema = CollectionSchema(
   name: r'FreelancerProfile',
   id: 8390889716158811100,
   properties: {
-    r'availability': PropertySchema(
+    r'accentColor': PropertySchema(
       id: 0,
+      name: r'accentColor',
+      type: IsarType.string,
+    ),
+    r'availability': PropertySchema(
+      id: 1,
       name: r'availability',
       type: IsarType.string,
     ),
     r'avatarUrl': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'avatarUrl',
       type: IsarType.string,
     ),
     r'bio': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'bio',
       type: IsarType.string,
     ),
+    r'caseStudies': PropertySchema(
+      id: 4,
+      name: r'caseStudies',
+      type: IsarType.stringList,
+    ),
+    r'certifications': PropertySchema(
+      id: 5,
+      name: r'certifications',
+      type: IsarType.stringList,
+    ),
+    r'clientsCount': PropertySchema(
+      id: 6,
+      name: r'clientsCount',
+      type: IsarType.long,
+    ),
+    r'coverUrl': PropertySchema(
+      id: 7,
+      name: r'coverUrl',
+      type: IsarType.string,
+    ),
+    r'cvUrl': PropertySchema(
+      id: 8,
+      name: r'cvUrl',
+      type: IsarType.string,
+    ),
     r'displayName': PropertySchema(
-      id: 3,
+      id: 9,
       name: r'displayName',
       type: IsarType.string,
     ),
+    r'education': PropertySchema(
+      id: 10,
+      name: r'education',
+      type: IsarType.stringList,
+    ),
+    r'experience': PropertySchema(
+      id: 11,
+      name: r'experience',
+      type: IsarType.stringList,
+    ),
+    r'faq': PropertySchema(
+      id: 12,
+      name: r'faq',
+      type: IsarType.stringList,
+    ),
+    r'githubUrl': PropertySchema(
+      id: 13,
+      name: r'githubUrl',
+      type: IsarType.string,
+    ),
     r'headline': PropertySchema(
-      id: 4,
+      id: 14,
       name: r'headline',
       type: IsarType.string,
     ),
     r'languages': PropertySchema(
-      id: 5,
+      id: 15,
       name: r'languages',
       type: IsarType.stringList,
     ),
+    r'linkedinUrl': PropertySchema(
+      id: 16,
+      name: r'linkedinUrl',
+      type: IsarType.string,
+    ),
     r'ownerUid': PropertySchema(
-      id: 6,
+      id: 17,
       name: r'ownerUid',
       type: IsarType.string,
     ),
     r'portfolio': PropertySchema(
-      id: 7,
+      id: 18,
       name: r'portfolio',
       type: IsarType.stringList,
     ),
+    r'projectsDone': PropertySchema(
+      id: 19,
+      name: r'projectsDone',
+      type: IsarType.long,
+    ),
     r'published': PropertySchema(
-      id: 8,
+      id: 20,
       name: r'published',
       type: IsarType.bool,
     ),
     r'rateAmount': PropertySchema(
-      id: 9,
+      id: 21,
       name: r'rateAmount',
       type: IsarType.double,
     ),
     r'rateBasis': PropertySchema(
-      id: 10,
+      id: 22,
       name: r'rateBasis',
       type: IsarType.string,
     ),
     r'rateCurrency': PropertySchema(
-      id: 11,
+      id: 23,
       name: r'rateCurrency',
       type: IsarType.string,
     ),
     r'ratingAvg': PropertySchema(
-      id: 12,
+      id: 24,
       name: r'ratingAvg',
       type: IsarType.double,
     ),
     r'ratingCount': PropertySchema(
-      id: 13,
+      id: 25,
       name: r'ratingCount',
       type: IsarType.long,
     ),
+    r'responseTime': PropertySchema(
+      id: 26,
+      name: r'responseTime',
+      type: IsarType.string,
+    ),
+    r'sectionOrder': PropertySchema(
+      id: 27,
+      name: r'sectionOrder',
+      type: IsarType.stringList,
+    ),
     r'services': PropertySchema(
-      id: 14,
+      id: 28,
       name: r'services',
       type: IsarType.stringList,
     ),
     r'skills': PropertySchema(
-      id: 15,
+      id: 29,
       name: r'skills',
       type: IsarType.stringList,
     ),
     r'slug': PropertySchema(
-      id: 16,
+      id: 30,
       name: r'slug',
       type: IsarType.string,
     ),
     r'synced': PropertySchema(
-      id: 17,
+      id: 31,
       name: r'synced',
       type: IsarType.bool,
     ),
     r'updatedAt': PropertySchema(
-      id: 18,
+      id: 32,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'username': PropertySchema(
-      id: 19,
+      id: 33,
       name: r'username',
       type: IsarType.string,
+    ),
+    r'websiteUrl': PropertySchema(
+      id: 34,
+      name: r'websiteUrl',
+      type: IsarType.string,
+    ),
+    r'yearsExperience': PropertySchema(
+      id: 35,
+      name: r'yearsExperience',
+      type: IsarType.long,
     )
   },
   estimateSize: _freelancerProfileEstimateSize,
@@ -152,10 +232,49 @@ int _freelancerProfileEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  bytesCount += 3 + object.accentColor.length * 3;
   bytesCount += 3 + object.availability.length * 3;
   bytesCount += 3 + object.avatarUrl.length * 3;
   bytesCount += 3 + object.bio.length * 3;
+  bytesCount += 3 + object.caseStudies.length * 3;
+  {
+    for (var i = 0; i < object.caseStudies.length; i++) {
+      final value = object.caseStudies[i];
+      bytesCount += value.length * 3;
+    }
+  }
+  bytesCount += 3 + object.certifications.length * 3;
+  {
+    for (var i = 0; i < object.certifications.length; i++) {
+      final value = object.certifications[i];
+      bytesCount += value.length * 3;
+    }
+  }
+  bytesCount += 3 + object.coverUrl.length * 3;
+  bytesCount += 3 + object.cvUrl.length * 3;
   bytesCount += 3 + object.displayName.length * 3;
+  bytesCount += 3 + object.education.length * 3;
+  {
+    for (var i = 0; i < object.education.length; i++) {
+      final value = object.education[i];
+      bytesCount += value.length * 3;
+    }
+  }
+  bytesCount += 3 + object.experience.length * 3;
+  {
+    for (var i = 0; i < object.experience.length; i++) {
+      final value = object.experience[i];
+      bytesCount += value.length * 3;
+    }
+  }
+  bytesCount += 3 + object.faq.length * 3;
+  {
+    for (var i = 0; i < object.faq.length; i++) {
+      final value = object.faq[i];
+      bytesCount += value.length * 3;
+    }
+  }
+  bytesCount += 3 + object.githubUrl.length * 3;
   bytesCount += 3 + object.headline.length * 3;
   bytesCount += 3 + object.languages.length * 3;
   {
@@ -164,6 +283,7 @@ int _freelancerProfileEstimateSize(
       bytesCount += value.length * 3;
     }
   }
+  bytesCount += 3 + object.linkedinUrl.length * 3;
   bytesCount += 3 + object.ownerUid.length * 3;
   bytesCount += 3 + object.portfolio.length * 3;
   {
@@ -174,6 +294,14 @@ int _freelancerProfileEstimateSize(
   }
   bytesCount += 3 + object.rateBasis.length * 3;
   bytesCount += 3 + object.rateCurrency.length * 3;
+  bytesCount += 3 + object.responseTime.length * 3;
+  bytesCount += 3 + object.sectionOrder.length * 3;
+  {
+    for (var i = 0; i < object.sectionOrder.length; i++) {
+      final value = object.sectionOrder[i];
+      bytesCount += value.length * 3;
+    }
+  }
   bytesCount += 3 + object.services.length * 3;
   {
     for (var i = 0; i < object.services.length; i++) {
@@ -190,6 +318,7 @@ int _freelancerProfileEstimateSize(
   }
   bytesCount += 3 + object.slug.length * 3;
   bytesCount += 3 + object.username.length * 3;
+  bytesCount += 3 + object.websiteUrl.length * 3;
   return bytesCount;
 }
 
@@ -199,26 +328,42 @@ void _freelancerProfileSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.availability);
-  writer.writeString(offsets[1], object.avatarUrl);
-  writer.writeString(offsets[2], object.bio);
-  writer.writeString(offsets[3], object.displayName);
-  writer.writeString(offsets[4], object.headline);
-  writer.writeStringList(offsets[5], object.languages);
-  writer.writeString(offsets[6], object.ownerUid);
-  writer.writeStringList(offsets[7], object.portfolio);
-  writer.writeBool(offsets[8], object.published);
-  writer.writeDouble(offsets[9], object.rateAmount);
-  writer.writeString(offsets[10], object.rateBasis);
-  writer.writeString(offsets[11], object.rateCurrency);
-  writer.writeDouble(offsets[12], object.ratingAvg);
-  writer.writeLong(offsets[13], object.ratingCount);
-  writer.writeStringList(offsets[14], object.services);
-  writer.writeStringList(offsets[15], object.skills);
-  writer.writeString(offsets[16], object.slug);
-  writer.writeBool(offsets[17], object.synced);
-  writer.writeDateTime(offsets[18], object.updatedAt);
-  writer.writeString(offsets[19], object.username);
+  writer.writeString(offsets[0], object.accentColor);
+  writer.writeString(offsets[1], object.availability);
+  writer.writeString(offsets[2], object.avatarUrl);
+  writer.writeString(offsets[3], object.bio);
+  writer.writeStringList(offsets[4], object.caseStudies);
+  writer.writeStringList(offsets[5], object.certifications);
+  writer.writeLong(offsets[6], object.clientsCount);
+  writer.writeString(offsets[7], object.coverUrl);
+  writer.writeString(offsets[8], object.cvUrl);
+  writer.writeString(offsets[9], object.displayName);
+  writer.writeStringList(offsets[10], object.education);
+  writer.writeStringList(offsets[11], object.experience);
+  writer.writeStringList(offsets[12], object.faq);
+  writer.writeString(offsets[13], object.githubUrl);
+  writer.writeString(offsets[14], object.headline);
+  writer.writeStringList(offsets[15], object.languages);
+  writer.writeString(offsets[16], object.linkedinUrl);
+  writer.writeString(offsets[17], object.ownerUid);
+  writer.writeStringList(offsets[18], object.portfolio);
+  writer.writeLong(offsets[19], object.projectsDone);
+  writer.writeBool(offsets[20], object.published);
+  writer.writeDouble(offsets[21], object.rateAmount);
+  writer.writeString(offsets[22], object.rateBasis);
+  writer.writeString(offsets[23], object.rateCurrency);
+  writer.writeDouble(offsets[24], object.ratingAvg);
+  writer.writeLong(offsets[25], object.ratingCount);
+  writer.writeString(offsets[26], object.responseTime);
+  writer.writeStringList(offsets[27], object.sectionOrder);
+  writer.writeStringList(offsets[28], object.services);
+  writer.writeStringList(offsets[29], object.skills);
+  writer.writeString(offsets[30], object.slug);
+  writer.writeBool(offsets[31], object.synced);
+  writer.writeDateTime(offsets[32], object.updatedAt);
+  writer.writeString(offsets[33], object.username);
+  writer.writeString(offsets[34], object.websiteUrl);
+  writer.writeLong(offsets[35], object.yearsExperience);
 }
 
 FreelancerProfile _freelancerProfileDeserialize(
@@ -228,26 +373,42 @@ FreelancerProfile _freelancerProfileDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = FreelancerProfile(
-    availability: reader.readStringOrNull(offsets[0]) ?? 'full_time',
-    avatarUrl: reader.readStringOrNull(offsets[1]) ?? '',
-    bio: reader.readStringOrNull(offsets[2]) ?? '',
-    displayName: reader.readString(offsets[3]),
-    headline: reader.readStringOrNull(offsets[4]) ?? '',
-    languages: reader.readStringList(offsets[5]) ?? const <String>[],
-    ownerUid: reader.readString(offsets[6]),
-    portfolio: reader.readStringList(offsets[7]) ?? const <String>[],
-    published: reader.readBoolOrNull(offsets[8]) ?? false,
-    rateAmount: reader.readDoubleOrNull(offsets[9]) ?? 0,
-    rateBasis: reader.readStringOrNull(offsets[10]) ?? 'hourly',
-    rateCurrency: reader.readStringOrNull(offsets[11]) ?? 'USD',
-    ratingAvg: reader.readDoubleOrNull(offsets[12]) ?? 0,
-    ratingCount: reader.readLongOrNull(offsets[13]) ?? 0,
-    services: reader.readStringList(offsets[14]) ?? const <String>[],
-    skills: reader.readStringList(offsets[15]) ?? const <String>[],
-    slug: reader.readString(offsets[16]),
-    synced: reader.readBoolOrNull(offsets[17]) ?? false,
-    updatedAt: reader.readDateTime(offsets[18]),
-    username: reader.readStringOrNull(offsets[19]) ?? '',
+    accentColor: reader.readStringOrNull(offsets[0]) ?? 'emerald',
+    availability: reader.readStringOrNull(offsets[1]) ?? 'full_time',
+    avatarUrl: reader.readStringOrNull(offsets[2]) ?? '',
+    bio: reader.readStringOrNull(offsets[3]) ?? '',
+    caseStudies: reader.readStringList(offsets[4]) ?? const <String>[],
+    certifications: reader.readStringList(offsets[5]) ?? const <String>[],
+    clientsCount: reader.readLongOrNull(offsets[6]) ?? 0,
+    coverUrl: reader.readStringOrNull(offsets[7]) ?? '',
+    cvUrl: reader.readStringOrNull(offsets[8]) ?? '',
+    displayName: reader.readString(offsets[9]),
+    education: reader.readStringList(offsets[10]) ?? const <String>[],
+    experience: reader.readStringList(offsets[11]) ?? const <String>[],
+    faq: reader.readStringList(offsets[12]) ?? const <String>[],
+    githubUrl: reader.readStringOrNull(offsets[13]) ?? '',
+    headline: reader.readStringOrNull(offsets[14]) ?? '',
+    languages: reader.readStringList(offsets[15]) ?? const <String>[],
+    linkedinUrl: reader.readStringOrNull(offsets[16]) ?? '',
+    ownerUid: reader.readString(offsets[17]),
+    portfolio: reader.readStringList(offsets[18]) ?? const <String>[],
+    projectsDone: reader.readLongOrNull(offsets[19]) ?? 0,
+    published: reader.readBoolOrNull(offsets[20]) ?? false,
+    rateAmount: reader.readDoubleOrNull(offsets[21]) ?? 0,
+    rateBasis: reader.readStringOrNull(offsets[22]) ?? 'hourly',
+    rateCurrency: reader.readStringOrNull(offsets[23]) ?? 'USD',
+    ratingAvg: reader.readDoubleOrNull(offsets[24]) ?? 0,
+    ratingCount: reader.readLongOrNull(offsets[25]) ?? 0,
+    responseTime: reader.readStringOrNull(offsets[26]) ?? '',
+    sectionOrder: reader.readStringList(offsets[27]) ?? const <String>[],
+    services: reader.readStringList(offsets[28]) ?? const <String>[],
+    skills: reader.readStringList(offsets[29]) ?? const <String>[],
+    slug: reader.readString(offsets[30]),
+    synced: reader.readBoolOrNull(offsets[31]) ?? false,
+    updatedAt: reader.readDateTime(offsets[32]),
+    username: reader.readStringOrNull(offsets[33]) ?? '',
+    websiteUrl: reader.readStringOrNull(offsets[34]) ?? '',
+    yearsExperience: reader.readLongOrNull(offsets[35]) ?? 0,
   );
   object.id = id;
   return object;
@@ -261,45 +422,77 @@ P _freelancerProfileDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readStringOrNull(offset) ?? 'full_time') as P;
+      return (reader.readStringOrNull(offset) ?? 'emerald') as P;
     case 1:
-      return (reader.readStringOrNull(offset) ?? '') as P;
+      return (reader.readStringOrNull(offset) ?? 'full_time') as P;
     case 2:
       return (reader.readStringOrNull(offset) ?? '') as P;
     case 3:
-      return (reader.readString(offset)) as P;
-    case 4:
       return (reader.readStringOrNull(offset) ?? '') as P;
+    case 4:
+      return (reader.readStringList(offset) ?? const <String>[]) as P;
     case 5:
       return (reader.readStringList(offset) ?? const <String>[]) as P;
     case 6:
-      return (reader.readString(offset)) as P;
-    case 7:
-      return (reader.readStringList(offset) ?? const <String>[]) as P;
-    case 8:
-      return (reader.readBoolOrNull(offset) ?? false) as P;
-    case 9:
-      return (reader.readDoubleOrNull(offset) ?? 0) as P;
-    case 10:
-      return (reader.readStringOrNull(offset) ?? 'hourly') as P;
-    case 11:
-      return (reader.readStringOrNull(offset) ?? 'USD') as P;
-    case 12:
-      return (reader.readDoubleOrNull(offset) ?? 0) as P;
-    case 13:
       return (reader.readLongOrNull(offset) ?? 0) as P;
-    case 14:
+    case 7:
+      return (reader.readStringOrNull(offset) ?? '') as P;
+    case 8:
+      return (reader.readStringOrNull(offset) ?? '') as P;
+    case 9:
+      return (reader.readString(offset)) as P;
+    case 10:
       return (reader.readStringList(offset) ?? const <String>[]) as P;
+    case 11:
+      return (reader.readStringList(offset) ?? const <String>[]) as P;
+    case 12:
+      return (reader.readStringList(offset) ?? const <String>[]) as P;
+    case 13:
+      return (reader.readStringOrNull(offset) ?? '') as P;
+    case 14:
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 15:
       return (reader.readStringList(offset) ?? const <String>[]) as P;
     case 16:
-      return (reader.readString(offset)) as P;
-    case 17:
-      return (reader.readBoolOrNull(offset) ?? false) as P;
-    case 18:
-      return (reader.readDateTime(offset)) as P;
-    case 19:
       return (reader.readStringOrNull(offset) ?? '') as P;
+    case 17:
+      return (reader.readString(offset)) as P;
+    case 18:
+      return (reader.readStringList(offset) ?? const <String>[]) as P;
+    case 19:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 20:
+      return (reader.readBoolOrNull(offset) ?? false) as P;
+    case 21:
+      return (reader.readDoubleOrNull(offset) ?? 0) as P;
+    case 22:
+      return (reader.readStringOrNull(offset) ?? 'hourly') as P;
+    case 23:
+      return (reader.readStringOrNull(offset) ?? 'USD') as P;
+    case 24:
+      return (reader.readDoubleOrNull(offset) ?? 0) as P;
+    case 25:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 26:
+      return (reader.readStringOrNull(offset) ?? '') as P;
+    case 27:
+      return (reader.readStringList(offset) ?? const <String>[]) as P;
+    case 28:
+      return (reader.readStringList(offset) ?? const <String>[]) as P;
+    case 29:
+      return (reader.readStringList(offset) ?? const <String>[]) as P;
+    case 30:
+      return (reader.readString(offset)) as P;
+    case 31:
+      return (reader.readBoolOrNull(offset) ?? false) as P;
+    case 32:
+      return (reader.readDateTime(offset)) as P;
+    case 33:
+      return (reader.readStringOrNull(offset) ?? '') as P;
+    case 34:
+      return (reader.readStringOrNull(offset) ?? '') as P;
+    case 35:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -502,6 +695,142 @@ extension FreelancerProfileQueryWhere
 
 extension FreelancerProfileQueryFilter
     on QueryBuilder<FreelancerProfile, FreelancerProfile, QFilterCondition> {
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      accentColorEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'accentColor',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      accentColorGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'accentColor',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      accentColorLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'accentColor',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      accentColorBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'accentColor',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      accentColorStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'accentColor',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      accentColorEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'accentColor',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      accentColorContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'accentColor',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      accentColorMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'accentColor',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      accentColorIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'accentColor',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      accentColorIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'accentColor',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
       availabilityEqualTo(
     String value, {
@@ -911,6 +1240,785 @@ extension FreelancerProfileQueryFilter
   }
 
   QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      caseStudiesElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'caseStudies',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      caseStudiesElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'caseStudies',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      caseStudiesElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'caseStudies',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      caseStudiesElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'caseStudies',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      caseStudiesElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'caseStudies',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      caseStudiesElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'caseStudies',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      caseStudiesElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'caseStudies',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      caseStudiesElementMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'caseStudies',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      caseStudiesElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'caseStudies',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      caseStudiesElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'caseStudies',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      caseStudiesLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'caseStudies',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      caseStudiesIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'caseStudies',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      caseStudiesIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'caseStudies',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      caseStudiesLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'caseStudies',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      caseStudiesLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'caseStudies',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      caseStudiesLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'caseStudies',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      certificationsElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'certifications',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      certificationsElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'certifications',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      certificationsElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'certifications',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      certificationsElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'certifications',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      certificationsElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'certifications',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      certificationsElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'certifications',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      certificationsElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'certifications',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      certificationsElementMatches(String pattern,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'certifications',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      certificationsElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'certifications',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      certificationsElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'certifications',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      certificationsLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'certifications',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      certificationsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'certifications',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      certificationsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'certifications',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      certificationsLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'certifications',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      certificationsLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'certifications',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      certificationsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'certifications',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      clientsCountEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'clientsCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      clientsCountGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'clientsCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      clientsCountLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'clientsCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      clientsCountBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'clientsCount',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      coverUrlEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'coverUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      coverUrlGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'coverUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      coverUrlLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'coverUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      coverUrlBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'coverUrl',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      coverUrlStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'coverUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      coverUrlEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'coverUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      coverUrlContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'coverUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      coverUrlMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'coverUrl',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      coverUrlIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'coverUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      coverUrlIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'coverUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      cvUrlEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'cvUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      cvUrlGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'cvUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      cvUrlLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'cvUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      cvUrlBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'cvUrl',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      cvUrlStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'cvUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      cvUrlEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'cvUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      cvUrlContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'cvUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      cvUrlMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'cvUrl',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      cvUrlIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'cvUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      cvUrlIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'cvUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
       displayNameEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1041,6 +2149,817 @@ extension FreelancerProfileQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'displayName',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      educationElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'education',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      educationElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'education',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      educationElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'education',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      educationElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'education',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      educationElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'education',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      educationElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'education',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      educationElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'education',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      educationElementMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'education',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      educationElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'education',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      educationElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'education',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      educationLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'education',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      educationIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'education',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      educationIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'education',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      educationLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'education',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      educationLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'education',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      educationLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'education',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      experienceElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'experience',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      experienceElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'experience',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      experienceElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'experience',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      experienceElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'experience',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      experienceElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'experience',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      experienceElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'experience',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      experienceElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'experience',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      experienceElementMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'experience',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      experienceElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'experience',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      experienceElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'experience',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      experienceLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'experience',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      experienceIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'experience',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      experienceIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'experience',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      experienceLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'experience',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      experienceLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'experience',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      experienceLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'experience',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      faqElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'faq',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      faqElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'faq',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      faqElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'faq',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      faqElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'faq',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      faqElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'faq',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      faqElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'faq',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      faqElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'faq',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      faqElementMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'faq',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      faqElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'faq',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      faqElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'faq',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      faqLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'faq',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      faqIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'faq',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      faqIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'faq',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      faqLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'faq',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      faqLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'faq',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      faqLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'faq',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      githubUrlEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'githubUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      githubUrlGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'githubUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      githubUrlLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'githubUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      githubUrlBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'githubUrl',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      githubUrlStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'githubUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      githubUrlEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'githubUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      githubUrlContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'githubUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      githubUrlMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'githubUrl',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      githubUrlIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'githubUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      githubUrlIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'githubUrl',
         value: '',
       ));
     });
@@ -1464,6 +3383,142 @@ extension FreelancerProfileQueryFilter
   }
 
   QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      linkedinUrlEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'linkedinUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      linkedinUrlGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'linkedinUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      linkedinUrlLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'linkedinUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      linkedinUrlBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'linkedinUrl',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      linkedinUrlStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'linkedinUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      linkedinUrlEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'linkedinUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      linkedinUrlContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'linkedinUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      linkedinUrlMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'linkedinUrl',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      linkedinUrlIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'linkedinUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      linkedinUrlIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'linkedinUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
       ownerUidEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1821,6 +3876,62 @@ extension FreelancerProfileQueryFilter
         upper,
         includeUpper,
       );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      projectsDoneEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'projectsDone',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      projectsDoneGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'projectsDone',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      projectsDoneLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'projectsDone',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      projectsDoneBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'projectsDone',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
     });
   }
 
@@ -2291,6 +4402,367 @@ extension FreelancerProfileQueryFilter
         upper: upper,
         includeUpper: includeUpper,
       ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      responseTimeEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'responseTime',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      responseTimeGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'responseTime',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      responseTimeLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'responseTime',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      responseTimeBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'responseTime',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      responseTimeStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'responseTime',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      responseTimeEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'responseTime',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      responseTimeContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'responseTime',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      responseTimeMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'responseTime',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      responseTimeIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'responseTime',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      responseTimeIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'responseTime',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      sectionOrderElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'sectionOrder',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      sectionOrderElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'sectionOrder',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      sectionOrderElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'sectionOrder',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      sectionOrderElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'sectionOrder',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      sectionOrderElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'sectionOrder',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      sectionOrderElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'sectionOrder',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      sectionOrderElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'sectionOrder',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      sectionOrderElementMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'sectionOrder',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      sectionOrderElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'sectionOrder',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      sectionOrderElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'sectionOrder',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      sectionOrderLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'sectionOrder',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      sectionOrderIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'sectionOrder',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      sectionOrderIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'sectionOrder',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      sectionOrderLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'sectionOrder',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      sectionOrderLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'sectionOrder',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      sectionOrderLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'sectionOrder',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
     });
   }
 
@@ -3081,6 +5553,198 @@ extension FreelancerProfileQueryFilter
       ));
     });
   }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      websiteUrlEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'websiteUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      websiteUrlGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'websiteUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      websiteUrlLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'websiteUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      websiteUrlBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'websiteUrl',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      websiteUrlStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'websiteUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      websiteUrlEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'websiteUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      websiteUrlContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'websiteUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      websiteUrlMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'websiteUrl',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      websiteUrlIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'websiteUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      websiteUrlIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'websiteUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      yearsExperienceEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'yearsExperience',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      yearsExperienceGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'yearsExperience',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      yearsExperienceLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'yearsExperience',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterFilterCondition>
+      yearsExperienceBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'yearsExperience',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension FreelancerProfileQueryObject
@@ -3091,6 +5755,20 @@ extension FreelancerProfileQueryLinks
 
 extension FreelancerProfileQuerySortBy
     on QueryBuilder<FreelancerProfile, FreelancerProfile, QSortBy> {
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByAccentColor() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'accentColor', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByAccentColorDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'accentColor', Sort.desc);
+    });
+  }
+
   QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
       sortByAvailability() {
     return QueryBuilder.apply(this, (query) {
@@ -3133,6 +5811,48 @@ extension FreelancerProfileQuerySortBy
   }
 
   QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByClientsCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'clientsCount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByClientsCountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'clientsCount', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByCoverUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'coverUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByCoverUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'coverUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByCvUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cvUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByCvUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cvUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
       sortByDisplayName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'displayName', Sort.asc);
@@ -3143,6 +5863,20 @@ extension FreelancerProfileQuerySortBy
       sortByDisplayNameDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'displayName', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByGithubUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'githubUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByGithubUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'githubUrl', Sort.desc);
     });
   }
 
@@ -3161,6 +5895,20 @@ extension FreelancerProfileQuerySortBy
   }
 
   QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByLinkedinUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'linkedinUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByLinkedinUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'linkedinUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
       sortByOwnerUid() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'ownerUid', Sort.asc);
@@ -3171,6 +5919,20 @@ extension FreelancerProfileQuerySortBy
       sortByOwnerUidDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'ownerUid', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByProjectsDone() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'projectsDone', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByProjectsDoneDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'projectsDone', Sort.desc);
     });
   }
 
@@ -3259,6 +6021,20 @@ extension FreelancerProfileQuerySortBy
   }
 
   QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByResponseTime() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'responseTime', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByResponseTimeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'responseTime', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
       sortBySlug() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'slug', Sort.asc);
@@ -3313,10 +6089,52 @@ extension FreelancerProfileQuerySortBy
       return query.addSortBy(r'username', Sort.desc);
     });
   }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByWebsiteUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'websiteUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByWebsiteUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'websiteUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByYearsExperience() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'yearsExperience', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      sortByYearsExperienceDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'yearsExperience', Sort.desc);
+    });
+  }
 }
 
 extension FreelancerProfileQuerySortThenBy
     on QueryBuilder<FreelancerProfile, FreelancerProfile, QSortThenBy> {
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByAccentColor() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'accentColor', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByAccentColorDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'accentColor', Sort.desc);
+    });
+  }
+
   QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
       thenByAvailability() {
     return QueryBuilder.apply(this, (query) {
@@ -3359,6 +6177,48 @@ extension FreelancerProfileQuerySortThenBy
   }
 
   QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByClientsCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'clientsCount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByClientsCountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'clientsCount', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByCoverUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'coverUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByCoverUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'coverUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByCvUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cvUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByCvUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cvUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
       thenByDisplayName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'displayName', Sort.asc);
@@ -3369,6 +6229,20 @@ extension FreelancerProfileQuerySortThenBy
       thenByDisplayNameDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'displayName', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByGithubUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'githubUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByGithubUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'githubUrl', Sort.desc);
     });
   }
 
@@ -3400,6 +6274,20 @@ extension FreelancerProfileQuerySortThenBy
   }
 
   QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByLinkedinUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'linkedinUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByLinkedinUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'linkedinUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
       thenByOwnerUid() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'ownerUid', Sort.asc);
@@ -3410,6 +6298,20 @@ extension FreelancerProfileQuerySortThenBy
       thenByOwnerUidDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'ownerUid', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByProjectsDone() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'projectsDone', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByProjectsDoneDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'projectsDone', Sort.desc);
     });
   }
 
@@ -3498,6 +6400,20 @@ extension FreelancerProfileQuerySortThenBy
   }
 
   QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByResponseTime() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'responseTime', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByResponseTimeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'responseTime', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
       thenBySlug() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'slug', Sort.asc);
@@ -3552,10 +6468,45 @@ extension FreelancerProfileQuerySortThenBy
       return query.addSortBy(r'username', Sort.desc);
     });
   }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByWebsiteUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'websiteUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByWebsiteUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'websiteUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByYearsExperience() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'yearsExperience', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QAfterSortBy>
+      thenByYearsExperienceDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'yearsExperience', Sort.desc);
+    });
+  }
 }
 
 extension FreelancerProfileQueryWhereDistinct
     on QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct> {
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
+      distinctByAccentColor({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'accentColor', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
       distinctByAvailability({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -3578,9 +6529,72 @@ extension FreelancerProfileQueryWhereDistinct
   }
 
   QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
+      distinctByCaseStudies() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'caseStudies');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
+      distinctByCertifications() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'certifications');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
+      distinctByClientsCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'clientsCount');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
+      distinctByCoverUrl({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'coverUrl', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct> distinctByCvUrl(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'cvUrl', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
       distinctByDisplayName({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'displayName', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
+      distinctByEducation() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'education');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
+      distinctByExperience() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'experience');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
+      distinctByFaq() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'faq');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
+      distinctByGithubUrl({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'githubUrl', caseSensitive: caseSensitive);
     });
   }
 
@@ -3599,6 +6613,13 @@ extension FreelancerProfileQueryWhereDistinct
   }
 
   QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
+      distinctByLinkedinUrl({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'linkedinUrl', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
       distinctByOwnerUid({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'ownerUid', caseSensitive: caseSensitive);
@@ -3609,6 +6630,13 @@ extension FreelancerProfileQueryWhereDistinct
       distinctByPortfolio() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'portfolio');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
+      distinctByProjectsDone() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'projectsDone');
     });
   }
 
@@ -3655,6 +6683,20 @@ extension FreelancerProfileQueryWhereDistinct
   }
 
   QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
+      distinctByResponseTime({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'responseTime', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
+      distinctBySectionOrder() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'sectionOrder');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
       distinctByServices() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'services');
@@ -3695,6 +6737,20 @@ extension FreelancerProfileQueryWhereDistinct
       return query.addDistinctBy(r'username', caseSensitive: caseSensitive);
     });
   }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
+      distinctByWebsiteUrl({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'websiteUrl', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, FreelancerProfile, QDistinct>
+      distinctByYearsExperience() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'yearsExperience');
+    });
+  }
 }
 
 extension FreelancerProfileQueryProperty
@@ -3702,6 +6758,13 @@ extension FreelancerProfileQueryProperty
   QueryBuilder<FreelancerProfile, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, String, QQueryOperations>
+      accentColorProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'accentColor');
     });
   }
 
@@ -3725,10 +6788,71 @@ extension FreelancerProfileQueryProperty
     });
   }
 
+  QueryBuilder<FreelancerProfile, List<String>, QQueryOperations>
+      caseStudiesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'caseStudies');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, List<String>, QQueryOperations>
+      certificationsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'certifications');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, int, QQueryOperations>
+      clientsCountProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'clientsCount');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, String, QQueryOperations> coverUrlProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'coverUrl');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, String, QQueryOperations> cvUrlProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'cvUrl');
+    });
+  }
+
   QueryBuilder<FreelancerProfile, String, QQueryOperations>
       displayNameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'displayName');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, List<String>, QQueryOperations>
+      educationProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'education');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, List<String>, QQueryOperations>
+      experienceProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'experience');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, List<String>, QQueryOperations>
+      faqProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'faq');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, String, QQueryOperations>
+      githubUrlProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'githubUrl');
     });
   }
 
@@ -3745,6 +6869,13 @@ extension FreelancerProfileQueryProperty
     });
   }
 
+  QueryBuilder<FreelancerProfile, String, QQueryOperations>
+      linkedinUrlProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'linkedinUrl');
+    });
+  }
+
   QueryBuilder<FreelancerProfile, String, QQueryOperations> ownerUidProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'ownerUid');
@@ -3755,6 +6886,13 @@ extension FreelancerProfileQueryProperty
       portfolioProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'portfolio');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, int, QQueryOperations>
+      projectsDoneProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'projectsDone');
     });
   }
 
@@ -3798,6 +6936,20 @@ extension FreelancerProfileQueryProperty
     });
   }
 
+  QueryBuilder<FreelancerProfile, String, QQueryOperations>
+      responseTimeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'responseTime');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, List<String>, QQueryOperations>
+      sectionOrderProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'sectionOrder');
+    });
+  }
+
   QueryBuilder<FreelancerProfile, List<String>, QQueryOperations>
       servicesProperty() {
     return QueryBuilder.apply(this, (query) {
@@ -3834,6 +6986,20 @@ extension FreelancerProfileQueryProperty
   QueryBuilder<FreelancerProfile, String, QQueryOperations> usernameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'username');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, String, QQueryOperations>
+      websiteUrlProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'websiteUrl');
+    });
+  }
+
+  QueryBuilder<FreelancerProfile, int, QQueryOperations>
+      yearsExperienceProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'yearsExperience');
     });
   }
 }

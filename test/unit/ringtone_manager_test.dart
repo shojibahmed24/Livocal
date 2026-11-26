@@ -13,18 +13,22 @@ void main() {
     });
 
     test('Presets list contains expected default and harmonic options', () {
-      expect(RingtoneManager.ringtonePresets, contains('Livocal Harmony (Default)'));
+      expect(RingtoneManager.ringtonePresets,
+          contains('Livocal Harmony (Default)'));
       expect(RingtoneManager.ringtonePresets, contains('Digital Pulse'));
       expect(RingtoneManager.ringtonePresets, contains('Marimba Bloom'));
       expect(RingtoneManager.ringtonePresets, contains('Classic Bell'));
-      expect(RingtoneManager.ringtonePresets, contains('Custom (Choose from phone)...'));
+      expect(RingtoneManager.ringtonePresets,
+          contains('Custom (Choose from phone)...'));
 
-      expect(RingtoneManager.messageTonePresets, contains('Livocal Chime (Default)'));
+      expect(RingtoneManager.messageTonePresets,
+          contains('Livocal Chime (Default)'));
       expect(RingtoneManager.messageTonePresets, contains('Subtle Ding'));
       expect(RingtoneManager.messageTonePresets, contains('Crystal Pop'));
     });
 
-    test('Synthesized preset tone produces valid 44-byte RIFF WAV structure', () {
+    test('Synthesized preset tone produces valid 44-byte RIFF WAV structure',
+        () {
       final manager = RingtoneManager();
       final wavBytes = manager.synthesizeToneBytes('Livocal Harmony (Default)');
 

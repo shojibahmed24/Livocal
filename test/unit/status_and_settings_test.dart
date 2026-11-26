@@ -38,7 +38,8 @@ void main() {
   });
 
   group('SettingsRow Component Tests', () {
-    testWidgets('Renders title, subtitle and icon with tap callback', (tester) async {
+    testWidgets('Renders title, subtitle and icon with tap callback',
+        (tester) async {
       bool tapped = false;
 
       await tester.pumpWidget(
@@ -57,7 +58,8 @@ void main() {
       );
 
       expect(find.text('Privacy & Security'), findsOneWidget);
-      expect(find.text('Block contacts, disappearing messages'), findsOneWidget);
+      expect(
+          find.text('Block contacts, disappearing messages'), findsOneWidget);
       expect(find.byIcon(Icons.security), findsOneWidget);
       expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
 
@@ -66,7 +68,8 @@ void main() {
       expect(tapped, isTrue);
     });
 
-    testWidgets('Renders trailing switch when trailing is provided', (tester) async {
+    testWidgets('Renders trailing switch when trailing is provided',
+        (tester) async {
       bool switchVal = false;
 
       await tester.pumpWidget(

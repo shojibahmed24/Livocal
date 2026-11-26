@@ -48,6 +48,21 @@ class FreelancerProfile {
   /// `{"role","company","start","end","summary"}`.
   List<String> experience;
 
+  /// JSON encoded education: `{"school","degree","start","end"}`.
+  List<String> education;
+
+  /// JSON encoded certifications: `{"name","issuer","year"}`.
+  List<String> certifications;
+
+  /// JSON encoded FAQ: `{"question","answer"}`.
+  List<String> faq;
+
+  /// Theme accent key: emerald | blue | violet | amber | rose.
+  String accentColor;
+
+  /// Public section order keys.
+  List<String> sectionOrder;
+
   String avatarUrl;
   bool published;
 
@@ -85,6 +100,11 @@ class FreelancerProfile {
     List<String> services = const <String>[],
     List<String> caseStudies = const <String>[],
     List<String> experience = const <String>[],
+    List<String> education = const <String>[],
+    List<String> certifications = const <String>[],
+    List<String> faq = const <String>[],
+    this.accentColor = 'emerald',
+    List<String> sectionOrder = const <String>[],
     this.avatarUrl = '',
     this.published = false,
     this.coverUrl = '',
@@ -105,7 +125,11 @@ class FreelancerProfile {
         portfolio = List<String>.from(portfolio),
         services = List<String>.from(services),
         caseStudies = List<String>.from(caseStudies),
-        experience = List<String>.from(experience);
+        experience = List<String>.from(experience),
+        education = List<String>.from(education),
+        certifications = List<String>.from(certifications),
+        faq = List<String>.from(faq),
+        sectionOrder = List<String>.from(sectionOrder);
 
   @ignore
   String get handle => username.isNotEmpty ? username : slug;
@@ -121,6 +145,80 @@ class FreelancerProfile {
           'level': parts.length > 1 ? parts[1] : '',
         };
       }).toList();
+
+  @ignore
+  List<Map<String, String>> get educationEntries =>
+      _decode(education, ['school', 'degree', 'start', 'end']);
+
+  @ignore
+  List<Map<String, String>> get certificationEntries =>
+      _decode(certifications, ['name', 'issuer', 'year']);
+
+  @ignore
+  List<Map<String, String>> get faqEntries =>
+      _decode(faq, ['question', 'answer']);
+
+  static List<Map<String, String>> _decode(
+    List<String> rawList,
+    List<String> keys,
+  ) {
+    return rawList.map((raw) {
+      try {
+        final map = jsonDecode(raw) as Map<String, dynamic>;
+        return {for (final key in keys) key: (map[key] ?? '').toString()};
+      } catch (_) {
+        return {for (final key in keys) key: key == keys.first ? raw : ''};
+      }
+    }).toList();
+  }
+
+  static List<String> _mapList(dynamic raw, List<String> keys) {
+    if (raw is! List) return const <String>[];
+    return raw.map((item) {
+      if (item is Map) {
+        return jsonEncode(
+            {for (final key in keys) key: (item[key] ?? '').toString()});
+      }
+      return item.toString();
+    }).toList();
+  }
+
+  /// Fills empty local fields from the cloud copy so a stale cache can never
+  /// erase data that already exists remotely.
+  void mergeMissingFrom(FreelancerProfile remote) {
+    void fillString(String current, String other, void Function(String) set) {
+      if (current.trim().isEmpty && other.trim().isNotEmpty) set(other);
+    }
+
+    fillString(coverUrl, remote.coverUrl, (v) => coverUrl = v);
+    fillString(responseTime, remote.responseTime, (v) => responseTime = v);
+    fillString(githubUrl, remote.githubUrl, (v) => githubUrl = v);
+    fillString(linkedinUrl, remote.linkedinUrl, (v) => linkedinUrl = v);
+    fillString(websiteUrl, remote.websiteUrl, (v) => websiteUrl = v);
+    fillString(cvUrl, remote.cvUrl, (v) => cvUrl = v);
+    fillString(headline, remote.headline, (v) => headline = v);
+    fillString(bio, remote.bio, (v) => bio = v);
+    if (projectsDone == 0) projectsDone = remote.projectsDone;
+    if (yearsExperience == 0) yearsExperience = remote.yearsExperience;
+    if (clientsCount == 0) clientsCount = remote.clientsCount;
+    if (skills.isEmpty) skills = List<String>.from(remote.skills);
+    if (languages.isEmpty) languages = List<String>.from(remote.languages);
+    if (portfolio.isEmpty) portfolio = List<String>.from(remote.portfolio);
+    if (services.isEmpty) services = List<String>.from(remote.services);
+    if (caseStudies.isEmpty)
+      caseStudies = List<String>.from(remote.caseStudies);
+    if (experience.isEmpty) experience = List<String>.from(remote.experience);
+    if (education.isEmpty) education = List<String>.from(remote.education);
+    if (certifications.isEmpty) {
+      certifications = List<String>.from(remote.certifications);
+    }
+    if (faq.isEmpty) faq = List<String>.from(remote.faq);
+    if (accentColor == 'emerald' && remote.accentColor != 'emerald') {
+      accentColor = remote.accentColor;
+    }
+    if (sectionOrder.isEmpty)
+      sectionOrder = List<String>.from(remote.sectionOrder);
+  }
 
   @ignore
   List<Map<String, String>> get serviceEntries => services.map((raw) {
@@ -249,6 +347,11 @@ class FreelancerProfile {
         'services': serviceEntries,
         'caseStudies': caseEntries,
         'experience': experienceEntries,
+        'education': educationEntries,
+        'certifications': certificationEntries,
+        'faq': faqEntries,
+        'accentColor': accentColor,
+        'sectionOrder': sectionOrder,
         'avatarUrl': avatarUrl,
         'coverUrl': coverUrl,
         'responseTime': responseTime,
@@ -311,6 +414,15 @@ class FreelancerProfile {
           : const <String>[],
       caseStudies: _caseFromMap(map['caseStudies']),
       experience: _experienceFromMap(map['experience']),
+      education:
+          _mapList(map['education'], ['school', 'degree', 'start', 'end']),
+      certifications:
+          _mapList(map['certifications'], ['name', 'issuer', 'year']),
+      faq: _mapList(map['faq'], ['question', 'answer']),
+      accentColor: (map['accentColor'] as String?) ?? 'emerald',
+      sectionOrder: map['sectionOrder'] is List
+          ? (map['sectionOrder'] as List).map((e) => e.toString()).toList()
+          : const <String>[],
       services: rawServices is List
           ? rawServices.map((item) {
               if (item is Map) {

@@ -94,9 +94,9 @@ class _BookingsScreenState extends State<BookingsScreen> {
     if (time == null) return;
     final start =
         DateTime(date.year, date.month, date.day, time.hour, time.minute);
-    await BookingService.reschedule(booking, start);
+    final ok = await BookingService.reschedule(booking, start);
     if (!mounted) return;
-    _snack(_t('bookingRescheduledMsg'));
+    _snack(_t(ok ? 'bookingRescheduledMsg' : 'slotTaken'));
   }
 
   @override

@@ -28,7 +28,8 @@ void main() {
   });
 
   group('SwipeToAnswer Widget Tests', () {
-    testWidgets('Renders decline button and swipe track with labels', (tester) async {
+    testWidgets('Renders decline button and swipe track with labels',
+        (tester) async {
       bool answered = false;
       bool declined = false;
 

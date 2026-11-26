@@ -18,7 +18,9 @@ void main() {
   });
 
   group('Login Controller Country Resolution Tests', () {
-    test('defaultCountryProvider resolves to valid country and not hardcoded India', () {
+    test(
+        'defaultCountryProvider resolves to valid country and not hardcoded India',
+        () {
       final container = ProviderContainer();
       final country = container.read(defaultCountryProvider);
 
@@ -30,7 +32,8 @@ void main() {
   });
 
   group('ScaffoldWithSearch Duplicate Icon Bug Tests', () {
-    testWidgets('Does not insert duplicate search icons on multiple rebuilds', (tester) async {
+    testWidgets('Does not insert duplicate search icons on multiple rebuilds',
+        (tester) async {
       final searchController = TextEditingController();
 
       await tester.pumpWidget(
@@ -64,7 +67,9 @@ void main() {
   });
 
   group('FirebaseAuthRepository.verifyOtp Real Implementation Tests', () {
-    test('Scenario 1: Re-auth user with stale session entering WRONG OTP strictly returns false', () async {
+    test(
+        'Scenario 1: Re-auth user with stale session entering WRONG OTP strictly returns false',
+        () async {
       final fakeAuth = FakeFirebaseAuth(
         currentUser: FakeUser('existing_stale_uid_123'),
         onSignInWithCredential: (_) => throw FirebaseAuthException(
@@ -79,10 +84,13 @@ void main() {
       );
 
       final result = await repo.verifyOtp('test_verification_id_1', '000000');
-      expect(result, isFalse, reason: 'FirebaseAuthException must return false even if currentUser is non-null');
+      expect(result, isFalse,
+          reason:
+              'FirebaseAuthException must return false even if currentUser is non-null');
     });
 
-    test('Scenario 2: Fresh user login entering wrong OTP returns false', () async {
+    test('Scenario 2: Fresh user login entering wrong OTP returns false',
+        () async {
       final fakeAuth = FakeFirebaseAuth(
         currentUser: null,
         onSignInWithCredential: (_) => throw FirebaseAuthException(
@@ -100,7 +108,9 @@ void main() {
       expect(result, isFalse);
     });
 
-    test('Scenario 3: Generic Exception (e.g. network failure) returns false and does not fall back', () async {
+    test(
+        'Scenario 3: Generic Exception (e.g. network failure) returns false and does not fall back',
+        () async {
       final fakeAuth = FakeFirebaseAuth(
         currentUser: FakeUser('existing_stale_uid_123'),
         onSignInWithCredential: (_) => throw Exception('Network unreachable'),
@@ -115,7 +125,9 @@ void main() {
       expect(result, isFalse);
     });
 
-    test('Scenario 4: Genuine new session established on native side despite Pigeon TypeError returns true', () async {
+    test(
+        'Scenario 4: Genuine new session established on native side despite Pigeon TypeError returns true',
+        () async {
       final fakeAuth = FakeFirebaseAuth(
         currentUser: null, // preExistingUid is null
       );
@@ -131,10 +143,14 @@ void main() {
       );
 
       final result = await repo.verifyOtp('test_verification_id_4', '123456');
-      expect(result, isTrue, reason: 'Genuine new native session with Pigeon decode mismatch should be accepted');
+      expect(result, isTrue,
+          reason:
+              'Genuine new native session with Pigeon decode mismatch should be accepted');
     });
 
-    test('Scenario 5: Stale session with Pigeon TypeError where native did NOT sign in a new user returns false', () async {
+    test(
+        'Scenario 5: Stale session with Pigeon TypeError where native did NOT sign in a new user returns false',
+        () async {
       final fakeAuth = FakeFirebaseAuth(
         currentUser: FakeUser('existing_user_123'),
         onSignInWithCredential: (_) => throw TypeError(),
@@ -146,14 +162,17 @@ void main() {
       );
 
       final result = await repo.verifyOtp('test_verification_id_5', '123456');
-      expect(result, isFalse, reason: 'Stale user session with Pigeon TypeError must return false');
+      expect(result, isFalse,
+          reason: 'Stale user session with Pigeon TypeError must return false');
     });
 
-    test('Scenario 6: Clean successful OTP verification returns true', () async {
+    test('Scenario 6: Clean successful OTP verification returns true',
+        () async {
       final newUser = FakeUser('verified_uid_555');
       final fakeAuth = FakeFirebaseAuth(
         currentUser: null,
-        onSignInWithCredential: (_) => Future.value(FakeUserCredential(user: newUser)),
+        onSignInWithCredential: (_) =>
+            Future.value(FakeUserCredential(user: newUser)),
       );
 
       final repo = FirebaseAuthRepository(
@@ -201,4 +220,3 @@ class FakeFirebaseAuth extends Fake implements FirebaseAuth {
 }
 
 class FakeFirebaseFirestore extends Fake implements FirebaseFirestore {}
-

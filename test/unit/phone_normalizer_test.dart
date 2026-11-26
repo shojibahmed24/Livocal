@@ -76,7 +76,8 @@ void main() {
       expect(PhoneNormalizer.parse(countryCode: '880', input: '   '), isNull);
       expect(PhoneNormalizer.parse(countryCode: '880', input: 'abc'), isNull);
       expect(PhoneNormalizer.parse(countryCode: '880', input: '0175'), isNull);
-      expect(PhoneNormalizer.parse(countryCode: '', input: '01775290702'), isNull);
+      expect(
+          PhoneNormalizer.parse(countryCode: '', input: '01775290702'), isNull);
     });
 
     test('rejects numbers longer than E.164 allows', () {

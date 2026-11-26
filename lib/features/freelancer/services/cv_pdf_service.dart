@@ -103,6 +103,27 @@ class CvPdfService {
               ),
             ),
           ],
+          if (profile.educationEntries.isNotEmpty)
+            _section(
+              'Education',
+              profile.educationEntries
+                  .map(
+                    (item) =>
+                        '${item['school'] ?? ''} — ${item['degree'] ?? ''} '
+                        '(${item['start'] ?? ''}–${item['end'] ?? ''})',
+                  )
+                  .join('\n'),
+            ),
+          if (profile.certificationEntries.isNotEmpty)
+            _section(
+              'Certifications',
+              profile.certificationEntries
+                  .map(
+                    (item) => '${item['name'] ?? ''} — ${item['issuer'] ?? ''} '
+                        '${item['year'] ?? ''}',
+                  )
+                  .join('\n'),
+            ),
           if (profile.caseEntries.isNotEmpty) ...[
             pw.SizedBox(height: 6),
             pw.Text(

@@ -31,7 +31,8 @@ void main() {
     });
 
     test('Language inference correctly detects Bengali names', () {
-      final lang = CallRepository.inferPeerLanguageCode('user_123', 'হাসান মাহমুদ');
+      final lang =
+          CallRepository.inferPeerLanguageCode('user_123', 'হাসান মাহমুদ');
       expect(lang, equals('bn'));
     });
 

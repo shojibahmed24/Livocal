@@ -77,12 +77,29 @@ class BookingService {
     }
   }
 
-  static Future<void> reschedule(Booking booking, DateTime startAt) async {
+  /// Returns false when the new time overlaps another active booking.
+  static Future<bool> reschedule(Booking booking, DateTime startAt) async {
     final duration = booking.endAt.difference(booking.startAt);
+    final newEnd = startAt.add(duration);
+
+    final rows = await IsarDb.isar.bookings
+        .filter()
+        .hostUidEqualTo(booking.hostUid)
+        .findAll();
+    final conflict = rows.any(
+      (other) =>
+          other.id != booking.id &&
+          other.status != 'cancelled' &&
+          other.startAt.isBefore(newEnd) &&
+          other.endAt.isAfter(startAt),
+    );
+    if (conflict) return false;
+
     booking.startAt = startAt;
-    booking.endAt = startAt.add(duration);
+    booking.endAt = newEnd;
     await _saveLocal(booking);
     await _push(booking);
+    return true;
   }
 
   static Future<void> cancel(Booking booking) async {

@@ -64,45 +64,61 @@ void main() {
       expect(AppStrings.get('settings', 'de'), equals('Einstellungen'));
     });
 
-    test('100% Key Parity: All 7 supported locales have identical key sets with non-empty values', () {
+    test(
+        '100% Key Parity: All 7 supported locales have identical key sets with non-empty values',
+        () {
       final supportedLocales = AppStrings.supportedLanguages;
-      expect(supportedLocales, unorderedEquals(['en', 'bn', 'hi', 'ar', 'es', 'fr', 'de']));
+      expect(supportedLocales,
+          unorderedEquals(['en', 'bn', 'hi', 'ar', 'es', 'fr', 'de']));
 
       final enKeys = AppStrings.allKeys;
-      expect(enKeys.length, greaterThanOrEqualTo(150), reason: 'All sub-screens must be included');
+      expect(enKeys.length, greaterThanOrEqualTo(150),
+          reason: 'All sub-screens must be included');
 
       for (final lang in supportedLocales) {
         final langDict = AppStrings.localizedValues[lang];
-        expect(langDict, isNotNull, reason: 'Language $lang must have a dictionary');
+        expect(langDict, isNotNull,
+            reason: 'Language $lang must have a dictionary');
 
         final langKeys = langDict!.keys.toSet();
         final missingKeys = enKeys.difference(langKeys);
         expect(missingKeys, isEmpty,
-            reason: 'Language $lang is missing ${missingKeys.length} keys: $missingKeys');
+            reason:
+                'Language $lang is missing ${missingKeys.length} keys: $missingKeys');
 
         for (final entry in langDict.entries) {
           expect(entry.value.trim().isNotEmpty, isTrue,
-              reason: 'Language $lang key "${entry.key}" must not have empty value');
+              reason:
+                  'Language $lang key "${entry.key}" must not have empty value');
         }
       }
     });
 
-    test('All 6 Settings Sub-screens have complete translations across all 7 locales', () {
+    test(
+        'All 6 Settings Sub-screens have complete translations across all 7 locales',
+        () {
       const subScreenSampleKeys = [
         // Account screen
-        'account', 'securityAndAccess', 'twoStepVerification', 'changeNumber', 'deleteMyAccount',
+        'account', 'securityAndAccess', 'twoStepVerification', 'changeNumber',
+        'deleteMyAccount',
         // Privacy screen
-        'privacy', 'whoCanSeeMyInfo', 'lastSeenAndOnline', 'disappearingMessages', 'fingerprintLock',
+        'privacy', 'whoCanSeeMyInfo', 'lastSeenAndOnline',
+        'disappearingMessages', 'fingerprintLock',
         // Notifications screen
-        'notifications', 'conversationTones', 'messagesHeader', 'notificationTone', 'callRingtoneTitle',
+        'notifications', 'conversationTones', 'messagesHeader',
+        'notificationTone', 'callRingtoneTitle',
         // Storage screen
-        'storage', 'manageStorage', 'storageBreakdown', 'networkUsage', 'whenUsingMobileData', 'failedToClearCache',
+        'storage', 'manageStorage', 'storageBreakdown', 'networkUsage',
+        'whenUsingMobileData', 'failedToClearCache',
         // Help screen
-        'help', 'helpCentre', 'contactSupport', 'faqTitle', 'aboutLivocal', 'privacyPrinciplesBody', 'failedToSendFeedback', 'couldNotOpenUrl',
+        'help', 'helpCentre', 'contactSupport', 'faqTitle', 'aboutLivocal',
+        'privacyPrinciplesBody', 'failedToSendFeedback', 'couldNotOpenUrl',
         // QR Code screen
-        'qrCode', 'copyLink', 'shareQrCode', 'qrCodeDesc', 'livocalContact', 'shareQrInviteText',
+        'qrCode', 'copyLink', 'shareQrCode', 'qrCodeDesc', 'livocalContact',
+        'shareQrInviteText',
         // Voice Persona & Security
-        'biometricError', 'voicePreviewOffline', 'liveAudioTranslationVoice', 'availableVoicePersonas',
+        'biometricError', 'voicePreviewOffline', 'liveAudioTranslationVoice',
+        'availableVoicePersonas',
       ];
 
       for (final key in subScreenSampleKeys) {
@@ -116,12 +132,14 @@ void main() {
     });
 
     test('Unknown keys gracefully return fallback', () {
-      expect(AppStrings.get('non_existent_key_xyz', 'bn'), equals('non_existent_key_xyz'));
+      expect(AppStrings.get('non_existent_key_xyz', 'bn'),
+          equals('non_existent_key_xyz'));
     });
   });
 
   group('Hardware-Backed SecurePinService Tests', () {
-    test('PIN lifecycle: set, check, verify, disable, and auto-clean plaintext', () async {
+    test('PIN lifecycle: set, check, verify, disable, and auto-clean plaintext',
+        () async {
       await SecurePinService.disablePin();
       expect(await SecurePinService.isPinSet(), isFalse);
 
@@ -140,15 +158,17 @@ void main() {
       await SecurePinService.disablePin();
       await SecurePinService.setPin('246810');
 
-      final stored = await FlutterSecureStorage()
-          .read(key: 'livocal_two_step_pin');
+      final stored =
+          await FlutterSecureStorage().read(key: 'livocal_two_step_pin');
       expect(stored, isNotNull);
       expect(stored, isNot(equals('246810')));
       expect(stored, startsWith('v2\$'));
       expect(await SecurePinService.verifyPin('246810'), isTrue);
     });
 
-    test('Legacy migration: plaintext PIN in SharedPref is migrated to Keystore and purged', () async {
+    test(
+        'Legacy migration: plaintext PIN in SharedPref is migrated to Keystore and purged',
+        () async {
       await SecurePinService.disablePin();
       await SharedPref.instance.setString('two_step_pin', '987654');
 
@@ -157,7 +177,8 @@ void main() {
       expect(SharedPref.instance.getString('two_step_pin'), isNull);
     });
 
-    test('Brute-force lockout: 5 consecutive failed attempts trigger lockout', () async {
+    test('Brute-force lockout: 5 consecutive failed attempts trigger lockout',
+        () async {
       await SecurePinService.disablePin();
       await SecurePinService.setPin('123456');
 
@@ -183,7 +204,8 @@ void main() {
   });
 
   group('Locale Persistence & Restart Tests', () {
-    test('App language persists and loads for all 7 supported locales', () async {
+    test('App language persists and loads for all 7 supported locales',
+        () async {
       const allLocales = ['en', 'bn', 'hi', 'ar', 'es', 'fr', 'de'];
       for (final code in allLocales) {
         await SharedPref.instance.setString('app_language', code);
@@ -195,10 +217,14 @@ void main() {
 
   group('Centralized AppConfig Tests', () {
     test('Default relay endpoints resolve properly', () {
-      expect(AppConfig.relayHttpBaseUrl, contains('https://livocal-relay.onrender.com'));
-      expect(AppConfig.relayWsBaseUrl, contains('wss://livocal-relay.onrender.com'));
-      expect(AppConfig.callNotifyIncomingUrl, endsWith('/api/call/notify-incoming'));
-      expect(AppConfig.chatNotifyMessageUrl, endsWith('/api/notify/chat-message'));
+      expect(AppConfig.relayHttpBaseUrl,
+          contains('https://livocal-relay.onrender.com'));
+      expect(AppConfig.relayWsBaseUrl,
+          contains('wss://livocal-relay.onrender.com'));
+      expect(AppConfig.callNotifyIncomingUrl,
+          endsWith('/api/call/notify-incoming'));
+      expect(
+          AppConfig.chatNotifyMessageUrl, endsWith('/api/notify/chat-message'));
       expect(AppConfig.matchContactsUrl, endsWith('/api/contacts/match'));
       expect(AppConfig.iceServersUrl, endsWith('/api/webrtc/ice-servers'));
       expect(AppConfig.liveCallWsUrl, endsWith('/ws/live-call'));

@@ -74,7 +74,11 @@ class _ClientDetailsSheetState extends State<ClientDetailsSheet> {
 
   Future<void> _load() async {
     unawaited(CrmService.refresh(widget.ownerUid, widget.peerUid));
-    final entry = await CrmService.ensure(widget.ownerUid, widget.peerUid);
+    var entry = await CrmService.ensure(widget.ownerUid, widget.peerUid);
+    if (entry.clientName.isEmpty && widget.peerName.isNotEmpty) {
+      entry.clientName = widget.peerName;
+      entry = await CrmService.save(entry);
+    }
     if (!mounted) return;
     setState(() {
       _entry = entry;

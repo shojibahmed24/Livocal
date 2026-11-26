@@ -24,7 +24,8 @@ void main() {
       final reconstructed = User.fromMap(map);
       expect(reconstructed.id, equals(user.id));
       expect(reconstructed.name, equals(user.name));
-      expect(reconstructed.phone.getFormattedNumber(), equals('+880 1712345678'));
+      expect(
+          reconstructed.phone.getFormattedNumber(), equals('+880 1712345678'));
     });
 
     test('User copyWith updates specific fields cleanly', () {
@@ -36,7 +37,8 @@ void main() {
         activityStatus: UserActivityStatus.offline,
       );
 
-      final updated = original.copyWith(name: 'New Name', avatarUrl: 'https://img.com/p.jpg');
+      final updated = original.copyWith(
+          name: 'New Name', avatarUrl: 'https://img.com/p.jpg');
       expect(updated.id, equals(original.id));
       expect(updated.name, equals('New Name'));
       expect(updated.avatarUrl, equals('https://img.com/p.jpg'));

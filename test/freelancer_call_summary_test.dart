@@ -5,7 +5,8 @@ void main() {
   group('CallSummary', () {
     test('parses a full server payload', () {
       final summary = CallSummary.fromJson({
-        'summary': 'Client needs a landing page. / ক্লায়েন্ট একটি ল্যান্ডিং পেজ চায়।',
+        'summary':
+            'Client needs a landing page. / ক্লায়েন্ট একটি ল্যান্ডিং পেজ চায়।',
         'decisions': ['Start Monday', ''],
         'actionItems': [
           {'text': 'Send proposal', 'owner': 'me'},
