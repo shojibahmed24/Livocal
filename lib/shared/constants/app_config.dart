@@ -29,23 +29,19 @@ class AppConfig {
   static String get deleteMessageNotifyUrl =>
       '$relayHttpBaseUrl/api/notify/delete-message';
 
-  static String get matchContactsUrl =>
-      '$relayHttpBaseUrl/api/contacts/match';
+  static String get matchContactsUrl => '$relayHttpBaseUrl/api/contacts/match';
 
-  static String get iceServersUrl =>
-      '$relayHttpBaseUrl/api/webrtc/ice-servers';
+  static String get iceServersUrl => '$relayHttpBaseUrl/api/webrtc/ice-servers';
 
-  static String get liveCallWsUrl =>
-      '$relayWsBaseUrl/ws/live-call';
+  static String get liveCallWsUrl => '$relayWsBaseUrl/ws/live-call';
 
-  static String get translateUrl =>
-      '$relayHttpBaseUrl/api/translate';
+  static String get translateUrl => '$relayHttpBaseUrl/api/translate';
 
-  static String get privacyPolicyUrl =>
-      '$relayHttpBaseUrl/privacy-policy';
+  static String get callSummaryUrl => '$relayHttpBaseUrl/api/call/summary';
 
-  static String get termsOfServiceUrl =>
-      '$relayHttpBaseUrl/terms-of-service';
+  static String get privacyPolicyUrl => '$relayHttpBaseUrl/privacy-policy';
+
+  static String get termsOfServiceUrl => '$relayHttpBaseUrl/terms-of-service';
 
   static String get missingContactsHelpUrl =>
       '$relayHttpBaseUrl/help/missing-contacts';
@@ -53,14 +49,12 @@ class AppConfig {
   static String get walletInitOrGetUrl =>
       '$relayHttpBaseUrl/api/wallet/init-or-get';
 
-  static String get walletBalanceUrl =>
-      '$relayHttpBaseUrl/api/wallet/balance';
+  static String get walletBalanceUrl => '$relayHttpBaseUrl/api/wallet/balance';
 
   static String get walletDeductMinuteUrl =>
       '$relayHttpBaseUrl/api/wallet/deduct-minute';
 
-  static String get walletCallEndUrl =>
-      '$relayHttpBaseUrl/api/wallet/call-end';
+  static String get walletCallEndUrl => '$relayHttpBaseUrl/api/wallet/call-end';
 
   static String get walletRechargeUrl =>
       '$relayHttpBaseUrl/api/wallet/recharge';
@@ -81,6 +75,5 @@ class AppConfig {
       '$relayHttpBaseUrl/api/wallet/my-payment-settings';
 
   /// Full account erasure (Firestore + Storage + Firebase Auth) via Admin SDK.
-  static String get accountDeleteUrl =>
-      '$relayHttpBaseUrl/api/account/delete';
+  static String get accountDeleteUrl => '$relayHttpBaseUrl/api/account/delete';
 }

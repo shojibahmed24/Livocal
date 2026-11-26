@@ -246,6 +246,26 @@ const TranslateSchema = z.object({
   sourceLang: z.string().max(16).optional(),
 });
 
+const CallSummarySchema = z.object({
+  callId: z.string().min(1, 'callId is required').max(128),
+  durationSeconds: z.number().int().min(0).max(86400),
+  langPair: z
+    .object({
+      a: z.string().max(16).optional(),
+      b: z.string().max(16).optional(),
+    })
+    .optional(),
+  transcript: z
+    .array(
+      z.object({
+        speaker: z.enum(['me', 'client']),
+        text: z.string().min(1).max(2000),
+      })
+    )
+    .min(1, 'transcript is required')
+    .max(300),
+});
+
 function validateBody(schema) {
   return (req, res, next) => {
     const parsed = schema.safeParse(req.body);
@@ -3981,6 +4001,199 @@ app.post(
       console.error('[Translate] API error:', err);
       res.status(500).json({ error: 'Translation request failed' });
     }
+  }
+);
+
+/**
+ * Normalizes the model's JSON (or a code-fenced variant) into the public
+ * summary shape. Returns null when the payload cannot be trusted.
+ */
+function normalizeCallSummary(value) {
+  if (!value || typeof value !== 'object') return null;
+  const asText = (v) => (typeof v === 'string' ? v.trim() : '');
+  const asList = (v, max = 5) =>
+    Array.isArray(v) ? v.map(asText).filter(Boolean).slice(0, max) : [];
+  const summaryText = asText(value.summary);
+  if (!summaryText) return null;
+
+  const actionItems = Array.isArray(value.actionItems)
+    ? value.actionItems
+        .map((item) => {
+          if (typeof item === 'string') return { text: item.trim(), owner: 'me' };
+          if (!item || typeof item !== 'object') return null;
+          const text = asText(item.text);
+          if (!text) return null;
+          return { text, owner: item.owner === 'client' ? 'client' : 'me' };
+        })
+        .filter(Boolean)
+        .slice(0, 5)
+    : [];
+
+  return {
+    summary: summaryText,
+    decisions: asList(value.decisions),
+    actionItems,
+    clientHints: asText(value.clientHints),
+  };
+}
+
+function parseCallSummaryJson(raw) {
+  if (!raw) return null;
+  const cleaned = String(raw).replace(/```json/gi, '').replace(/```/g, '').trim();
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if (start === -1 || end <= start) return null;
+  try {
+    return normalizeCallSummary(JSON.parse(cleaned.slice(start, end + 1)));
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
+ * Extractive fallback when Gemini is unavailable: no guessing, only lines that
+ * were actually said.
+ */
+function buildFallbackCallSummary(transcript) {
+  const lines = transcript.map(
+    (item) => `${item.speaker === 'me' ? 'Me' : 'Client'}: ${item.text}`
+  );
+  const summary = lines.slice(0, 4).join(' ').slice(0, 600);
+  const actionPattern =
+    /\b(will|shall|send|share|prepare|confirm|pay|deliver|deadline|tomorrow|next week)\b|করব|পাঠাবো|দেব|শেষ করব/i;
+  const actionItems = transcript
+    .filter((item) => actionPattern.test(item.text))
+    .slice(0, 3)
+    .map((item) => ({
+      text: item.text.slice(0, 300),
+      owner: item.speaker === 'me' ? 'me' : 'client',
+    }));
+  return { summary, decisions: [], actionItems, clientHints: '' };
+}
+
+/**
+ * POST /api/call/summary
+ * Turns a translated call transcript into a bilingual summary with decisions
+ * and action items. The raw transcript is used for this request only and is
+ * never stored; only the resulting summary is kept at
+ * calls/{callId}/summary/latest.
+ */
+app.post(
+  '/api/call/summary',
+  apiLimiter,
+  authenticateRequest,
+  translateLimiter,
+  validateBody(CallSummarySchema),
+  async (req, res) => {
+    const uid = req.user?.uid;
+    if (!uid) return res.status(401).json({ error: 'Unauthorized' });
+    if (!firestoreDb) return res.status(503).json({ error: 'unavailable' });
+
+    const { callId, durationSeconds, transcript } = req.body;
+    const langPair = {
+      a: req.body.langPair?.a || 'auto',
+      b: req.body.langPair?.b || 'en',
+    };
+
+    // Participant guard: fail closed when the call document exists.
+    try {
+      const callSnap = await firestoreDb.collection('calls').doc(callId).get();
+      if (callSnap.exists) {
+        const call = callSnap.data() || {};
+        const partyIds = [call.callerId, call.calleeId].filter(Boolean).map(String);
+        const phone = req.user?.phone_number || '';
+        const isParty =
+          partyIds.includes(uid) ||
+          (phone &&
+            (partyIds.includes(`phone_${phone}`) || partyIds.includes(phone)));
+        if (!isParty) return res.status(403).json({ error: 'forbidden' });
+      }
+    } catch (err) {
+      console.error('[CallSummary] participant check failed:', err.message);
+      return res.status(500).json({ error: 'failed' });
+    }
+
+    const transcriptText = transcript
+      .map((item) => `${item.speaker === 'me' ? 'Me' : 'Client'}: ${item.text}`)
+      .join('\n')
+      .slice(0, 12000);
+
+    const prompt = [
+      'You are a meeting summarizer for a translated business call between a freelancer ("Me") and a client ("Client").',
+      'Return ONLY JSON with this exact shape:',
+      '{"summary":"3 concise sentences","decisions":["..."],"actionItems":[{"text":"...","owner":"me|client"}],"clientHints":"budget, timeline and scope hints"}',
+      'Write summary, decisions, action items and clientHints bilingually: the English sentence followed by its Bangla translation separated by " / ".',
+      'At most 5 decisions and 5 action items. Use empty arrays and an empty string when the transcript has no such content.',
+      'Never invent facts that are not in the transcript.',
+      '',
+      'Transcript:',
+      transcriptText,
+    ].join('\n');
+
+    let summary = null;
+    let source = 'fallback';
+
+    if (GEMINI_API_KEY) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+        const apiRes = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: 900,
+              responseMimeType: 'application/json',
+            },
+          }),
+        });
+        if (apiRes.ok) {
+          const data = await apiRes.json();
+          const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          summary = parseCallSummaryJson(raw);
+          if (summary) source = 'gemini';
+        } else {
+          console.error('[CallSummary] Gemini HTTP status:', apiRes.status);
+        }
+      } catch (err) {
+        console.error('[CallSummary] Gemini error:', err.message);
+      }
+    }
+
+    if (!summary) summary = buildFallbackCallSummary(transcript);
+
+    const stored = {
+      summary: summary.summary,
+      decisions: summary.decisions,
+      actionItems: summary.actionItems,
+      clientHints: summary.clientHints,
+      langPair,
+      durationSeconds,
+      createdBy: uid,
+      createdAt: FieldValue.serverTimestamp(),
+    };
+
+    try {
+      await firestoreDb
+        .collection('calls')
+        .doc(callId)
+        .collection('summary')
+        .doc('latest')
+        .set(stored);
+    } catch (err) {
+      console.error('[CallSummary] save failed:', err.message);
+    }
+
+    return res.json({
+      summary: {
+        summary: summary.summary,
+        decisions: summary.decisions,
+        actionItems: summary.actionItems,
+        clientHints: summary.clientHints,
+      },
+      source,
+    });
   }
 );
 

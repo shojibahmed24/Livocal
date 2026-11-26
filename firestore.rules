@@ -225,6 +225,12 @@ service cloud.firestore {
         && request.resource.data.calleeId == resource.data.calleeId;
       allow delete: if isCallParty(resource.data);
 
+      // AI call summary (written by the relay with the Admin SDK only)
+      match /summary/{docId} {
+        allow read: if isCallParticipant(callId);
+        allow write: if false;
+      }
+
       // WebRTC ICE Candidates (Caller) - Restricted strictly to call participants
       match /callerCandidates/{candidateId} {
         allow read, write: if isCallParticipant(callId);

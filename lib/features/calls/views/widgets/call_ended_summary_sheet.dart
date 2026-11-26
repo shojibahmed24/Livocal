@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livocal/features/calls/views/widgets/different_language_call_sheet.dart';
 import 'package:livocal/features/calls/views/widgets/minute_recharge_sheet.dart';
 import 'package:livocal/features/chat/views/chat.dart';
+import 'package:livocal/features/freelancer/widgets/call_summary_card.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/wallet_repository.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
@@ -292,6 +293,15 @@ class CallEndedSummarySheet extends ConsumerWidget {
                   ],
                 ),
               ),
+              if (!isMissed && isTranslated) ...[
+                const SizedBox(height: 14),
+                CallSummaryCard(
+                  ownerUid: currentUser.id,
+                  peerUid: peerUser.id,
+                  peerName: peerUser.name,
+                  durationSeconds: durationSeconds,
+                ),
+              ],
               const SizedBox(height: 16),
 
               // Cost & Wallet Balance Breakdown Card
