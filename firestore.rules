@@ -82,6 +82,16 @@ service cloud.firestore {
         allow read, write: if isAuthenticated() && request.auth.uid == userId;
       }
 
+      // Freelancer CRM (owner-only notes, rates and deal stages)
+      match /crm/{peerId} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
+
+      // Freelancer quick replies (owner-only message templates)
+      match /quick_replies/{replyId} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
+
       // SaaS Freelancer Minute Wallet & Payment Settings
       // Owner can ONLY read and manage their own private wallet subcollection.
       // Third-party access is strictly prohibited (preventing bulk scraping of bKash/Nagad/Crypto addresses).

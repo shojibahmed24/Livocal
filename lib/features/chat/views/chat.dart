@@ -47,6 +47,9 @@ import 'contact_profile_screen.dart';
 import 'widgets/chat_translation_sheet.dart';
 import 'widgets/send_payment_sheet.dart';
 import 'widgets/swipe_to_reply.dart';
+import 'package:livocal/features/freelancer/views/client_details_sheet.dart';
+import 'package:livocal/features/freelancer/services/quick_reply_service.dart';
+import 'package:livocal/features/freelancer/views/quick_replies_sheet.dart';
 import 'widgets/unread_banner.dart';
 
 class ChatPage extends ConsumerStatefulWidget {
@@ -434,6 +437,14 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                     ),
                   );
                   break;
+                case 'client_details':
+                  showClientDetailsSheet(
+                    context,
+                    ownerUid: self.id,
+                    peerUid: other.id,
+                    peerName: widget.otherUserContactName,
+                  );
+                  break;
                 case 'search':
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -586,6 +597,16 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                 PopupMenuItem(
                   value: 'view_contact',
                   child: Text(AppStrings.tr(ref, 'viewContact')),
+                ),
+                PopupMenuItem(
+                  value: 'client_details',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.work_outline_rounded, size: 18),
+                      const SizedBox(width: 10),
+                      Text(AppStrings.tr(ref, 'clientDetails')),
+                    ],
+                  ),
                 ),
                 PopupMenuItem(
                   value: 'mute',
@@ -1038,6 +1059,20 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
         actions: [
           Semantics(
             button: true,
+            label: AppStrings.tr(ref, 'quickReplies'),
+            child: InkWell(
+              onTap: _insertQuickReply,
+              child: const SizedBox(
+                width: 44,
+                height: 44,
+                child: Center(
+                  child: Icon(Icons.bolt_rounded, size: 23),
+                ),
+              ),
+            ),
+          ),
+          Semantics(
+            button: true,
             label: AppStrings.tr(ref, 'attachFile'),
             child: InkWell(
               onTap: () {
@@ -1085,6 +1120,27 @@ class _ChatInputContainerState extends ConsumerState<ChatInputContainer>
               ),
             ),
         ]);
+  }
+
+  /// Inserts a saved freelancer template into the composer.
+  Future<void> _insertQuickReply() async {
+    final lang = Localizations.localeOf(context).languageCode;
+    await QuickReplyService.ensureSeeded(widget.self.id, lang);
+    if (!mounted) return;
+
+    final body = await showQuickRepliesSheet(
+      context,
+      ownerUid: widget.self.id,
+      langCode: lang,
+    );
+    if (body == null || !mounted) return;
+
+    final controller = ref.read(chatControllerProvider).messageController;
+    final next =
+        controller.text.trim().isEmpty ? body : '${controller.text} $body';
+    controller.text = next;
+    controller.selection = TextSelection.collapsed(offset: next.length);
+    ref.read(chatControllerProvider.notifier).onTextChanged(next);
   }
 
   /// Payment lives in the attachment sheet now: the composer only keeps the
