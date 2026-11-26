@@ -8,6 +8,7 @@ import 'package:livocal/theme/app_colors.dart';
 /// Headline → availability fields of the freelancer profile form.
 class ProfileFormFields extends StatelessWidget {
   final FreelancerProfile profile;
+  final TextEditingController displayNameCtrl;
   final TextEditingController headlineCtrl;
   final TextEditingController bioCtrl;
   final TextEditingController rateCtrl;
@@ -17,6 +18,7 @@ class ProfileFormFields extends StatelessWidget {
   const ProfileFormFields({
     super.key,
     required this.profile,
+    required this.displayNameCtrl,
     required this.headlineCtrl,
     required this.bioCtrl,
     required this.rateCtrl,
@@ -44,6 +46,22 @@ class ProfileFormFields extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _label(t('displayNameLabel'), muted),
+        TextField(
+          controller: displayNameCtrl,
+          maxLength: 60,
+          decoration: const InputDecoration(
+            isDense: true,
+            border: OutlineInputBorder(),
+            counterText: '',
+          ),
+          style: TextStyle(fontSize: 13.5, color: textColor),
+          onChanged: (value) {
+            final next = value.trim();
+            if (next.isNotEmpty) mutate((p) => p.displayName = next);
+          },
+        ),
+        const SizedBox(height: 14),
         _label(t('headlineLabel'), muted),
         TextField(
           controller: headlineCtrl,

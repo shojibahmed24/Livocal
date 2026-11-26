@@ -27,6 +27,7 @@ class FreelancerProfileScreen extends StatefulWidget {
 }
 
 class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
+  final TextEditingController _displayNameCtrl = TextEditingController();
   final TextEditingController _headlineCtrl = TextEditingController();
   final TextEditingController _bioCtrl = TextEditingController();
   final TextEditingController _rateCtrl = TextEditingController();
@@ -44,6 +45,7 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
   @override
   void dispose() {
     _saveTimer?.cancel();
+    _displayNameCtrl.dispose();
     _headlineCtrl.dispose();
     _bioCtrl.dispose();
     _rateCtrl.dispose();
@@ -63,6 +65,7 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
     if (!mounted) return;
     setState(() {
       _profile = profile;
+      _displayNameCtrl.text = profile.displayName;
       _headlineCtrl.text = profile.headline;
       _bioCtrl.text = profile.bio;
       if (profile.rateAmount > 0) {
@@ -213,6 +216,7 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
                 const SizedBox(height: 18),
                 ProfileFormFields(
                   profile: profile,
+                  displayNameCtrl: _displayNameCtrl,
                   headlineCtrl: _headlineCtrl,
                   bioCtrl: _bioCtrl,
                   rateCtrl: _rateCtrl,
