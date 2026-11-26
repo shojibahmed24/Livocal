@@ -117,6 +117,43 @@ export function renderProfilePage({ profile, username, days, reviews }) {
     ? `<img class="avatar" src="${esc(p.avatarUrl)}" alt="${esc(name)}">`
     : `<div class="avatar avatar-fallback">${esc(initial(name))}</div>`;
 
+  const responsePill = p.responseTime
+    ? `<span class="pill neutral">⏱ ${esc(p.responseTime)}</span>`
+    : '';
+
+  const stats = [
+    [p.projectsDone, 'projects'],
+    [p.yearsExperience, 'years'],
+    [p.clientsCount, 'clients'],
+  ]
+    .filter((row) => Number(row[0]) > 0)
+    .map(
+      (row) =>
+        `<div class="stat"><strong>${esc(row[0])}+</strong><span>${row[1]}</span></div>`
+    )
+    .join('');
+
+  const socials = [
+    p.githubUrl
+      ? `<a class="social" href="${esc(p.githubUrl)}" target="_blank" rel="noopener nofollow">GitHub</a>`
+      : '',
+    p.linkedinUrl
+      ? `<a class="social" href="${esc(p.linkedinUrl)}" target="_blank" rel="noopener nofollow">LinkedIn</a>`
+      : '',
+    p.websiteUrl
+      ? `<a class="social" href="${esc(p.websiteUrl)}" target="_blank" rel="noopener nofollow">Website</a>`
+      : '',
+    p.cvUrl
+      ? `<a class="social social-cv" href="${esc(p.cvUrl)}" target="_blank" rel="noopener nofollow">Download CV</a>`
+      : '',
+  ]
+    .filter(Boolean)
+    .join('');
+
+  const heroStyle = p.coverUrl
+    ? ` style="background-image:linear-gradient(rgba(4,7,13,.72),var(--card)),url('${esc(p.coverUrl)}');background-size:cover;background-position:center;"`
+    : '';
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Person',
@@ -124,6 +161,7 @@ export function renderProfilePage({ profile, username, days, reviews }) {
     jobTitle: p.headline || undefined,
     description: p.bio || undefined,
     image: p.avatarUrl || undefined,
+    sameAs: [p.githubUrl, p.linkedinUrl, p.websiteUrl].filter(Boolean),
     knowsLanguage: (Array.isArray(p.languages) ? p.languages : []).map(
       (item) => item.code || item
     ),
@@ -207,7 +245,18 @@ ${p.avatarUrl ? `<meta property="og:image" content="${esc(p.avatarUrl)}">` : ''}
     border: 1px solid rgba(52,211,153,.28);
   }
   .pill.neutral { color: var(--muted); background: var(--card-2); border-color: var(--border); }
-  .cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; align-items: center; }
+  .stats { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 14px; }
+  .stat { display: flex; flex-direction: column; }
+  .stat strong { font-size: 18px; color: var(--text); letter-spacing: -0.3px; }
+  .stat span { font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .social {
+    display: inline-flex; align-items: center; padding: 9px 13px; border-radius: 10px;
+    border: 1px solid var(--border); background: transparent; color: var(--text);
+    font-size: 12px; font-weight: 700; text-decoration: none;
+  }
+  .social:hover { border-color: var(--primary); color: var(--primary); }
+  .social-cv { background: var(--primary); color: var(--primary-ink); border-color: var(--primary); }
   .btn {
     display: inline-flex; align-items: center; justify-content: center;
     gap: 8px; padding: 12px 18px; border-radius: 12px; font-weight: 800;
@@ -272,7 +321,7 @@ ${p.avatarUrl ? `<meta property="og:image" content="${esc(p.avatarUrl)}">` : ''}
     <button class="theme-btn" id="themeToggle" type="button">◐ Theme</button>
   </div>
 
-  <header class="hero">
+  <header class="hero"${heroStyle}>
     ${avatar}
     <div>
       <h1>${esc(name)}</h1>
@@ -281,10 +330,13 @@ ${p.avatarUrl ? `<meta property="og:image" content="${esc(p.avatarUrl)}">` : ''}
         ${verified ? '<span class="pill">✓ Verified</span>' : ''}
         ${ratingCount > 0 ? `<span class="pill neutral">★ ${ratingAvg.toFixed(1)} · ${ratingCount}</span>` : ''}
         ${languages ? `<span class="pill neutral">${languages.split('</span>').length - 1} languages</span>` : ''}
+        ${responsePill}
       </div>
+      ${stats ? `<div class="stats">${stats}</div>` : ''}
       <div class="cta-row">
         <a class="btn btn-primary" href="${bookingUrl}">Book a call</a>
         <button class="btn btn-ghost" id="shareBtn" type="button">Share profile</button>
+        ${socials}
       </div>
     </div>
   </header>
