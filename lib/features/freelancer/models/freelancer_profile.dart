@@ -43,6 +43,16 @@ class FreelancerProfile {
   String avatarUrl;
   bool published;
 
+  String coverUrl;
+  String responseTime;
+  String githubUrl;
+  String linkedinUrl;
+  String websiteUrl;
+  String cvUrl;
+  int projectsDone;
+  int yearsExperience;
+  int clientsCount;
+
   /// Server-managed review aggregates (never pushed back).
   double ratingAvg;
   int ratingCount;
@@ -67,6 +77,15 @@ class FreelancerProfile {
     List<String> services = const <String>[],
     this.avatarUrl = '',
     this.published = false,
+    this.coverUrl = '',
+    this.responseTime = '',
+    this.githubUrl = '',
+    this.linkedinUrl = '',
+    this.websiteUrl = '',
+    this.cvUrl = '',
+    this.projectsDone = 0,
+    this.yearsExperience = 0,
+    this.clientsCount = 0,
     this.ratingAvg = 0,
     this.ratingCount = 0,
     required this.updatedAt,
@@ -135,6 +154,15 @@ class FreelancerProfile {
         'portfolio': portfolioEntries,
         'services': serviceEntries,
         'avatarUrl': avatarUrl,
+        'coverUrl': coverUrl,
+        'responseTime': responseTime,
+        'githubUrl': githubUrl,
+        'linkedinUrl': linkedinUrl,
+        'websiteUrl': websiteUrl,
+        'cvUrl': cvUrl,
+        'projectsDone': projectsDone,
+        'yearsExperience': yearsExperience,
+        'clientsCount': clientsCount,
         'published': published,
         'updatedAt': updatedAt.toIso8601String(),
       };
@@ -197,6 +225,15 @@ class FreelancerProfile {
             }).toList()
           : const <String>[],
       avatarUrl: (map['avatarUrl'] as String?) ?? '',
+      coverUrl: (map['coverUrl'] as String?) ?? '',
+      responseTime: (map['responseTime'] as String?) ?? '',
+      githubUrl: (map['githubUrl'] as String?) ?? '',
+      linkedinUrl: (map['linkedinUrl'] as String?) ?? '',
+      websiteUrl: (map['websiteUrl'] as String?) ?? '',
+      cvUrl: (map['cvUrl'] as String?) ?? '',
+      projectsDone: (map['projectsDone'] as num?)?.toInt() ?? 0,
+      yearsExperience: (map['yearsExperience'] as num?)?.toInt() ?? 0,
+      clientsCount: (map['clientsCount'] as num?)?.toInt() ?? 0,
       published: map['published'] == true,
       ratingAvg: (map['ratingAvg'] as num?)?.toDouble() ?? 0,
       ratingCount: (map['ratingCount'] as num?)?.toInt() ?? 0,

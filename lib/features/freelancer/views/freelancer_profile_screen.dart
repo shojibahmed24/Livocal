@@ -10,6 +10,7 @@ import 'package:livocal/features/freelancer/services/freelancer_profile_service.
 import 'package:livocal/features/freelancer/widgets/profile_sections.dart';
 import 'package:livocal/features/freelancer/widgets/profile_form_fields.dart';
 import 'package:livocal/features/freelancer/widgets/profile_header.dart';
+import 'package:livocal/features/freelancer/widgets/profile_pro_fields.dart';
 import 'package:livocal/features/freelancer/widgets/regenerate_confirm.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
@@ -224,6 +225,12 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
                   mutate: _mutate,
                 ),
                 const SizedBox(height: 16),
+                ProfileProFields(
+                  profile: profile,
+                  t: _t,
+                  mutate: _mutate,
+                ),
+                const SizedBox(height: 10),
                 ProfileSections(
                   profile: profile,
                   t: _t,
