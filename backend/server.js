@@ -744,6 +744,7 @@ app.get('/api/public/profile/:slug', async (req, res) => {
       portfolio: Array.isArray(p.portfolio) ? p.portfolio : [],
       services: Array.isArray(p.services) ? p.services : [],
       caseStudies: Array.isArray(p.caseStudies) ? p.caseStudies : [],
+      experience: Array.isArray(p.experience) ? p.experience : [],
       avatarUrl: p.avatarUrl || '',
       coverUrl: p.coverUrl || '',
       responseTime: p.responseTime || '',
