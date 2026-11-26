@@ -11,6 +11,7 @@ import 'package:livocal/features/freelancer/services/invoice_service.dart';
 import 'package:livocal/features/freelancer/widgets/invoice_actions_bar.dart';
 import 'package:livocal/features/freelancer/widgets/invoice_form.dart';
 import 'package:livocal/features/freelancer/widgets/invoice_line_tile.dart';
+import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/theme/app_colors.dart';
@@ -156,12 +157,15 @@ class _InvoiceEditorScreenState extends ConsumerState<InvoiceEditorScreen> {
       final invoice = await _save();
       if (invoice == null || !mounted) return;
       await InvoiceService.markSent(invoice);
+      final token =
+          await InvoiceService.ensureShareToken(invoice, widget.user.name);
       final due = invoice.dueDate == null
           ? _t('noDueDate')
           : Invoice.formatDate(invoice.dueDate!);
+      final link = '${AppConfig.relayHttpBaseUrl}/i/$token';
       final content =
           '📄 ${_t('invoice')} ${invoice.number} • ${invoice.totalLabel} • '
-          '${_t('dueDate')}: $due';
+          '${_t('dueDate')}: $due\n$link';
       ref.read(chatControllerProvider.notifier).sendMessageNoAttachments(
             Message(
               id: const Uuid().v4(),

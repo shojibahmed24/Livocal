@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -70,6 +71,47 @@ class InvoiceService {
     invoice.status = 'sent';
     invoice.sentAt = DateTime.now();
     return save(invoice);
+  }
+
+  static String _newToken() {
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    final random = Random.secure();
+    return List.generate(24, (_) => alphabet[random.nextInt(alphabet.length)])
+        .join();
+  }
+
+  /// Publishes a public snapshot and returns the share token.
+  static Future<String> ensureShareToken(
+    Invoice invoice,
+    String ownerName,
+  ) async {
+    if (invoice.publicToken.isEmpty) {
+      invoice.publicToken = _newToken();
+      await save(invoice);
+    }
+    try {
+      await FirebaseFirestore.instance
+          .collection('public_invoices')
+          .doc(invoice.publicToken)
+          .set({
+        'ownerUid': invoice.ownerUid,
+        'ownerName': ownerName,
+        'number': invoice.number,
+        'clientName': invoice.clientName,
+        'items': invoice.items.map((item) => item.toMap()).toList(),
+        'currency': invoice.currency,
+        'taxPct': invoice.taxPct,
+        'discount': invoice.discount,
+        'total': invoice.total,
+        'status': invoice.status,
+        'dueDate': invoice.dueDate?.toIso8601String(),
+        'notes': invoice.notes,
+        'createdAt': invoice.createdAt.toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('[InvoiceService] public snapshot failed: $e');
+    }
+    return invoice.publicToken;
   }
 
   static Future<Invoice> markPaid(Invoice invoice, {String? messageId}) async {

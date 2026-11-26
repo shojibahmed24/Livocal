@@ -78,23 +78,28 @@ const InvoiceSchema = CollectionSchema(
       name: r'paymentMsgId',
       type: IsarType.string,
     ),
-    r'sentAt': PropertySchema(
+    r'publicToken': PropertySchema(
       id: 12,
+      name: r'publicToken',
+      type: IsarType.string,
+    ),
+    r'sentAt': PropertySchema(
+      id: 13,
       name: r'sentAt',
       type: IsarType.dateTime,
     ),
     r'status': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'status',
       type: IsarType.string,
     ),
     r'synced': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'synced',
       type: IsarType.bool,
     ),
     r'taxPct': PropertySchema(
-      id: 15,
+      id: 16,
       name: r'taxPct',
       type: IsarType.double,
     )
@@ -166,6 +171,7 @@ int _invoiceEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  bytesCount += 3 + object.publicToken.length * 3;
   bytesCount += 3 + object.status.length * 3;
   return bytesCount;
 }
@@ -193,10 +199,11 @@ void _invoiceSerialize(
   writer.writeString(offsets[9], object.ownerUid);
   writer.writeDateTime(offsets[10], object.paidAt);
   writer.writeString(offsets[11], object.paymentMsgId);
-  writer.writeDateTime(offsets[12], object.sentAt);
-  writer.writeString(offsets[13], object.status);
-  writer.writeBool(offsets[14], object.synced);
-  writer.writeDouble(offsets[15], object.taxPct);
+  writer.writeString(offsets[12], object.publicToken);
+  writer.writeDateTime(offsets[13], object.sentAt);
+  writer.writeString(offsets[14], object.status);
+  writer.writeBool(offsets[15], object.synced);
+  writer.writeDouble(offsets[16], object.taxPct);
 }
 
 Invoice _invoiceDeserialize(
@@ -224,10 +231,11 @@ Invoice _invoiceDeserialize(
     ownerUid: reader.readString(offsets[9]),
     paidAt: reader.readDateTimeOrNull(offsets[10]),
     paymentMsgId: reader.readStringOrNull(offsets[11]),
-    sentAt: reader.readDateTimeOrNull(offsets[12]),
-    status: reader.readStringOrNull(offsets[13]) ?? 'draft',
-    synced: reader.readBoolOrNull(offsets[14]) ?? false,
-    taxPct: reader.readDoubleOrNull(offsets[15]) ?? 0,
+    publicToken: reader.readStringOrNull(offsets[12]) ?? '',
+    sentAt: reader.readDateTimeOrNull(offsets[13]),
+    status: reader.readStringOrNull(offsets[14]) ?? 'draft',
+    synced: reader.readBoolOrNull(offsets[15]) ?? false,
+    taxPct: reader.readDoubleOrNull(offsets[16]) ?? 0,
   );
   object.id = id;
   return object;
@@ -271,12 +279,14 @@ P _invoiceDeserializeProp<P>(
     case 11:
       return (reader.readStringOrNull(offset)) as P;
     case 12:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 13:
-      return (reader.readStringOrNull(offset) ?? 'draft') as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 14:
-      return (reader.readBoolOrNull(offset) ?? false) as P;
+      return (reader.readStringOrNull(offset) ?? 'draft') as P;
     case 15:
+      return (reader.readBoolOrNull(offset) ?? false) as P;
+    case 16:
       return (reader.readDoubleOrNull(offset) ?? 0) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1779,6 +1789,137 @@ extension InvoiceQueryFilter
     });
   }
 
+  QueryBuilder<Invoice, Invoice, QAfterFilterCondition> publicTokenEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'publicToken',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Invoice, Invoice, QAfterFilterCondition> publicTokenGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'publicToken',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Invoice, Invoice, QAfterFilterCondition> publicTokenLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'publicToken',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Invoice, Invoice, QAfterFilterCondition> publicTokenBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'publicToken',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Invoice, Invoice, QAfterFilterCondition> publicTokenStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'publicToken',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Invoice, Invoice, QAfterFilterCondition> publicTokenEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'publicToken',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Invoice, Invoice, QAfterFilterCondition> publicTokenContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'publicToken',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Invoice, Invoice, QAfterFilterCondition> publicTokenMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'publicToken',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Invoice, Invoice, QAfterFilterCondition> publicTokenIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'publicToken',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Invoice, Invoice, QAfterFilterCondition>
+      publicTokenIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'publicToken',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<Invoice, Invoice, QAfterFilterCondition> sentAtIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -2197,6 +2338,18 @@ extension InvoiceQuerySortBy on QueryBuilder<Invoice, Invoice, QSortBy> {
     });
   }
 
+  QueryBuilder<Invoice, Invoice, QAfterSortBy> sortByPublicToken() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'publicToken', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Invoice, Invoice, QAfterSortBy> sortByPublicTokenDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'publicToken', Sort.desc);
+    });
+  }
+
   QueryBuilder<Invoice, Invoice, QAfterSortBy> sortBySentAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sentAt', Sort.asc);
@@ -2392,6 +2545,18 @@ extension InvoiceQuerySortThenBy
     });
   }
 
+  QueryBuilder<Invoice, Invoice, QAfterSortBy> thenByPublicToken() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'publicToken', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Invoice, Invoice, QAfterSortBy> thenByPublicTokenDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'publicToken', Sort.desc);
+    });
+  }
+
   QueryBuilder<Invoice, Invoice, QAfterSortBy> thenBySentAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sentAt', Sort.asc);
@@ -2516,6 +2681,13 @@ extension InvoiceQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Invoice, Invoice, QDistinct> distinctByPublicToken(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'publicToken', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Invoice, Invoice, QDistinct> distinctBySentAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'sentAt');
@@ -2619,6 +2791,12 @@ extension InvoiceQueryProperty
   QueryBuilder<Invoice, String?, QQueryOperations> paymentMsgIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'paymentMsgId');
+    });
+  }
+
+  QueryBuilder<Invoice, String, QQueryOperations> publicTokenProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'publicToken');
     });
   }
 

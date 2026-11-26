@@ -64,6 +64,9 @@ class Invoice {
   DateTime? sentAt;
   DateTime? paidAt;
   String? paymentMsgId;
+
+  /// Public share token (set when the invoice is first sent).
+  String publicToken;
   bool synced;
 
   Invoice({
@@ -82,6 +85,7 @@ class Invoice {
     this.sentAt,
     this.paidAt,
     this.paymentMsgId,
+    this.publicToken = '',
     this.synced = false,
   }) : items = List<InvoiceLine>.from(items);
 
@@ -140,6 +144,7 @@ class Invoice {
         'sentAt': sentAt?.toIso8601String(),
         'paidAt': paidAt?.toIso8601String(),
         'paymentMsgId': paymentMsgId,
+        'publicToken': publicToken,
       };
 
   static Invoice fromMap(
@@ -171,6 +176,7 @@ class Invoice {
       sentAt: DateTime.tryParse((map['sentAt'] ?? '').toString()),
       paidAt: DateTime.tryParse((map['paidAt'] ?? '').toString()),
       paymentMsgId: map['paymentMsgId']?.toString(),
+      publicToken: (map['publicToken'] ?? '').toString(),
       synced: true,
     );
   }

@@ -1225,6 +1225,128 @@ app.post('/api/public/book/:slug', bookingLimiter, async (req, res) => {
   }
 });
 
+// Public invoice view: no login, no Storage. Print/Save as PDF in the browser.
+app.get('/i/:token', async (req, res) => {
+  if (!firestoreDb) return res.status(503).send('unavailable');
+  const token = String(req.params.token || '').trim();
+  if (!/^[a-z0-9]{16,40}$/.test(token)) return res.status(404).send('Not found');
+  try {
+    const doc = await firestoreDb.collection('public_invoices').doc(token).get();
+    if (!doc.exists) return res.status(404).send('Not found');
+    const inv = doc.data() || {};
+    const esc = (value) =>
+      String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    const currency = esc(inv.currency || 'USD');
+    const money = (value) =>
+      `${currency} ${(Number(value) || 0).toFixed(2)}`;
+    const items = (Array.isArray(inv.items) ? inv.items : [])
+      .map(
+        (item) => `<tr>
+          <td>${esc(item.description || '')}</td>
+          <td class="num">${esc(item.qty ?? '')}</td>
+          <td class="num">${money(item.rate)}</td>
+          <td class="num">${money((Number(item.qty) || 0) * (Number(item.rate) || 0))}</td>
+        </tr>`
+      )
+      .join('');
+    const due = inv.dueDate
+      ? new Date(inv.dueDate).toLocaleDateString('en-GB')
+      : '';
+    const status = String(inv.status || 'sent');
+    const subtotal = (Array.isArray(inv.items) ? inv.items : []).reduce(
+      (sum, item) =>
+        sum + (Number(item.qty) || 0) * (Number(item.rate) || 0),
+      0
+    );
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=60');
+    return res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${esc(inv.number || 'Invoice')} — ${esc(inv.ownerName || 'Livocal')}</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#eef2f7;color:#0b1220;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans Bengali',sans-serif;line-height:1.55}
+  .sheet{max-width:760px;margin:24px auto;background:#fff;border-radius:14px;padding:32px;box-shadow:0 12px 40px rgba(15,40,70,.12)}
+  .top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+  h1{font-size:24px;margin:0;color:#0f766e;letter-spacing:-.3px}
+  .muted{color:#64748b;font-size:12px}
+  .badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:800;text-transform:uppercase;border:1px solid #cbd5e1;background:#f8fafc}
+  .parties{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:22px 0}
+  table{width:100%;border-collapse:collapse;margin-top:8px}
+  th,td{padding:9px 8px;border-bottom:1px solid #e2e8f0;font-size:12.5px;text-align:left}
+  th{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:#64748b}
+  .num{text-align:right}
+  .totals{margin-left:auto;width:260px;margin-top:14px}
+  .totals .row{display:flex;justify-content:space-between;padding:4px 0;font-size:12.5px}
+  .totals .grand{border-top:1px solid #cbd5e1;margin-top:6px;padding-top:8px;font-weight:800;font-size:15px;color:#0f766e}
+  .notes{margin-top:18px;font-size:12px;color:#475569}
+  .actions{margin-top:22px;display:flex;gap:10px}
+  .btn{padding:10px 16px;border-radius:10px;border:0;background:#0f9d76;color:#fff;font-weight:800;font-size:12.5px;cursor:pointer;text-decoration:none}
+  footer{margin-top:24px;text-align:center;color:#94a3b8;font-size:10.5px}
+  @media(max-width:600px){.sheet{margin:10px;padding:20px}.parties{grid-template-columns:1fr}.totals{width:100%}}
+  @media print{body{background:#fff}.sheet{box-shadow:none;margin:0;border-radius:0;padding:0}.actions{display:none}}
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="top">
+    <div>
+      <h1>INVOICE</h1>
+      <div class="muted">${esc(inv.number || '')}</div>
+    </div>
+    <div style="text-align:right">
+      <span class="badge">${esc(status)}</span>
+      ${due ? `<div class="muted" style="margin-top:6px">Due ${esc(due)}</div>` : ''}
+    </div>
+  </div>
+
+  <div class="parties">
+    <div>
+      <div class="muted">From</div>
+      <strong>${esc(inv.ownerName || 'Freelancer')}</strong>
+      <div class="muted">Livocal</div>
+    </div>
+    <div>
+      <div class="muted">Bill to</div>
+      <strong>${esc(inv.clientName || 'Client')}</strong>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead>
+    <tbody>${items}</tbody>
+  </table>
+
+  <div class="totals">
+    <div class="row"><span>Subtotal</span><span>${money(subtotal)}</span></div>
+    ${Number(inv.taxPct) > 0 ? `<div class="row"><span>Tax ${esc(inv.taxPct)}%</span><span>${money(subtotal * Number(inv.taxPct) / 100)}</span></div>` : ''}
+    ${Number(inv.discount) > 0 ? `<div class="row"><span>Discount</span><span>- ${money(inv.discount)}</span></div>` : ''}
+    <div class="row grand"><span>Total</span><span>${money(inv.total)}</span></div>
+  </div>
+
+  ${inv.notes ? `<div class="notes"><strong>Notes:</strong> ${esc(inv.notes)}</div>` : ''}
+
+  <div class="actions">
+    <button class="btn" onclick="window.print()">Print / Save PDF</button>
+  </div>
+  <footer>Powered by Livocal · live voice translation for freelancers</footer>
+</div>
+</body>
+</html>`);
+  } catch (err) {
+    console.error('[Invoice] page error:', err.message);
+    return res.status(500).send('error');
+  }
+});
+
 // Hosted Public Terms of Service Page for Google Play & App Store Compliance
 app.get(['/terms-of-service', '/terms'], (req, res) => {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
