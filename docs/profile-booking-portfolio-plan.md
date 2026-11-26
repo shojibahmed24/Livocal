@@ -1,9 +1,15 @@
 # Freelancer Profile & Booking — Portfolio Redesign + Custom Domain
 
-Status: **Draft plan (awaiting approval)**
+Status: **Approved direction — decisions recorded, implementation not started**
 Owner: Shojib
 Repo: `C:\dev\livocal-freelancer` (branch `feat/freelancer`)
 Date: 2026-11-26
+
+### Decisions (2026-11-26)
+1. **Domain:** start on `livocal-relay.onrender.com/u/<username>`; custom domain is a later phase.
+2. **Hosting (when the domain is bought):** builder's call — apex to Render, web app on `app.` subdomain.
+3. **Public reviews:** show the latest 3 with first name + initial.
+4. **Visual:** dark premium **and** light clean, with a visitor toggle; remember choice.
 
 ---
 
@@ -166,10 +172,10 @@ Pre-render pages at publish time.
 
 ## 5. Phases (each phase is shippable)
 
-### Phase 0 — Decisions (½ day)
-- Confirm domain choice (A/B/C above) and whether `livocal.app` is free.
-- Confirm the public-page template direction (dark premium).
-- Confirm whether reviews (names + comments) may appear publicly.
+### Phase 0 — Decisions (done)
+- Domain deferred: ship on `livocal-relay.onrender.com/u/<username>` first.
+- Public reviews: latest 3, first name + initial.
+- Theme: dark + light, visitor toggle with remembered choice.
 - **Deliverable:** decisions recorded here; no code.
 
 ### Phase 1 — Custom username + routes (1–2 days)
@@ -193,7 +199,9 @@ Acceptance:
 - Split public pages into `backend/public/site/` (layout, CSS, partials).
 - Sections: hero (avatar, name, verified, rating, languages, CTAs), about,
   services, portfolio grid, skills, languages, rate, next availability,
-  reviews (if approved), footer.
+  **reviews (latest 3, first name + initial)**, footer.
+- Theme toggle (dark ⇄ light) in the header, remembered in `localStorage`,
+  default dark; no flash on load.
 - Responsive 360px → desktop; print-friendly.
 - OG/Twitter meta + JSON-LD `Person`/`Offer`; canonical; favicon.
 - Optional "Message on Livocal" deep link (`livocal://chat/<uid>` or web
@@ -225,13 +233,12 @@ Acceptance:
 - Analyze 0, tests green; edits reflect on the public page within ~1 min
   (cache-control 60s).
 
-### Phase 5 — Domain + SEO + launch (1 day + DNS wait)
+### Phase 5 — Domain + SEO + launch (deferred until a domain is bought)
 - Buy domain (if not owned), add to Render, verify TLS.
-- Decide apex vs subdomain (see 2.1); add redirects.
+- Builder's call: apex (`livocal.app`) → Render; web app to `app.` subdomain.
 - `robots.txt`, `sitemap.xml` (generated from published usernames),
   `security.txt`, favicon set.
-- Update app copy: `livocal.app/u/<username>`.
-- Optional: privacy-friendly page-view counter (no cookies).
+- Update app copy to the custom URL once live.
 Acceptance:
 - `https://livocal.app/u/<username>` 200, `http` → `https`, `www` → apex.
 - Old `onrender.com/p/...` links 301 to the new URL.
@@ -295,12 +302,11 @@ GET  /p/:slug                         301 → /u/:slug
 
 ---
 
-## 8. Open decisions (need answers before Phase 1)
-1. **Domain:** buy `livocal.app`, or start with `livocal-relay.onrender.com/u/...`?
-2. **Hosting:** if the domain exists on Firebase Hosting, move apex to Render
-   (web app → `app.` subdomain) or use a Cloudflare Worker proxy?
-3. **Reviews public?** Show latest 3 ratings with comment + first name?
-4. **Visual direction:** dark premium (recommended) or light clean portfolio?
+## 8. Decisions status
+1. **Domain:** deferred — ship on `livocal-relay.onrender.com/u/<username>` now.
+2. **Hosting:** builder's call when the domain is bought (apex → Render).
+3. **Reviews public:** yes — latest 3, first name + initial only.
+4. **Visual:** both — dark premium default + light toggle.
 
-Once these are answered, Phase 1 starts immediately; Phases 2–4 are independent
-of the domain and can ship on the Render URL first.
+Only Phase 5 (custom domain) stays blocked on a domain purchase. Phases 1–4,
+6 can proceed now.
