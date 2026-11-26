@@ -64,6 +64,25 @@ function serviceCards(services, rate) {
   return `<div class="service"><strong>Custom project</strong><span>${line}</span></div>`;
 }
 
+function experienceItems(items) {
+  if (!Array.isArray(items) || items.length === 0) return '';
+  return items
+    .slice(0, 8)
+    .map((item) => {
+      const period = `${item.start || ''}${item.start && item.end ? ' – ' : ''}${item.end || (item.start ? 'Present' : '')}`;
+      return `<div class="exp">
+        <div class="exp-dot"></div>
+        <div class="exp-body">
+          <strong>${esc(item.role || '')}</strong>
+          ${item.company ? `<span class="exp-company">${esc(item.company)}</span>` : ''}
+          ${period ? `<span class="exp-when">${esc(period)}</span>` : ''}
+          ${item.summary ? `<p>${esc(item.summary)}</p>` : ''}
+        </div>
+      </div>`;
+    })
+    .join('');
+}
+
 function caseCards(items) {
   if (!Array.isArray(items) || items.length === 0) return '';
   return items
@@ -143,6 +162,7 @@ export function renderProfilePage({ profile, username, days, reviews }) {
   const services = serviceCards(p.services, p.rate);
   const work = portfolioCards(p.portfolio);
   const cases = caseCards(p.caseStudies);
+  const experience = experienceItems(p.experience);
   const reviewList = reviewCards(reviews);
   const availability = nextAvailability(days);
   const bookingUrl = `/book/${encodeURIComponent(username)}`;
@@ -333,6 +353,14 @@ ${p.avatarUrl ? `<meta property="og:image" content="${esc(p.avatarUrl)}">` : ''}
   .work-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
   .work-body strong { font-size: 13px; }
   .work-body span { font-size: 11px; color: var(--muted); }
+  .timeline { display: flex; flex-direction: column; gap: 12px; }
+  .exp { display: flex; gap: 10px; }
+  .exp-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--primary); margin-top: 5px; flex: 0 0 auto; box-shadow: 0 0 0 3px rgba(52,211,153,.15); }
+  .exp-body { display: flex; flex-direction: column; gap: 1px; }
+  .exp-body strong { font-size: 13px; }
+  .exp-company { font-size: 11px; color: var(--muted); }
+  .exp-when { font-size: 10.5px; color: var(--primary); font-weight: 700; }
+  .exp-body p { margin: 2px 0 0; font-size: 11.5px; color: var(--muted); }
   .cases { display: flex; flex-direction: column; gap: 12px; }
   .case {
     display: grid; grid-template-columns: 1.2fr .8fr; gap: 14px;
@@ -396,6 +424,8 @@ ${p.avatarUrl ? `<meta property="og:image" content="${esc(p.avatarUrl)}">` : ''}
 
   <main>
     ${p.bio ? `<section class="card" style="margin-top:16px"><h2>About</h2><p>${esc(p.bio)}</p></section>` : ''}
+
+    ${experience ? `<section class="card" style="margin-top:16px"><h2>Experience</h2><div class="timeline">${experience}</div></section>` : ''}
 
     ${services ? `<section class="card" style="margin-top:16px"><h2>Services</h2><div class="services">${services}</div></section>` : ''}
 

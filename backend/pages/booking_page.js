@@ -28,10 +28,22 @@ export function renderBookingPage({ profile, days, username }) {
     : `<div class="avatar avatar-fallback">${esc(initial(name))}</div>`;
 
   const dayButtons = (Array.isArray(days) ? days : [])
-    .map(
-      (day, index) =>
-        `<button class="day ${index === 0 ? 'active' : ''}" type="button" data-day="${esc(day.date)}">${esc(day.label)}</button>`
-    )
+    .map((day, index) => {
+      const date = new Date(`${day.date}T00:00:00Z`);
+      const weekday = date.toLocaleDateString('en-GB', {
+        weekday: 'short',
+        timeZone: 'UTC',
+      });
+      const month = date.toLocaleDateString('en-GB', {
+        month: 'short',
+        timeZone: 'UTC',
+      });
+      return `<button class="day ${index === 0 ? 'active' : ''}" type="button" data-day="${esc(day.date)}">
+        <span class="dow">${weekday}</span>
+        <strong>${date.getUTCDate()}</strong>
+        <span class="mon">${month}</span>
+      </button>`;
+    })
     .join('');
 
   const daySections = (Array.isArray(days) ? days : [])
@@ -85,14 +97,20 @@ export function renderBookingPage({ profile, days, username }) {
   .pill{padding:3px 9px;border-radius:999px;font-size:10.5px;font-weight:800;color:var(--primary);background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.28)}
   .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;margin-top:14px}
   h2{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
-  .days{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
-  .day{white-space:nowrap;border:1px solid var(--border);background:var(--card-2);color:var(--text);border-radius:999px;padding:8px 13px;font-size:12px;cursor:pointer}
-  .day.active{border-color:var(--primary);color:var(--primary);background:rgba(52,211,153,.12)}
-  .day-panel{display:none;flex-wrap:wrap;gap:8px;margin-top:12px}
-  .day-panel.active{display:flex}
-  .slot{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid var(--border);border-radius:10px;font-size:12.5px;cursor:pointer;background:var(--card-2)}
-  .slot:has(input:checked){border-color:var(--primary);background:rgba(52,211,153,.12)}
-  .slot input{accent-color:var(--primary)}
+  .days{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 12px;scroll-snap-type:x mandatory;scrollbar-width:none;-ms-overflow-style:none}
+  .days::-webkit-scrollbar{display:none}
+  .day{scroll-snap-align:start;min-width:76px;padding:9px 10px 10px;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:1px;border:1px solid var(--border);background:var(--card-2);color:var(--text);cursor:pointer;transition:border-color .15s,background .15s}
+  .day .dow{font-size:9.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700}
+  .day strong{font-size:19px;line-height:1.15;font-weight:800}
+  .day .mon{font-size:10px;color:var(--muted)}
+  .day.active{border-color:var(--primary);background:rgba(52,211,153,.14)}
+  .day.active strong{color:var(--primary)}
+  .day.active .dow,.day.active .mon{color:var(--primary)}
+  .day-panel{display:none;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:12px}
+  .day-panel.active{display:grid}
+  .slot{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 12px;border:1px solid var(--border);border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;background:var(--card-2);text-align:center;transition:border-color .15s,background .15s}
+  .slot input{position:absolute;opacity:0;pointer-events:none}
+  .slot:has(input:checked){border-color:var(--primary);background:rgba(52,211,153,.14);color:var(--primary);box-shadow:0 0 0 1px var(--primary) inset}
   .tz{font-size:11px;color:var(--muted);margin-top:8px}
   label.field{display:block;margin:10px 0 4px;font-size:11.5px;color:var(--muted)}
   input[type=text],textarea{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--border);background:var(--card-2);color:var(--text);font-size:13px}
@@ -108,6 +126,13 @@ export function renderBookingPage({ profile, days, username }) {
   .success h3{margin:6px 0 4px}
   .success p{color:var(--muted);font-size:12.5px;margin:4px 0 12px}
   .success a{display:inline-block;padding:10px 16px;border-radius:10px;background:var(--primary);color:var(--primary-ink);font-weight:800;font-size:12.5px;text-decoration:none}
+  @media(max-width:430px){
+    .wrap{padding:14px 12px 40px}
+    .card{padding:14px;border-radius:16px}
+    .day{min-width:70px;padding:8px 8px 9px}
+    .slot{padding:12px 10px;font-size:12.5px}
+    button.primary{padding:14px;font-size:14.5px}
+  }
   footer{margin-top:22px;text-align:center;color:var(--muted);font-size:11px}
 </style>
 </head>
