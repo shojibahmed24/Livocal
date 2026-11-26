@@ -783,6 +783,59 @@ function parseHm(value) {
   return Number(match[1]) * 60 + Number(match[2]);
 }
 
+function timeZoneOffsetMs(date, timeZone) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      hour12: false,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+      .formatToParts(date)
+      .reduce((acc, part) => {
+        acc[part.type] = part.value;
+        return acc;
+      }, {});
+    const asUtc = Date.UTC(
+      Number(parts.year),
+      Number(parts.month) - 1,
+      Number(parts.day),
+      Number(parts.hour) % 24,
+      Number(parts.minute),
+      Number(parts.second)
+    );
+    return asUtc - date.getTime();
+  } catch (_) {
+    return 0;
+  }
+}
+
+function zonedToUtc(dateStr, timeStr, timeZone) {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const [hour, minute] = timeStr.split(':').map(Number);
+  const naive = Date.UTC(year, month - 1, day, hour, minute);
+  let utc = naive - timeZoneOffsetMs(new Date(naive), timeZone);
+  utc = naive - timeZoneOffsetMs(new Date(utc), timeZone);
+  return new Date(utc);
+}
+
+function hostDateString(date, timeZone) {
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(date);
+  } catch (_) {
+    return ymd(date);
+  }
+}
+
 function bookingWeekday(date) {
   const day = date.getUTCDay();
   return day === 0 ? 7 : day;
@@ -829,25 +882,41 @@ async function computeBookingDays(uid) {
 
   const days = [];
   const now = new Date();
+  // Enumerate host-local calendar days, not the server's UTC days.
+  const todayParts = hostDateString(now, hostTimeZone(availability))
+    .split('-')
+    .map(Number);
+
   for (let i = 0; i < 14; i++) {
     const date = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + i)
+      Date.UTC(todayParts[0], todayParts[1] - 1, todayParts[2] + i)
     );
     const config = availability[String(bookingWeekday(date))];
     if (!config || config.enabled !== true) continue;
 
+    const timeZone = config.timezone || 'UTC';
     const slots = (Array.isArray(config.slots) ? config.slots : [])
       .filter((slot) => {
         const start = parseHm(slot.start);
         const end = parseHm(slot.end);
         return start !== null && end !== null && start < end;
       })
-      .filter((slot) => {
-        const start = Date.parse(`${ymd(date)}T${slot.start}:00Z`);
-        const end = Date.parse(`${ymd(date)}T${slot.end}:00Z`);
-        if (!Number.isFinite(start) || start < Date.now()) return false;
-        return !booked.some((row) => row.start < end && row.end > start);
-      });
+      .map((slot) => {
+        const startAt = zonedToUtc(ymd(date), slot.start, timeZone);
+        const endAt = zonedToUtc(ymd(date), slot.end, timeZone);
+        return {
+          start: slot.start,
+          end: slot.end,
+          startAt: startAt.toISOString(),
+          endAt: endAt.toISOString(),
+          startMs: startAt.getTime(),
+          endMs: endAt.getTime(),
+        };
+      })
+      .filter((slot) => slot.startMs > Date.now())
+      .filter(
+        (slot) => !booked.some((row) => row.start < slot.endMs && row.end > slot.startMs)
+      );
 
     if (slots.length > 0) {
       days.push({
@@ -858,13 +927,25 @@ async function computeBookingDays(uid) {
           weekday: 'short',
           timeZone: 'UTC',
         }),
-        slots: slots.map((slot) => ({ start: slot.start, end: slot.end })),
+        slots: slots.map((slot) => ({
+          start: slot.start,
+          end: slot.end,
+          startAt: slot.startAt,
+          endAt: slot.endAt,
+        })),
       });
     }
   }
   return days;
 }
 
+function hostTimeZone(availability) {
+  for (const key of Object.keys(availability)) {
+    const zone = availability[key]?.timezone;
+    if (typeof zone === 'string' && zone.trim()) return zone.trim();
+  }
+  return 'UTC';
+}
 app.get('/api/public/availability/:slug', async (req, res) => {
   if (!firestoreDb) return res.status(503).json({ error: 'unavailable' });
   try {
@@ -904,8 +985,8 @@ app.get('/book/:slug', async (req, res) => {
         const slots = day.slots
           .map(
             (slot) =>
-              `<label class="slot"><input type="radio" name="slot" value="${day.date}T${slot.start}">` +
-              `<span>${slot.start} – ${slot.end}</span></label>`
+              `<label class="slot"><input type="radio" name="slot" value="${slot.startAt}">` +
+              `<span data-start="${slot.startAt}" data-end="${slot.endAt}">${slot.start} – ${slot.end}</span></label>`
           )
           .join('');
         return `<div class="day"><div class="date">${esc(day.label)}</div><div class="slots">${slots}</div></div>`;
@@ -949,7 +1030,7 @@ app.get('/book/:slug', async (req, res) => {
     <input type="text" name="guestContact" maxlength="120" required>
     <label>Note (optional)</label>
     <textarea name="note" rows="3" maxlength="500"></textarea>
-    <label>Pick a slot (UTC)</label>
+    <label>Pick a slot (your local time)</label>
     ${dayHtml || '<p class="empty">No open slots right now. Please check back later.</p>'}
     <button type="submit" ${days.length ? '' : 'disabled'}>Request booking</button>
     <p id="msg" class="empty"></p>
@@ -958,6 +1039,15 @@ app.get('/book/:slug', async (req, res) => {
 </div>
 <script>
   var SLUG = ${JSON.stringify(host.slug)};
+  document.querySelectorAll('span[data-start]').forEach(function (element) {
+    var start = new Date(element.getAttribute('data-start'));
+    var end = new Date(element.getAttribute('data-end'));
+    if (isNaN(start) || isNaN(end)) return;
+    var fmt = function (date) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+    element.textContent = fmt(start) + ' – ' + fmt(end);
+  });
   document.getElementById('f').addEventListener('submit', async function (event) {
     event.preventDefault();
     var form = event.target;
@@ -1011,45 +1101,52 @@ app.post('/api/public/book/:slug', bookingLimiter, async (req, res) => {
     const guestContact = String(body.guestContact || '').trim().slice(0, 120);
     const note = String(body.note || '').trim().slice(0, 500);
     const slot = String(body.slot || '');
-    const match = /^(\d{4}-\d{2}-\d{2})T([01]\d|2[0-3]):([0-5]\d)$/.exec(slot);
-    if (!guestName || !guestContact || !match) {
+    const slotStart = new Date(slot);
+    if (
+      !guestName ||
+      !guestContact ||
+      !slot ||
+      !Number.isFinite(slotStart.getTime()) ||
+      slotStart.getTime() < Date.now() - 60 * 1000
+    ) {
       return res.status(400).json({ error: 'invalid' });
     }
 
-    const date = match[1];
-    const startHm = `${match[2]}:${match[3]}`;
-    const [year, month, day] = date.split('-').map(Number);
+    const availSnap = await firestoreDb
+      .collection('users')
+      .doc(host.uid)
+      .collection('availability')
+      .get();
+    const availability = {};
+    availSnap.docs.forEach((doc) => {
+      availability[doc.id] = doc.data();
+    });
+    const timeZone = hostTimeZone(availability);
+    const hostDate = hostDateString(slotStart, timeZone);
+    const [year, month, day] = hostDate.split('-').map(Number);
     const dateObj = new Date(Date.UTC(year, month - 1, day));
     if (!Number.isFinite(dateObj.getTime())) {
       return res.status(400).json({ error: 'invalid' });
     }
 
-    const config = await firestoreDb
-      .collection('users')
-      .doc(host.uid)
-      .collection('availability')
-      .doc(String(bookingWeekday(dateObj)))
-      .get();
-    const slotConfig = config.exists
-      ? (Array.isArray(config.data().slots) ? config.data().slots : []).find(
-          (row) => row.start === startHm
-        )
+    const config = availability[String(bookingWeekday(dateObj))];
+    const slotConfig = config && config.enabled === true
+      ? (Array.isArray(config.slots) ? config.slots : [])
+          .map((row) => ({
+            startAt: zonedToUtc(hostDate, row.start, timeZone),
+            endAt: zonedToUtc(hostDate, row.end, timeZone),
+          }))
+          .find(
+            (row) =>
+              Math.abs(row.startAt.getTime() - slotStart.getTime()) < 60 * 1000
+          )
       : null;
-    if (
-      !config.exists ||
-      config.data().enabled !== true ||
-      !slotConfig ||
-      parseHm(slotConfig.end) === null ||
-      parseHm(slotConfig.end) <= parseHm(startHm)
-    ) {
+    if (!slotConfig || slotConfig.endAt <= slotConfig.startAt) {
       return res.status(400).json({ error: 'slot_unavailable' });
     }
 
-    const startAt = new Date(`${date}T${startHm}:00Z`);
-    const endAt = new Date(`${date}T${slotConfig.end}:00Z`);
-    if (startAt.getTime() < Date.now() - 60 * 1000) {
-      return res.status(400).json({ error: 'slot_unavailable' });
-    }
+    const startAt = slotConfig.startAt;
+    const endAt = slotConfig.endAt;
 
     const existingSnap = await firestoreDb
       .collection('bookings')
