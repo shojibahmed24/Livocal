@@ -94,18 +94,13 @@ class FreelancerProfileService {
     }
   }
 
-  /// Regenerates the slug (old claim is released best-effort).
+  /// Regenerates the slug. Old claims are kept on purpose so previously
+  /// shared links keep resolving to this profile.
   static Future<FreelancerProfile> regenerateSlug(
     FreelancerProfile profile,
   ) async {
-    final previous = profile.slug;
     profile.slug = _generateSlug(profile.displayName);
     await save(profile);
-    try {
-      await _slugClaims.doc(previous).delete();
-    } catch (e) {
-      debugPrint('[FreelancerProfileService] release slug failed: $e');
-    }
     return profile;
   }
 

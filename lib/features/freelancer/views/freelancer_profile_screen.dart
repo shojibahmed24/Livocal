@@ -147,6 +147,24 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
   Future<void> _regenerateSlug() async {
     final profile = _profile;
     if (profile == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(_t('regenerateLinkTitle')),
+        content: Text(_t('regenerateLinkBody')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(_t('cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(_t('generateProposal')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
     _saveTimer?.cancel();
     await FreelancerProfileService.regenerateSlug(profile);
     if (mounted) setState(() {});
