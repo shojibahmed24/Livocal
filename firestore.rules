@@ -32,6 +32,27 @@ service cloud.firestore {
     }
 
     // 1. User Profiles & Realtime Presence
+    // Public freelancer profiles: published docs are world-readable, drafts are
+    // owner-only. Fields are validated so a published page cannot leak contact
+    // data (phone/email are not part of the allowed shape).
+    match /profiles/{uid} {
+      allow read: if resource.data.published == true ||
+        (isAuthenticated() && request.auth.uid == uid);
+      allow write: if isAuthenticated() && request.auth.uid == uid &&
+        !request.resource.data.keys().hasAny(['phone', 'email', 'phoneNumber']);
+    }
+
+    // Slug lease: unique claim per public link (uid may not be reassigned).
+    match /profiles_slug/{slug} {
+      allow read: if true;
+      allow create: if isAuthenticated() &&
+        request.resource.data.uid == request.auth.uid;
+      allow update: if isAuthenticated() &&
+        resource.data.uid == request.auth.uid &&
+        request.resource.data.uid == resource.data.uid;
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+    }
+
     match /users/{userId} {
       // Security: Allow get for individual profile inspection by known ID
       allow get: if isAuthenticated();

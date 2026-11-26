@@ -14,6 +14,7 @@ import 'package:livocal/shared/models/contact.dart';
 import 'package:livocal/shared/models/messages.dart';
 import 'package:livocal/features/freelancer/models/crm_entry.dart';
 import 'package:livocal/features/freelancer/models/quick_reply.dart';
+import 'package:livocal/features/freelancer/models/freelancer_profile.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/repositories/firebase_firestore.dart';
 import 'package:livocal/shared/utils/abc.dart';
@@ -50,7 +51,14 @@ class IsarDb {
     final dir = await getApplicationDocumentsDirectory();
     try {
       _instance = await Isar.open(
-        [StoredMessageSchema, ContactSchema, UserSchema, CrmEntrySchema, QuickReplySchema],
+        [
+          StoredMessageSchema,
+          ContactSchema,
+          UserSchema,
+          CrmEntrySchema,
+          QuickReplySchema,
+          FreelancerProfileSchema
+        ],
         directory: dir.path,
         inspector: false,
       );
@@ -63,7 +71,14 @@ class IsarDb {
         await Future.delayed(const Duration(milliseconds: 300));
         _instance = Isar.getInstance() ??
             await Isar.open(
-              [StoredMessageSchema, ContactSchema, UserSchema, CrmEntrySchema, QuickReplySchema],
+              [
+                StoredMessageSchema,
+                ContactSchema,
+                UserSchema,
+                CrmEntrySchema,
+                QuickReplySchema,
+                FreelancerProfileSchema
+              ],
               directory: dir.path,
               inspector: false,
             );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:livocal/features/freelancer/models/quick_reply.dart';
 import 'package:livocal/features/freelancer/services/quick_reply_service.dart';
+import 'package:livocal/features/freelancer/widgets/quick_reply_dialogs.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/theme/app_colors.dart';
 
@@ -74,7 +75,7 @@ class _QuickRepliesSheet extends StatelessWidget {
                 ),
                 IconButton(
                   tooltip: _t(context, 'addQuickReply'),
-                  onPressed: () => _addReply(context),
+                  onPressed: () => showAddQuickReplyDialog(context, ownerUid),
                   icon: const Icon(Icons.add_circle_outline_rounded),
                   color: AppColors.primary,
                 ),
@@ -104,7 +105,8 @@ class _QuickRepliesSheet extends StatelessWidget {
                       return InkWell(
                         borderRadius: BorderRadius.circular(12),
                         onTap: () => Navigator.of(context).pop(reply.body),
-                        onLongPress: () => _confirmDelete(context, reply),
+                        onLongPress: () =>
+                            showDeleteQuickReplyDialog(context, reply),
                         child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
@@ -131,7 +133,9 @@ class _QuickRepliesSheet extends StatelessWidget {
                                   ),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 7, vertical: 2),
+                                      horizontal: 7,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: AppColors.primary
                                           .withValues(alpha: 0.14),
@@ -172,116 +176,5 @@ class _QuickRepliesSheet extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Future<void> _addReply(BuildContext context) async {
-    final titleCtrl = TextEditingController();
-    final bodyCtrl = TextEditingController();
-    String category = QuickReplyService.categoryPitch;
-
-    final created = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setState) => AlertDialog(
-          title: Text(_t(context, 'addQuickReply')),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Title',
-                    isDense: true,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: bodyCtrl,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Message',
-                    isDense: true,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: category,
-                  isDense: true,
-                  decoration: const InputDecoration(isDense: true),
-                  items: [
-                    (QuickReplyService.categoryPitch, 'catPitch'),
-                    (QuickReplyService.categoryRate, 'catRate'),
-                    (QuickReplyService.categoryAvailability, 'catAvailability'),
-                    (QuickReplyService.categoryClosing, 'catClosing'),
-                  ]
-                      .map(
-                        (item) => DropdownMenuItem(
-                          value: item.$1,
-                          child: Text(_t(context, item.$2),
-                              style: const TextStyle(fontSize: 12.5)),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) setState(() => category = value);
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(AppStrings.get(
-                  'cancel', Localizations.localeOf(context).languageCode)),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text(AppStrings.get(
-                  'save', Localizations.localeOf(context).languageCode)),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (created != true) return;
-    final title = titleCtrl.text.trim();
-    final body = bodyCtrl.text.trim();
-    if (title.isEmpty || body.isEmpty) return;
-    await QuickReplyService.save(
-      QuickReply(
-        ownerUid: ownerUid,
-        title: title,
-        body: body,
-        category: category,
-      ),
-    );
-  }
-
-  Future<void> _confirmDelete(BuildContext context, QuickReply reply) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(_t(context, 'deleteQuickReply')),
-        content: Text(reply.title),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(AppStrings.get(
-                'cancel', Localizations.localeOf(context).languageCode)),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(AppStrings.get(
-                'delete', Localizations.localeOf(context).languageCode)),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true) {
-      await QuickReplyService.delete(reply);
-    }
   }
 }
