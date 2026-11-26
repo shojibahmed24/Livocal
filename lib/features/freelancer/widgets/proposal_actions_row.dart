@@ -7,8 +7,10 @@ class ProposalActionsRow extends StatelessWidget {
   final String copyLabel;
   final String shareLabel;
   final String saveLabel;
+  final String linkLabel;
   final VoidCallback onCopy;
   final VoidCallback onShare;
+  final VoidCallback onLink;
   final VoidCallback? onSave;
 
   const ProposalActionsRow({
@@ -16,8 +18,10 @@ class ProposalActionsRow extends StatelessWidget {
     required this.copyLabel,
     required this.shareLabel,
     required this.saveLabel,
+    required this.linkLabel,
     required this.onCopy,
     required this.onShare,
+    required this.onLink,
     required this.onSave,
   });
 
@@ -28,6 +32,8 @@ class ProposalActionsRow extends StatelessWidget {
         _action(Icons.copy_rounded, copyLabel, onCopy),
         const SizedBox(width: 8),
         _action(Icons.ios_share_rounded, shareLabel, onShare),
+        const SizedBox(width: 8),
+        _action(Icons.link_rounded, linkLabel, onLink),
         const Spacer(),
         _action(
           Icons.save_alt_rounded,

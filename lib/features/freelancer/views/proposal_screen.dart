@@ -11,8 +11,10 @@ import 'package:livocal/features/freelancer/services/crm_service.dart';
 import 'package:livocal/features/freelancer/services/freelancer_profile_service.dart';
 import 'package:livocal/features/freelancer/services/proposal_pdf_service.dart';
 import 'package:livocal/features/freelancer/services/proposal_service.dart';
+import 'package:livocal/features/freelancer/services/proposal_share_service.dart';
 import 'package:livocal/features/freelancer/widgets/proposal_actions_row.dart';
 import 'package:livocal/features/freelancer/widgets/proposal_form_fields.dart';
+import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/models/user.dart';
 import 'package:livocal/shared/utils/app_localizations.dart';
 import 'package:livocal/theme/app_colors.dart';
@@ -131,6 +133,30 @@ class _ProposalScreenState extends State<ProposalScreen> {
       _terms.text = proposal.terms;
       _ready = true;
     });
+  }
+
+  Future<void> _shareLink() async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    try {
+      final token = await ProposalShareService.publish(
+        ownerUid: widget.user.id,
+        ownerName: _profile?.displayName ?? widget.user.name,
+        clientName: widget.clientName,
+        proposal: Proposal(
+          headline: _headline.text.trim(),
+          scope: _scope.text.trim(),
+          timeline: _timeline.text.trim(),
+          price: _price.text.trim(),
+          terms: _terms.text.trim(),
+        ),
+      );
+      final url = '${AppConfig.relayHttpBaseUrl}/pr/$token';
+      await Clipboard.setData(ClipboardData(text: url));
+      if (mounted) _snack(_t('linkCopied'));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 
   Future<void> _copy() async {
@@ -254,8 +280,10 @@ class _ProposalScreenState extends State<ProposalScreen> {
               copyLabel: _t('copySummary'),
               shareLabel: _t('shareProposal'),
               saveLabel: _t('saveProposalNote'),
+              linkLabel: _t('copyProfileLink'),
               onCopy: _copy,
               onShare: _share,
+              onLink: _saving ? () {} : _shareLink,
               onSave: _saving ? null : _saveToCrm,
             ),
           ],
