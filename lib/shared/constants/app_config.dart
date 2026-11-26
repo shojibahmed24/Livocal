@@ -41,6 +41,8 @@ class AppConfig {
 
   static String get callReviewUrl => '$relayHttpBaseUrl/api/call/review';
 
+  static String get proposalUrl => '$relayHttpBaseUrl/api/ai/proposal';
+
   static String get privacyPolicyUrl => '$relayHttpBaseUrl/privacy-policy';
 
   static String get termsOfServiceUrl => '$relayHttpBaseUrl/terms-of-service';

@@ -49,6 +49,7 @@ import 'widgets/send_payment_sheet.dart';
 import 'widgets/swipe_to_reply.dart';
 import 'package:livocal/features/freelancer/views/client_details_sheet.dart';
 import 'package:livocal/features/freelancer/views/invoice_editor_screen.dart';
+import 'package:livocal/features/freelancer/views/proposal_screen.dart';
 import 'package:livocal/features/freelancer/services/invoice_service.dart';
 import 'package:livocal/features/freelancer/services/quick_reply_service.dart';
 import 'package:livocal/features/freelancer/views/quick_replies_sheet.dart';
@@ -458,6 +459,17 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                     ),
                   );
                   break;
+                case 'proposal':
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ProposalScreen(
+                        user: self,
+                        clientUid: other.id,
+                        clientName: widget.otherUserContactName,
+                      ),
+                    ),
+                  );
+                  break;
                 case 'search':
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -628,6 +640,16 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                       const Icon(Icons.receipt_long_outlined, size: 18),
                       const SizedBox(width: 10),
                       Text(AppStrings.tr(ref, 'invoice')),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'proposal',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.auto_awesome_outlined, size: 18),
+                      const SizedBox(width: 10),
+                      Text(AppStrings.tr(ref, 'proposal')),
                     ],
                   ),
                 ),

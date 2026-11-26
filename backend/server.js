@@ -4560,6 +4560,127 @@ const ReviewSchema = z.object({
   comment: z.string().max(500).optional(),
 });
 
+const ProposalSchema = z.object({
+  displayName: z.string().max(80).optional(),
+  headline: z.string().max(160).optional(),
+  skills: z.array(z.string().max(40)).max(20).optional(),
+  clientName: z.string().max(80).optional(),
+  brief: z.string().max(1200).optional(),
+  hints: z.string().max(800).optional(),
+  rate: z
+    .object({
+      amount: z.number().min(0).max(1000000),
+      currency: z.string().max(8),
+      basis: z.string().max(16),
+    })
+    .optional(),
+});
+
+function fallbackProposal(input) {
+  const skills = (input.skills || []).slice(0, 6).join(', ') || 'your project';
+  const price = input.rate && input.rate.amount > 0
+    ? `${input.rate.currency} ${input.rate.amount} per ${input.rate.basis === 'project' ? 'project' : 'hour'}`
+    : 'To be agreed';
+  const brief = (input.brief || '').trim();
+  return {
+    headline: `Proposal for ${brief ? brief.slice(0, 60) : 'your project'} / আপনার প্রজেক্টের প্রস্তাব`,
+    scope: `I will handle ${skills}. Deliverables and milestones are agreed in writing before the start. / আমি ${skills} দেখব। কাজ শুরুর আগে ডেলিভারেবল ও মাইলস্টোন লিখিতভাবে ঠিক হবে।`,
+    timeline: 'First draft within 3 working days, revisions included. / ৩ কর্মদিবসে প্রথম ড্রাফট, রিভিশনসহ।',
+    price: `${price} / ${price.includes('project') ? 'প্রজেক্ট অনুযায়ী' : 'ঘণ্টা অনুযায়ী'}`,
+    terms: '50% advance, balance on delivery. Two revision rounds included. / ৫০% অগ্রিম, বাকিটা ডেলিভারির সময়। দুই রাউন্ড রিভিশন অন্তর্ভুক্ত।',
+  };
+}
+
+/**
+ * POST /api/ai/proposal
+ * Drafts a bilingual client proposal from the freelancer's profile data.
+ * Nothing is stored server-side.
+ */
+app.post(
+  '/api/ai/proposal',
+  apiLimiter,
+  authenticateRequest,
+  translateLimiter,
+  validateBody(ProposalSchema),
+  async (req, res) => {
+    const input = req.body || {};
+    const skills = Array.isArray(input.skills) ? input.skills.slice(0, 20) : [];
+    const rate = input.rate && input.rate.amount > 0 ? input.rate : null;
+
+    const prompt = [
+      'You are a senior freelancer writing a short, client-ready proposal.',
+      'Return ONLY JSON with this exact shape:',
+      '{"headline":"...","scope":"...","timeline":"...","price":"...","terms":"..."}',
+      'Write every field bilingually: the English sentence followed by its Bangla translation separated by " / ".',
+      'Scope: 3-5 short sentences. Timeline: concrete days/weeks. Price: use the given rate when present, otherwise ask for scope. Terms: 2 sentences (payment + revisions).',
+      'Never invent certifications, clients, years of experience or skills that are not in the profile.',
+      '',
+      `Freelancer: ${input.displayName || 'Freelancer'}`,
+      `Headline: ${input.headline || ''}`,
+      `Skills: ${skills.join(', ')}`,
+      `Client: ${input.clientName || 'Client'}`,
+      `Rate: ${rate ? `${rate.currency} ${rate.amount} per ${rate.basis}` : 'not set'}`,
+      `Job brief: ${(input.brief || '').slice(0, 1200)}`,
+      `Extra context: ${(input.hints || '').slice(0, 800)}`,
+    ].join('\n');
+
+    let proposal = null;
+    let source = 'fallback';
+
+    if (GEMINI_API_KEY) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+        const apiRes = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.5,
+              maxOutputTokens: 900,
+              responseMimeType: 'application/json',
+            },
+          }),
+        });
+        if (apiRes.ok) {
+          const data = await apiRes.json();
+          const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          proposal = parseProposalJson(raw);
+          if (proposal) source = 'gemini';
+        } else {
+          console.error('[Proposal] Gemini HTTP status:', apiRes.status);
+        }
+      } catch (err) {
+        console.error('[Proposal] Gemini error:', err.message);
+      }
+    }
+
+    if (!proposal) proposal = fallbackProposal({ ...input, skills, rate });
+    return res.json({ proposal, source });
+  }
+);
+
+function parseProposalJson(raw) {
+  if (!raw) return null;
+  const cleaned = String(raw).replace(/```json/gi, '').replace(/```/g, '').trim();
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if (start === -1 || end <= start) return null;
+  try {
+    const value = JSON.parse(cleaned.slice(start, end + 1));
+    const fields = ['headline', 'scope', 'timeline', 'price', 'terms'];
+    const proposal = {};
+    for (const field of fields) {
+      const text = typeof value[field] === 'string' ? value[field].trim() : '';
+      if (!text) return null;
+      proposal[field] = text.slice(0, 2000);
+    }
+    return proposal;
+  } catch (_) {
+    return null;
+  }
+}
+
 /**
  * POST /api/call/review
  * One rating per participant per call. Aggregates live on profiles/{uid} so
