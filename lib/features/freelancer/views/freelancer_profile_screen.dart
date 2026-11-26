@@ -57,7 +57,7 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
       AppStrings.get(key, Localizations.localeOf(context).languageCode);
 
   Future<void> _load() async {
-    unawaited(FreelancerProfileService.refresh(widget.user.id));
+    await FreelancerProfileService.refresh(widget.user.id);
     final profile = await FreelancerProfileService.ensure(
       widget.user.id,
       displayName: widget.user.name,
@@ -226,6 +226,7 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
                 ),
                 const SizedBox(height: 16),
                 ProfileProFields(
+                  key: ValueKey(profile.updatedAt.millisecondsSinceEpoch),
                   profile: profile,
                   t: _t,
                   mutate: _mutate,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:livocal/features/freelancer/models/freelancer_profile.dart';
+import 'package:livocal/features/freelancer/widgets/cover_image_field.dart';
 
 /// Phase A professional fields: cover, response time, socials, stats, CV.
 class ProfileProFields extends StatefulWidget {
@@ -95,7 +96,11 @@ class _ProfileProFieldsState extends State<ProfileProFields> {
           ),
         ),
         const SizedBox(height: 8),
-        _field('coverUrl', 'coverUrl', textColor),
+        CoverImageField(
+          profile: widget.profile,
+          t: widget.t,
+          mutate: widget.mutate,
+        ),
         _field('responseTime', 'responseTime', textColor),
         _field('githubUrl', 'githubUrl', textColor),
         _field('linkedinUrl', 'linkedinUrl', textColor),

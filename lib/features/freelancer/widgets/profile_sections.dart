@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import 'package:livocal/features/freelancer/models/freelancer_profile.dart';
+import 'package:livocal/features/freelancer/widgets/case_studies_section.dart';
+import 'package:livocal/features/freelancer/widgets/case_study_dialog.dart';
 import 'package:livocal/features/freelancer/widgets/portfolio_dialog.dart';
 import 'package:livocal/features/freelancer/widgets/portfolio_section.dart';
 import 'package:livocal/features/freelancer/widgets/service_dialog.dart';
@@ -37,6 +39,16 @@ class ProfileSections extends StatelessWidget {
     mutate((p) => p.portfolio = [...p.portfolio]..removeAt(index));
   }
 
+  Future<void> _addCase(BuildContext context) async {
+    final result = await showCaseStudyDialog(context);
+    if (result == null) return;
+    mutate((p) => p.caseStudies = [...p.caseStudies, jsonEncode(result)]);
+  }
+
+  void _removeCase(int index) {
+    mutate((p) => p.caseStudies = [...p.caseStudies]..removeAt(index));
+  }
+
   Future<void> _addService(BuildContext context) async {
     final result = await showServiceDialog(context);
     if (result == null) return;
@@ -52,6 +64,14 @@ class ProfileSections extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        CaseStudiesSection(
+          entries: profile.caseEntries,
+          t: t,
+          textColor: textColor,
+          muted: muted,
+          onAdd: () => _addCase(context),
+          onRemove: _removeCase,
+        ),
         ServicesSection(
           entries: profile.serviceEntries,
           t: t,

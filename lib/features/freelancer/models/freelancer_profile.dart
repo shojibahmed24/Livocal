@@ -40,6 +40,10 @@ class FreelancerProfile {
   /// JSON encoded `{"title": "...", "from": 100}` strings.
   List<String> services;
 
+  /// JSON encoded case studies:
+  /// `{"title","client","problem","result","imageUrl","url","tags"}`.
+  List<String> caseStudies;
+
   String avatarUrl;
   bool published;
 
@@ -75,6 +79,7 @@ class FreelancerProfile {
     this.availability = 'full_time',
     List<String> portfolio = const <String>[],
     List<String> services = const <String>[],
+    List<String> caseStudies = const <String>[],
     this.avatarUrl = '',
     this.published = false,
     this.coverUrl = '',
@@ -93,7 +98,8 @@ class FreelancerProfile {
   })  : skills = List<String>.from(skills),
         languages = List<String>.from(languages),
         portfolio = List<String>.from(portfolio),
-        services = List<String>.from(services);
+        services = List<String>.from(services),
+        caseStudies = List<String>.from(caseStudies);
 
   @ignore
   String get handle => username.isNotEmpty ? username : slug;
@@ -122,6 +128,50 @@ class FreelancerProfile {
           return {'title': raw, 'from': ''};
         }
       }).toList();
+
+  @ignore
+  List<Map<String, String>> get caseEntries => caseStudies.map((raw) {
+        try {
+          final map = jsonDecode(raw) as Map<String, dynamic>;
+          return {
+            'title': (map['title'] ?? '').toString(),
+            'client': (map['client'] ?? '').toString(),
+            'problem': (map['problem'] ?? '').toString(),
+            'result': (map['result'] ?? '').toString(),
+            'imageUrl': (map['imageUrl'] ?? '').toString(),
+            'url': (map['url'] ?? '').toString(),
+            'tags': (map['tags'] ?? '').toString(),
+          };
+        } catch (_) {
+          return {
+            'title': raw,
+            'client': '',
+            'problem': '',
+            'result': '',
+            'imageUrl': '',
+            'url': '',
+            'tags': '',
+          };
+        }
+      }).toList();
+
+  static List<String> _caseFromMap(dynamic raw) {
+    if (raw is! List) return const <String>[];
+    return raw.map((item) {
+      if (item is Map) {
+        return jsonEncode({
+          'title': (item['title'] ?? '').toString(),
+          'client': (item['client'] ?? '').toString(),
+          'problem': (item['problem'] ?? '').toString(),
+          'result': (item['result'] ?? '').toString(),
+          'imageUrl': (item['imageUrl'] ?? '').toString(),
+          'url': (item['url'] ?? '').toString(),
+          'tags': (item['tags'] ?? '').toString(),
+        });
+      }
+      return item.toString();
+    }).toList();
+  }
 
   @ignore
   List<Map<String, String>> get portfolioEntries => portfolio.map((raw) {
@@ -153,6 +203,7 @@ class FreelancerProfile {
         'availability': availability,
         'portfolio': portfolioEntries,
         'services': serviceEntries,
+        'caseStudies': caseEntries,
         'avatarUrl': avatarUrl,
         'coverUrl': coverUrl,
         'responseTime': responseTime,
@@ -213,6 +264,7 @@ class FreelancerProfile {
               return item.toString();
             }).toList()
           : const <String>[],
+      caseStudies: _caseFromMap(map['caseStudies']),
       services: rawServices is List
           ? rawServices.map((item) {
               if (item is Map) {

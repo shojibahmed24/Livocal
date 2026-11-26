@@ -743,6 +743,7 @@ app.get('/api/public/profile/:slug', async (req, res) => {
       availability: p.availability || '',
       portfolio: Array.isArray(p.portfolio) ? p.portfolio : [],
       services: Array.isArray(p.services) ? p.services : [],
+      caseStudies: Array.isArray(p.caseStudies) ? p.caseStudies : [],
       avatarUrl: p.avatarUrl || '',
       coverUrl: p.coverUrl || '',
       responseTime: p.responseTime || '',
