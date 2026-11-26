@@ -745,6 +745,11 @@ app.get('/api/public/profile/:slug', async (req, res) => {
       services: Array.isArray(p.services) ? p.services : [],
       caseStudies: Array.isArray(p.caseStudies) ? p.caseStudies : [],
       experience: Array.isArray(p.experience) ? p.experience : [],
+      education: Array.isArray(p.education) ? p.education : [],
+      certifications: Array.isArray(p.certifications) ? p.certifications : [],
+      faq: Array.isArray(p.faq) ? p.faq : [],
+      accentColor: p.accentColor || 'emerald',
+      sectionOrder: Array.isArray(p.sectionOrder) ? p.sectionOrder : [],
       avatarUrl: p.avatarUrl || '',
       coverUrl: p.coverUrl || '',
       responseTime: p.responseTime || '',
@@ -855,6 +860,34 @@ function zonedToUtc(dateStr, timeStr, timeZone) {
   return new Date(utc);
 }
 
+function fmtHm(minutes) {
+  const h = Math.floor(minutes / 60).toString().padStart(2, '0');
+  const m = (minutes % 60).toString().padStart(2, '0');
+  return `${h}:${m}`;
+}
+
+/** Expands availability windows into fixed 60-minute bookable slots. */
+function expandWindows(config, dateStr, timeZone, durationMinutes = 60) {
+  const out = [];
+  const windows = Array.isArray(config?.slots) ? config.slots : [];
+  for (const window of windows) {
+    const start = parseHm(window.start);
+    const end = parseHm(window.end);
+    if (start === null || end === null || start >= end) continue;
+    for (let minute = start; minute + durationMinutes <= end; minute += durationMinutes) {
+      const startHm = fmtHm(minute);
+      const endHm = fmtHm(minute + durationMinutes);
+      out.push({
+        start: startHm,
+        end: endHm,
+        startAt: zonedToUtc(dateStr, startHm, timeZone),
+        endAt: zonedToUtc(dateStr, endHm, timeZone),
+      });
+    }
+  }
+  return out;
+}
+
 function hostDateString(date, timeZone) {
   try {
     return new Intl.DateTimeFormat('en-CA', {
@@ -927,29 +960,22 @@ async function computeBookingDays(uid) {
     if (!config || config.enabled !== true) continue;
 
     const timeZone = config.timezone || 'UTC';
-    const slots = (Array.isArray(config.slots) ? config.slots : [])
-      .filter((slot) => {
-        const start = parseHm(slot.start);
-        const end = parseHm(slot.end);
-        return start !== null && end !== null && start < end;
-      })
-      .map((slot) => {
-        const startAt = zonedToUtc(ymd(date), slot.start, timeZone);
-        const endAt = zonedToUtc(ymd(date), slot.end, timeZone);
-        return {
-          start: slot.start,
-          end: slot.end,
-          startAt: startAt.toISOString(),
-          endAt: endAt.toISOString(),
-          startMs: startAt.getTime(),
-          endMs: endAt.getTime(),
-        };
-      })
-      .filter((slot) => slot.startMs > Date.now())
+    const slots = expandWindows(config, ymd(date), timeZone, 60)
+      .filter((slot) => slot.startAt.getTime() > Date.now())
       .filter(
-        (slot) => !booked.some((row) => row.start < slot.endMs && row.end > slot.startMs)
-      );
-
+        (slot) =>
+          !booked.some(
+            (row) =>
+              row.start < slot.endAt.getTime() &&
+              row.end > slot.startAt.getTime()
+          )
+      )
+      .map((slot) => ({
+        start: slot.start,
+        end: slot.end,
+        startAt: slot.startAt.toISOString(),
+        endAt: slot.endAt.toISOString(),
+      }));
     if (slots.length > 0) {
       days.push({
         date: ymd(date),
@@ -1127,15 +1153,10 @@ app.post('/api/public/book/:slug', bookingLimiter, async (req, res) => {
 
     const config = availability[String(bookingWeekday(dateObj))];
     const slotConfig = config && config.enabled === true
-      ? (Array.isArray(config.slots) ? config.slots : [])
-          .map((row) => ({
-            startAt: zonedToUtc(hostDate, row.start, timeZone),
-            endAt: zonedToUtc(hostDate, row.end, timeZone),
-          }))
-          .find(
-            (row) =>
-              Math.abs(row.startAt.getTime() - slotStart.getTime()) < 60 * 1000
-          )
+      ? expandWindows(config, hostDate, timeZone, 60).find(
+          (row) =>
+            Math.abs(row.startAt.getTime() - slotStart.getTime()) < 60 * 1000
+        )
       : null;
     if (!slotConfig || slotConfig.endAt <= slotConfig.startAt) {
       return res.status(400).json({ error: 'slot_unavailable' });

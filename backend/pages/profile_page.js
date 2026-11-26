@@ -64,6 +64,47 @@ function serviceCards(services, rate) {
   return `<div class="service"><strong>Custom project</strong><span>${line}</span></div>`;
 }
 
+function educationCards(items) {
+  if (!Array.isArray(items) || items.length === 0) return '';
+  return items
+    .slice(0, 6)
+    .map((item) => {
+      const period = `${item.start || ''}${item.start && item.end ? ' – ' : ''}${item.end || ''}`;
+      return `<div class="exp"><div class="exp-dot"></div><div class="exp-body">
+        <strong>${esc(item.school || '')}</strong>
+        ${item.degree ? `<span class="exp-company">${esc(item.degree)}</span>` : ''}
+        ${period ? `<span class="exp-when">${esc(period)}</span>` : ''}
+      </div></div>`;
+    })
+    .join('');
+}
+
+function certCards(items) {
+  if (!Array.isArray(items) || items.length === 0) return '';
+  return items
+    .slice(0, 8)
+    .map(
+      (item) => `<div class="cert">
+        <strong>${esc(item.name || '')}</strong>
+        <span>${esc(item.issuer || '')}${item.year ? ` · ${esc(item.year)}` : ''}</span>
+      </div>`
+    )
+    .join('');
+}
+
+function faqCards(items) {
+  if (!Array.isArray(items) || items.length === 0) return '';
+  return items
+    .slice(0, 8)
+    .map(
+      (item) => `<details class="faq">
+        <summary>${esc(item.question || '')}</summary>
+        <p>${esc(item.answer || '')}</p>
+      </details>`
+    )
+    .join('');
+}
+
 function experienceItems(items) {
   if (!Array.isArray(items) || items.length === 0) return '';
   return items
@@ -163,6 +204,17 @@ export function renderProfilePage({ profile, username, days, reviews }) {
   const work = portfolioCards(p.portfolio);
   const cases = caseCards(p.caseStudies);
   const experience = experienceItems(p.experience);
+  const education = educationCards(p.education);
+  const certifications = certCards(p.certifications);
+  const faqs = faqCards(p.faq);
+  const accentHex =
+    {
+      emerald: '#34d399',
+      blue: '#60a5fa',
+      violet: '#a78bfa',
+      amber: '#fbbf24',
+      rose: '#fb7185',
+    }[p.accentColor] || '#34d399';
   const reviewList = reviewCards(reviews);
   const availability = nextAvailability(days);
   const bookingUrl = `/book/${encodeURIComponent(username)}`;
@@ -207,6 +259,48 @@ export function renderProfilePage({ profile, username, days, reviews }) {
     ? ` style="background-image:linear-gradient(rgba(4,7,13,.72),var(--card)),url('${esc(p.coverUrl)}');background-size:cover;background-position:center;"`
     : '';
 
+  const sections = {
+    about: p.bio
+      ? `<section class="card" style="margin-top:16px"><h2>About</h2><p>${esc(p.bio)}</p></section>`
+      : '',
+    experience: experience
+      ? `<section class="card" style="margin-top:16px"><h2>Experience</h2><div class="timeline">${experience}</div></section>`
+      : '',
+    services: services
+      ? `<section class="card" style="margin-top:16px"><h2>Services</h2><div class="services">${services}</div></section>`
+      : '',
+    work: work
+      ? `<section class="card" style="margin-top:16px"><h2>Work</h2><div class="work-grid">${work}</div></section>`
+      : '',
+    cases: cases
+      ? `<section class="card" style="margin-top:16px"><h2>Case studies</h2><div class="cases">${cases}</div></section>`
+      : '',
+    skills: skills
+      ? `<section class="card" style="margin-top:16px"><h2>Skills</h2><div class="chips">${skills}</div></section>`
+      : '',
+    education: education
+      ? `<section class="card" style="margin-top:16px"><h2>Education</h2><div class="timeline">${education}</div></section>`
+      : '',
+    certifications: certifications
+      ? `<section class="card" style="margin-top:16px"><h2>Certifications</h2><div class="certs">${certifications}</div></section>`
+      : '',
+    reviews: reviewList
+      ? `<section class="card" style="margin-top:16px"><h2>Recent reviews</h2><div class="reviews">${reviewList}</div></section>`
+      : '',
+    faq: faqs
+      ? `<section class="card" style="margin-top:16px"><h2>FAQ</h2><div class="faqs">${faqs}</div></section>`
+      : '',
+  };
+  const defaultOrder = [
+    'about', 'experience', 'services', 'work', 'cases', 'skills',
+    'education', 'certifications', 'reviews', 'faq',
+  ];
+  const order =
+    Array.isArray(p.sectionOrder) && p.sectionOrder.length > 0
+      ? p.sectionOrder
+      : defaultOrder;
+  const sectionsHtml = order.map((key) => sections[key] || '').join('');
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Person',
@@ -228,7 +322,7 @@ export function renderProfilePage({ profile, username, days, reviews }) {
   };
 
   return `<!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" style="--accent:${accentHex}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -253,12 +347,12 @@ ${p.avatarUrl ? `<meta property="og:image" content="${esc(p.avatarUrl)}">` : ''}
 <style>
   :root {
     --bg: #04070d; --card: #0b1422; --card-2: #0f1b2d; --text: #f2f6fb;
-    --muted: #8fa0b6; --border: rgba(255,255,255,.08); --primary: #34d399;
+    --muted: #8fa0b6; --border: rgba(255,255,255,.08); --primary: var(--accent, #34d399);
     --primary-ink: #04120c; --shadow: 0 18px 50px rgba(0,0,0,.35);
   }
   html[data-theme="light"] {
     --bg: #f6f8fb; --card: #ffffff; --card-2: #f1f5f9; --text: #0b1220;
-    --muted: #5b6b80; --border: rgba(11,18,32,.08); --primary: #0f9d76;
+    --muted: #5b6b80; --border: rgba(11,18,32,.08); --primary: var(--accent, #0f9d76);
     --primary-ink: #ffffff; --shadow: 0 18px 50px rgba(15,40,70,.10);
   }
   * { box-sizing: border-box; }
@@ -353,6 +447,15 @@ ${p.avatarUrl ? `<meta property="og:image" content="${esc(p.avatarUrl)}">` : ''}
   .work-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
   .work-body strong { font-size: 13px; }
   .work-body span { font-size: 11px; color: var(--muted); }
+  .certs { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); }
+  .cert { padding: 10px 12px; border-radius: 12px; background: var(--card-2); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 1px; }
+  .cert strong { font-size: 12px; }
+  .cert span { font-size: 10.5px; color: var(--muted); }
+  .faqs { display: grid; gap: 8px; }
+  .faq { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; background: var(--card-2); }
+  .faq summary { cursor: pointer; font-size: 12.5px; font-weight: 700; list-style: none; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq p { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
   .timeline { display: flex; flex-direction: column; gap: 12px; }
   .exp { display: flex; gap: 10px; }
   .exp-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--primary); margin-top: 5px; flex: 0 0 auto; box-shadow: 0 0 0 3px rgba(52,211,153,.15); }
@@ -423,12 +526,6 @@ ${p.avatarUrl ? `<meta property="og:image" content="${esc(p.avatarUrl)}">` : ''}
   </header>
 
   <main>
-    ${p.bio ? `<section class="card" style="margin-top:16px"><h2>About</h2><p>${esc(p.bio)}</p></section>` : ''}
-
-    ${experience ? `<section class="card" style="margin-top:16px"><h2>Experience</h2><div class="timeline">${experience}</div></section>` : ''}
-
-    ${services ? `<section class="card" style="margin-top:16px"><h2>Services</h2><div class="services">${services}</div></section>` : ''}
-
     <div class="grid">
       <section class="card">
         <h2>Rate</h2>
@@ -441,13 +538,7 @@ ${p.avatarUrl ? `<meta property="og:image" content="${esc(p.avatarUrl)}">` : ''}
       </section>
     </div>
 
-    ${work ? `<section class="card" style="margin-top:16px"><h2>Work</h2><div class="work-grid">${work}</div></section>` : ''}
-
-    ${cases ? `<section class="card" style="margin-top:16px"><h2>Case studies</h2><div class="cases">${cases}</div></section>` : ''}
-
-    ${skills ? `<section class="card" style="margin-top:16px"><h2>Skills</h2><div class="chips">${skills}</div></section>` : ''}
-
-    ${reviewList ? `<section class="card" style="margin-top:16px"><h2>Recent reviews</h2><div class="reviews">${reviewList}</div></section>` : ''}
+    ${sectionsHtml}
   </main>
 
   <footer>Powered by Livocal · live voice translation for freelancers</footer>
