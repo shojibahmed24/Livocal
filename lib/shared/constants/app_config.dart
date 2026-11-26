@@ -46,6 +46,10 @@ class AppConfig {
   static String get changeUsernameUrl =>
       '$relayHttpBaseUrl/api/profile/username';
 
+  static String get shareInvoiceUrl => '$relayHttpBaseUrl/api/share/invoice';
+
+  static String get shareProposalUrl => '$relayHttpBaseUrl/api/share/proposal';
+
   static String get privacyPolicyUrl => '$relayHttpBaseUrl/privacy-policy';
 
   static String get termsOfServiceUrl => '$relayHttpBaseUrl/terms-of-service';

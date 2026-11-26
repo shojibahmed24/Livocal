@@ -1,12 +1,17 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:isar/isar.dart';
 
 import 'package:livocal/features/freelancer/models/invoice.dart';
+import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
+import 'package:livocal/shared/services/app_check_service.dart';
 
 /// Local-first invoice storage with a Firestore mirror and a per-user counter.
 class InvoiceService {
@@ -80,11 +85,53 @@ class InvoiceService {
         .join();
   }
 
-  /// Publishes a public snapshot and returns the share token.
+  /// Publishes a public snapshot via the relay and returns the share token.
   static Future<String> ensureShareToken(
     Invoice invoice,
     String ownerName,
   ) async {
+    final body = {
+      'ownerName': ownerName,
+      'number': invoice.number,
+      'clientName': invoice.clientName,
+      'items': invoice.items.map((item) => item.toMap()).toList(),
+      'currency': invoice.currency,
+      'taxPct': invoice.taxPct,
+      'discount': invoice.discount,
+      'total': invoice.total,
+      'status': invoice.status,
+      'dueDate': invoice.dueDate?.toIso8601String(),
+      'notes': invoice.notes,
+    };
+
+    try {
+      final authToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+      if (authToken != null) {
+        final response = await http
+            .post(
+              Uri.parse(AppConfig.shareInvoiceUrl),
+              headers: await AppCheckService.withAppCheck({
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $authToken',
+              }),
+              body: jsonEncode(body),
+            )
+            .timeout(const Duration(seconds: 20));
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final token = (data is Map) ? data['token']?.toString() : null;
+          if (token != null && token.isNotEmpty) {
+            invoice.publicToken = token;
+            await save(invoice);
+            return token;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[InvoiceService] share endpoint failed: $e');
+    }
+
+    // Fallback: direct Firestore snapshot.
     if (invoice.publicToken.isEmpty) {
       invoice.publicToken = _newToken();
       await save(invoice);
@@ -93,21 +140,7 @@ class InvoiceService {
       await FirebaseFirestore.instance
           .collection('public_invoices')
           .doc(invoice.publicToken)
-          .set({
-        'ownerUid': invoice.ownerUid,
-        'ownerName': ownerName,
-        'number': invoice.number,
-        'clientName': invoice.clientName,
-        'items': invoice.items.map((item) => item.toMap()).toList(),
-        'currency': invoice.currency,
-        'taxPct': invoice.taxPct,
-        'discount': invoice.discount,
-        'total': invoice.total,
-        'status': invoice.status,
-        'dueDate': invoice.dueDate?.toIso8601String(),
-        'notes': invoice.notes,
-        'createdAt': invoice.createdAt.toIso8601String(),
-      });
+          .set(body);
     } catch (e) {
       debugPrint('[InvoiceService] public snapshot failed: $e');
     }
