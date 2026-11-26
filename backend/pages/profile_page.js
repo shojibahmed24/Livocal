@@ -64,8 +64,40 @@ function serviceCards(services, rate) {
   return `<div class="service"><strong>Custom project</strong><span>${line}</span></div>`;
 }
 
-function reviewCards(reviews) {
-  if (!Array.isArray(reviews) || reviews.length === 0) return '';
+function caseCards(items) {
+  if (!Array.isArray(items) || items.length === 0) return '';
+  return items
+    .slice(0, 6)
+    .map((item, index) => {
+      const tags = String(item.tags || '')
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+        .slice(0, 5)
+        .map((tag) => `<span class="chip">${esc(tag)}</span>`)
+        .join('');
+      const image = item.imageUrl
+        ? `<div class="case-media"><img src="${esc(item.imageUrl)}" alt="${esc(item.title || 'Case study')}" loading="lazy"></div>`
+        : '';
+      const link = item.url
+        ? `<a class="case-link" href="${esc(item.url)}" target="_blank" rel="noopener nofollow">View project →</a>`
+        : '';
+      return `<article class="case ${index % 2 === 1 ? 'reverse' : ''}">
+        <div class="case-body">
+          <div class="case-kicker">${esc(item.client || 'Case study')}</div>
+          <h3>${esc(item.title || 'Project')}</h3>
+          ${item.problem ? `<p><strong>Problem:</strong> ${esc(item.problem)}</p>` : ''}
+          ${item.result ? `<p><strong>Result:</strong> ${esc(item.result)}</p>` : ''}
+          ${tags ? `<div class="chips">${tags}</div>` : ''}
+          ${link}
+        </div>
+        ${image}
+      </article>`;
+    })
+    .join('');
+}
+
+function reviewCards(reviews) {  if (!Array.isArray(reviews) || reviews.length === 0) return '';
   return reviews
     .map((review) => {
       const stars = '★'.repeat(Math.max(1, Math.min(5, Number(review.rating) || 5)));
@@ -110,6 +142,7 @@ export function renderProfilePage({ profile, username, days, reviews }) {
     .join('');
   const services = serviceCards(p.services, p.rate);
   const work = portfolioCards(p.portfolio);
+  const cases = caseCards(p.caseStudies);
   const reviewList = reviewCards(reviews);
   const availability = nextAvailability(days);
   const bookingUrl = `/book/${encodeURIComponent(username)}`;
@@ -300,6 +333,23 @@ ${p.avatarUrl ? `<meta property="og:image" content="${esc(p.avatarUrl)}">` : ''}
   .work-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
   .work-body strong { font-size: 13px; }
   .work-body span { font-size: 11px; color: var(--muted); }
+  .cases { display: flex; flex-direction: column; gap: 12px; }
+  .case {
+    display: grid; grid-template-columns: 1.2fr .8fr; gap: 14px;
+    background: var(--card-2); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+  }
+  .case.reverse { grid-template-columns: .8fr 1.2fr; }
+  .case.reverse .case-body { order: 2; }
+  .case.reverse .case-media { order: 1; }
+  .case-body { padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+  .case-kicker { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--primary); font-weight: 800; }
+  .case-body h3 { margin: 0; font-size: 16px; }
+  .case-body p { margin: 0; font-size: 12px; color: var(--muted); }
+  .case-body strong { color: var(--text); }
+  .case-media { min-height: 130px; }
+  .case-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .case-link { font-size: 12px; font-weight: 700; margin-top: 2px; }
   .reviews { display: grid; gap: 10px; }
   .review { margin: 0; padding: 12px; border-radius: 12px; background: var(--card-2); border: 1px solid var(--border); }
   .review .stars { color: #fbbf24; font-size: 13px; letter-spacing: 1px; }
@@ -311,6 +361,9 @@ ${p.avatarUrl ? `<meta property="og:image" content="${esc(p.avatarUrl)}">` : ''}
     .meta { justify-content: center; }
     .cta-row { justify-content: center; }
     .grid { grid-template-columns: 1fr; }
+    .case, .case.reverse { grid-template-columns: 1fr; }
+    .case.reverse .case-body { order: 1; }
+    .case.reverse .case-media { order: 2; }
     h1 { font-size: 25px; }
   }
 </style>
@@ -359,6 +412,8 @@ ${p.avatarUrl ? `<meta property="og:image" content="${esc(p.avatarUrl)}">` : ''}
     </div>
 
     ${work ? `<section class="card" style="margin-top:16px"><h2>Work</h2><div class="work-grid">${work}</div></section>` : ''}
+
+    ${cases ? `<section class="card" style="margin-top:16px"><h2>Case studies</h2><div class="cases">${cases}</div></section>` : ''}
 
     ${skills ? `<section class="card" style="margin-top:16px"><h2>Skills</h2><div class="chips">${skills}</div></section>` : ''}
 
