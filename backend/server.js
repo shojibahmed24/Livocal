@@ -1362,6 +1362,75 @@ app.get('/i/:token', async (req, res) => {
   }
 });
 
+// Public proposal view (share link, no login).
+app.get('/pr/:token', async (req, res) => {
+  if (!firestoreDb) return res.status(503).send('unavailable');
+  const token = String(req.params.token || '').trim();
+  if (!/^[a-z0-9]{16,40}$/.test(token)) return res.status(404).send('Not found');
+  try {
+    const doc = await firestoreDb.collection('public_proposals').doc(token).get();
+    if (!doc.exists) return res.status(404).send('Not found');
+    const p = doc.data() || {};
+    const esc = (value) =>
+      String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    const section = (title, body) =>
+      body
+        ? `<section><h2>${esc(title)}</h2><p>${esc(body).replace(/\n/g, '<br>')}</p></section>`
+        : '';
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=60');
+    return res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proposal — ${esc(p.ownerName || 'Freelancer')}</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#eef2f7;color:#0b1220;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans Bengali',sans-serif;line-height:1.6}
+  .sheet{max-width:780px;margin:24px auto;background:#fff;border-radius:14px;padding:34px;box-shadow:0 12px 40px rgba(15,40,70,.12)}
+  .top{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;border-bottom:2px solid #0f766e;padding-bottom:14px}
+  h1{font-size:22px;margin:0;color:#0f766e}
+  .muted{color:#64748b;font-size:12px}
+  h2{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#0f766e;margin:18px 0 6px}
+  p{margin:0;font-size:13px}
+  section{border-bottom:1px solid #e2e8f0;padding-bottom:12px}
+  .actions{margin:16px 0}
+  .btn{border:0;background:#0f9d76;color:#fff;border-radius:10px;padding:10px 16px;font-weight:800;font-size:12.5px;cursor:pointer}
+  footer{margin-top:20px;text-align:center;color:#94a3b8;font-size:10.5px}
+  @media(max-width:600px){.sheet{margin:10px;padding:20px}}
+  @media print{body{background:#fff}.sheet{box-shadow:none;margin:0;border-radius:0;padding:0}.actions{display:none}}
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="actions"><button class="btn" onclick="window.print()">Print / Save PDF</button></div>
+  <div class="top">
+    <div>
+      <h1>${esc(p.headline || 'Proposal')}</h1>
+      <div class="muted">Prepared for ${esc(p.clientName || 'Client')}</div>
+    </div>
+    <div class="muted" style="text-align:right">${esc(p.ownerName || 'Freelancer')}</div>
+  </div>
+  ${section('Scope', p.scope)}
+  ${section('Timeline', p.timeline)}
+  ${section('Price', p.price)}
+  ${section('Terms', p.terms)}
+  <footer>Powered by Livocal · live voice translation for freelancers</footer>
+</div>
+</body>
+</html>`);
+  } catch (err) {
+    console.error('[Proposal] page error:', err.message);
+    return res.status(500).send('error');
+  }
+});
+
 // Hosted Public Terms of Service Page for Google Play & App Store Compliance
 app.get(['/terms-of-service', '/terms'], (req, res) => {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
