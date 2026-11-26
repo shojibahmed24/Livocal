@@ -70,7 +70,7 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
                 child: Row(
                   children: [
-                    _chip('all', 'invoices', muted),
+                    _chip('all', 'filterAll', muted),
                     _chip('draft', 'statusDraft', muted),
                     _chip('sent', 'statusSent', muted),
                     _chip('paid', 'statusPaid', muted),

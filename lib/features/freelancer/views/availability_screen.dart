@@ -45,6 +45,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
 
   Future<void> _bootstrap() async {
     await AvailabilityService.ensureDefaults(widget.user.id);
+    await AvailabilityService.syncTimezone(widget.user.id);
     final profile = await FreelancerProfileService.ensure(
       widget.user.id,
       displayName: widget.user.name,

@@ -47,6 +47,9 @@ class AvailabilityDay {
 
   bool enabled;
   List<AvailabilitySlot> slots;
+
+  /// IANA zone the slot times belong to (e.g. Asia/Dhaka).
+  String timezone;
   DateTime updatedAt;
   bool synced;
 
@@ -55,6 +58,7 @@ class AvailabilityDay {
     required this.dayOfWeek,
     this.enabled = false,
     List<AvailabilitySlot> slots = const <AvailabilitySlot>[],
+    this.timezone = 'UTC',
     required this.updatedAt,
     this.synced = false,
   }) : slots = List<AvailabilitySlot>.from(slots);
@@ -67,6 +71,7 @@ class AvailabilityDay {
   Map<String, dynamic> toMap() => {
         'enabled': enabled,
         'slots': slots.map((slot) => slot.toMap()).toList(),
+        'timezone': timezone,
         'updatedAt': updatedAt.toIso8601String(),
       };
 
@@ -76,6 +81,7 @@ class AvailabilityDay {
       ownerUid: '',
       dayOfWeek: dayOfWeek,
       enabled: map['enabled'] == true,
+      timezone: (map['timezone'] ?? 'UTC').toString(),
       slots: rawSlots is List
           ? rawSlots
               .whereType<Map>()

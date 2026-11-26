@@ -271,7 +271,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           // Section: Freelancer tools
           _group(
-            title: AppStrings.tr(ref, 'freelancerProfile'),
+            title: AppStrings.tr(ref, 'freelancerTools'),
             rows: [
               SettingsRow(
                 icon: Icons.badge_outlined,

@@ -43,8 +43,13 @@ const AvailabilityDaySchema = CollectionSchema(
       name: r'synced',
       type: IsarType.bool,
     ),
-    r'updatedAt': PropertySchema(
+    r'timezone': PropertySchema(
       id: 5,
+      name: r'timezone',
+      type: IsarType.string,
+    ),
+    r'updatedAt': PropertySchema(
+      id: 6,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -98,6 +103,7 @@ int _availabilityDayEstimateSize(
           AvailabilitySlotSchema.estimateSize(value, offsets, allOffsets);
     }
   }
+  bytesCount += 3 + object.timezone.length * 3;
   return bytesCount;
 }
 
@@ -117,7 +123,8 @@ void _availabilityDaySerialize(
     object.slots,
   );
   writer.writeBool(offsets[4], object.synced);
-  writer.writeDateTime(offsets[5], object.updatedAt);
+  writer.writeString(offsets[5], object.timezone);
+  writer.writeDateTime(offsets[6], object.updatedAt);
 }
 
 AvailabilityDay _availabilityDayDeserialize(
@@ -138,7 +145,8 @@ AvailabilityDay _availabilityDayDeserialize(
         ) ??
         const <AvailabilitySlot>[],
     synced: reader.readBoolOrNull(offsets[4]) ?? false,
-    updatedAt: reader.readDateTime(offsets[5]),
+    timezone: reader.readStringOrNull(offsets[5]) ?? 'UTC',
+    updatedAt: reader.readDateTime(offsets[6]),
   );
   object.id = id;
   return object;
@@ -168,6 +176,8 @@ P _availabilityDayDeserializeProp<P>(
     case 4:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     case 5:
+      return (reader.readStringOrNull(offset) ?? 'UTC') as P;
+    case 6:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -858,6 +868,142 @@ extension AvailabilityDayQueryFilter
   }
 
   QueryBuilder<AvailabilityDay, AvailabilityDay, QAfterFilterCondition>
+      timezoneEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'timezone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AvailabilityDay, AvailabilityDay, QAfterFilterCondition>
+      timezoneGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'timezone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AvailabilityDay, AvailabilityDay, QAfterFilterCondition>
+      timezoneLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'timezone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AvailabilityDay, AvailabilityDay, QAfterFilterCondition>
+      timezoneBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'timezone',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AvailabilityDay, AvailabilityDay, QAfterFilterCondition>
+      timezoneStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'timezone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AvailabilityDay, AvailabilityDay, QAfterFilterCondition>
+      timezoneEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'timezone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AvailabilityDay, AvailabilityDay, QAfterFilterCondition>
+      timezoneContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'timezone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AvailabilityDay, AvailabilityDay, QAfterFilterCondition>
+      timezoneMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'timezone',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AvailabilityDay, AvailabilityDay, QAfterFilterCondition>
+      timezoneIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'timezone',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AvailabilityDay, AvailabilityDay, QAfterFilterCondition>
+      timezoneIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'timezone',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AvailabilityDay, AvailabilityDay, QAfterFilterCondition>
       updatedAtEqualTo(DateTime value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -984,6 +1130,20 @@ extension AvailabilityDayQuerySortBy
   }
 
   QueryBuilder<AvailabilityDay, AvailabilityDay, QAfterSortBy>
+      sortByTimezone() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'timezone', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AvailabilityDay, AvailabilityDay, QAfterSortBy>
+      sortByTimezoneDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'timezone', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AvailabilityDay, AvailabilityDay, QAfterSortBy>
       sortByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'updatedAt', Sort.asc);
@@ -1067,6 +1227,20 @@ extension AvailabilityDayQuerySortThenBy
   }
 
   QueryBuilder<AvailabilityDay, AvailabilityDay, QAfterSortBy>
+      thenByTimezone() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'timezone', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AvailabilityDay, AvailabilityDay, QAfterSortBy>
+      thenByTimezoneDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'timezone', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AvailabilityDay, AvailabilityDay, QAfterSortBy>
       thenByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'updatedAt', Sort.asc);
@@ -1107,6 +1281,13 @@ extension AvailabilityDayQueryWhereDistinct
   QueryBuilder<AvailabilityDay, AvailabilityDay, QDistinct> distinctBySynced() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'synced');
+    });
+  }
+
+  QueryBuilder<AvailabilityDay, AvailabilityDay, QDistinct> distinctByTimezone(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'timezone', caseSensitive: caseSensitive);
     });
   }
 
@@ -1154,6 +1335,12 @@ extension AvailabilityDayQueryProperty
   QueryBuilder<AvailabilityDay, bool, QQueryOperations> syncedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'synced');
+    });
+  }
+
+  QueryBuilder<AvailabilityDay, String, QQueryOperations> timezoneProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'timezone');
     });
   }
 

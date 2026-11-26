@@ -122,7 +122,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
                 child: Row(
                   children: [
-                    _chip('all', 'bookings', muted),
+                    _chip('all', 'filterAll', muted),
                     _chip('pending', 'bookingPending', muted),
                     _chip('confirmed', 'bookingConfirmed', muted),
                     _chip('cancelled', 'bookingCancelled', muted),
