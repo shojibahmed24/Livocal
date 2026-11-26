@@ -770,6 +770,10 @@ app.get('/u/:slug', async (req, res) => {
     if (!snap.exists) return res.status(404).send('Not found');
     const profile = snap.data() || {};
     if (profile.published !== true) return res.status(404).send('Not found');
+    const canonical = String(profile.slug || profile.username || slug);
+    if (canonical && canonical !== slug) {
+      return res.redirect(301, '/u/' + encodeURIComponent(canonical));
+    }
 
     const [days, reviews] = await Promise.all([
       computeBookingDays(uid).catch(() => []),
