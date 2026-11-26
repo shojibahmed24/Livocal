@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'package:livocal/features/freelancer/models/freelancer_profile.dart';
+import 'package:livocal/features/freelancer/services/cv_pdf_service.dart';
 import 'package:livocal/features/freelancer/widgets/cover_image_field.dart';
 
 /// Phase A professional fields: cover, response time, socials, stats, CV.
@@ -21,6 +23,29 @@ class ProfileProFields extends StatefulWidget {
 }
 
 class _ProfileProFieldsState extends State<ProfileProFields> {
+  bool _cvLoading = false;
+
+  Future<void> _generateCv() async {
+    if (_cvLoading) return;
+    setState(() => _cvLoading = true);
+    try {
+      final file = await CvPdfService.build(widget.profile);
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        subject: widget.profile.displayName,
+      );
+    } catch (e) {
+      debugPrint('[ProfileProFields] cv failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(widget.t('cvFailed'))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _cvLoading = false);
+    }
+  }
+
   late final Map<String, TextEditingController> _c = {
     'coverUrl': TextEditingController(text: widget.profile.coverUrl),
     'responseTime': TextEditingController(text: widget.profile.responseTime),
@@ -120,6 +145,24 @@ class _ProfileProFieldsState extends State<ProfileProFields> {
                 child: _field('clientsCount', 'clientsCount', textColor,
                     number: true)),
           ],
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: _cvLoading ? null : _generateCv,
+            icon: _cvLoading
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.picture_as_pdf_outlined, size: 16),
+            label: Text(
+              widget.t('generateCv'),
+              style: const TextStyle(fontSize: 12),
+            ),
+          ),
         ),
         const SizedBox(height: 10),
       ],

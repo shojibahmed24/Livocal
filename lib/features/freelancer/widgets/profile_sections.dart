@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import 'package:livocal/features/freelancer/models/freelancer_profile.dart';
 import 'package:livocal/features/freelancer/widgets/case_studies_section.dart';
+import 'package:livocal/features/freelancer/widgets/experience_dialog.dart';
+import 'package:livocal/features/freelancer/widgets/experience_section.dart';
 import 'package:livocal/features/freelancer/widgets/case_study_dialog.dart';
 import 'package:livocal/features/freelancer/widgets/portfolio_dialog.dart';
 import 'package:livocal/features/freelancer/widgets/portfolio_section.dart';
@@ -42,6 +44,16 @@ class ProfileSections extends StatelessWidget {
     mutate((p) => p.portfolio = [...p.portfolio]..removeAt(index));
   }
 
+  Future<void> _addExperience(BuildContext context) async {
+    final result = await showExperienceDialog(context);
+    if (result == null) return;
+    mutate((p) => p.experience = [...p.experience, jsonEncode(result)]);
+  }
+
+  void _removeExperience(int index) {
+    mutate((p) => p.experience = [...p.experience]..removeAt(index));
+  }
+
   Future<void> _addCase(BuildContext context) async {
     final result = await showCaseStudyDialog(
       context,
@@ -70,6 +82,14 @@ class ProfileSections extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        ExperienceSection(
+          entries: profile.experienceEntries,
+          t: t,
+          textColor: textColor,
+          muted: muted,
+          onAdd: () => _addExperience(context),
+          onRemove: _removeExperience,
+        ),
         CaseStudiesSection(
           entries: profile.caseEntries,
           t: t,
