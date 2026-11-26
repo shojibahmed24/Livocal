@@ -32,6 +32,49 @@ service cloud.firestore {
     }
 
     // 1. User Profiles & Realtime Presence
+    // Public booking requests: the relay creates them; only the host may read
+    // or change status (guest data is never writable by clients).
+    match /bookings/{bookingId} {
+      allow read: if isAuthenticated() && resource.data.hostUid == request.auth.uid;
+      allow update: if isAuthenticated()
+        && resource.data.hostUid == request.auth.uid
+        && request.resource.data.hostUid == resource.data.hostUid
+        && request.resource.data.guestName == resource.data.guestName
+        && request.resource.data.guestContact == resource.data.guestContact
+        && request.resource.data.status in ['pending', 'confirmed', 'cancelled'];
+      allow create, delete: if false;
+    }
+
+    // Call reviews are written by the relay only; participants may read their own.
+    match /reviews/{reviewId} {
+      allow read: if isAuthenticated() && (
+        resource.data.raterUid == request.auth.uid ||
+        resource.data.targetUid == request.auth.uid
+      );
+      allow write: if false;
+    }
+
+    // Public freelancer profiles: published docs are world-readable, drafts are
+    // owner-only. Fields are validated so a published page cannot leak contact
+    // data (phone/email are not part of the allowed shape).
+    match /profiles/{uid} {
+      allow read: if resource.data.published == true ||
+        (isAuthenticated() && request.auth.uid == uid);
+      allow write: if isAuthenticated() && request.auth.uid == uid &&
+        !request.resource.data.keys().hasAny(['phone', 'email', 'phoneNumber']);
+    }
+
+    // Slug lease: unique claim per public link (uid may not be reassigned).
+    match /profiles_slug/{slug} {
+      allow read: if true;
+      allow create: if isAuthenticated() &&
+        request.resource.data.uid == request.auth.uid;
+      allow update: if isAuthenticated() &&
+        resource.data.uid == request.auth.uid &&
+        request.resource.data.uid == resource.data.uid;
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+    }
+
     match /users/{userId} {
       // Security: Allow get for individual profile inspection by known ID
       allow get: if isAuthenticated();
@@ -79,6 +122,34 @@ service cloud.firestore {
 
       // Muted Contacts Subcollection (Owner manages per-contact mute preferences)
       match /muted_contacts/{contactId} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
+
+      // Freelancer CRM (owner-only notes, rates and deal stages)
+      match /crm/{peerId} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
+
+      // Freelancer quick replies (owner-only message templates)
+      match /quick_replies/{replyId} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
+
+      // Freelancer invoices and the sequential number counter
+      match /invoices/{invoiceId} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
+      match /counters/{counterId} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
+
+      // Freelancer time entries (call minutes per client)
+      match /time_entries/{entryId} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
+
+      // Freelancer weekly availability (public read happens through the relay)
+      match /availability/{dayOfWeek} {
         allow read, write: if isAuthenticated() && request.auth.uid == userId;
       }
 
@@ -193,6 +264,12 @@ service cloud.firestore {
         && request.resource.data.callerId == resource.data.callerId
         && request.resource.data.calleeId == resource.data.calleeId;
       allow delete: if isCallParty(resource.data);
+
+      // AI call summary (written by the relay with the Admin SDK only)
+      match /summary/{docId} {
+        allow read: if isCallParticipant(callId);
+        allow write: if false;
+      }
 
       // WebRTC ICE Candidates (Caller) - Restricted strictly to call participants
       match /callerCandidates/{candidateId} {

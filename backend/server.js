@@ -246,6 +246,26 @@ const TranslateSchema = z.object({
   sourceLang: z.string().max(16).optional(),
 });
 
+const CallSummarySchema = z.object({
+  callId: z.string().min(1, 'callId is required').max(128),
+  durationSeconds: z.number().int().min(0).max(86400),
+  langPair: z
+    .object({
+      a: z.string().max(16).optional(),
+      b: z.string().max(16).optional(),
+    })
+    .optional(),
+  transcript: z
+    .array(
+      z.object({
+        speaker: z.enum(['me', 'client']),
+        text: z.string().min(1).max(2000),
+      })
+    )
+    .min(1, 'transcript is required')
+    .max(300),
+});
+
 function validateBody(schema) {
   return (req, res, next) => {
     const parsed = schema.safeParse(req.body);
@@ -622,6 +642,473 @@ app.get(['/privacy-policy', '/privacy'], (req, res) => {
   </script>
 </body>
 </html>`);
+});
+
+// Public freelancer profile: shareable page that works without the app.
+app.get('/api/public/profile/:slug', async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'unavailable' });
+  const slug = String(req.params.slug || '').trim().toLowerCase();
+  if (!/^[a-z0-9-]{3,32}$/.test(slug)) return res.status(404).json({ error: 'not_found' });
+  try {
+    const claim = await firestoreDb.collection('profiles_slug').doc(slug).get();
+    const uid = claim.exists ? (claim.data()?.uid || '') : '';
+    if (!uid) return res.status(404).json({ error: 'not_found' });
+    const snap = await firestoreDb.collection('profiles').doc(uid).get();
+    if (!snap.exists) return res.status(404).json({ error: 'not_found' });
+    const p = snap.data() || {};
+    if (p.published !== true) return res.status(404).json({ error: 'not_found' });
+    res.setHeader('Cache-Control', 'public, max-age=60');
+    return res.json({
+      slug,
+      displayName: p.displayName || '',
+      headline: p.headline || '',
+      bio: p.bio || '',
+      skills: Array.isArray(p.skills) ? p.skills : [],
+      languages: Array.isArray(p.languages) ? p.languages : [],
+      rate: p.rate || null,
+      availability: p.availability || '',
+      portfolio: Array.isArray(p.portfolio) ? p.portfolio : [],
+      avatarUrl: p.avatarUrl || '',
+      ratingAvg: Number(p.ratingAvg || 0),
+      ratingCount: Number(p.ratingCount || 0),
+      verified: p.published === true && Number(p.ratingCount || 0) > 0,
+    });
+  } catch (err) {
+    console.error('[PublicProfile] error:', err.message);
+    return res.status(500).json({ error: 'failed' });
+  }
+});
+
+app.get('/p/:slug', async (req, res) => {
+  if (!firestoreDb) return res.status(503).send('unavailable');
+  const slug = String(req.params.slug || '').trim().toLowerCase();
+  if (!/^[a-z0-9-]{3,32}$/.test(slug)) return res.status(404).send('Not found');
+  try {
+    const claim = await firestoreDb.collection('profiles_slug').doc(slug).get();
+    const uid = claim.exists ? (claim.data()?.uid || '') : '';
+    if (!uid) return res.status(404).send('Not found');
+    const snap = await firestoreDb.collection('profiles').doc(uid).get();
+    if (!snap.exists) return res.status(404).send('Not found');
+    const p = snap.data() || {};
+    if (p.published !== true) return res.status(404).send('Not found');
+
+    const esc = (v) => String(v == null ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+    const rate = p.rate && Number(p.rate.amount) > 0
+      ? `${esc(p.rate.currency || 'USD')} ${esc(p.rate.amount)} / ${p.rate.basis === 'project' ? 'project' : 'hour'}`
+      : '';
+    const skills = (Array.isArray(p.skills) ? p.skills : [])
+      .map((s) => `<span class="chip">${esc(s)}</span>`).join('');
+    const languages = (Array.isArray(p.languages) ? p.languages : [])
+      .map((l) => `<span class="chip">${esc(l.code || l)}${l.level ? ' · ' + esc(l.level) : ''}</span>`).join('');
+    const portfolio = (Array.isArray(p.portfolio) ? p.portfolio : [])
+      .map((item) => `<li><a href="${esc(item.url || '#')}" rel="noopener nofollow" target="_blank">${esc(item.label || item.url || '')}</a></li>`).join('');
+    const availability = p.availability
+      ? `<span class="pill">${esc(String(p.availability).replace(/_/g, ' '))}</span>` : '';
+    const ratingCount = Number(p.ratingCount || 0);
+    const ratingAvg = Number(p.ratingAvg || 0);
+    const ratingBlock = ratingCount > 0
+      ? `<span class="pill">★ ${ratingAvg.toFixed(1)} · ${ratingCount}</span>` : '';
+    const verifiedBlock =
+      p.published === true && ratingCount > 0
+        ? '<span class="pill">✓ Verified</span>'
+        : '';
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=60');
+    return res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${esc(p.displayName || 'Freelancer')} — Livocal</title>
+<meta property="og:title" content="${esc(p.displayName || 'Freelancer')}">
+<meta property="og:description" content="${esc(p.headline || 'Freelancer profile on Livocal')}">
+<style>
+  :root { --primary:#34d399; --bg:#04070d; --card:#0c1424; --text:#f1f5f9; --muted:#8b98ad; --border:rgba(255,255,255,.08); }
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6}
+  .wrap{max-width:760px;margin:0 auto;padding:28px 20px 60px}
+  .head{display:flex;gap:16px;align-items:center}
+  .avatar{width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#34d399,#10b981);flex:0 0 auto;object-fit:cover}
+  h1{font-size:26px;margin:0 0 4px} .headline{color:var(--muted);font-size:14px;margin:0}
+  .pill{display:inline-block;margin-top:8px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;color:var(--primary);background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);text-transform:capitalize}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-top:18px}
+  h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+  .chip{display:inline-block;margin:0 6px 6px 0;padding:4px 10px;border-radius:999px;font-size:12px;background:rgba(255,255,255,.06);border:1px solid var(--border)}
+  .rate{font-size:22px;font-weight:800;color:var(--primary)}
+  ul{padding-left:18px;margin:0} a{color:var(--primary)}
+  footer{margin-top:28px;text-align:center;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    ${p.avatarUrl ? `<img class="avatar" src="${esc(p.avatarUrl)}" alt="">` : '<div class="avatar"></div>'}
+    <div>
+      <h1>${esc(p.displayName || 'Freelancer')}</h1>
+      <p class="headline">${esc(p.headline || '')}</p>
+      ${availability}
+      ${ratingBlock}
+      ${verifiedBlock}
+    </div>
+  </div>
+  ${p.bio ? `<div class="card"><h2>About</h2><p>${esc(p.bio)}</p></div>` : ''}
+  ${skills ? `<div class="card"><h2>Skills</h2>${skills}</div>` : ''}
+  ${languages ? `<div class="card"><h2>Languages</h2>${languages}</div>` : ''}
+  ${rate ? `<div class="card"><h2>Rate</h2><div class="rate">${rate}</div></div>` : ''}
+  ${portfolio ? `<div class="card"><h2>Portfolio</h2><ul>${portfolio}</ul></div>` : ''}
+  <footer>Powered by Livocal · live voice translation for freelancers</footer>
+</div>
+</body>
+</html>`);
+  } catch (err) {
+    console.error('[PublicProfile] page error:', err.message);
+    return res.status(500).send('error');
+  }
+});
+
+// Public booking: shareable page and request endpoint (no app or login).
+const bookingLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many booking attempts, please try again later.' },
+});
+
+function parseHm(value) {
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(String(value || ''));
+  if (!match) return null;
+  return Number(match[1]) * 60 + Number(match[2]);
+}
+
+function bookingWeekday(date) {
+  const day = date.getUTCDay();
+  return day === 0 ? 7 : day;
+}
+
+function ymd(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+async function loadHostBySlug(rawSlug) {
+  if (!firestoreDb) return null;
+  const slug = String(rawSlug || '').trim().toLowerCase();
+  if (!/^[a-z0-9-]{3,32}$/.test(slug)) return null;
+  const claim = await firestoreDb.collection('profiles_slug').doc(slug).get();
+  const uid = claim.exists ? (claim.data()?.uid || '') : '';
+  if (!uid) return null;
+  const snap = await firestoreDb.collection('profiles').doc(uid).get();
+  if (!snap.exists) return null;
+  const profile = snap.data() || {};
+  if (profile.published !== true) return null;
+  return { uid, slug, profile };
+}
+
+async function computeBookingDays(uid) {
+  const availSnap = await firestoreDb
+    .collection('users')
+    .doc(uid)
+    .collection('availability')
+    .get();
+  const availability = {};
+  availSnap.docs.forEach((doc) => {
+    availability[doc.id] = doc.data();
+  });
+
+  const bookingsSnap = await firestoreDb
+    .collection('bookings')
+    .where('hostUid', '==', uid)
+    .get();
+  const booked = bookingsSnap.docs
+    .map((doc) => doc.data())
+    .filter((row) => row.status !== 'cancelled')
+    .map((row) => ({ start: Date.parse(row.startAt), end: Date.parse(row.endAt) }))
+    .filter((row) => Number.isFinite(row.start) && Number.isFinite(row.end));
+
+  const days = [];
+  const now = new Date();
+  for (let i = 0; i < 14; i++) {
+    const date = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + i)
+    );
+    const config = availability[String(bookingWeekday(date))];
+    if (!config || config.enabled !== true) continue;
+
+    const slots = (Array.isArray(config.slots) ? config.slots : [])
+      .filter((slot) => {
+        const start = parseHm(slot.start);
+        const end = parseHm(slot.end);
+        return start !== null && end !== null && start < end;
+      })
+      .filter((slot) => {
+        const start = Date.parse(`${ymd(date)}T${slot.start}:00Z`);
+        const end = Date.parse(`${ymd(date)}T${slot.end}:00Z`);
+        if (!Number.isFinite(start) || start < Date.now()) return false;
+        return !booked.some((row) => row.start < end && row.end > start);
+      });
+
+    if (slots.length > 0) {
+      days.push({
+        date: ymd(date),
+        label: date.toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          weekday: 'short',
+          timeZone: 'UTC',
+        }),
+        slots: slots.map((slot) => ({ start: slot.start, end: slot.end })),
+      });
+    }
+  }
+  return days;
+}
+
+app.get('/api/public/availability/:slug', async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'unavailable' });
+  try {
+    const host = await loadHostBySlug(req.params.slug);
+    if (!host) return res.status(404).json({ error: 'not_found' });
+    const days = await computeBookingDays(host.uid);
+    res.setHeader('Cache-Control', 'no-store');
+    return res.json({ displayName: host.profile.displayName || '', days });
+  } catch (err) {
+    console.error('[Booking] availability error:', err.message);
+    return res.status(500).json({ error: 'failed' });
+  }
+});
+
+app.get('/book/:slug', async (req, res) => {
+  if (!firestoreDb) return res.status(503).send('unavailable');
+  try {
+    const host = await loadHostBySlug(req.params.slug);
+    if (!host) return res.status(404).send('Not found');
+    const days = await computeBookingDays(host.uid);
+
+    const esc = (value) =>
+      String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+
+    const rate = host.profile.rate && Number(host.profile.rate.amount) > 0
+      ? `${esc(host.profile.rate.currency || 'USD')} ${esc(host.profile.rate.amount)} / ${
+          host.profile.rate.basis === 'project' ? 'project' : 'hour'
+        }`
+      : '';
+
+    const dayHtml = days
+      .map((day) => {
+        const slots = day.slots
+          .map(
+            (slot) =>
+              `<label class="slot"><input type="radio" name="slot" value="${day.date}T${slot.start}">` +
+              `<span>${slot.start} – ${slot.end}</span></label>`
+          )
+          .join('');
+        return `<div class="day"><div class="date">${esc(day.label)}</div><div class="slots">${slots}</div></div>`;
+      })
+      .join('');
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
+    return res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book a call — ${esc(host.profile.displayName || 'Livocal')}</title>
+<style>
+  :root { --primary:#34d399; --bg:#04070d; --card:#0c1424; --text:#f1f5f9; --muted:#8b98ad; --border:rgba(255,255,255,.08); }
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.55}
+  .wrap{max-width:640px;margin:0 auto;padding:28px 18px 56px}
+  h1{font-size:24px;margin:0 0 6px} .sub{color:var(--muted);font-size:13px;margin:0 0 4px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;margin-top:18px}
+  .day{margin-bottom:14px} .date{font-size:12px;font-weight:700;color:var(--primary);margin-bottom:6px}
+  .slots{display:flex;flex-wrap:wrap;gap:8px}
+  .slot{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border:1px solid var(--border);border-radius:999px;font-size:12.5px;cursor:pointer;background:rgba(255,255,255,.03)}
+  .slot input{accent-color:var(--primary)}
+  label{display:block;margin:10px 0 4px;font-size:12px;color:var(--muted)}
+  input[type=text],textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0a1220;color:var(--text);font-size:13px}
+  button{width:100%;margin-top:16px;padding:12px;border:0;border-radius:12px;background:var(--primary);color:#04120c;font-weight:800;font-size:14px;cursor:pointer}
+  .ok{color:var(--primary);font-weight:700} .err{color:#ff6b6b;font-weight:700} .empty{color:var(--muted);font-size:13px}
+  footer{margin-top:22px;text-align:center;color:var(--muted);font-size:11px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Book a call with ${esc(host.profile.displayName || 'a freelancer')}</h1>
+  <p class="sub">${esc(host.profile.headline || '')}</p>
+  ${rate ? `<p class="sub">${rate}</p>` : ''}
+  <form id="f" class="card">
+    <label>Your name</label>
+    <input type="text" name="guestName" maxlength="80" required>
+    <label>WhatsApp or email</label>
+    <input type="text" name="guestContact" maxlength="120" required>
+    <label>Note (optional)</label>
+    <textarea name="note" rows="3" maxlength="500"></textarea>
+    <label>Pick a slot (UTC)</label>
+    ${dayHtml || '<p class="empty">No open slots right now. Please check back later.</p>'}
+    <button type="submit" ${days.length ? '' : 'disabled'}>Request booking</button>
+    <p id="msg" class="empty"></p>
+  </form>
+  <footer>Powered by Livocal · live voice translation for freelancers</footer>
+</div>
+<script>
+  var SLUG = ${JSON.stringify(host.slug)};
+  document.getElementById('f').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    var form = event.target;
+    var msg = document.getElementById('msg');
+    var slot = form.querySelector('input[name=slot]:checked');
+    if (!slot) { msg.className = 'err'; msg.textContent = 'Please pick a slot.'; return; }
+    msg.className = 'empty';
+    msg.textContent = 'Sending...';
+    try {
+      var response = await fetch('/api/public/book/' + SLUG, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          guestName: form.guestName.value,
+          guestContact: form.guestContact.value,
+          note: form.note.value,
+          slot: slot.value
+        })
+      });
+      var data = await response.json().catch(function () { return {}; });
+      if (!response.ok) {
+        msg.className = 'err';
+        msg.textContent = data.error === 'slot_taken'
+          ? 'That slot was just taken. Please pick another.'
+          : 'Could not send the request. Please try again.';
+        return;
+      }
+      form.innerHTML = '<p class="ok">Request sent! You will get a confirmation soon.</p>';
+    } catch (error) {
+      msg.className = 'err';
+      msg.textContent = 'Network error. Please try again.';
+    }
+  });
+</script>
+</body>
+</html>`);
+  } catch (err) {
+    console.error('[Booking] page error:', err.message);
+    return res.status(500).send('error');
+  }
+});
+
+app.post('/api/public/book/:slug', bookingLimiter, async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'unavailable' });
+  try {
+    const host = await loadHostBySlug(req.params.slug);
+    if (!host) return res.status(404).json({ error: 'not_found' });
+
+    const body = req.body || {};
+    const guestName = String(body.guestName || '').trim().slice(0, 80);
+    const guestContact = String(body.guestContact || '').trim().slice(0, 120);
+    const note = String(body.note || '').trim().slice(0, 500);
+    const slot = String(body.slot || '');
+    const match = /^(\d{4}-\d{2}-\d{2})T([01]\d|2[0-3]):([0-5]\d)$/.exec(slot);
+    if (!guestName || !guestContact || !match) {
+      return res.status(400).json({ error: 'invalid' });
+    }
+
+    const date = match[1];
+    const startHm = `${match[2]}:${match[3]}`;
+    const [year, month, day] = date.split('-').map(Number);
+    const dateObj = new Date(Date.UTC(year, month - 1, day));
+    if (!Number.isFinite(dateObj.getTime())) {
+      return res.status(400).json({ error: 'invalid' });
+    }
+
+    const config = await firestoreDb
+      .collection('users')
+      .doc(host.uid)
+      .collection('availability')
+      .doc(String(bookingWeekday(dateObj)))
+      .get();
+    const slotConfig = config.exists
+      ? (Array.isArray(config.data().slots) ? config.data().slots : []).find(
+          (row) => row.start === startHm
+        )
+      : null;
+    if (
+      !config.exists ||
+      config.data().enabled !== true ||
+      !slotConfig ||
+      parseHm(slotConfig.end) === null ||
+      parseHm(slotConfig.end) <= parseHm(startHm)
+    ) {
+      return res.status(400).json({ error: 'slot_unavailable' });
+    }
+
+    const startAt = new Date(`${date}T${startHm}:00Z`);
+    const endAt = new Date(`${date}T${slotConfig.end}:00Z`);
+    if (startAt.getTime() < Date.now() - 60 * 1000) {
+      return res.status(400).json({ error: 'slot_unavailable' });
+    }
+
+    const existingSnap = await firestoreDb
+      .collection('bookings')
+      .where('hostUid', '==', host.uid)
+      .get();
+    const conflict = existingSnap.docs
+      .map((doc) => doc.data())
+      .filter((row) => row.status !== 'cancelled')
+      .some(
+        (row) =>
+          Date.parse(row.startAt) < endAt.getTime() &&
+          Date.parse(row.endAt) > startAt.getTime()
+      );
+    if (conflict) return res.status(409).json({ error: 'slot_taken' });
+
+    const created = await firestoreDb.collection('bookings').add({
+      hostUid: host.uid,
+      guestName,
+      guestContact,
+      note,
+      startAt: startAt.toISOString(),
+      endAt: endAt.toISOString(),
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    });
+
+    try {
+      if (messagingService) {
+        const tokenDoc = await firestoreDb.collection('fcmTokens').doc(host.uid).get();
+        const token = tokenDoc.exists ? tokenDoc.data().token : null;
+        if (token) {
+          await messagingService.send({
+            token,
+            notification: {
+              title: 'New booking request',
+              body: `${guestName} · ${startAt.toISOString().slice(0, 16).replace('T', ' ')} UTC`,
+            },
+            data: { type: 'BOOKING_REQUEST', bookingId: created.id },
+            android: {
+              priority: 'high',
+              notification: { channelId: 'livocal_messages', defaultSound: true },
+            },
+          });
+        }
+      }
+    } catch (pushErr) {
+      console.error('[Booking] push failed:', pushErr.message);
+    }
+
+    return res.json({
+      ok: true,
+      id: created.id,
+      startAt: startAt.toISOString(),
+      endAt: endAt.toISOString(),
+    });
+  } catch (err) {
+    console.error('[Booking] create error:', err.message);
+    return res.status(500).json({ error: 'failed' });
+  }
 });
 
 // Hosted Public Terms of Service Page for Google Play & App Store Compliance
@@ -3869,6 +4356,398 @@ app.post(
     } catch (err) {
       console.error('[Translate] API error:', err);
       res.status(500).json({ error: 'Translation request failed' });
+    }
+  }
+);
+
+/**
+ * Normalizes the model's JSON (or a code-fenced variant) into the public
+ * summary shape. Returns null when the payload cannot be trusted.
+ */
+function normalizeCallSummary(value) {
+  if (!value || typeof value !== 'object') return null;
+  const asText = (v) => (typeof v === 'string' ? v.trim() : '');
+  const asList = (v, max = 5) =>
+    Array.isArray(v) ? v.map(asText).filter(Boolean).slice(0, max) : [];
+  const summaryText = asText(value.summary);
+  if (!summaryText) return null;
+
+  const actionItems = Array.isArray(value.actionItems)
+    ? value.actionItems
+        .map((item) => {
+          if (typeof item === 'string') return { text: item.trim(), owner: 'me' };
+          if (!item || typeof item !== 'object') return null;
+          const text = asText(item.text);
+          if (!text) return null;
+          return { text, owner: item.owner === 'client' ? 'client' : 'me' };
+        })
+        .filter(Boolean)
+        .slice(0, 5)
+    : [];
+
+  return {
+    summary: summaryText,
+    decisions: asList(value.decisions),
+    actionItems,
+    clientHints: asText(value.clientHints),
+  };
+}
+
+function parseCallSummaryJson(raw) {
+  if (!raw) return null;
+  const cleaned = String(raw).replace(/```json/gi, '').replace(/```/g, '').trim();
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if (start === -1 || end <= start) return null;
+  try {
+    return normalizeCallSummary(JSON.parse(cleaned.slice(start, end + 1)));
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
+ * Extractive fallback when Gemini is unavailable: no guessing, only lines that
+ * were actually said.
+ */
+function buildFallbackCallSummary(transcript) {
+  const lines = transcript.map(
+    (item) => `${item.speaker === 'me' ? 'Me' : 'Client'}: ${item.text}`
+  );
+  const summary = lines.slice(0, 4).join(' ').slice(0, 600);
+  const actionPattern =
+    /\b(will|shall|send|share|prepare|confirm|pay|deliver|deadline|tomorrow|next week)\b|করব|পাঠাবো|দেব|শেষ করব/i;
+  const actionItems = transcript
+    .filter((item) => actionPattern.test(item.text))
+    .slice(0, 3)
+    .map((item) => ({
+      text: item.text.slice(0, 300),
+      owner: item.speaker === 'me' ? 'me' : 'client',
+    }));
+  return { summary, decisions: [], actionItems, clientHints: '' };
+}
+
+/**
+ * POST /api/call/summary
+ * Turns a translated call transcript into a bilingual summary with decisions
+ * and action items. The raw transcript is used for this request only and is
+ * never stored; only the resulting summary is kept at
+ * calls/{callId}/summary/latest.
+ */
+app.post(
+  '/api/call/summary',
+  apiLimiter,
+  authenticateRequest,
+  translateLimiter,
+  validateBody(CallSummarySchema),
+  async (req, res) => {
+    const uid = req.user?.uid;
+    if (!uid) return res.status(401).json({ error: 'Unauthorized' });
+    if (!firestoreDb) return res.status(503).json({ error: 'unavailable' });
+
+    const { callId, durationSeconds, transcript } = req.body;
+    const langPair = {
+      a: req.body.langPair?.a || 'auto',
+      b: req.body.langPair?.b || 'en',
+    };
+
+    // Participant guard: fail closed when the call document exists.
+    try {
+      const callSnap = await firestoreDb.collection('calls').doc(callId).get();
+      if (callSnap.exists) {
+        const call = callSnap.data() || {};
+        const partyIds = [call.callerId, call.calleeId].filter(Boolean).map(String);
+        const phone = req.user?.phone_number || '';
+        const isParty =
+          partyIds.includes(uid) ||
+          (phone &&
+            (partyIds.includes(`phone_${phone}`) || partyIds.includes(phone)));
+        if (!isParty) return res.status(403).json({ error: 'forbidden' });
+      }
+    } catch (err) {
+      console.error('[CallSummary] participant check failed:', err.message);
+      return res.status(500).json({ error: 'failed' });
+    }
+
+    const transcriptText = transcript
+      .map((item) => `${item.speaker === 'me' ? 'Me' : 'Client'}: ${item.text}`)
+      .join('\n')
+      .slice(0, 12000);
+
+    const prompt = [
+      'You are a meeting summarizer for a translated business call between a freelancer ("Me") and a client ("Client").',
+      'Return ONLY JSON with this exact shape:',
+      '{"summary":"3 concise sentences","decisions":["..."],"actionItems":[{"text":"...","owner":"me|client"}],"clientHints":"budget, timeline and scope hints"}',
+      'Write summary, decisions, action items and clientHints bilingually: the English sentence followed by its Bangla translation separated by " / ".',
+      'At most 5 decisions and 5 action items. Use empty arrays and an empty string when the transcript has no such content.',
+      'Never invent facts that are not in the transcript.',
+      '',
+      'Transcript:',
+      transcriptText,
+    ].join('\n');
+
+    let summary = null;
+    let source = 'fallback';
+
+    if (GEMINI_API_KEY) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+        const apiRes = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: 900,
+              responseMimeType: 'application/json',
+            },
+          }),
+        });
+        if (apiRes.ok) {
+          const data = await apiRes.json();
+          const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          summary = parseCallSummaryJson(raw);
+          if (summary) source = 'gemini';
+        } else {
+          console.error('[CallSummary] Gemini HTTP status:', apiRes.status);
+        }
+      } catch (err) {
+        console.error('[CallSummary] Gemini error:', err.message);
+      }
+    }
+
+    if (!summary) summary = buildFallbackCallSummary(transcript);
+
+    const stored = {
+      summary: summary.summary,
+      decisions: summary.decisions,
+      actionItems: summary.actionItems,
+      clientHints: summary.clientHints,
+      langPair,
+      durationSeconds,
+      createdBy: uid,
+      createdAt: FieldValue.serverTimestamp(),
+    };
+
+    try {
+      await firestoreDb
+        .collection('calls')
+        .doc(callId)
+        .collection('summary')
+        .doc('latest')
+        .set(stored);
+    } catch (err) {
+      console.error('[CallSummary] save failed:', err.message);
+    }
+
+    return res.json({
+      summary: {
+        summary: summary.summary,
+        decisions: summary.decisions,
+        actionItems: summary.actionItems,
+        clientHints: summary.clientHints,
+      },
+      source,
+    });
+  }
+);
+
+const ReviewSchema = z.object({
+  callId: z.string().min(1, 'callId is required').max(128),
+  targetUid: z.string().min(1, 'targetUid is required').max(128),
+  rating: z.number().int().min(1, 'rating must be 1-5').max(5),
+  comment: z.string().max(500).optional(),
+});
+
+const ProposalSchema = z.object({
+  displayName: z.string().max(80).optional(),
+  headline: z.string().max(160).optional(),
+  skills: z.array(z.string().max(40)).max(20).optional(),
+  clientName: z.string().max(80).optional(),
+  brief: z.string().max(1200).optional(),
+  hints: z.string().max(800).optional(),
+  rate: z
+    .object({
+      amount: z.number().min(0).max(1000000),
+      currency: z.string().max(8),
+      basis: z.string().max(16),
+    })
+    .optional(),
+});
+
+function fallbackProposal(input) {
+  const skills = (input.skills || []).slice(0, 6).join(', ') || 'your project';
+  const price = input.rate && input.rate.amount > 0
+    ? `${input.rate.currency} ${input.rate.amount} per ${input.rate.basis === 'project' ? 'project' : 'hour'}`
+    : 'To be agreed';
+  const brief = (input.brief || '').trim();
+  return {
+    headline: `Proposal for ${brief ? brief.slice(0, 60) : 'your project'} / আপনার প্রজেক্টের প্রস্তাব`,
+    scope: `I will handle ${skills}. Deliverables and milestones are agreed in writing before the start. / আমি ${skills} দেখব। কাজ শুরুর আগে ডেলিভারেবল ও মাইলস্টোন লিখিতভাবে ঠিক হবে।`,
+    timeline: 'First draft within 3 working days, revisions included. / ৩ কর্মদিবসে প্রথম ড্রাফট, রিভিশনসহ।',
+    price: `${price} / ${price.includes('project') ? 'প্রজেক্ট অনুযায়ী' : 'ঘণ্টা অনুযায়ী'}`,
+    terms: '50% advance, balance on delivery. Two revision rounds included. / ৫০% অগ্রিম, বাকিটা ডেলিভারির সময়। দুই রাউন্ড রিভিশন অন্তর্ভুক্ত।',
+  };
+}
+
+/**
+ * POST /api/ai/proposal
+ * Drafts a bilingual client proposal from the freelancer's profile data.
+ * Nothing is stored server-side.
+ */
+app.post(
+  '/api/ai/proposal',
+  apiLimiter,
+  authenticateRequest,
+  translateLimiter,
+  validateBody(ProposalSchema),
+  async (req, res) => {
+    const input = req.body || {};
+    const skills = Array.isArray(input.skills) ? input.skills.slice(0, 20) : [];
+    const rate = input.rate && input.rate.amount > 0 ? input.rate : null;
+
+    const prompt = [
+      'You are a senior freelancer writing a short, client-ready proposal.',
+      'Return ONLY JSON with this exact shape:',
+      '{"headline":"...","scope":"...","timeline":"...","price":"...","terms":"..."}',
+      'Write every field bilingually: the English sentence followed by its Bangla translation separated by " / ".',
+      'Scope: 3-5 short sentences. Timeline: concrete days/weeks. Price: use the given rate when present, otherwise ask for scope. Terms: 2 sentences (payment + revisions).',
+      'Never invent certifications, clients, years of experience or skills that are not in the profile.',
+      '',
+      `Freelancer: ${input.displayName || 'Freelancer'}`,
+      `Headline: ${input.headline || ''}`,
+      `Skills: ${skills.join(', ')}`,
+      `Client: ${input.clientName || 'Client'}`,
+      `Rate: ${rate ? `${rate.currency} ${rate.amount} per ${rate.basis}` : 'not set'}`,
+      `Job brief: ${(input.brief || '').slice(0, 1200)}`,
+      `Extra context: ${(input.hints || '').slice(0, 800)}`,
+    ].join('\n');
+
+    let proposal = null;
+    let source = 'fallback';
+
+    if (GEMINI_API_KEY) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+        const apiRes = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.5,
+              maxOutputTokens: 900,
+              responseMimeType: 'application/json',
+            },
+          }),
+        });
+        if (apiRes.ok) {
+          const data = await apiRes.json();
+          const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          proposal = parseProposalJson(raw);
+          if (proposal) source = 'gemini';
+        } else {
+          console.error('[Proposal] Gemini HTTP status:', apiRes.status);
+        }
+      } catch (err) {
+        console.error('[Proposal] Gemini error:', err.message);
+      }
+    }
+
+    if (!proposal) proposal = fallbackProposal({ ...input, skills, rate });
+    return res.json({ proposal, source });
+  }
+);
+
+function parseProposalJson(raw) {
+  if (!raw) return null;
+  const cleaned = String(raw).replace(/```json/gi, '').replace(/```/g, '').trim();
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if (start === -1 || end <= start) return null;
+  try {
+    const value = JSON.parse(cleaned.slice(start, end + 1));
+    const fields = ['headline', 'scope', 'timeline', 'price', 'terms'];
+    const proposal = {};
+    for (const field of fields) {
+      const text = typeof value[field] === 'string' ? value[field].trim() : '';
+      if (!text) return null;
+      proposal[field] = text.slice(0, 2000);
+    }
+    return proposal;
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
+ * POST /api/call/review
+ * One rating per participant per call. Aggregates live on profiles/{uid} so
+ * the public page can show them without exposing individual reviews.
+ */
+app.post(
+  '/api/call/review',
+  apiLimiter,
+  authenticateRequest,
+  validateBody(ReviewSchema),
+  async (req, res) => {
+    const uid = req.user?.uid;
+    if (!uid) return res.status(401).json({ error: 'Unauthorized' });
+    if (!firestoreDb) return res.status(503).json({ error: 'unavailable' });
+
+    const { callId, targetUid, rating } = req.body;
+    const comment = String(req.body.comment || '').trim().slice(0, 500);
+    if (targetUid === uid) return res.status(400).json({ error: 'invalid_target' });
+
+    try {
+      const callSnap = await firestoreDb.collection('calls').doc(callId).get();
+      if (!callSnap.exists) return res.status(403).json({ error: 'forbidden' });
+      const call = callSnap.data() || {};
+      const parties = [String(call.callerId || ''), String(call.calleeId || '')];
+      if (!parties.includes(uid) || !parties.includes(targetUid)) {
+        return res.status(403).json({ error: 'forbidden' });
+      }
+
+      const reviewId = `${callId}_${uid}`;
+      const reviewRef = firestoreDb.collection('reviews').doc(reviewId);
+      const profileRef = firestoreDb.collection('profiles').doc(targetUid);
+      let duplicate = false;
+
+      await firestoreDb.runTransaction(async (transaction) => {
+        const existing = await transaction.get(reviewRef);
+        if (existing.exists) {
+          duplicate = true;
+          return;
+        }
+        const profileSnap = await transaction.get(profileRef);
+        const profile = profileSnap.exists ? profileSnap.data() || {} : {};
+        const count = Number(profile.ratingCount || 0) + 1;
+        const sum = Number(profile.ratingSum || 0) + rating;
+
+        transaction.set(reviewRef, {
+          callId,
+          raterUid: uid,
+          targetUid,
+          rating,
+          comment,
+          createdAt: new Date().toISOString(),
+        });
+        if (profileSnap.exists) {
+          transaction.update(profileRef, {
+            ratingCount: count,
+            ratingSum: sum,
+            ratingAvg: Math.round((sum / count) * 100) / 100,
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      });
+
+      if (duplicate) return res.status(409).json({ error: 'already_reviewed' });
+      return res.json({ ok: true });
+    } catch (err) {
+      console.error('[Review] error:', err.message);
+      return res.status(500).json({ error: 'failed' });
     }
   }
 );
