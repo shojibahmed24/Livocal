@@ -1,11 +1,8 @@
-import 'dart:io';
-
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
 
 import 'package:livocal/features/freelancer/models/freelancer_profile.dart';
+import 'package:livocal/features/freelancer/services/profile_image_service.dart';
 import 'package:livocal/theme/app_colors.dart';
 
 /// Picks a cover image from the phone and uploads it to Storage.
@@ -32,29 +29,23 @@ class _CoverImageFieldState extends State<CoverImageField> {
     if (_uploading) return;
     HapticFeedback.lightImpact();
     try {
-      final picked = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 1920,
-        imageQuality: 82,
-      );
+      final picked = await ProfileImageService.pick();
       if (picked == null) return;
 
       setState(() => _uploading = true);
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('userAvatars')
-          .child(widget.profile.ownerUid)
-          .child('cover_${DateTime.now().millisecondsSinceEpoch}.jpg');
-      await ref.putFile(File(picked.path));
-      final url = await ref.getDownloadURL();
+      final url = await ProfileImageService.upload(
+        ownerUid: widget.profile.ownerUid,
+        prefix: 'cover',
+        image: picked,
+      );
       widget.mutate((p) => p.coverUrl = url);
     } catch (e) {
       debugPrint('[CoverImageField] upload failed: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(widget.t('imageUploadFailed')),
-            duration: const Duration(seconds: 2),
+            content: Text('${widget.t('imageUploadFailed')} ($e)'),
+            duration: const Duration(seconds: 4),
           ),
         );
       }

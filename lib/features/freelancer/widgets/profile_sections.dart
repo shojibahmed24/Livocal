@@ -28,7 +28,10 @@ class ProfileSections extends StatelessWidget {
   });
 
   Future<void> _addPortfolio(BuildContext context) async {
-    final result = await showPortfolioDialog(context);
+    final result = await showPortfolioDialog(
+      context,
+      ownerUid: profile.ownerUid,
+    );
     if (result == null) return;
     mutate(
       (p) => p.portfolio = [...p.portfolio, jsonEncode(result)],
@@ -40,7 +43,10 @@ class ProfileSections extends StatelessWidget {
   }
 
   Future<void> _addCase(BuildContext context) async {
-    final result = await showCaseStudyDialog(context);
+    final result = await showCaseStudyDialog(
+      context,
+      ownerUid: profile.ownerUid,
+    );
     if (result == null) return;
     mutate((p) => p.caseStudies = [...p.caseStudies, jsonEncode(result)]);
   }
