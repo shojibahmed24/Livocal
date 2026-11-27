@@ -1490,38 +1490,62 @@ app.post('/api/public/demo-translate', demoLimiter, async (req, res) => {
     `into ${target}. Return only the translation, no quotes and no explanation.\n\n` +
     text;
   try {
-    const url =
-      `https://generativelanguage.googleapis.com/v1beta/models/` +
-      `${TEXT_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-    const apiRes = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 200 },
-      }),
-      signal: AbortSignal.timeout(20000),
-    });
-    if (!apiRes.ok) {
-      const detail = await apiRes.text().catch(() => '');
-      console.warn('[Demo] Gemini HTTP', apiRes.status, detail.slice(0, 200));
-      return res
-        .status(502)
-        .json({ ok: false, error: 'gemini_' + apiRes.status });
+    // Model availability differs per API key; try the configured model first
+    // and fall back to widely available ones before giving up.
+    const models = Array.from(
+      new Set(
+        [
+          TEXT_MODEL,
+          'gemini-2.5-flash-lite',
+          GEMINI_FALLBACK_TEXT_MODEL,
+          'gemini-1.5-flash',
+        ].filter(Boolean)
+      )
+    );
+    let lastStatus = 0;
+    for (const model of models) {
+      try {
+        const url =
+          `https://generativelanguage.googleapis.com/v1beta/models/` +
+          `${model}:generateContent?key=${GEMINI_API_KEY}`;
+        const apiRes = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.2, maxOutputTokens: 200 },
+          }),
+          signal: AbortSignal.timeout(8000),
+        });
+        if (!apiRes.ok) {
+          lastStatus = apiRes.status;
+          const detail = await apiRes.text().catch(() => '');
+          console.warn('[Demo]', model, 'HTTP', apiRes.status, detail.slice(0, 160));
+          continue;
+        }
+        const data = await apiRes.json();
+        const raw = (data.candidates?.[0]?.content?.parts || [])
+          .map((part) => part.text || '')
+          .join('')
+          .trim();
+        if (!raw) {
+          lastStatus = 200;
+          console.warn('[Demo]', model, 'returned no text');
+          continue;
+        }
+        return res.json({
+          ok: true,
+          text: raw.replace(/^["'“”‘’]+|["'“”‘’]+$/g, '').trim(),
+          model,
+        });
+      } catch (err) {
+        console.warn('[Demo]', model, 'failed:', err.name);
+        lastStatus = 0;
+      }
     }
-    const data = await apiRes.json();
-    const raw = (data.candidates?.[0]?.content?.parts || [])
-      .map((part) => part.text || '')
-      .join('')
-      .trim();
-    if (!raw) {
-      console.warn('[Demo] empty translation', JSON.stringify(data).slice(0, 200));
-      return res.status(502).json({ ok: false, error: 'empty' });
-    }
-    return res.json({
-      ok: true,
-      text: raw.replace(/^["'“”‘’]+|["'“”‘’]+$/g, '').trim(),
-    });
+    return res
+      .status(502)
+      .json({ ok: false, error: 'gemini_' + (lastStatus || 'timeout') });
   } catch (err) {
     console.warn('[Demo] translate failed:', err.name, err.message);
     return res.status(502).json({ ok: false, error: 'translate_failed' });
