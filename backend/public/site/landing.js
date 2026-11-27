@@ -9,25 +9,32 @@
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ── 1. Language memory ─────────────────────────────────────────────── */
+  var LANDING_PATHS = ['/', '/bn', '/hi', '/ar', '/es', '/fr', '/de'];
+  var pathOf = function (code) {
+    return code === 'en' ? '/' : '/' + code;
+  };
   try {
     var stored = localStorage.getItem('lv-lang');
     var path = location.pathname;
     if (
       stored &&
       stored !== LANG &&
-      (path === '/' || path === '/bn') &&
+      LANDING_PATHS.indexOf(path) !== -1 &&
       !sessionStorage.getItem('lv-redirected')
     ) {
       sessionStorage.setItem('lv-redirected', '1');
-      location.replace(stored === 'bn' ? '/bn' : '/');
+      location.replace(pathOf(stored));
       return;
     }
-    var switcher = document.querySelector('[data-lang-switch]');
-    if (switcher) {
-      switcher.addEventListener('click', function () {
+    var langSelect = document.getElementById('langSelect');
+    if (langSelect) {
+      langSelect.value = LANG;
+      langSelect.addEventListener('change', function (event) {
+        var next = event.target.value;
         try {
-          localStorage.setItem('lv-lang', LANG === 'bn' ? 'en' : 'bn');
-        } catch (e) {}
+          localStorage.setItem('lv-lang', next);
+        } catch (err) {}
+        location.href = pathOf(next);
       });
     }
   } catch (e) {}

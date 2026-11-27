@@ -1302,3 +1302,49 @@ html[lang='bn'] .btn {
   .tour__slide { padding: 14px; }
   .call__body { min-height: 96px; }
 }
+
+/* ── Language switcher ───────────────────────────────────────────────── */
+.lang-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 7px 26px 7px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238FA0B6' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+.lang-select:hover { color: var(--text); border-color: var(--border-strong); }
+.lang-select option { background: #0b1422; color: #f2f6fb; }
+
+/* ── RTL (Arabic) ────────────────────────────────────────────────────── */
+html[dir='rtl'] .lang-select {
+  padding: 7px 12px 7px 26px;
+  background-position: left 10px center;
+}
+html[dir='rtl'] .steps::before,
+html[dir='rtl'] .steps::after {
+  left: auto;
+  right: 21px;
+}
+html[dir='rtl'] .demo__input,
+html[dir='rtl'] .cta__form input {
+  text-align: right;
+}
+html[dir='rtl'] .call__who,
+html[dir='rtl'] .proof__card > div:nth-child(2) {
+  text-align: right;
+}
+html[dir='rtl'] .marquee__track {
+  animation-direction: reverse;
+}
+
+@media (max-width: 520px) {
+  .lang-select { max-width: 104px; }
+}

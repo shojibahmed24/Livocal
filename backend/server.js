@@ -524,26 +524,40 @@ function renderLandingFor(req, lang) {
   return renderLanding({ lang, origin: publicOrigin(req) });
 }
 
-app.get('/', (req, res) => {
+const LANDING_LANGS = ['bn', 'hi', 'ar', 'es', 'fr', 'de'];
+
+/** Best language for this request: ?lang=, then Accept-Language, then English. */
+function pickLandingLang(req) {
+  const explicit = String(req.query.lang || '').toLowerCase().slice(0, 2);
+  if (explicit === 'en' || LANDING_LANGS.includes(explicit)) return explicit;
   const accept = String(req.headers['accept-language'] || '').toLowerCase();
-  const prefersBangla = accept.startsWith('bn') || accept.includes(',bn');
-  const explicit = String(req.query.lang || '').toLowerCase();
-  if (!explicit && prefersBangla) {
-    return res.redirect(302, '/bn');
+  const preferred = accept
+    .split(',')
+    .map((part) => part.split(';')[0].trim().slice(0, 2));
+  for (const code of preferred) {
+    if (code === 'en' || LANDING_LANGS.includes(code)) return code;
   }
-  if (explicit === 'bn') {
-    return res.redirect(302, '/bn');
+  return 'en';
+}
+
+app.get('/', (req, res) => {
+  const lang = pickLandingLang(req);
+  if (lang !== 'en') {
+    return res.redirect(302, `/${lang}`);
   }
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=300');
+  res.setHeader('Vary', 'Accept-Language');
   return res.send(renderLandingFor(req, 'en'));
 });
 
-app.get('/bn', (req, res) => {
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', 'public, max-age=300');
-  return res.send(renderLandingFor(req, 'bn'));
-});
+for (const code of LANDING_LANGS) {
+  app.get(`/${code}`, (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    return res.send(renderLandingFor(req, code));
+  });
+}
 
 // Hosted Public Privacy Policy Page for Google Play & App Store Compliance
 app.get(['/privacy-policy', '/privacy'], (req, res) => {
@@ -1370,7 +1384,18 @@ app.get('/robots.txt', (req, res) => {
 
 app.get('/sitemap.xml', async (req, res) => {
   const origin = publicOrigin(req);
-  const urls = ['/', '/bn', '/privacy-policy', '/terms-of-service', '/delete-account'];
+  const urls = [
+    '/',
+    '/bn',
+    '/hi',
+    '/ar',
+    '/es',
+    '/fr',
+    '/de',
+    '/privacy-policy',
+    '/terms-of-service',
+    '/delete-account',
+  ];
   try {
     if (firestoreDb) {
       const snapshot = await firestoreDb
