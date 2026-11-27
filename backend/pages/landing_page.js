@@ -252,7 +252,7 @@ const COPY = {
     client: {
       title: 'ক্লায়েন্টকে কিছু ইনস্টল করতে হবে না',
       body: 'লিংক খুলবে, মাইকের অনুমতি দেবে, কথা বলবে। কোনো স্টোর নেই, সাইন-আপ নেই, অ্যাকাউন্ট নেই।',
-      bullets: ['যেকোনো ব্রাউজারে খোলে', 'একবার ব্যবহারযোগ্য সাইনড লিংক', 'বিনয়ের সাথে মাইক অনুমতি'],
+      bullets: ['যেকোনো ব্রাউজারে খোলে', 'একবার ব্যবহারযোগ্য সাইনড লিংক', 'বিনয়ের সাথে মাইক পারমিশন চাওয়া হয়'],
       cta: 'লাইভ রুম দেখুন',
     },
     proof: {
@@ -468,7 +468,7 @@ export function renderLanding({ lang, origin }) {
 <link rel="apple-touch-icon" href="/static/icon-192.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <style>:root{--bg:#04070D;--surface:#0B1422;--surface-2:#0F1B2D;--text:#F2F6FB;--muted:#8FA0B6;--accent:#34D399;--accent-ink:#04120C;--accent-2:#6366F1;--border:rgba(255,255,255,.08);--radius:18px;--ease:cubic-bezier(.2,.8,.2,1)}*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans Bengali',sans-serif;line-height:1.6;overflow-x:hidden}a{color:inherit}</style>
-<link rel="stylesheet" href="/site/landing.css?v=2">
+<link rel="stylesheet" href="/site/landing.css?v=3">
 <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
 </head>
 <body data-lang="${language}">
@@ -518,7 +518,7 @@ export function renderLanding({ lang, origin }) {
           <span class="demo__badge">LIVE</span>
         </div>
         <p class="demo__hint">${esc(c.hero.demoHint)}</p>
-        <label class="sr-only" for="demoInput">Bangla sentence</label>
+        <label class="sr-only" for="demoInput">${language === 'bn' ? 'বাংলা বাক্য' : 'Bangla sentence'}</label>
         <textarea id="demoInput" class="demo__input" rows="2" maxlength="200" placeholder="${esc(c.hero.demoPlaceholder)}"></textarea>
         <div class="demo__row">
           <button class="btn btn--primary btn--sm" id="demoBtn" type="button">${esc(c.hero.demoBtn)}</button>
@@ -648,7 +648,7 @@ export function renderLanding({ lang, origin }) {
         <h2>${esc(c.final.title)}</h2>
         <p>${esc(c.final.sub)}</p>
         <form class="cta__form" id="waitlistForm" novalidate>
-          <label class="sr-only" for="contact">Email or phone</label>
+          <label class="sr-only" for="contact">${language === 'bn' ? 'ইমেইল বা ফোন' : 'Email or phone'}</label>
           <input id="contact" name="contact" type="text" inputmode="email" autocomplete="email"
             placeholder="${esc(c.final.placeholder)}" required>
           <button class="btn btn--primary" type="submit" id="waitlistBtn">${esc(c.final.btn)}</button>
@@ -704,7 +704,7 @@ export function renderLanding({ lang, origin }) {
     finalBtn: c.final.btn,
     finalBtnBusy: language === 'bn' ? 'পাঠানো হচ্ছে…' : 'Sending…',
   })};window.__LV_LANG=${JSON.stringify(language)};</script>
-<script src="/site/landing.js?v=2" defer></script>
+<script src="/site/landing.js?v=3" defer></script>
 </body>
 </html>`;
 }
