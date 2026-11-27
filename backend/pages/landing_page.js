@@ -76,6 +76,8 @@ export function renderLanding({ lang, origin }) {
   const c = COPY[language];
   const dir = RTL_LANGUAGES.includes(language) ? 'rtl' : 'ltr';
   const a11y = A11Y[language] || A11Y.en;
+  const demoFromDefault = language;
+  const demoToDefault = language === 'en' ? 'bn' : 'en';
   const base = origin || 'https://livocal.app';
   const canonical = `${base}${pathFor(language)}`;
   const sampleUser = 'shojibahmed';
@@ -373,7 +375,7 @@ ${language === 'bn' ? '<link rel="preload" href="/site/fonts/noto-bengali.woff2"
             ${DEMO_LANGS.map(
               ([code, name]) =>
                 `<option value="${code}"${
-                  code === (language === 'bn' ? 'bn' : 'auto') ? ' selected' : ''
+                  code === demoFromDefault ? ' selected' : ''
                 }>${esc(name)}</option>`
             ).join('')}
           </select>
@@ -384,7 +386,7 @@ ${language === 'bn' ? '<link rel="preload" href="/site/fonts/noto-bengali.woff2"
               .map(
                 ([code, name]) =>
                   `<option value="${code}"${
-                    code === 'en' ? ' selected' : ''
+                    code === demoToDefault ? ' selected' : ''
                   }>${esc(name)}</option>`
               )
               .join('')}
@@ -464,10 +466,10 @@ ${language === 'bn' ? '<link rel="preload" href="/site/fonts/noto-bengali.woff2"
         <div class="phone__notch"></div>
         <div class="phone__screen">
           <span class="phone__badge">livocal.app/join/•••</span>
-          <div class="bubble bubble--in">${language === 'bn' ? 'আমি ২০ তারিখে শুরু করতে পারব।' : 'I can start on the 20th.'}</div>
-          <div class="bubble bubble--out">${language === 'bn' ? 'I can start on the 20th.' : 'আমি ২০ তারিখে শুরু করতে পারব।'}</div>
-          <div class="bubble bubble--in">${language === 'bn' ? 'দামটা কি ফিক্সড?' : 'Is the price fixed?'}</div>
-          <div class="bubble bubble--out">${language === 'bn' ? 'Is the price fixed?' : 'দামটা কি ফিক্সড?'}</div>
+          <div class="bubble bubble--in">${esc(c.clientDemo.client[0])}</div>
+          <div class="bubble bubble--out">${esc(c.clientDemo.you[0])}</div>
+          <div class="bubble bubble--in">${esc(c.clientDemo.client[1])}</div>
+          <div class="bubble bubble--out">${esc(c.clientDemo.you[1])}</div>
           <div class="phone__wave"><span></span><span></span><span></span><span></span><span></span></div>
         </div>
       </div>
