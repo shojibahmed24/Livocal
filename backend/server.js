@@ -477,6 +477,7 @@ app.get('/health', (req, res) => {
       : (GEMINI_API_KEY ? 'gemini' : 'fallback'),
     openrouterModel: OPENROUTER_MODEL,
     appCheckEnforced: APP_CHECK_ENFORCE,
+    publicBaseUrl: PUBLIC_BASE_URL || null,
     privacyRoute: true,
     timestamp: new Date().toISOString(),
   });
@@ -940,7 +941,11 @@ app.get('/cv/:slug', async (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=60');
     return res.send(
-      renderCvPage({ profile: host.profile, username: host.slug })
+      renderCvPage({
+        profile: host.profile,
+        username: host.slug,
+        origin: publicOrigin(req),
+      })
     );
   } catch (err) {
     console.error('[CV] page error:', err.message);
@@ -1264,6 +1269,79 @@ app.get('/manifest.webmanifest', (req, res) => {
   );
 });
 
+// ── Site plumbing: favicon, robots, sitemap, Android App Links ─────────────
+const ANDROID_CERT_SHA256 = (process.env.ANDROID_CERT_SHA256 || '')
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean);
+
+app.get('/favicon.ico', (req, res) => res.redirect(301, '/static/icon-192.png'));
+
+app.get('/robots.txt', (req, res) => {
+  const origin = publicOrigin(req);
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.type('text/plain').send(
+    [
+      'User-agent: *',
+      'Allow: /',
+      'Disallow: /api/',
+      'Disallow: /admin',
+      'Disallow: /join/',
+      '',
+      `Sitemap: ${origin}/sitemap.xml`,
+      '',
+    ].join('\n')
+  );
+});
+
+app.get('/sitemap.xml', async (req, res) => {
+  const origin = publicOrigin(req);
+  const urls = ['/', '/privacy-policy', '/terms-of-service'];
+  try {
+    if (firestoreDb) {
+      const snapshot = await firestoreDb
+        .collection('profiles')
+        .where('published', '==', true)
+        .limit(500)
+        .get();
+      snapshot.forEach((doc) => {
+        const data = doc.data() || {};
+        const slug = String(data.slug || data.username || '').toLowerCase();
+        if (/^[a-z0-9-]{3,32}$/.test(slug)) {
+          urls.push(`/u/${slug}`, `/book/${slug}`, `/cv/${slug}`, `/app/${slug}`);
+        }
+      });
+    }
+  } catch (err) {
+    console.warn('[Sitemap] profile list failed:', err.message);
+  }
+  const body =
+    '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+    urls.map((path) => `  <url><loc>${origin}${path}</loc></url>`).join('\n') +
+    '\n</urlset>\n';
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.type('application/xml').send(body);
+});
+
+// Verified Android App Links: https://livocal.app/u/<name> opens the app.
+app.get('/.well-known/assetlinks.json', (req, res) => {
+  if (!ANDROID_CERT_SHA256.length) {
+    return res.status(404).json({ error: 'not_configured' });
+  }
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  return res.json([
+    {
+      relation: ['delegate_permission/common.handle_all_urls'],
+      target: {
+        namespace: 'android_app',
+        package_name: 'com.livocal.app',
+        sha256_cert_fingerprints: ANDROID_CERT_SHA256,
+      },
+    },
+  ]);
+});
+
 app.get('/app/:slug', async (req, res) => {
   if (!firestoreDb) return res.status(503).send('unavailable');
   try {
@@ -1405,7 +1483,15 @@ app.get('/u/:slug', async (req, res) => {
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=60');
-    return res.send(renderProfilePage({ profile, username: slug, days, reviews }));
+    return res.send(
+      renderProfilePage({
+        profile,
+        username: slug,
+        days,
+        reviews,
+        origin: publicOrigin(req),
+      })
+    );
   } catch (err) {
     console.error('[Profile] page error:', err.message);
     return res.status(500).send('error');
