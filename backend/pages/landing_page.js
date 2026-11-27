@@ -163,6 +163,28 @@ const COPY = {
         { q: 'Will it work on a slow connection?', a: 'Voice uses about 24 kbps. If the network drops, the call continues as direct voice without translation.' },
       ],
     },
+    tour: {
+      kicker: 'See it in action',
+      title: 'From first message to paid invoice',
+      sub: 'Three screens, thirty seconds. No setup call, no tutorial.',
+      tabs: ['Live call', 'Booking', 'Invoice'],
+      callName: 'Shojib Ahmed',
+      callStatus: 'Live · 04:12',
+      callTag: 'Translated',
+      callLine1: 'Can you start next week?',
+      callLine2: 'হ্যাঁ, পরের সপ্তাহে শুরু করতে পারব',
+      callTranslation: 'Yes, I can start next week.',
+      bookTitle: 'Pick a slot',
+      bookDay: 'Tue, 2 Dec',
+      bookSlots: ['10:00', '11:00', '14:00'],
+      bookConfirm: 'Confirm booking',
+      bookDone: 'Booked · client notified',
+      invTitle: 'Invoice INV-2026-014',
+      invRows: [['Landing page', '180'], ['Extra section', '60']],
+      invTotal: '240',
+      invStatus: 'Sent to client',
+      invLink: 'livocal.app/i/•••',
+    },
     final: {
       title: 'Be first when we open',
       sub: 'Leave an email or a phone number. We send one message when your account is ready.',
@@ -313,6 +335,28 @@ const COPY = {
         { q: 'ধীর ইন্টারনেটে চলবে?', a: 'ভয়েস প্রায় ২৪ kbps নেয়। নেটওয়ার্ক পড়ে গেলে কল অনুবাদ ছাড়া সরাসরি ভয়েসে চলতে থাকে।' },
       ],
     },
+    tour: {
+      kicker: 'কাজ করতে দেখুন',
+      title: 'প্রথম মেসেজ থেকে পেমেন্ট পর্যন্ত',
+      sub: 'তিনটি স্ক্রিন, ত্রিশ সেকেন্ড। কোনো সেটআপ কল বা টিউটোরিয়াল নেই।',
+      tabs: ['লাইভ কল', 'বুকিং', 'ইনভয়েস'],
+      callName: 'সজীব আহমেদ',
+      callStatus: 'লাইভ · ০৪:১২',
+      callTag: 'অনূদিত',
+      callLine1: 'Can you start next week?',
+      callLine2: 'হ্যাঁ, পরের সপ্তাহে শুরু করতে পারব',
+      callTranslation: 'Yes, I can start next week.',
+      bookTitle: 'স্লট বেছে নিন',
+      bookDay: 'মঙ্গল, ২ ডিসে',
+      bookSlots: ['১০:০০', '১১:০০', '১৪:০০'],
+      bookConfirm: 'বুকিং কনফার্ম করুন',
+      bookDone: 'বুকড · ক্লায়েন্টকে জানানো হয়েছে',
+      invTitle: 'ইনভয়েস INV-2026-014',
+      invRows: [['ল্যান্ডিং পেজ', '১৮০'], ['অতিরিক্ত সেকশন', '৬০']],
+      invTotal: '২৪০',
+      invStatus: 'ক্লায়েন্টকে পাঠানো হয়েছে',
+      invLink: 'livocal.app/i/•••',
+    },
     final: {
       title: 'আমরা খুললে সবার আগে থাকুন',
       sub: 'ইমেইল বা ফোন নম্বর দিন। অ্যাকাউন্ট রেডি হলে একটাই মেসেজ পাঠাব।',
@@ -455,6 +499,104 @@ export function renderLanding({ lang, origin }) {
     )
     .join('');
 
+  const tour = c.tour;
+  const tourSection = `
+  <section class="section" id="tour">
+    <div class="wrap">
+      <header class="section__head reveal">
+        <span class="kicker"><i>04</i> ${esc(tour.kicker)}</span>
+        <h2>${esc(tour.title)}</h2>
+        <p>${esc(tour.sub)}</p>
+      </header>
+      <div class="tour reveal" id="tourWidget">
+        <div class="tour__frame">
+          <div class="tour__bar"><i></i><i></i><i></i><em>livocal.app</em></div>
+          <div class="tour__stage">
+            <article class="tour__slide is-active">
+              <div class="call">
+                <div class="call__head">
+                  <span class="call__avatar">S</span>
+                  <div class="call__who">
+                    <strong>${esc(tour.callName)}</strong>
+                    <span><b class="call__dot"></b>${esc(tour.callStatus)}</span>
+                  </div>
+                  <span class="call__tag">${esc(tour.callTag)}</span>
+                </div>
+                <div class="call__body">
+                  <div class="bubble bubble--in">${esc(tour.callLine1)}</div>
+                  <div class="bubble bubble--out">
+                    ${esc(tour.callLine2)}
+                    <small>${esc(tour.callTranslation)}</small>
+                  </div>
+                </div>
+                <div class="call__wave">
+                  ${Array.from({ length: 16 })
+                    .map((_, i) => `<span style="--i:${i}"></span>`)
+                    .join('')}
+                </div>
+              </div>
+            </article>
+
+            <article class="tour__slide">
+              <div class="book">
+                <div class="book__head">
+                  <strong>${esc(tour.bookTitle)}</strong>
+                  <span>${esc(tour.bookDay)}</span>
+                </div>
+                <div class="book__slots">
+                  ${tour.bookSlots
+                    .map(
+                      (slot, i) =>
+                        `<span class="book__slot ${
+                          i === tour.bookSlots.length - 1 ? 'is-on' : ''
+                        }">${esc(slot)}</span>`
+                    )
+                    .join('')}
+                </div>
+                <div class="book__cta">${esc(tour.bookConfirm)}</div>
+                <div class="book__done">✓ ${esc(tour.bookDone)}</div>
+              </div>
+            </article>
+
+            <article class="tour__slide">
+              <div class="inv">
+                <div class="inv__head">
+                  <strong>${esc(tour.invTitle)}</strong>
+                  <span class="inv__status">${esc(tour.invStatus)}</span>
+                </div>
+                ${tour.invRows
+                  .map(
+                    (row) =>
+                      `<div class="inv__row"><span>${esc(
+                        row[0]
+                      )}</span><b>$${esc(row[1])}</b></div>`
+                  )
+                  .join('')}
+                <div class="inv__total"><span>Total</span><b>$${esc(
+                  tour.invTotal
+                )}</b></div>
+                <div class="inv__link">${esc(tour.invLink)}</div>
+              </div>
+            </article>
+          </div>
+        </div>
+        <div class="tour__tabs" role="tablist">
+          ${tour.tabs
+            .map(
+              (tab, i) =>
+                `<button class="tour__tab ${
+                  i === 0 ? 'is-on' : ''
+                }" data-tab="${i}" role="tab" aria-selected="${
+                  i === 0
+                }" type="button">${esc(tab)}</button>`
+            )
+            .join('')}
+        </div>
+      </div>
+    </div>
+  </section>
+`;
+
   return `<!DOCTYPE html>
 <html lang="${language}" class="no-js">
 <head>
@@ -481,9 +623,10 @@ export function renderLanding({ lang, origin }) {
 <link rel="icon" href="/static/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="/static/icon-192.png">
 <link rel="preload" href="/site/fonts/sora-latin.woff2" as="font" type="font/woff2" crossorigin>
+${language === 'bn' ? '<link rel="preload" href="/site/fonts/noto-bengali.woff2" as="font" type="font/woff2" crossorigin>' : ''}
 <link rel="manifest" href="/manifest.webmanifest">
 <style>:root{--bg:#04070D;--surface:#0B1422;--surface-2:#0F1B2D;--text:#F2F6FB;--muted:#8FA0B6;--accent:#34D399;--accent-ink:#04120C;--accent-2:#6366F1;--border:rgba(255,255,255,.08);--radius:18px;--ease:cubic-bezier(.2,.8,.2,1)}*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans Bengali',sans-serif;line-height:1.6;overflow-x:hidden}a{color:inherit}</style>
-<link rel="stylesheet" href="/site/landing.css?v=4">
+<link rel="stylesheet" href="/site/landing.css?v=6">
 <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
 </head>
 <body data-lang="${language}">
@@ -618,6 +761,8 @@ export function renderLanding({ lang, origin }) {
     </div>
   </section>
 
+${tourSection}
+
   <section class="section" id="proof">
     <div class="wrap">
       <header class="section__head reveal">
@@ -727,7 +872,7 @@ export function renderLanding({ lang, origin }) {
     finalBtn: c.final.btn,
     finalBtnBusy: language === 'bn' ? 'পাঠানো হচ্ছে…' : 'Sending…',
   })};window.__LV_LANG=${JSON.stringify(language)};</script>
-<script src="/site/landing.js?v=4" defer></script>
+<script src="/site/landing.js?v=6" defer></script>
 </body>
 </html>`;
 }
