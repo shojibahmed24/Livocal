@@ -81,6 +81,11 @@ const DEFAULT_VOICE = process.env.DEFAULT_VOICE?.trim() || 'Aoede';
 const TEXT_MODEL =
     process.env.GEMINI_TEXT_MODEL?.trim() || 'gemini-2.5-flash';
 
+// Proposal writing: OpenRouter when configured, else Gemini.
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY?.trim() || '';
+const OPENROUTER_MODEL =
+    process.env.OPENROUTER_MODEL?.trim() || 'openai/gpt-4o-mini';
+
 // Metered TURN: when an API key is configured the relay fetches short-lived ICE
 // servers per request instead of shipping static credentials to every client.
 // Falls back to the static TURN_URL/TURN_SECRET setup when absent.
@@ -1536,6 +1541,84 @@ app.get('/pr/:token', async (req, res) => {
   } catch (err) {
     console.error('[Proposal] page error:', err.message);
     return res.status(500).send('error');
+  }
+});
+
+// Daily booking digest (free GitHub Actions cron calls this with a secret).
+app.post('/api/digest/run', async (req, res) => {
+  const secret = process.env.DIGEST_SECRET || '';
+  if (!secret) return res.status(503).json({ error: 'digest_disabled' });
+  if (req.headers['x-digest-key'] !== secret) {
+    return res.status(401).json({ error: 'unauthorized' });
+  }
+  if (!firestoreDb || !messagingService) {
+    return res.status(503).json({ error: 'unavailable' });
+  }
+
+  try {
+    const dateKey = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Dhaka',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date());
+    const start = new Date(`${dateKey}T00:00:00+06:00`);
+    const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+
+    const snap = await firestoreDb
+      .collection('bookings')
+      .where('startAt', '>=', start.toISOString())
+      .get();
+    const today = snap.docs
+      .map((doc) => doc.data())
+      .filter(
+        (row) =>
+          row.status !== 'cancelled' &&
+          Date.parse(row.startAt) < end.getTime()
+      );
+
+    const byHost = new Map();
+    for (const row of today) {
+      const list = byHost.get(row.hostUid) || [];
+      list.push(row);
+      byHost.set(row.hostUid, list);
+    }
+
+    let sent = 0;
+    for (const [hostUid, rows] of byHost.entries()) {
+      try {
+        const tokenDoc = await firestoreDb.collection('fcmTokens').doc(hostUid).get();
+        const token = tokenDoc.exists ? tokenDoc.data().token : null;
+        if (!token) continue;
+        const first = rows
+          .sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt))[0];
+        const time = new Date(first.startAt).toLocaleTimeString('en-GB', {
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZone: 'Asia/Dhaka',
+        });
+        await messagingService.send({
+          token,
+          notification: {
+            title: `Today: ${rows.length} booking${rows.length > 1 ? 's' : ''}`,
+            body: `${first.guestName || 'Guest'} at ${time}`,
+          },
+          data: { type: 'DAILY_DIGEST' },
+          android: {
+            priority: 'high',
+            notification: { channelId: 'livocal_messages', defaultSound: true },
+          },
+        });
+        sent += 1;
+      } catch (pushErr) {
+        console.error('[Digest] push failed:', pushErr.message);
+      }
+    }
+
+    return res.json({ ok: true, bookings: today.length, hosts: sent });
+  } catch (err) {
+    console.error('[Digest] error:', err.message);
+    return res.status(500).json({ error: 'failed' });
   }
 });
 
@@ -5010,15 +5093,26 @@ function fallbackProposal(input) {
     ? `${input.rate.currency} ${input.rate.amount} per ${input.rate.basis === 'project' ? 'project' : 'hour'}`
     : 'To be agreed';
   const brief = (input.brief || '').trim();
+  const bangla = /[\u0980-\u09FF]/.test(brief);
+
+  if (bangla) {
+    return {
+      headline: `প্রস্তাব: ${brief ? brief.slice(0, 60) : 'আপনার প্রজেক্ট'}`,
+      scope: `আমি ${skills} দেখব। কাজ শুরুর আগে ডেলিভারেবল ও মাইলস্টোন লিখিতভাবে ঠিক হবে।`,
+      timeline: '৩ কর্মদিবসে প্রথম ড্রাফট, রিভিশনসহ।',
+      price: price.includes('project') ? `${price} (প্রজেক্ট অনুযায়ী)` : `${price} (ঘণ্টা অনুযায়ী)`,
+      terms: '৫০% অগ্রিম, বাকিটা ডেলিভারির সময়। দুই রাউন্ড রিভিশন অন্তর্ভুক্ত।',
+    };
+  }
+
   return {
-    headline: `Proposal for ${brief ? brief.slice(0, 60) : 'your project'} / আপনার প্রজেক্টের প্রস্তাব`,
-    scope: `I will handle ${skills}. Deliverables and milestones are agreed in writing before the start. / আমি ${skills} দেখব। কাজ শুরুর আগে ডেলিভারেবল ও মাইলস্টোন লিখিতভাবে ঠিক হবে।`,
-    timeline: 'First draft within 3 working days, revisions included. / ৩ কর্মদিবসে প্রথম ড্রাফট, রিভিশনসহ।',
-    price: `${price} / ${price.includes('project') ? 'প্রজেক্ট অনুযায়ী' : 'ঘণ্টা অনুযায়ী'}`,
-    terms: '50% advance, balance on delivery. Two revision rounds included. / ৫০% অগ্রিম, বাকিটা ডেলিভারির সময়। দুই রাউন্ড রিভিশন অন্তর্ভুক্ত।',
+    headline: `Proposal: ${brief ? brief.slice(0, 60) : 'your project'}`,
+    scope: `I will handle ${skills}. Deliverables and milestones are agreed in writing before the start.`,
+    timeline: 'First draft within 3 working days, revisions included.',
+    price,
+    terms: '50% advance, balance on delivery. Two revision rounds included.',
   };
 }
-
 /**
  * POST /api/ai/proposal
  * Drafts a bilingual client proposal from the freelancer's profile data.
@@ -5039,7 +5133,7 @@ app.post(
       'You are a senior freelancer writing a short, client-ready proposal.',
       'Return ONLY JSON with this exact shape:',
       '{"headline":"...","scope":"...","timeline":"...","price":"...","terms":"..."}',
-      'Write every field bilingually: the English sentence followed by its Bangla translation separated by " / ".',
+      'Write every field in ONE language only: use the language of the Job brief (Bangla if the brief is Bangla, otherwise English). Never mix two languages.',
       'Scope: 3-5 short sentences. Timeline: concrete days/weeks. Price: use the given rate when present, otherwise ask for scope. Terms: 2 sentences (payment + revisions).',
       'Never invent certifications, clients, years of experience or skills that are not in the profile.',
       '',
@@ -5055,7 +5149,48 @@ app.post(
     let proposal = null;
     let source = 'fallback';
 
-    if (GEMINI_API_KEY) {
+    if (OPENROUTER_API_KEY) {
+      try {
+        const apiRes = await fetch(
+          'https://openrouter.ai/api/v1/chat/completions',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+              'HTTP-Referer': 'https://livocal-relay.onrender.com',
+              'X-Title': 'Livocal',
+            },
+            body: JSON.stringify({
+              model: OPENROUTER_MODEL,
+              temperature: 0.5,
+              max_tokens: 900,
+              response_format: { type: 'json_object' },
+              messages: [
+                {
+                  role: 'system',
+                  content:
+                    'You are a senior freelancer writing a short, client-ready proposal. Output JSON only.',
+                },
+                { role: 'user', content: prompt },
+              ],
+            }),
+          }
+        );
+        if (apiRes.ok) {
+          const data = await apiRes.json();
+          const raw = data.choices?.[0]?.message?.content || '';
+          proposal = parseProposalJson(raw);
+          if (proposal) source = 'openrouter';
+        } else {
+          console.error('[Proposal] OpenRouter HTTP status:', apiRes.status);
+        }
+      } catch (err) {
+        console.error('[Proposal] OpenRouter error:', err.message);
+      }
+    }
+
+    if (!proposal && GEMINI_API_KEY) {
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
         const apiRes = await fetch(url, {

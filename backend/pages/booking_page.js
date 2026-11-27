@@ -176,12 +176,14 @@ export function renderBookingPage({ profile, days, username }) {
     <h3>Request sent</h3>
     <p>${esc(name)} will confirm shortly.</p>
     <a id="icsLink" href="#">Add to calendar</a>
+    <a id="gcalLink" href="#" style="background:#0b1220;margin-left:6px">Google Calendar</a>
   </section>
 
   <footer>Powered by Livocal · live voice translation for freelancers</footer>
 </div>
 <script>
   var SLUG = ${JSON.stringify(username)};
+  var HOST_NAME = ${JSON.stringify(name)};
   var BOOK_URL = ${JSON.stringify(bookingUrl)};
 
   document.getElementById('themeToggle').addEventListener('click', function () {
@@ -242,6 +244,14 @@ export function renderBookingPage({ profile, days, username }) {
       document.getElementById('bookingForm').style.display = 'none';
       document.getElementById('successCard').classList.add('show');
       document.getElementById('icsLink').href = '/book/' + SLUG + '/' + data.id + '.ics';
+      var gfmt = function (d) {
+        return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+      };
+      var gurl = 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+        '&text=' + encodeURIComponent('Call with ' + HOST_NAME) +
+        '&dates=' + gfmt(new Date(data.startAt)) + '/' + gfmt(new Date(data.endAt)) +
+        '&details=' + encodeURIComponent('Booked via Livocal');
+      document.getElementById('gcalLink').href = gurl;
     } catch (error) {
       msg.className = 'msg err';
       msg.textContent = 'Network error. Please try again.';
