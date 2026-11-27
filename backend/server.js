@@ -1463,6 +1463,34 @@ app.get('/app/:slug', async (req, res) => {
 });
 
 // ── Landing page helpers: demo translation, waitlist, counters ─────────────
+const DEMO_LANGUAGES = {
+  en: 'English',
+  bn: 'Bengali',
+  hi: 'Hindi',
+  ur: 'Urdu',
+  ar: 'Arabic',
+  es: 'Spanish',
+  fr: 'French',
+  de: 'German',
+  pt: 'Portuguese',
+  it: 'Italian',
+  ru: 'Russian',
+  tr: 'Turkish',
+  zh: 'Mandarin Chinese',
+  ja: 'Japanese',
+  ko: 'Korean',
+  id: 'Indonesian',
+  vi: 'Vietnamese',
+  th: 'Thai',
+  ta: 'Tamil',
+  te: 'Telugu',
+  fil: 'Filipino',
+  sw: 'Swahili',
+  fa: 'Persian',
+  nl: 'Dutch',
+  pl: 'Polish',
+};
+
 const demoLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 5,
@@ -1519,7 +1547,10 @@ async function allowDemoCall() {
 app.post('/api/public/demo-translate', demoLimiter, async (req, res) => {
   const body = req.body || {};
   const text = String(body.text || '').trim().slice(0, 200);
-  const from = body.from === 'en' ? 'en' : 'bn';
+  const fromCode = String(body.from || 'bn').slice(0, 8);
+  const toCode = String(body.to || '').slice(0, 8);
+  const fromName = DEMO_LANGUAGES[fromCode] || '';
+  const toName = DEMO_LANGUAGES[toCode] || '';
   if (text.length < 2) {
     return res.status(400).json({ ok: false, error: 'invalid_text' });
   }
@@ -1530,10 +1561,14 @@ app.post('/api/public/demo-translate', demoLimiter, async (req, res) => {
   if (!allowed) {
     return res.status(429).json({ ok: false, error: 'daily_cap' });
   }
-  const target = from === 'bn' ? 'English' : 'Bangla';
+  const target = toName || 'English';
+  const sourceHint = fromName
+    ? `The speaker is talking in ${fromName}. `
+    : 'Detect the spoken language yourself. ';
   const prompt =
-    `Translate the following ${from === 'bn' ? 'Bangla' : 'English'} sentence ` +
-    `into ${target}. Return only the translation, no quotes and no explanation.\n\n` +
+    `You are a professional interpreter. ${sourceHint}` +
+    `Translate the sentence below into ${target}. ` +
+    `Return only the translation, no quotes and no explanation.\n\n` +
     text;
   try {
     // Model availability differs per API key; try the configured model first
@@ -1583,6 +1618,7 @@ app.post('/api/public/demo-translate', demoLimiter, async (req, res) => {
           ok: true,
           text: raw.replace(/^["'“”‘’]+|["'“”‘’]+$/g, '').trim(),
           model,
+          to: target,
         });
       } catch (err) {
         console.warn('[Demo]', model, 'failed:', err.name);

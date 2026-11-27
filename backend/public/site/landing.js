@@ -104,6 +104,9 @@
   var demoStatus = document.getElementById('demoStatus');
   var demoOut = document.getElementById('demoOut');
   var demoText = document.getElementById('demoText');
+  var demoFrom = document.getElementById('demoFrom');
+  var demoTo = document.getElementById('demoTo');
+  var demoLabel = document.querySelector('.demo__label');
   var demoBusy = false;
 
   function showSample(message) {
@@ -127,7 +130,11 @@
     fetch('/api/public/demo-translate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: text.slice(0, 200), from: LANG }),
+      body: JSON.stringify({
+        text: text.slice(0, 200),
+        from: demoFrom ? demoFrom.value : LANG,
+        to: demoTo ? demoTo.value : 'en',
+      }),
     })
       .then(function (res) {
         return res.json().then(function (data) {
@@ -139,6 +146,10 @@
         var translated = data.ok && data.text ? String(data.text).trim() : '';
         if (translated) {
           demoText.textContent = translated;
+          if (demoLabel && demoTo) {
+            demoLabel.textContent =
+              demoTo.options[demoTo.selectedIndex].textContent;
+          }
           demoOut.hidden = false;
           if (demoStatus) demoStatus.textContent = '';
           track('demo');

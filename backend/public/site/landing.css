@@ -1348,3 +1348,38 @@ html[dir='rtl'] .marquee__track {
 @media (max-width: 520px) {
   .lang-select { max-width: 104px; }
 }
+/* ── Hero demo language pair ─────────────────────────────────────────── */
+.demo__langs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.demo__langs select {
+  flex: 1;
+  min-width: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: #071019;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: #cbd5e1;
+  font-size: 11.5px;
+  padding: 7px 24px 7px 10px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238FA0B6' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+.demo__langs select:focus {
+  border-color: rgba(52, 211, 153, 0.5);
+  outline: none;
+}
+.demo__langs > span {
+  color: var(--muted);
+  font-size: 12px;
+}
+html[dir='rtl'] .demo__langs select {
+  padding: 7px 10px 7px 24px;
+  background-position: left 8px center;
+}

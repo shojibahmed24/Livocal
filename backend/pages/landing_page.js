@@ -13,8 +13,37 @@ function esc(value) {
     .replace(/'/g, '&#39;');
 }
 
-const ICONS = {
-  mic: '<path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+/** Languages offered in the hero demo. Any pair works — the model does the rest. */
+const DEMO_LANGS = [
+  ['auto', 'Auto-detect'],
+  ['bn', 'বাংলা'],
+  ['en', 'English'],
+  ['hi', 'हिन्दी'],
+  ['ur', 'اردو'],
+  ['ar', 'العربية'],
+  ['es', 'Español'],
+  ['fr', 'Français'],
+  ['de', 'Deutsch'],
+  ['pt', 'Português'],
+  ['it', 'Italiano'],
+  ['ru', 'Русский'],
+  ['tr', 'Türkçe'],
+  ['zh', '中文'],
+  ['ja', '日本語'],
+  ['ko', '한국어'],
+  ['id', 'Indonesia'],
+  ['vi', 'Tiếng Việt'],
+  ['th', 'ไทย'],
+  ['ta', 'தமிழ்'],
+  ['te', 'తెలుగు'],
+  ['fil', 'Filipino'],
+  ['sw', 'Kiswahili'],
+  ['fa', 'فارسی'],
+  ['nl', 'Nederlands'],
+  ['pl', 'Polski'],
+];
+
+const ICONS = {  mic: '<path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
   user: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>',
   calendar:
     '<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/>',
@@ -338,6 +367,29 @@ ${language === 'bn' ? '<link rel="preload" href="/site/fonts/noto-bengali.woff2"
           <span class="demo__badge">LIVE</span>
         </div>
         <p class="demo__hint">${esc(c.hero.demoHint)}</p>
+        <div class="demo__langs">
+          <label class="sr-only" for="demoFrom">${esc(a11y.demo)}</label>
+          <select id="demoFrom" aria-label="From">
+            ${DEMO_LANGS.map(
+              ([code, name]) =>
+                `<option value="${code}"${
+                  code === (language === 'bn' ? 'bn' : 'auto') ? ' selected' : ''
+                }>${esc(name)}</option>`
+            ).join('')}
+          </select>
+          <span aria-hidden="true">→</span>
+          <label class="sr-only" for="demoTo">To</label>
+          <select id="demoTo" aria-label="To">
+            ${DEMO_LANGS.filter(([code]) => code !== 'auto')
+              .map(
+                ([code, name]) =>
+                  `<option value="${code}"${
+                    code === 'en' ? ' selected' : ''
+                  }>${esc(name)}</option>`
+              )
+              .join('')}
+          </select>
+        </div>
         <label class="sr-only" for="demoInput">${esc(a11y.demo)}</label>
         <textarea id="demoInput" class="demo__input" rows="2" maxlength="200" placeholder="${esc(c.hero.demoPlaceholder)}"></textarea>
         <div class="demo__row">
