@@ -468,7 +468,7 @@ export function renderLanding({ lang, origin }) {
 <link rel="apple-touch-icon" href="/static/icon-192.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <style>:root{--bg:#04070D;--surface:#0B1422;--surface-2:#0F1B2D;--text:#F2F6FB;--muted:#8FA0B6;--accent:#34D399;--accent-ink:#04120C;--accent-2:#6366F1;--border:rgba(255,255,255,.08);--radius:18px;--ease:cubic-bezier(.2,.8,.2,1)}*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans Bengali',sans-serif;line-height:1.6;overflow-x:hidden}a{color:inherit}</style>
-<link rel="stylesheet" href="/site/landing.css?v=1">
+<link rel="stylesheet" href="/site/landing.css?v=2">
 <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
 </head>
 <body data-lang="${language}">
@@ -669,19 +669,19 @@ export function renderLanding({ lang, origin }) {
     </div>
     <div class="footer__cols">
       <div>
-        <h4>${esc(c.footer.product)}</h4>
+        <h3>${esc(c.footer.product)}</h3>
         <a href="/u/${sampleUser}">${esc(c.footer.links.profile)}</a>
         <a href="/room/${sampleUser}">${esc(c.footer.links.room)}</a>
         <a href="/app/${sampleUser}">${esc(c.footer.links.app)}</a>
       </div>
       <div>
-        <h4>${esc(c.footer.legal)}</h4>
+        <h3>${esc(c.footer.legal)}</h3>
         <a href="/privacy-policy">${esc(c.footer.links.privacy)}</a>
         <a href="/terms-of-service">${esc(c.footer.links.terms)}</a>
         <a href="/delete-account">${esc(c.footer.links.delete)}</a>
       </div>
       <div>
-        <h4>${esc(c.footer.support)}</h4>
+        <h3>${esc(c.footer.support)}</h3>
         <a href="mailto:support@livocal.app">${esc(c.footer.links.mail)}</a>
       </div>
     </div>
@@ -704,7 +704,7 @@ export function renderLanding({ lang, origin }) {
     finalBtn: c.final.btn,
     finalBtnBusy: language === 'bn' ? 'পাঠানো হচ্ছে…' : 'Sending…',
   })};window.__LV_LANG=${JSON.stringify(language)};</script>
-<script src="/site/landing.js?v=1" defer></script>
+<script src="/site/landing.js?v=2" defer></script>
 </body>
 </html>`;
 }
