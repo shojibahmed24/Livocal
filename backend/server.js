@@ -217,21 +217,24 @@ const allowedOrigins = Array.from(new Set([...defaultAllowedOrigins, ...configur
 // https://livocal.app) every generated link uses it and the old Render host
 // keeps serving, but browsers are redirected to the custom domain.
 const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || '').trim().replace(/\/+$/, '');
-const PUBLIC_HOST = PUBLIC_BASE_URL.replace(/^https?:\/\//i, '').toLowerCase();
+// Custom domain is the canonical origin even when the env var is missing, so
+// links created from an onrender request still point at livocal.app.
+const CANONICAL_ORIGIN = PUBLIC_BASE_URL || 'https://livocal.app';
+const CANONICAL_HOST = CANONICAL_ORIGIN.replace(/^https?:\/\//i, '').toLowerCase();
+const RENDER_HOST_SUFFIX = '.onrender.com';
 
 /** Absolute origin used for every link we hand to users. */
 function publicOrigin(req) {
-  if (PUBLIC_BASE_URL) return PUBLIC_BASE_URL;
-  const host = req?.get('host') || 'livocal.app';
+  const host = String(req?.get('host') || '').toLowerCase();
+  if (!host || host.endsWith(RENDER_HOST_SUFFIX)) return CANONICAL_ORIGIN;
   return 'https://' + host;
 }
 
 app.use((req, res, next) => {
-  if (!PUBLIC_HOST) return next();
   if (req.method !== 'GET' && req.method !== 'HEAD') return next();
   const host = String(req.headers.host || '').toLowerCase();
-  if (host === PUBLIC_HOST) return next();
-  if (!host.endsWith('.onrender.com')) return next();
+  if (host === CANONICAL_HOST) return next();
+  if (!host.endsWith(RENDER_HOST_SUFFIX)) return next();
   const url = req.originalUrl || req.url || '/';
   if (
     url.startsWith('/api/') ||
@@ -242,7 +245,7 @@ app.use((req, res, next) => {
   ) {
     return next();
   }
-  return res.redirect(301, `${PUBLIC_BASE_URL}${url}`);
+  return res.redirect(301, `${CANONICAL_ORIGIN}${url}`);
 });
 
 app.use(cors({
@@ -478,7 +481,7 @@ app.get('/health', (req, res) => {
       : (GEMINI_API_KEY ? 'gemini' : 'fallback'),
     openrouterModel: OPENROUTER_MODEL,
     appCheckEnforced: APP_CHECK_ENFORCE,
-    publicBaseUrl: PUBLIC_BASE_URL || null,
+    publicBaseUrl: CANONICAL_ORIGIN,
     privacyRoute: true,
     timestamp: new Date().toISOString(),
   });
