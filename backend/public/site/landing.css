@@ -1383,3 +1383,31 @@ html[dir='rtl'] .demo__langs select {
   padding: 7px 10px 7px 24px;
   background-position: left 8px center;
 }
+/* ── Demo output: listen button ──────────────────────────────────────── */
+.demo__out {
+  position: relative;
+}
+.demo__play {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-30%);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  background: rgba(52, 211, 153, 0.12);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), transform 0.2s var(--ease);
+}
+.demo__play:hover {
+  background: rgba(52, 211, 153, 0.22);
+  transform: translateY(-30%) scale(1.05);
+}
+.demo__play .ico { width: 16px; height: 16px; }
+html[dir='rtl'] .demo__play { right: auto; left: 10px; }
+.demo__out .demo__text { padding-right: 44px; }
+html[dir='rtl'] .demo__out .demo__text { padding-right: 0; padding-left: 44px; }
