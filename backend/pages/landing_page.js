@@ -409,7 +409,7 @@ ${language === 'bn' ? '<link rel="preload" href="/site/fonts/noto-bengali.woff2"
           <span class="demo__status" id="demoStatus" role="status" aria-live="polite"></span>
         </div>
         <div class="demo__out" id="demoOut" hidden>
-          <span class="demo__label">${esc(c.hero.demoResult)}</span>
+          <span class="demo__label">${esc(COPY[demoToDefault].label)}</span>
           <p id="demoText" class="demo__text"></p>
           <button class="demo__play" id="demoPlay" type="button" aria-label="Play the translation" hidden>
             ${icon('speaker', 'ico')}
