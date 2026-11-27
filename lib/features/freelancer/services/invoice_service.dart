@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:isar/isar.dart';
 
 import 'package:livocal/features/freelancer/models/invoice.dart';
+import 'package:livocal/features/freelancer/services/reminder_service.dart';
 import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/repositories/isar_db.dart';
 import 'package:livocal/shared/services/app_check_service.dart';
@@ -75,6 +76,19 @@ class InvoiceService {
   static Future<Invoice> markSent(Invoice invoice) async {
     invoice.status = 'sent';
     invoice.sentAt = DateTime.now();
+    if (invoice.dueDate != null) {
+      await ReminderService.scheduleInvoiceDue(
+        id: 900000 + invoice.id,
+        number: invoice.number,
+        clientName: invoice.clientName,
+        at: DateTime(
+          invoice.dueDate!.year,
+          invoice.dueDate!.month,
+          invoice.dueDate!.day,
+          9,
+        ),
+      );
+    }
     return save(invoice);
   }
 
@@ -148,6 +162,7 @@ class InvoiceService {
   }
 
   static Future<Invoice> markPaid(Invoice invoice, {String? messageId}) async {
+    await ReminderService.cancelReminder(900000 + invoice.id);
     invoice.status = 'paid';
     invoice.paidAt = DateTime.now();
     if (messageId != null) invoice.paymentMsgId = messageId;
@@ -155,6 +170,7 @@ class InvoiceService {
   }
 
   static Future<Invoice> markVoid(Invoice invoice) async {
+    await ReminderService.cancelReminder(900000 + invoice.id);
     invoice.status = 'void';
     return save(invoice);
   }

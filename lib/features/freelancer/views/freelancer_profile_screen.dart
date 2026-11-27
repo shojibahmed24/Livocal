@@ -2,14 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'package:livocal/features/freelancer/models/freelancer_profile.dart';
 import 'package:livocal/features/freelancer/services/freelancer_profile_service.dart';
 import 'package:livocal/features/freelancer/widgets/profile_sections.dart';
 import 'package:livocal/features/freelancer/widgets/profile_form_fields.dart';
 import 'package:livocal/features/freelancer/widgets/profile_header.dart';
+import 'package:livocal/features/freelancer/widgets/profile_link_actions.dart';
+import 'package:livocal/features/freelancer/widgets/profile_qr_dialog.dart';
 import 'package:livocal/features/freelancer/widgets/profile_pro_fields.dart';
 import 'package:livocal/features/freelancer/widgets/regenerate_confirm.dart';
 import 'package:livocal/shared/models/user.dart';
@@ -97,33 +97,13 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
     if (mounted) setState(() => _savedRecently = false);
   }
 
-  Future<void> _copyLink() async {
-    final profile = _profile;
-    if (profile == null) return;
-    await Clipboard.setData(ClipboardData(text: profile.publicUrl));
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_t('linkCopied')),
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
+  Future<void> _copyLink() =>
+      ProfileLinkActions.copy(context, _profile!.publicUrl, _t);
 
-  Future<void> _shareLink() async {
-    final profile = _profile;
-    if (profile == null) return;
-    await Share.share(profile.publicUrl, subject: profile.displayName);
-  }
+  Future<void> _shareLink() =>
+      ProfileLinkActions.share(_profile!.publicUrl, _profile!.displayName);
 
-  Future<void> _preview() async {
-    final profile = _profile;
-    if (profile == null) return;
-    final uri = Uri.tryParse(profile.publicUrl);
-    if (uri == null) return;
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
-
+  Future<void> _preview() => ProfileLinkActions.open(_profile!.publicUrl);
   Future<void> _togglePublish(bool value) async {
     if (value) {
       final confirmed = await showDialog<bool>(
@@ -165,7 +145,6 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
     final muted =
         isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
     final profile = _profile;
-
     return Scaffold(
       appBar: AppBar(
         title: Text(_t('freelancerProfile')),
@@ -214,6 +193,12 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
                   onShare: _shareLink,
                   onPreview: _preview,
                   onRegenerate: _regenerateSlug,
+                  onQr: () => showProfileQrDialog(
+                    context,
+                    url: profile.publicUrl,
+                    name: profile.displayName,
+                    t: _t,
+                  ),
                 ),
                 const SizedBox(height: 18),
                 ProfileFormFields(

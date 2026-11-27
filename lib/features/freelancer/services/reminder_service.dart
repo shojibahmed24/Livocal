@@ -77,6 +77,39 @@ class ReminderService {
     }
   }
 
+  static Future<void> scheduleInvoiceDue({
+    required int id,
+    required String number,
+    required String clientName,
+    required DateTime at,
+  }) async {
+    await _ensureReady();
+    if (!_ready) return;
+    try {
+      await _plugin.cancel(id: id);
+      if (at.isBefore(DateTime.now())) return;
+      await _plugin.zonedSchedule(
+        id: id,
+        title: 'Invoice $number due today',
+        body: '$clientName · Livocal invoice',
+        scheduledDate: tz.TZDateTime.from(at, tz.local),
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            _channelId,
+            _channelName,
+            channelDescription: 'Client follow-up reminders',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(),
+        ),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      );
+    } catch (e) {
+      debugPrint('[ReminderService] invoice schedule failed: $e');
+    }
+  }
+
   static Future<void> cancelReminder(int id) async {
     await _ensureReady();
     if (!_ready) return;

@@ -686,6 +686,8 @@ const ProposalShareSchema = z.object({
   terms: z.string().max(2000).optional(),
 });
 
+const profileViewThrottle = new Map();
+
 function shareToken() {
   const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
   let token = '';
@@ -920,6 +922,21 @@ app.get('/u/:slug', async (req, res) => {
       return res.redirect(301, '/u/' + encodeURIComponent(canonical));
     }
 
+    // Anonymous, throttled page-view counter (no cookies).
+    try {
+      const ip = String(req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim();
+      const nowMs = Date.now();
+      const seen = profileViewThrottle.get(ip) || 0;
+      if (!ip || nowMs - seen > 10 * 60 * 1000) {
+        if (ip) profileViewThrottle.set(ip, nowMs);
+        await firestoreDb
+          .collection('profiles')
+          .doc(uid)
+          .set({ viewCount: FieldValue.increment(1) }, { merge: true });
+      }
+    } catch (viewErr) {
+      // Analytics must never break the page.
+    }
     const [days, reviews] = await Promise.all([
       computeBookingDays(uid).catch(() => []),
       loadRecentReviews(uid).catch(() => []),

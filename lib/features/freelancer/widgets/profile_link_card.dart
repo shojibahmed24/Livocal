@@ -11,6 +11,7 @@ class ProfileLinkCard extends StatelessWidget {
   final VoidCallback onShare;
   final VoidCallback onPreview;
   final VoidCallback onRegenerate;
+  final VoidCallback onQr;
 
   const ProfileLinkCard({
     super.key,
@@ -21,6 +22,7 @@ class ProfileLinkCard extends StatelessWidget {
     required this.onShare,
     required this.onPreview,
     required this.onRegenerate,
+    required this.onQr,
   });
 
   @override
@@ -59,6 +61,14 @@ class ProfileLinkCard extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                     color: textColor,
                   ),
+                ),
+              ),
+              InkWell(
+                onTap: onQr,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(Icons.qr_code_2_rounded, size: 17, color: muted),
                 ),
               ),
               if (published)

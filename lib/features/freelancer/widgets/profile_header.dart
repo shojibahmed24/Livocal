@@ -14,6 +14,7 @@ class ProfileHeader extends StatelessWidget {
   final VoidCallback onShare;
   final VoidCallback onPreview;
   final VoidCallback onRegenerate;
+  final VoidCallback onQr;
   final VoidCallback onUpdated;
 
   const ProfileHeader({
@@ -27,6 +28,7 @@ class ProfileHeader extends StatelessWidget {
     required this.onShare,
     required this.onPreview,
     required this.onRegenerate,
+    required this.onQr,
   });
 
   @override
@@ -50,6 +52,7 @@ class ProfileHeader extends StatelessWidget {
           onShare: onShare,
           onPreview: onPreview,
           onRegenerate: onRegenerate,
+          onQr: onQr,
         ),
         if (profile.ratingCount > 0) ...[
           const SizedBox(height: 10),
@@ -64,6 +67,35 @@ class ProfileHeader extends StatelessWidget {
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: textColor,
+                ),
+              ),
+              if (profile.viewCount > 0) ...[
+                const SizedBox(width: 12),
+                Icon(Icons.visibility_outlined, size: 14, color: muted),
+                const SizedBox(width: 3),
+                Text(
+                  '${profile.viewCount}',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: muted,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ] else if (profile.viewCount > 0) ...[
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Icon(Icons.visibility_outlined, size: 14, color: muted),
+              const SizedBox(width: 4),
+              Text(
+                '${profile.viewCount}',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: muted,
                 ),
               ),
             ],

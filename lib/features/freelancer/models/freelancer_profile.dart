@@ -80,6 +80,9 @@ class FreelancerProfile {
   double ratingAvg;
   int ratingCount;
 
+  /// Server-managed public page views.
+  int viewCount;
+
   DateTime updatedAt;
   bool synced;
 
@@ -118,6 +121,7 @@ class FreelancerProfile {
     this.clientsCount = 0,
     this.ratingAvg = 0,
     this.ratingCount = 0,
+    this.viewCount = 0,
     required this.updatedAt,
     this.synced = false,
   })  : skills = List<String>.from(skills),
@@ -447,6 +451,7 @@ class FreelancerProfile {
       published: map['published'] == true,
       ratingAvg: (map['ratingAvg'] as num?)?.toDouble() ?? 0,
       ratingCount: (map['ratingCount'] as num?)?.toInt() ?? 0,
+      viewCount: (map['viewCount'] as num?)?.toInt() ?? 0,
       updatedAt: DateTime.tryParse((map['updatedAt'] as String?) ?? '') ??
           DateTime.now(),
       synced: true,
