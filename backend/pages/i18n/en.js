@@ -16,7 +16,7 @@ export default {
     sub: 'Live voice translation, booking, invoices and a public profile — one workspace for freelancers who work across languages.',
     cta1: 'Get early access',
     cta2: 'Try the translator',
-    micro: 'Free while we launch · No card required · 7 languages',
+    micro: 'Free while we launch · No card required · 70+ languages',
     demoTitle: 'Try it now',
     demoHint: 'Type a sentence, get the English instantly.',
     demoPlaceholder: 'আমি পরের সপ্তাহে কাজ শুরু করতে পারব',
@@ -29,7 +29,7 @@ export default {
   },
   trust: [
     'Made in Bangladesh',
-    '7 languages',
+    '70+ languages',
     'Client needs no app',
     'Invoices + booking',
     'No card required',
@@ -81,7 +81,7 @@ export default {
     title: 'A real Livocal profile',
     sub: 'Everything below is live — not a mockup.',
     stats: [
-      { v: '7', l: 'languages' },
+      { v: '70+', l: 'languages' },
       { v: '60', l: 'minute slots' },
       { v: '$0', l: 'to start' },
       { v: '1', l: 'link' },
@@ -99,7 +99,7 @@ export default {
         price: '$0',
         period: 'forever',
         badge: 'Available now',
-        features: ['Profile, booking and invoices', 'AI proposals', 'Voice calls with translation', '7 languages'],
+        features: ['Profile, booking and invoices', 'AI proposals', 'Voice calls with translation', '70+ translation languages'],
         cta: 'Get early access',
       },
       {
@@ -118,7 +118,7 @@ export default {
     items: [
       { q: 'Is Livocal free?', a: 'Yes during launch. Premium will be $5/month later, and you will be told before anything changes.' },
       { q: 'Does the client need the app?', a: 'No. They receive a link and join the call from any browser. Only you install the app.' },
-      { q: 'Which languages are supported?', a: 'Bangla, English, Hindi, Arabic, Spanish, French and German today. More are added as voice models improve.' },
+      { q: 'Which languages are supported?', a: 'Voice translation works between 70+ languages in any direction — Bangla to Spanish, Mandarin to Arabic, anything. The app interface itself comes in 7 languages.' },
       { q: 'Are my calls recorded?', a: 'No. Audio is translated in real time and never stored. Call summaries are text you choose to save.' },
       { q: 'What happens to my data?', a: 'It stays yours. You can delete the account and its data from Settings, or from livocal.app/delete-account.' },
       { q: 'Will it work on a slow connection?', a: 'Voice uses about 24 kbps. If the network drops, the call continues as direct voice without translation.' },

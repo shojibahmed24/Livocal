@@ -16,7 +16,7 @@ export default {
     sub: 'Live-Sprachübersetzung, Buchung, Rechnungen und ein öffentliches Profil — ein Arbeitsbereich für Freelancer, die über Sprachen hinweg arbeiten.',
     cta1: 'Früher Zugang',
     cta2: 'Übersetzer testen',
-    micro: 'Kostenlos bis zum Start · Keine Karte · 7 Sprachen',
+    micro: 'Kostenlos bis zum Start · Keine Karte · 70+ Sprachen',
     demoTitle: 'Jetzt testen',
     demoHint: 'Schreibe einen Satz und erhalte sofort Englisch.',
     demoPlaceholder: 'আমি পরের সপ্তাহে কাজ শুরু করতে পারব',
@@ -29,7 +29,7 @@ export default {
   },
   trust: [
     'Made in Bangladesch',
-    '7 Sprachen',
+    '70+ Sprachen',
     'Kunde braucht keine App',
     'Rechnungen + Buchung',
     'Keine Karte nötig',
@@ -81,7 +81,7 @@ export default {
     title: 'Ein echtes Livocal-Profil',
     sub: 'Alles unten ist live — kein Mockup.',
     stats: [
-      { v: '7', l: 'Sprachen' },
+      { v: '70+', l: 'Sprachen' },
       { v: '60', l: 'Minuten-Slots' },
       { v: '$0', l: 'zum Start' },
       { v: '1', l: 'Link' },
@@ -99,7 +99,7 @@ export default {
         price: '$0',
         period: 'für immer',
         badge: 'Jetzt verfügbar',
-        features: ['Profil, Buchung und Rechnungen', 'KI-Angebote', 'Anrufe mit Übersetzung', '7 Sprachen'],
+        features: ['Profil, Buchung und Rechnungen', 'KI-Angebote', 'Anrufe mit Übersetzung', 'Übersetzung in 70+ Sprachen'],
         cta: 'Frühen Zugang sichern',
       },
       {
@@ -118,7 +118,7 @@ export default {
     items: [
       { q: 'Ist Livocal kostenlos?', a: 'Zum Start ja. Premium kostet später 5 $/Monat, und du wirst vor jeder Änderung informiert.' },
       { q: 'Braucht der Kunde die App?', a: 'Nein. Er bekommt einen Link und tritt dem Anruf aus jedem Browser bei. Nur du installierst die App.' },
-      { q: 'Welche Sprachen gibt es?', a: 'Bengalisch, Englisch, Hindi, Arabisch, Spanisch, Französisch und Deutsch. Weitere folgen mit besseren Modellen.' },
+      { q: 'Welche Sprachen gibt es?', a: 'Sprachübersetzung funktioniert zwischen über 70 Sprachen in jede Richtung — Bengalisch nach Spanisch, Mandarin nach Arabisch, egal. Die App-Oberfläche gibt es in 7 Sprachen.' },
       { q: 'Werden Anrufe aufgezeichnet?', a: 'Nein. Audio wird live übersetzt und nie gespeichert. Die Zusammenfassung ist Text, den du speicherst.' },
       { q: 'Was passiert mit meinen Daten?', a: 'Sie bleiben deine. Lösche Konto und Daten in den Einstellungen oder unter livocal.app/delete-account.' },
       { q: 'Funktioniert es bei langsamer Verbindung?', a: 'Sprache braucht etwa 24 kbps. Bricht das Netz ein, läuft der Anruf ohne Übersetzung weiter.' },

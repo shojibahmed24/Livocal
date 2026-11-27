@@ -16,7 +16,7 @@ export default {
     sub: 'Traducción de voz en vivo, reservas, facturas y un perfil público: un solo lugar para freelancers que trabajan en varios idiomas.',
     cta1: 'Consigue acceso anticipado',
     cta2: 'Prueba el traductor',
-    micro: 'Gratis hasta el lanzamiento · Sin tarjeta · 7 idiomas',
+    micro: 'Gratis hasta el lanzamiento · Sin tarjeta · Más de 70 idiomas',
     demoTitle: 'Pruébalo ahora',
     demoHint: 'Escribe una frase y recibe el inglés al instante.',
     demoPlaceholder: 'আমি পরের সপ্তাহে কাজ শুরু করতে পারব',
@@ -29,7 +29,7 @@ export default {
   },
   trust: [
     'Hecho en Bangladés',
-    '7 idiomas',
+    'Más de 70 idiomas',
     'El cliente no necesita app',
     'Facturas + reservas',
     'Sin tarjeta',
@@ -81,7 +81,7 @@ export default {
     title: 'Un perfil real de Livocal',
     sub: 'Todo lo de abajo está en vivo, no es un mockup.',
     stats: [
-      { v: '7', l: 'idiomas' },
+      { v: '70+', l: 'idiomas' },
       { v: '60', l: 'minutos' },
       { v: '$0', l: 'para empezar' },
       { v: '1', l: 'enlace' },
@@ -99,7 +99,7 @@ export default {
         price: '$0',
         period: 'para siempre',
         badge: 'Disponible',
-        features: ['Perfil, reservas y facturas', 'Propuestas con IA', 'Llamadas con traducción', '7 idiomas'],
+        features: ['Perfil, reservas y facturas', 'Propuestas con IA', 'Llamadas con traducción', 'Traducción en 70+ idiomas'],
         cta: 'Consigue acceso',
       },
       {
@@ -118,7 +118,7 @@ export default {
     items: [
       { q: '¿Livocal es gratis?', a: 'Sí durante el lanzamiento. Premium costará 5 $/mes después y te avisaremos antes de cualquier cambio.' },
       { q: '¿El cliente necesita la app?', a: 'No. Recibe un enlace y entra a la llamada desde cualquier navegador. Solo tú instalas la app.' },
-      { q: '¿Qué idiomas hay?', a: 'Bengalí, inglés, hindi, árabe, español, francés y alemán. Se añaden más con mejores modelos de voz.' },
+      { q: '¿Qué idiomas hay?', a: 'La traducción de voz funciona entre más de 70 idiomas en cualquier dirección: bengalí a español, mandarín a árabe, lo que sea. La interfaz de la app está en 7 idiomas.' },
       { q: '¿Se graban mis llamadas?', a: 'No. El audio se traduce en vivo y no se guarda. El resumen es texto que tú decides guardar.' },
       { q: '¿Qué pasa con mis datos?', a: 'Son tuyos. Puedes borrar la cuenta y sus datos desde Ajustes o en livocal.app/delete-account.' },
       { q: '¿Funciona con mala conexión?', a: 'La voz usa unos 24 kbps. Si cae la red, la llamada sigue como voz directa sin traducción.' },
