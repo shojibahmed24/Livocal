@@ -9,6 +9,7 @@ import { renderBookingPage, bookingIcs } from './pages/booking_page.js';
 import { renderRoomPage } from './pages/room_page.js';
 import { renderAppHub } from './pages/app_page.js';
 import { renderDeleteAccountPage } from './pages/legal_page.js';
+import { renderLanding } from './pages/landing_page.js';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import crypto from 'crypto';
@@ -487,13 +488,40 @@ app.get('/health', (req, res) => {
   });
 });
 
-app.get('/', (req, res) => {
+// Legacy service descriptor, now on /api (the root is the landing page).
+app.get('/api', (req, res) => {
   res.json({
     service: 'Livocal Live Relay Gateway',
     version: '1.0.0',
     status: 'online',
     privacyPolicy: '/privacy-policy',
   });
+});
+
+// ── Marketing landing page ─────────────────────────────────────────────────
+function renderLandingFor(req, lang) {
+  return renderLanding({ lang, origin: publicOrigin(req) });
+}
+
+app.get('/', (req, res) => {
+  const accept = String(req.headers['accept-language'] || '').toLowerCase();
+  const prefersBangla = accept.startsWith('bn') || accept.includes(',bn');
+  const explicit = String(req.query.lang || '').toLowerCase();
+  if (!explicit && prefersBangla) {
+    return res.redirect(302, '/bn');
+  }
+  if (explicit === 'bn') {
+    return res.redirect(302, '/bn');
+  }
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=300');
+  return res.send(renderLandingFor(req, 'en'));
+});
+
+app.get('/bn', (req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=300');
+  return res.send(renderLandingFor(req, 'bn'));
 });
 
 // Hosted Public Privacy Policy Page for Google Play & App Store Compliance
@@ -1252,6 +1280,15 @@ app.use(
   express.static(path.join(__dirname, 'public', 'pwa'), { maxAge: '7d' })
 );
 
+// Landing page assets (CSS, JS, logo, fonts)
+app.use(
+  '/site',
+  express.static(path.join(__dirname, 'public', 'site'), {
+    maxAge: '7d',
+    etag: true,
+  })
+);
+
 app.get('/manifest.webmanifest', (req, res) => {
   const slug = String(req.query.slug || '').replace(/[^a-z0-9_-]/gi, '');
   const start = slug ? `/app/${slug}` : '/app';
@@ -1312,7 +1349,7 @@ app.get('/robots.txt', (req, res) => {
 
 app.get('/sitemap.xml', async (req, res) => {
   const origin = publicOrigin(req);
-  const urls = ['/', '/privacy-policy', '/terms-of-service', '/delete-account'];
+  const urls = ['/', '/bn', '/privacy-policy', '/terms-of-service', '/delete-account'];
   try {
     if (firestoreDb) {
       const snapshot = await firestoreDb
@@ -1377,6 +1414,188 @@ app.get('/app/:slug', async (req, res) => {
     console.error('[AppHub] error:', err.message);
     return res.status(500).send('error');
   }
+});
+
+// ── Landing page helpers: demo translation, waitlist, counters ─────────────
+const demoLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { ok: false, error: 'rate_limited' },
+});
+
+const waitlistLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { ok: false, error: 'rate_limited' },
+});
+
+const eventLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { ok: false, error: 'rate_limited' },
+});
+
+const DEMO_DAILY_CAP = Math.max(0, Number(process.env.DEMO_DAILY_CAP || 300));
+
+/** Increments the global demo counter and reports whether the call is allowed. */
+async function allowDemoCall() {
+  if (!firestoreDb) return true;
+  const day = new Date().toISOString().slice(0, 10);
+  const ref = firestoreDb.collection('stats').doc('demo');
+  try {
+    const snapshot = await ref.get();
+    const data = snapshot.data() || {};
+    if (data.day !== day) {
+      await ref.set(
+        { day, count: 1, updatedAt: FieldValue.serverTimestamp() },
+        { merge: true }
+      );
+      return true;
+    }
+    if (Number(data.count || 0) >= DEMO_DAILY_CAP) return false;
+    await ref.update({
+      count: FieldValue.increment(1),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    return true;
+  } catch (err) {
+    console.warn('[Demo] counter failed:', err.message);
+    return true;
+  }
+}
+
+app.post('/api/public/demo-translate', demoLimiter, async (req, res) => {
+  const body = req.body || {};
+  const text = String(body.text || '').trim().slice(0, 200);
+  const from = body.from === 'en' ? 'en' : 'bn';
+  if (text.length < 2) {
+    return res.status(400).json({ ok: false, error: 'invalid_text' });
+  }
+  if (!GEMINI_API_KEY) {
+    return res.status(503).json({ ok: false, error: 'unavailable' });
+  }
+  const allowed = await allowDemoCall();
+  if (!allowed) {
+    return res.status(429).json({ ok: false, error: 'daily_cap' });
+  }
+  const target = from === 'bn' ? 'English' : 'Bangla';
+  const prompt =
+    `Translate the following ${from === 'bn' ? 'Bangla' : 'English'} sentence ` +
+    `into ${target}. Return only the translation, no quotes and no explanation.\n\n` +
+    text;
+  try {
+    const url =
+      `https://generativelanguage.googleapis.com/v1beta/models/` +
+      `${TEXT_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+    const apiRes = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.2, maxOutputTokens: 200 },
+      }),
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!apiRes.ok) {
+      console.warn('[Demo] Gemini HTTP', apiRes.status);
+      return res.status(502).json({ ok: false, error: 'translate_failed' });
+    }
+    const data = await apiRes.json();
+    const raw = (data.candidates?.[0]?.content?.parts || [])
+      .map((part) => part.text || '')
+      .join('')
+      .trim();
+    if (!raw) {
+      return res.status(502).json({ ok: false, error: 'empty' });
+    }
+    return res.json({
+      ok: true,
+      text: raw.replace(/^["'“”‘’]+|["'“”‘’]+$/g, '').trim(),
+    });
+  } catch (err) {
+    console.warn('[Demo] translate failed:', err.message);
+    return res.status(502).json({ ok: false, error: 'translate_failed' });
+  }
+});
+
+app.post('/api/public/waitlist', waitlistLimiter, async (req, res) => {
+  const body = req.body || {};
+  const raw = String(body.contact || '').trim().slice(0, 120);
+  const locale = body.locale === 'bn' ? 'bn' : 'en';
+  const source = String(body.source || 'landing').slice(0, 40);
+  if (!raw) return res.status(400).json({ ok: false, error: 'missing_contact' });
+
+  const compact = raw.replace(/[\s-]/g, '');
+  const isPhone = /^(\+?8801[3-9]\d{8}|01[3-9]\d{8})$/.test(compact);
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(raw);
+
+  let contact;
+  if (isEmail) {
+    contact = raw.toLowerCase();
+  } else if (isPhone) {
+    contact = compact.startsWith('0')
+      ? '+88' + compact
+      : '+' + compact.replace(/^\+?/, '');
+  } else {
+    return res.status(400).json({ ok: false, error: 'invalid_contact' });
+  }
+
+  if (!firestoreDb) return res.status(503).json({ ok: false, error: 'unavailable' });
+
+  const id = crypto.createHash('sha256').update(contact).digest('hex').slice(0, 32);
+  const ip = String(req.headers['x-forwarded-for'] || req.ip || '')
+    .split(',')[0]
+    .trim();
+  const ipHash = ip
+    ? crypto.createHash('sha256').update(ip).digest('hex').slice(0, 16)
+    : '';
+
+  try {
+    await firestoreDb.collection('waitlist').doc(id).set(
+      {
+        contact,
+        locale,
+        source,
+        ipHash,
+        createdAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('[Waitlist] write failed:', err.message);
+    return res.status(500).json({ ok: false, error: 'failed' });
+  }
+});
+
+app.post('/api/public/landing-event', eventLimiter, async (req, res) => {
+  const type = String(req.body?.type || '');
+  if (!['view', 'cta', 'waitlist', 'demo'].includes(type)) {
+    return res.status(204).end();
+  }
+  if (firestoreDb) {
+    try {
+      await firestoreDb
+        .collection('stats')
+        .doc('landing')
+        .set(
+          {
+            [type]: FieldValue.increment(1),
+            updatedAt: FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+    } catch (err) {
+      // Analytics must never break the page.
+    }
+  }
+  return res.status(204).end();
 });
 
 app.get('/room/:slug', async (req, res) => {
