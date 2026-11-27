@@ -1627,7 +1627,7 @@ app.post('/api/public/demo-translate', demoLimiter, async (req, res) => {
     }
     // Gemini quota or region can fail; OpenRouter keeps the demo alive.
     if (OPENROUTER_API_KEY) {
-      const fallbackModels = [OPENROUTER_MODEL, OPENROUTER_FALLBACK_MODEL].filter(
+      const fallbackModels = [OPENROUTER_FALLBACK_MODEL, OPENROUTER_MODEL].filter(
         (model, index, list) => model && list.indexOf(model) === index
       );
       for (const model of fallbackModels) {
