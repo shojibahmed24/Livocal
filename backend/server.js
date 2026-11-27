@@ -86,6 +86,9 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY?.trim() || '';
 const OPENROUTER_MODEL =
     process.env.OPENROUTER_MODEL?.trim() ||
     'nvidia/nemotron-3-ultra-550b-a55b:free';
+const GEMINI_FALLBACK_TEXT_MODEL =
+    process.env.GEMINI_FALLBACK_TEXT_MODEL?.trim() || 'gemini-2.0-flash';
+
 const OPENROUTER_FALLBACK_MODEL =
     process.env.OPENROUTER_FALLBACK_MODEL?.trim() ||
     'google/gemma-4-31b-it:free';
@@ -5284,39 +5287,43 @@ app.post(
       }
     }
     if (!proposal && GEMINI_API_KEY) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-        const apiRes = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.5,
-              maxOutputTokens: 900,
-              responseMimeType: 'application/json',
-            },
-          }),
-        });
-        if (apiRes.ok) {
-          const data = await apiRes.json();
-          const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          proposal = parseProposalJson(raw);
-          if (proposal) {
-            source = 'gemini';
-          } else {
+      const geminiModels = [TEXT_MODEL, GEMINI_FALLBACK_TEXT_MODEL].filter(
+        (model, index, list) => model && list.indexOf(model) === index
+      );
+      for (const model of geminiModels) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+          const apiRes = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                temperature: 0.5,
+                maxOutputTokens: 900,
+                responseMimeType: 'application/json',
+              },
+            }),
+          });
+          if (apiRes.ok) {
+            const data = await apiRes.json();
+            const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            proposal = parseProposalJson(raw);
+            if (proposal) {
+              source = 'gemini';
+              break;
+            }
             reason = 'gemini_parse';
+          } else {
+            reason = 'gemini_http_' + apiRes.status;
+            console.error('[Proposal] Gemini', model, 'HTTP', apiRes.status);
           }
-        } else {
-          reason = 'gemini_http_' + apiRes.status;
-          console.error('[Proposal] Gemini HTTP status:', apiRes.status);
+        } catch (err) {
+          reason = 'gemini_error';
+          console.error('[Proposal] Gemini error:', err.message);
         }
-      } catch (err) {
-        reason = 'gemini_error';
-        console.error('[Proposal] Gemini error:', err.message);
       }
     }
-
     if (!proposal) {
       if (!reason) reason = 'ai_not_configured';
       proposal = fallbackProposal({ ...input, skills, rate });
