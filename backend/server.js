@@ -6,6 +6,7 @@ import cors from 'cors';
 import { z } from 'zod';
 import { renderProfilePage, renderCvPage } from './pages/profile_page.js';
 import { renderBookingPage, bookingIcs } from './pages/booking_page.js';
+import { renderRoomPage } from './pages/room_page.js';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import crypto from 'crypto';
@@ -967,6 +968,122 @@ app.get('/m/:slug', async (req, res) => {
     return res.status(500).send('error');
   }
 });
+// ── Browser guest rooms (F7.1, voice only) ─────────────────────────────────
+const JOIN_SECRET =
+  process.env.JOIN_SECRET?.trim() ||
+  process.env.ADMIN_SECRET?.trim() ||
+  'livocal-join-dev';
+const joinRooms = new Map();
+
+function signJoinToken(roomId, role, ttlSeconds = 7200) {
+  const exp = Math.floor(Date.now() / 1000) + ttlSeconds;
+  const payload = `${roomId}.${role}.${exp}`;
+  const sig = crypto
+    .createHmac('sha256', JOIN_SECRET)
+    .update(payload)
+    .digest('base64url');
+  return `${payload}.${sig}`;
+}
+
+function verifyJoinToken(token) {
+  const parts = String(token || '').split('.');
+  if (parts.length !== 4) return null;
+  const [roomId, role, expRaw, sig] = parts;
+  const expected = crypto
+    .createHmac('sha256', JOIN_SECRET)
+    .update(`${roomId}.${role}.${expRaw}`)
+    .digest('base64url');
+  const a = Buffer.from(sig);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+  if (Number(expRaw) * 1000 < Date.now()) return null;
+  if (role !== 'host' && role !== 'guest') return null;
+  return { roomId, role };
+}
+
+function createJoinRoom(hostName) {
+  const roomId = crypto.randomBytes(9).toString('hex');
+  joinRooms.set(roomId, {
+    host: null,
+    guest: null,
+    hostName: hostName || 'Livocal',
+    expires: Date.now() + 2 * 60 * 60 * 1000,
+  });
+  return roomId;
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [roomId, room] of joinRooms.entries()) {
+    if (room.expires < now && !room.host && !room.guest) {
+      joinRooms.delete(roomId);
+    }
+  }
+}, 5 * 60 * 1000).unref();
+
+app.get('/api/public/ice', apiLimiter, async (req, res) => {
+  const iceServers = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+  ];
+  if (METERED_API_KEY) {
+    try {
+      const metered = await fetchMeteredIceServers();
+      iceServers.push(...metered);
+    } catch (err) {
+      console.warn('[GuestICE] Metered failed:', err.message);
+    }
+  }
+  res.setHeader('Cache-Control', 'no-store');
+  return res.json({ iceServers });
+});
+
+app.get('/room/:slug', async (req, res) => {
+  if (!firestoreDb) return res.status(503).send('unavailable');
+  try {
+    const host = await loadHostBySlug(req.params.slug);
+    if (!host) return res.status(404).send('Not found');
+    const roomId = createJoinRoom(host.profile.displayName || 'Livocal');
+    const hostToken = signJoinToken(roomId, 'host');
+    const guestToken = signJoinToken(roomId, 'guest');
+    const guestUrl = `https://${req.get('host')}/join/${guestToken}`;
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
+    return res.send(
+      renderRoomPage({
+        role: 'host',
+        roomId,
+        token: hostToken,
+        peerName: host.profile.displayName || 'Livocal',
+        guestUrl,
+      })
+    );
+  } catch (err) {
+    console.error('[GuestRoom] host page error:', err.message);
+    return res.status(500).send('error');
+  }
+});
+
+app.get('/join/:token', async (req, res) => {
+  const info = verifyJoinToken(req.params.token);
+  if (!info || info.role !== 'guest') return res.status(404).send('Room not found');
+  const room = joinRooms.get(info.roomId);
+  if (!room) {
+    return res.status(410).send('This room has expired. Ask the host for a new link.');
+  }
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store');
+  return res.send(
+    renderRoomPage({
+      role: 'guest',
+      roomId: info.roomId,
+      token: req.params.token,
+      peerName: room.hostName,
+      guestUrl: '',
+    })
+  );
+});
+
 app.get('/p/:slug', (req, res) => {
   const slug = String(req.params.slug || '').trim();
   return res.redirect(301, `/u/${encodeURIComponent(slug)}`);
@@ -5602,6 +5719,60 @@ app.post(
 
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws/live-call' });
+
+// Browser guest-room signaling (F7.1)
+const roomWss = new WebSocketServer({ server, path: '/ws/room' });
+roomWss.on('connection', (socket, request) => {
+  try {
+    const url = new URL(request.url || '', 'http://localhost');
+    const info = verifyJoinToken(url.searchParams.get('token'));
+    if (!info) {
+      socket.close(4001, 'invalid');
+      return;
+    }
+    const room = joinRooms.get(info.roomId);
+    if (!room) {
+      socket.send(JSON.stringify({ type: 'expired' }));
+      socket.close(4004, 'expired');
+      return;
+    }
+    const role = info.role;
+    if (room[role]) {
+      socket.send(JSON.stringify({ type: 'full' }));
+      socket.close(4009, 'full');
+      return;
+    }
+    room[role] = socket;
+
+    const other = role === 'host' ? room.guest : room.host;
+    if (other && other.readyState === WebSocket.OPEN) {
+      other.send(
+        JSON.stringify({
+          type: role === 'guest' ? 'peer-joined' : 'host-ready',
+        })
+      );
+    }
+
+    socket.on('message', (data) => {
+      const target = role === 'host' ? room.guest : room.host;
+      if (target && target.readyState === WebSocket.OPEN) {
+        target.send(data.toString());
+      }
+    });
+
+    socket.on('close', () => {
+      if (room[role] === socket) room[role] = null;
+      const target = role === 'host' ? room.guest : room.host;
+      if (target && target.readyState === WebSocket.OPEN) {
+        target.send(JSON.stringify({ type: 'peer-left' }));
+      }
+      if (!room.host && !room.guest) joinRooms.delete(info.roomId);
+    });
+  } catch (err) {
+    console.error('[GuestRoom] ws error:', err.message);
+    socket.close(1011, 'error');
+  }
+});
 
 let activeSessionsCount = 0;
 
