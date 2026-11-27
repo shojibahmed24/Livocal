@@ -84,7 +84,8 @@ const TEXT_MODEL =
 // Proposal writing: OpenRouter when configured, else Gemini.
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY?.trim() || '';
 const OPENROUTER_MODEL =
-    process.env.OPENROUTER_MODEL?.trim() || 'openai/gpt-4o-mini';
+    process.env.OPENROUTER_MODEL?.trim() ||
+    'nvidia/nemotron-3-ultra-550b-a55b:free';
 
 // Metered TURN: when an API key is configured the relay fetches short-lived ICE
 // servers per request instead of shipping static credentials to every client.
@@ -5161,11 +5162,11 @@ app.post(
               'HTTP-Referer': 'https://livocal-relay.onrender.com',
               'X-Title': 'Livocal',
             },
+            signal: AbortSignal.timeout(45000),
             body: JSON.stringify({
               model: OPENROUTER_MODEL,
               temperature: 0.5,
               max_tokens: 900,
-              response_format: { type: 'json_object' },
               messages: [
                 {
                   role: 'system',
