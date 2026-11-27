@@ -62,9 +62,14 @@ class ProposalService {
       if (data is! Map) return null;
       final raw = data['proposal'];
       if (raw is! Map) return null;
-      return Proposal.fromJson(
+      final proposal = Proposal.fromJson(
         raw.map((key, value) => MapEntry(key.toString(), value)),
       );
+      if (proposal != null) {
+        proposal.source = (data['source'] ?? 'ai').toString();
+        proposal.reason = (data['reason'] ?? '').toString();
+      }
+      return proposal;
     } catch (e) {
       debugPrint('[ProposalService] generate failed: $e');
       return null;

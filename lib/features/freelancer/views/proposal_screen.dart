@@ -48,6 +48,8 @@ class _ProposalScreenState extends State<ProposalScreen> {
   CrmEntry? _crm;
   bool _generating = false;
   bool _ready = false;
+  bool _usedFallback = false;
+  String _reason = '';
   bool _saving = false;
 
   @override
@@ -132,6 +134,8 @@ class _ProposalScreenState extends State<ProposalScreen> {
       _price.text = proposal.price;
       _terms.text = proposal.terms;
       _ready = true;
+      _usedFallback = proposal.source == 'fallback';
+      _reason = proposal.reason;
     });
   }
 
@@ -267,6 +271,24 @@ class _ProposalScreenState extends State<ProposalScreen> {
           ),
           const SizedBox(height: 16),
           if (_ready) ...[
+            if (_usedFallback) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                  border:
+                      Border.all(color: Colors.orange.withValues(alpha: 0.4)),
+                ),
+                child: Text(
+                  '${_t('proposalFallback')}'
+                  '${_reason.isEmpty ? '' : ' ($_reason)'}',
+                  style: const TextStyle(fontSize: 10.5, color: Colors.orange),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
             ProposalFormFields(
               headline: _headline,
               scope: _scope,

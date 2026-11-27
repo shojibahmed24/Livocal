@@ -6,12 +6,18 @@ class Proposal {
   final String price;
   final String terms;
 
-  const Proposal({
+  /// openrouter | gemini | allback`r
+  String source;
+  String reason;
+
+  Proposal({
     required this.headline,
     required this.scope,
     required this.timeline,
     required this.price,
     required this.terms,
+    this.source = 'ai',
+    this.reason = '',
   });
 
   static Proposal? fromJson(Map<String, dynamic>? json) {

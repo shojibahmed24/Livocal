@@ -26,7 +26,7 @@ void main() {
     });
 
     test('plain text includes all sections', () {
-      const proposal = Proposal(
+      final proposal = Proposal(
         headline: 'Website',
         scope: 'Build 3 pages',
         timeline: '7 days',

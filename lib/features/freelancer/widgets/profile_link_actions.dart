@@ -15,7 +15,8 @@ class ProfileLinkActions {
     await Clipboard.setData(ClipboardData(text: url));
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(t('linkCopied')), duration: const Duration(seconds: 2)),
+      SnackBar(
+          content: Text(t('linkCopied')), duration: const Duration(seconds: 2)),
     );
   }
 
