@@ -163,9 +163,10 @@ class _InvoiceEditorScreenState extends ConsumerState<InvoiceEditorScreen> {
           ? _t('noDueDate')
           : Invoice.formatDate(invoice.dueDate!);
       final link = '${AppConfig.relayHttpBaseUrl}/i/$token';
-      final content =
-          '📄 ${_t('invoice')} ${invoice.number} • ${invoice.totalLabel} • '
-          '${_t('dueDate')}: $due\n$link';
+      final content = '📄 ${_t('invoice')} ${invoice.number}\n'
+          '${_t('totalLabel')}: ${invoice.totalLabel}\n'
+          '${_t('dueDate')}: $due\n'
+          '${_t('previewInvoice')}: $link';
       ref.read(chatControllerProvider.notifier).sendMessageNoAttachments(
             Message(
               id: const Uuid().v4(),
@@ -193,8 +194,10 @@ class _InvoiceEditorScreenState extends ConsumerState<InvoiceEditorScreen> {
     final due =
         invoice.dueDate == null ? '-' : Invoice.formatDate(invoice.dueDate!);
     final content =
-        '🔔 ${_t('sendReminder')}: ${_t('invoice')} ${invoice.number} • '
-        '${invoice.totalLabel} • ${_t('dueDate')}: $due\n$link';
+        '🔔 ${_t('sendReminder')}: ${_t('invoice')} ${invoice.number}\n'
+        '${_t('totalLabel')}: ${invoice.totalLabel}\n'
+        '${_t('dueDate')}: $due\n'
+        '${_t('previewInvoice')}: $link';
     ref.read(chatControllerProvider.notifier).sendMessageNoAttachments(
           Message(
             id: const Uuid().v4(),

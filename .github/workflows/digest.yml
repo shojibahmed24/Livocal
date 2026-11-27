@@ -1,0 +1,24 @@
+name: Daily booking digest
+
+on:
+  schedule:
+    # 08:00 Asia/Dhaka (02:00 UTC)
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger relay digest
+        env:
+          DIGEST_SECRET: ${{ secrets.DIGEST_SECRET }}
+        run: |
+          if [ -z "$DIGEST_SECRET" ]; then
+            echo "DIGEST_SECRET is not configured; skipping."
+            exit 0
+          fi
+          curl -fsS -X POST "https://livocal-relay.onrender.com/api/digest/run" \
+            -H "Content-Type: application/json" \
+            -H "x-digest-key: $DIGEST_SECRET" \
+            -d '{}'

@@ -3,7 +3,9 @@ import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_emoji/flutter_emoji.dart';
 import 'package:livocal/features/chat/models/call_log_helper.dart';
@@ -1428,13 +1430,15 @@ class _MessageCardState extends ConsumerState<MessageCard>
             ),
           ),
         ],
-        Text(
-          '$actualText $textPadding',
+        Text.rich(
+          _linkifiedText(
+            '$actualText $textPadding',
+            Theme.of(context).custom.textTheme.bodyText1.copyWith(
+                  fontSize: biggerFont ? 40 : dynamicFontSize,
+                  color: colorTheme.textColor1,
+                ),
+          ),
           textWidthBasis: TextWidthBasis.longestLine,
-          style: Theme.of(context).custom.textTheme.bodyText1.copyWith(
-                fontSize: biggerFont ? 40 : dynamicFontSize,
-                color: colorTheme.textColor1,
-              ),
           softWrap: true,
         ),
         if (_isTranslating) ...[
@@ -1516,6 +1520,37 @@ class _MessageCardState extends ConsumerState<MessageCard>
         ],
       ],
     );
+  }
+
+  TextSpan _linkifiedText(String text, TextStyle style) {
+    final regex = RegExp(r'https?://[^\s]+');
+    final spans = <TextSpan>[];
+    var last = 0;
+    for (final match in regex.allMatches(text)) {
+      if (match.start > last) {
+        spans.add(TextSpan(text: text.substring(last, match.start)));
+      }
+      final url = match.group(0)!;
+      spans.add(
+        TextSpan(
+          text: url,
+          style: style.copyWith(
+            color: AppColors.accent,
+            decoration: TextDecoration.underline,
+          ),
+          recognizer: TapGestureRecognizer()
+            ..onTap = () => launchUrl(
+                  Uri.parse(url),
+                  mode: LaunchMode.externalApplication,
+                ),
+        ),
+      );
+      last = match.end;
+    }
+    if (last < text.length) {
+      spans.add(TextSpan(text: text.substring(last)));
+    }
+    return TextSpan(style: style, children: spans);
   }
 
   @override
