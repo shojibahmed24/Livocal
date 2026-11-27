@@ -199,6 +199,8 @@ app.use('/admin', adminUiAuth, express.static(path.join(__dirname, 'public/admin
 
 // Secure CORS configuration: Restrict origins, allow mobile apps without Origin header
 const defaultAllowedOrigins = [
+  'https://livocal.app',
+  'https://www.livocal.app',
   'https://livocal.web.app',
   'https://livocal.firebaseapp.com',
   'https://livocal24.web.app',
@@ -209,6 +211,38 @@ const configuredOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
   : [];
 const allowedOrigins = Array.from(new Set([...defaultAllowedOrigins, ...configuredOrigins]));
+
+// Canonical public origin. When PUBLIC_BASE_URL is set (for example
+// https://livocal.app) every generated link uses it and the old Render host
+// keeps serving, but browsers are redirected to the custom domain.
+const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || '').trim().replace(/\/+$/, '');
+const PUBLIC_HOST = PUBLIC_BASE_URL.replace(/^https?:\/\//i, '').toLowerCase();
+
+/** Absolute origin used for every link we hand to users. */
+function publicOrigin(req) {
+  if (PUBLIC_BASE_URL) return PUBLIC_BASE_URL;
+  const host = req?.get('host') || 'livocal.app';
+  return 'https://' + host;
+}
+
+app.use((req, res, next) => {
+  if (!PUBLIC_HOST) return next();
+  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+  const host = String(req.headers.host || '').toLowerCase();
+  if (host === PUBLIC_HOST) return next();
+  if (!host.endsWith('.onrender.com')) return next();
+  const url = req.originalUrl || req.url || '/';
+  if (
+    url.startsWith('/api/') ||
+    url.startsWith('/ws/') ||
+    url.startsWith('/static/') ||
+    url.startsWith('/admin') ||
+    url === '/health'
+  ) {
+    return next();
+  }
+  return res.redirect(301, `${PUBLIC_BASE_URL}${url}`);
+});
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -1262,7 +1296,7 @@ app.get('/room/:slug', async (req, res) => {
     );
     const hostToken = signJoinToken(room.roomId, 'host');
     const guestToken = signJoinToken(room.roomId, 'guest');
-    const guestUrl = `https://${req.get('host')}/join/${guestToken}`;
+    const guestUrl = `${publicOrigin(req)}/join/${guestToken}`;
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store');
     return res.send(
@@ -1296,10 +1330,10 @@ app.get('/api/public/room/:slug', apiLimiter, async (req, res) => {
     return res.json({
       roomId: room.roomId,
       hostName: room.hostName || 'Livocal',
-      hostUrl: `https://${req.get('host')}/room/${encodeURIComponent(
+      hostUrl: `${publicOrigin(req)}/room/${encodeURIComponent(
         req.params.slug
       )}`,
-      guestUrl: `https://${req.get('host')}/join/${guestToken}`,
+      guestUrl: `${publicOrigin(req)}/join/${guestToken}`,
       expiresAt: new Date(room.expires).toISOString(),
     });
   } catch (err) {
@@ -5608,7 +5642,7 @@ app.post(
               headers: {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-                'HTTP-Referer': 'https://livocal-relay.onrender.com',
+                'HTTP-Referer': PUBLIC_BASE_URL || 'https://livocal.app',
                 'X-Title': 'Livocal',
               },
               signal: AbortSignal.timeout(45000),

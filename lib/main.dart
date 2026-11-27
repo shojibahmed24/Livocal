@@ -82,6 +82,7 @@ void main() async {
   );
 
   unawaited(DeepLinkService.init());
+  unawaited(_warmUpRelay());
   unawaited(_bootstrapDeferred());
 }
 
@@ -139,11 +140,12 @@ Future<void> _bootstrapDeferred() async {
   // Render free instances cold-start in 10-30s. Wake the relay while the user
   // is still on the login/home screen so the first translated call does not
   // pay the cold-start penalty (and fail its 15s connect timeout).
-  unawaited(_warmUpRelay());
 }
 
 Future<void> _warmUpRelay() async {
   try {
+    // Pick the custom domain when it answers, otherwise the Render host.
+    await AppConfig.resolveRelay();
     await http
         .get(Uri.parse('${AppConfig.relayHttpBaseUrl}/health'))
         .timeout(const Duration(seconds: 8));

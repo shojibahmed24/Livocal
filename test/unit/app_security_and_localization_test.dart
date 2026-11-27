@@ -217,10 +217,10 @@ void main() {
 
   group('Centralized AppConfig Tests', () {
     test('Default relay endpoints resolve properly', () {
-      expect(AppConfig.relayHttpBaseUrl,
+      expect(AppConfig.relayHttpBaseUrl, contains('https://livocal.app'));
+      expect(AppConfig.relayWsBaseUrl, contains('wss://livocal.app'));
+      expect(AppConfig.fallbackRelayUrl,
           contains('https://livocal-relay.onrender.com'));
-      expect(AppConfig.relayWsBaseUrl,
-          contains('wss://livocal-relay.onrender.com'));
       expect(AppConfig.callNotifyIncomingUrl,
           endsWith('/api/call/notify-incoming'));
       expect(

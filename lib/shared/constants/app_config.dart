@@ -1,10 +1,47 @@
+import 'dart:async';
+
+import 'package:http/http.dart' as http;
+
 class AppConfig {
   /// Base HTTP URL for the Livocal backend relay server.
-  /// Can be overridden at build or runtime with `--dart-define=RELAY_URL=...`.
-  static const String relayHttpBaseUrl = String.fromEnvironment(
-    'RELAY_URL',
-    defaultValue: 'https://livocal-relay.onrender.com',
-  );
+  ///
+  /// Primary host is the custom domain. If the domain is not reachable the app
+  /// falls back to the Render host so calls, chat and links never break.
+  /// Override at build time with `--dart-define=RELAY_URL=...`.
+  static const String _envBase = String.fromEnvironment('RELAY_URL');
+
+  static const String primaryRelayUrl =
+      _envBase == '' ? 'https://livocal.app' : _envBase;
+
+  static const String fallbackRelayUrl =
+      _envBase == '' ? 'https://livocal-relay.onrender.com' : _envBase;
+
+  static String _baseUrl = primaryRelayUrl;
+
+  static String get relayHttpBaseUrl => _baseUrl;
+
+  /// True once the custom domain answered a health check.
+  static bool get usingCustomDomain => _baseUrl == primaryRelayUrl;
+
+  /// Pings the custom domain once. A cold Render start times out, which is not
+  /// a reason to abandon the domain; a DNS or HTTP failure is.
+  static Future<void> resolveRelay({http.Client? client}) async {
+    if (primaryRelayUrl == fallbackRelayUrl) return;
+    final httpClient = client ?? http.Client();
+    try {
+      final response = await httpClient
+          .get(Uri.parse('$primaryRelayUrl/health'))
+          .timeout(const Duration(seconds: 6));
+      _baseUrl =
+          response.statusCode == 200 ? primaryRelayUrl : fallbackRelayUrl;
+    } on TimeoutException {
+      // Likely a sleeping free instance – keep the custom domain.
+    } catch (_) {
+      _baseUrl = fallbackRelayUrl;
+    } finally {
+      if (client == null) httpClient.close();
+    }
+  }
 
   /// Base WebSocket URL for real-time live translation relay.
   /// Can be overridden at build or runtime with `--dart-define=RELAY_WS_URL=...`.
@@ -16,7 +53,7 @@ class AppConfig {
     } else if (relayHttpBaseUrl.startsWith('http://')) {
       return relayHttpBaseUrl.replaceFirst('http://', 'ws://');
     }
-    return 'wss://livocal-relay.onrender.com';
+    return 'wss://livocal.app';
   }
 
   /// Specific REST endpoints
