@@ -86,6 +86,9 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY?.trim() || '';
 const OPENROUTER_MODEL =
     process.env.OPENROUTER_MODEL?.trim() ||
     'nvidia/nemotron-3-ultra-550b-a55b:free';
+const OPENROUTER_FALLBACK_MODEL =
+    process.env.OPENROUTER_FALLBACK_MODEL?.trim() ||
+    'google/gemma-4-31b-it:free';
 
 // Metered TURN: when an API key is configured the relay fetches short-lived ICE
 // servers per request instead of shipping static credentials to every client.
@@ -5176,7 +5179,7 @@ function fallbackProposal(input) {
   if (bangla) {
     return {
       headline: `প্রস্তাব: ${brief ? brief.slice(0, 60) : 'আপনার প্রজেক্ট'}`,
-      scope: `আমি ${skills} দেখব। কাজ শুরুর আগে ডেলিভারেবল ও মাইলস্টোন লিখিতভাবে ঠিক হবে।`,
+      scope: `কাজের সারসংক্ষেপ: ${brief || 'আপনার প্রজেক্ট'}। আমি ${skills} দেখব। ডেলিভারেবল ও মাইলস্টোন শুরুর আগে লিখিতভাবে ঠিক হবে।`,
       timeline: '৩ কর্মদিবসে প্রথম ড্রাফট, রিভিশনসহ।',
       price: price.includes('project') ? `${price} (প্রজেক্ট অনুযায়ী)` : `${price} (ঘণ্টা অনুযায়ী)`,
       terms: '৫০% অগ্রিম, বাকিটা ডেলিভারির সময়। দুই রাউন্ড রিভিশন অন্তর্ভুক্ত।',
@@ -5185,7 +5188,7 @@ function fallbackProposal(input) {
 
   return {
     headline: `Proposal: ${brief ? brief.slice(0, 60) : 'your project'}`,
-    scope: `I will handle ${skills}. Deliverables and milestones are agreed in writing before the start.`,
+    scope: `Scope: ${brief || 'your project'}. I will handle ${skills}. Deliverables and milestones are agreed in writing before the start.`,
     timeline: 'First draft within 3 working days, revisions included.',
     price,
     terms: '50% advance, balance on delivery. Two revision rounds included.',
@@ -5229,52 +5232,57 @@ app.post(
     let reason = '';
 
     if (OPENROUTER_API_KEY) {
-      try {
-        const apiRes = await fetch(
-          'https://openrouter.ai/api/v1/chat/completions',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-              'HTTP-Referer': 'https://livocal-relay.onrender.com',
-              'X-Title': 'Livocal',
-            },
-            signal: AbortSignal.timeout(45000),
-            body: JSON.stringify({
-              model: OPENROUTER_MODEL,
-              temperature: 0.5,
-              max_tokens: 900,
-              messages: [
-                {
-                  role: 'system',
-                  content:
-                    'You are a senior freelancer writing a short, client-ready proposal. Output JSON only.',
-                },
-                { role: 'user', content: prompt },
-              ],
-            }),
-          }
-        );
-        if (apiRes.ok) {
-          const data = await apiRes.json();
-          const raw = data.choices?.[0]?.message?.content || '';
-          proposal = parseProposalJson(raw);
-          if (proposal) {
-            source = 'openrouter';
-          } else {
+      const models = [OPENROUTER_MODEL, OPENROUTER_FALLBACK_MODEL].filter(
+        (model, index, list) => model && list.indexOf(model) === index
+      );
+      for (const model of models) {
+        try {
+          const apiRes = await fetch(
+            'https://openrouter.ai/api/v1/chat/completions',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+                'HTTP-Referer': 'https://livocal-relay.onrender.com',
+                'X-Title': 'Livocal',
+              },
+              signal: AbortSignal.timeout(45000),
+              body: JSON.stringify({
+                model,
+                temperature: 0.5,
+                max_tokens: 900,
+                messages: [
+                  {
+                    role: 'system',
+                    content:
+                      'You are a senior freelancer writing a short, client-ready proposal. Output JSON only.',
+                  },
+                  { role: 'user', content: prompt },
+                ],
+              }),
+            }
+          );
+          if (apiRes.ok) {
+            const data = await apiRes.json();
+            const raw = data.choices?.[0]?.message?.content || '';
+            proposal = parseProposalJson(raw);
+            if (proposal) {
+              source = 'openrouter';
+              break;
+            }
             reason = 'openrouter_parse';
+          } else {
+            reason = 'openrouter_http_' + apiRes.status;
+            console.error('[Proposal] OpenRouter', model, 'HTTP', apiRes.status);
+            if (apiRes.status === 401 || apiRes.status === 402) break;
           }
-        } else {
-          reason = 'openrouter_http_' + apiRes.status;
-          console.error('[Proposal] OpenRouter HTTP status:', apiRes.status);
+        } catch (err) {
+          reason = 'openrouter_error';
+          console.error('[Proposal] OpenRouter error:', err.message);
         }
-      } catch (err) {
-        reason = 'openrouter_error';
-        console.error('[Proposal] OpenRouter error:', err.message);
       }
     }
-
     if (!proposal && GEMINI_API_KEY) {
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
