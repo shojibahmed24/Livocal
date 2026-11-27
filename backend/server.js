@@ -430,6 +430,10 @@ app.get('/health', (req, res) => {
     turnProvider: METERED_API_KEY ? 'metered' : 'static',
     liveModel: DEFAULT_MODEL,
     textModel: TEXT_MODEL,
+    proposalProvider: OPENROUTER_API_KEY
+      ? 'openrouter'
+      : (GEMINI_API_KEY ? 'gemini' : 'fallback'),
+    openrouterModel: OPENROUTER_MODEL,
     appCheckEnforced: APP_CHECK_ENFORCE,
     privacyRoute: true,
     timestamp: new Date().toISOString(),
@@ -5222,6 +5226,7 @@ app.post(
 
     let proposal = null;
     let source = 'fallback';
+    let reason = '';
 
     if (OPENROUTER_API_KEY) {
       try {
@@ -5255,11 +5260,17 @@ app.post(
           const data = await apiRes.json();
           const raw = data.choices?.[0]?.message?.content || '';
           proposal = parseProposalJson(raw);
-          if (proposal) source = 'openrouter';
+          if (proposal) {
+            source = 'openrouter';
+          } else {
+            reason = 'openrouter_parse';
+          }
         } else {
+          reason = 'openrouter_http_' + apiRes.status;
           console.error('[Proposal] OpenRouter HTTP status:', apiRes.status);
         }
       } catch (err) {
+        reason = 'openrouter_error';
         console.error('[Proposal] OpenRouter error:', err.message);
       }
     }
@@ -5283,17 +5294,26 @@ app.post(
           const data = await apiRes.json();
           const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
           proposal = parseProposalJson(raw);
-          if (proposal) source = 'gemini';
+          if (proposal) {
+            source = 'gemini';
+          } else {
+            reason = 'gemini_parse';
+          }
         } else {
+          reason = 'gemini_http_' + apiRes.status;
           console.error('[Proposal] Gemini HTTP status:', apiRes.status);
         }
       } catch (err) {
+        reason = 'gemini_error';
         console.error('[Proposal] Gemini error:', err.message);
       }
     }
 
-    if (!proposal) proposal = fallbackProposal({ ...input, skills, rate });
-    return res.json({ proposal, source });
+    if (!proposal) {
+      if (!reason) reason = 'ai_not_configured';
+      proposal = fallbackProposal({ ...input, skills, rate });
+    }
+    return res.json({ proposal, source, reason });
   }
 );
 
