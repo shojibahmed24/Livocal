@@ -1493,28 +1493,21 @@ app.post('/api/public/demo-translate', demoLimiter, async (req, res) => {
     const url =
       `https://generativelanguage.googleapis.com/v1beta/models/` +
       `${TEXT_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-    const generationConfig = {
-      temperature: 0.2,
-      maxOutputTokens: 200,
-    };
-    // Gemini 2.5 models think before answering; a short translation does not
-    // need it and thinking would blow the latency budget.
-    if (TEXT_MODEL.includes('2.5')) {
-      generationConfig.thinkingConfig = { thinkingBudget: 0 };
-    }
     const apiRes = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig,
+        generationConfig: { temperature: 0.2, maxOutputTokens: 200 },
       }),
-      signal: AbortSignal.timeout(12000),
+      signal: AbortSignal.timeout(20000),
     });
     if (!apiRes.ok) {
       const detail = await apiRes.text().catch(() => '');
       console.warn('[Demo] Gemini HTTP', apiRes.status, detail.slice(0, 200));
-      return res.status(502).json({ ok: false, error: 'translate_failed' });
+      return res
+        .status(502)
+        .json({ ok: false, error: 'gemini_' + apiRes.status });
     }
     const data = await apiRes.json();
     const raw = (data.candidates?.[0]?.content?.parts || [])
