@@ -1625,6 +1625,55 @@ app.post('/api/public/demo-translate', demoLimiter, async (req, res) => {
         lastStatus = 0;
       }
     }
+    // Gemini quota or region can fail; OpenRouter keeps the demo alive.
+    if (OPENROUTER_API_KEY) {
+      const fallbackModels = [OPENROUTER_MODEL, OPENROUTER_FALLBACK_MODEL].filter(
+        (model, index, list) => model && list.indexOf(model) === index
+      );
+      for (const model of fallbackModels) {
+        try {
+          const apiRes = await fetch(
+            'https://openrouter.ai/api/v1/chat/completions',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+                'HTTP-Referer': PUBLIC_BASE_URL || 'https://livocal.app',
+                'X-Title': 'Livocal',
+              },
+              signal: AbortSignal.timeout(15000),
+              body: JSON.stringify({
+                model,
+                temperature: 0.2,
+                max_tokens: 400,
+                messages: [
+                  {
+                    role: 'system',
+                    content:
+                      'You are a professional interpreter. Output only the translation.',
+                  },
+                  { role: 'user', content: prompt },
+                ],
+              }),
+            }
+          );
+          if (!apiRes.ok) continue;
+          const data = await apiRes.json();
+          const raw = (data.choices?.[0]?.message?.content || '').trim();
+          if (!raw) continue;
+          return res.json({
+            ok: true,
+            text: raw.replace(/^["'“”‘’]+|["'“”‘’]+$/g, '').trim(),
+            model: `openrouter:${model}`,
+            to: target,
+          });
+        } catch (err) {
+          console.warn('[Demo] openrouter', model, 'failed:', err.name);
+        }
+      }
+    }
+
     return res.status(502).json({
       ok: false,
       error: 'translate_failed',
