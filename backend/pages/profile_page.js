@@ -182,7 +182,7 @@ function nextAvailability(days) {
   )}</strong>, ${esc(time)}–${esc(end)}</div>`;
 }
 
-export function renderProfilePage({ profile, username, days, reviews }) {
+export function renderProfilePage({ profile, username, days, reviews, origin }) {
   const p = profile || {};
   const name = p.displayName || 'Freelancer';
   const headline = p.headline || 'Freelancer on Livocal';
@@ -328,13 +328,18 @@ export function renderProfilePage({ profile, username, days, reviews }) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${esc(name)} — ${esc(headline)}</title>
 <meta name="description" content="${esc(p.bio || headline)}">
-<link rel="canonical" href="/u/${esc(username)}">
+<link rel="canonical" href="${esc(origin || '')}/u/${esc(username)}">
 <meta property="og:type" content="profile">
 <meta property="og:title" content="${esc(name)} — ${esc(headline)}">
 <meta property="og:description" content="${esc(p.bio || headline)}">
-<meta property="og:url" content="/u/${esc(username)}">
-${p.avatarUrl ? `<meta property="og:image" content="${esc(p.avatarUrl)}">` : ''}
-<meta name="twitter:card" content="summary">
+<meta property="og:url" content="${esc(origin || '')}/u/${esc(username)}">
+<meta property="og:image" content="${esc(
+    p.avatarUrl || `${origin || ''}/static/og-image.png`
+  )}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="${esc(
+    p.avatarUrl || `${origin || ''}/static/og-image.png`
+  )}">
 <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
 <script>
   try {
@@ -568,7 +573,7 @@ ${p.avatarUrl ? `<meta property="og:image" content="${esc(p.avatarUrl)}">` : ''}
 
 
 
-export function renderCvPage({ profile, username }) {
+export function renderCvPage({ profile, username, origin }) {
   const p = profile || {};
   const name = p.displayName || 'Freelancer';
   const rate = rateLine(p.rate);
@@ -618,6 +623,14 @@ export function renderCvPage({ profile, username }) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${esc(name)} — CV</title>
+<meta name="description" content="${esc(
+    `${name} — ${p.headline || 'Freelancer'} · CV`
+  )}">
+<link rel="canonical" href="${esc(origin || '')}/cv/${esc(username)}">
+<meta property="og:type" content="profile">
+<meta property="og:title" content="${esc(name)} — CV">
+<meta property="og:url" content="${esc(origin || '')}/cv/${esc(username)}">
+<meta property="og:image" content="${esc(`${origin || ''}/static/og-image.png`)}">
 <style>
   *{box-sizing:border-box}
   body{margin:0;background:#eef2f7;color:#0b1220;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans Bengali',sans-serif;line-height:1.55}
