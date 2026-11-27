@@ -1503,6 +1503,7 @@ app.post('/api/public/demo-translate', demoLimiter, async (req, res) => {
       )
     );
     let lastStatus = 0;
+    let lastDetail = '';
     for (const model of models) {
       try {
         const url =
@@ -1520,6 +1521,7 @@ app.post('/api/public/demo-translate', demoLimiter, async (req, res) => {
         if (!apiRes.ok) {
           lastStatus = apiRes.status;
           const detail = await apiRes.text().catch(() => '');
+          lastDetail = detail.slice(0, 300);
           console.warn('[Demo]', model, 'HTTP', apiRes.status, detail.slice(0, 160));
           continue;
         }
@@ -1543,9 +1545,11 @@ app.post('/api/public/demo-translate', demoLimiter, async (req, res) => {
         lastStatus = 0;
       }
     }
-    return res
-      .status(502)
-      .json({ ok: false, error: 'gemini_' + (lastStatus || 'timeout') });
+    return res.status(502).json({
+      ok: false,
+      error: 'gemini_' + (lastStatus || 'timeout'),
+      detail: lastDetail,
+    });
   } catch (err) {
     console.warn('[Demo] translate failed:', err.name, err.message);
     return res.status(502).json({ ok: false, error: 'translate_failed' });
