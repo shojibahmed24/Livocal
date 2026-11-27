@@ -8,6 +8,7 @@ import { renderProfilePage, renderCvPage } from './pages/profile_page.js';
 import { renderBookingPage, bookingIcs } from './pages/booking_page.js';
 import { renderRoomPage } from './pages/room_page.js';
 import { renderAppHub } from './pages/app_page.js';
+import { renderDeleteAccountPage } from './pages/legal_page.js';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import crypto from 'crypto';
@@ -1230,6 +1231,18 @@ app.post('/api/public/translate-audio', guestTranslateLimiter, async (req, res) 
   }
 });
 
+// ── Account deletion page (Google Play requirement) ────────────────────────
+app.get('/delete-account', (req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  return res.send(
+    renderDeleteAccountPage({
+      origin: publicOrigin(req),
+      supportEmail: process.env.SUPPORT_EMAIL || 'support@livocal.app',
+    })
+  );
+});
+
 // ── Installable web hub (no app install) ───────────────────────────────────
 app.use(
   '/static',
@@ -1296,7 +1309,7 @@ app.get('/robots.txt', (req, res) => {
 
 app.get('/sitemap.xml', async (req, res) => {
   const origin = publicOrigin(req);
-  const urls = ['/', '/privacy-policy', '/terms-of-service'];
+  const urls = ['/', '/privacy-policy', '/terms-of-service', '/delete-account'];
   try {
     if (firestoreDb) {
       const snapshot = await firestoreDb
