@@ -286,7 +286,62 @@
     }
   );
 
-  /* ── 8. Cursor spotlight on cards (desktop pointers only) ───────────── */
+  /* ── 8. Product tour ────────────────────────────────────────────────── */
+  var tour = document.getElementById('tourWidget');
+  if (tour) {
+    var slides = tour.querySelectorAll('.tour__slide');
+    var tabs = tour.querySelectorAll('.tour__tab');
+    var active = 0;
+    var tourTimer = null;
+
+    var showSlide = function (index) {
+      active = index;
+      Array.prototype.forEach.call(slides, function (slide, i) {
+        slide.classList.toggle('is-active', i === index);
+      });
+      Array.prototype.forEach.call(tabs, function (tab, i) {
+        tab.classList.toggle('is-on', i === index);
+        tab.setAttribute('aria-selected', i === index ? 'true' : 'false');
+      });
+    };
+
+    var stopTour = function () {
+      if (tourTimer) {
+        clearInterval(tourTimer);
+        tourTimer = null;
+      }
+    };
+
+    var playTour = function () {
+      if (reduceMotion) return;
+      stopTour();
+      tourTimer = setInterval(function () {
+        showSlide((active + 1) % slides.length);
+      }, 4200);
+    };
+
+    Array.prototype.forEach.call(tabs, function (tab, i) {
+      tab.addEventListener('click', function () {
+        showSlide(i);
+        playTour();
+      });
+    });
+    tour.addEventListener('mouseenter', stopTour);
+    tour.addEventListener('mouseleave', playTour);
+    tour.addEventListener('focusin', stopTour);
+
+    var param = parseInt(
+      new URLSearchParams(location.search).get('tour') || '',
+      10
+    );
+    if (!isNaN(param) && param >= 0 && param < slides.length) {
+      showSlide(param);
+    } else {
+      playTour();
+    }
+  }
+
+  /* ── 9. Cursor spotlight on cards (desktop pointers only) ───────────── */
   if (!reduceMotion && window.matchMedia('(pointer: fine)').matches) {
     Array.prototype.forEach.call(document.querySelectorAll('.card'), function (card) {
       card.addEventListener('pointermove', function (event) {
