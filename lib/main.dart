@@ -30,6 +30,7 @@ import 'package:livocal/features/settings/services/block_service.dart';
 import 'package:livocal/shared/constants/app_config.dart';
 import 'package:livocal/shared/services/native_channel.dart';
 import 'package:livocal/shared/utils/navigator_key.dart';
+import 'package:livocal/features/freelancer/services/deep_link_service.dart';
 import 'package:livocal/theme/theme.dart';
 
 void main() async {
@@ -80,6 +81,7 @@ void main() async {
     ),
   );
 
+  unawaited(DeepLinkService.init());
   unawaited(_bootstrapDeferred());
 }
 
@@ -105,10 +107,10 @@ Future<void> _bootstrapDeferred() async {
   if (appCheckEnabled) {
     await _safeBootstrap(() async {
       await FirebaseAppCheck.instance.activate(
-        androidProvider: kDebugMode
-            ? AndroidProvider.debug
-            : AndroidProvider.playIntegrity,
-        appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.deviceCheck,
+        androidProvider:
+            kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+        appleProvider:
+            kDebugMode ? AppleProvider.debug : AppleProvider.deviceCheck,
       );
     }, 'app check');
   }

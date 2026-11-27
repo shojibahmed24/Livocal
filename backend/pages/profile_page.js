@@ -520,6 +520,7 @@ ${p.avatarUrl ? `<meta property="og:image" content="${esc(p.avatarUrl)}">` : ''}
       <div class="cta-row">
         <a class="btn btn-primary" href="${bookingUrl}">Book a call</a>
         <button class="btn btn-ghost" id="shareBtn" type="button">Share profile</button>
+        <a class="btn btn-ghost" href="/m/${esc(username)}">Message</a>
         <a class="btn btn-ghost" href="/cv/${esc(username)}">View CV</a>
         ${socials}
       </div>

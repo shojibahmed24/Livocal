@@ -901,9 +901,65 @@ app.get('/cv/:slug', async (req, res) => {
     return res.status(500).send('error');
   }
 });
+app.get('/api/public/uid/:slug', async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'unavailable' });
+  try {
+    const host = await loadHostBySlug(req.params.slug);
+    if (!host) return res.status(404).json({ error: 'not_found' });
+    return res.json({
+      uid: host.uid,
+      displayName: host.profile.displayName || '',
+      avatarUrl: host.profile.avatarUrl || '',
+    });
+  } catch (err) {
+    console.error('[PublicUid] error:', err.message);
+    return res.status(500).json({ error: 'failed' });
+  }
+});
+
+app.get('/m/:slug', async (req, res) => {
+  if (!firestoreDb) return res.status(503).send('unavailable');
+  try {
+    const host = await loadHostBySlug(req.params.slug);
+    if (!host) return res.status(404).send('Not found');
+    const esc = (value) =>
+      String(value == null ? '' : value)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const name = esc(host.profile.displayName || 'this freelancer');
+    const slug = esc(host.slug);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
+    return res.send(`<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Message ${name} — Livocal</title>
+<style>
+  body{margin:0;background:#04070d;color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:20px}
+  .card{max-width:420px;width:100%;background:#0c1424;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:24px;text-align:center}
+  h1{font-size:20px;margin:0 0 8px} p{color:#8b98ad;font-size:13px;line-height:1.6}
+  .btn{display:block;margin-top:14px;padding:13px;border-radius:12px;text-decoration:none;font-weight:800;font-size:13.5px}
+  .primary{background:#34d399;color:#04120c} .ghost{border:1px solid rgba(255,255,255,.15);color:#f1f5f9}
+</style></head><body>
+<div class="card">
+  <h1>Message ${name}</h1>
+  <p>Opening Livocal… If nothing happens, install/open the Livocal app.</p>
+  <a class="btn primary" href="livocal://chat/${slug}">Open in Livocal</a>
+  <a class="btn ghost" href="/u/${slug}">View profile</a>
+  <a class="btn ghost" href="/book/${slug}">Book a call instead</a>
+</div>
+<script>
+  setTimeout(function(){ location.href = 'livocal://chat/${slug}'; }, 150);
+</script>
+</body></html>`);
+  } catch (err) {
+    console.error('[Message] page error:', err.message);
+    return res.status(500).send('error');
+  }
+});
 app.get('/p/:slug', (req, res) => {
   const slug = String(req.params.slug || '').trim();
-  return res.redirect(301, /u/ + encodeURIComponent(slug));
+  return res.redirect(301, `/u/${encodeURIComponent(slug)}`);
 });
 app.get('/u/:slug', async (req, res) => {
   if (!firestoreDb) return res.status(503).send('unavailable');

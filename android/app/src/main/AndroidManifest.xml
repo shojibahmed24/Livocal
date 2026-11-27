@@ -65,7 +65,12 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-        </activity>
+                    <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="livocal" android:host="chat" />
+            </intent-filter></activity>
         <service
             android:name="com.hiennv.flutter_callkit_incoming.CallkitSoundPlayerService"
             android:exported="false"
