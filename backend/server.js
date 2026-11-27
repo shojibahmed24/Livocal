@@ -94,8 +94,8 @@ const RETIRED_TEXT_MODELS = new Set([
   'gemini-2.5-flash-lite',
   'gemini-2.5-pro',
 ]);
-const CURRENT_TEXT_MODEL = 'gemini-3.8-flash';
-const CURRENT_FALLBACK_TEXT_MODEL = 'gemini-3.5-flash';
+const CURRENT_TEXT_MODEL = 'gemini-3.5-flash';
+const CURRENT_FALLBACK_TEXT_MODEL = 'gemini-3.6-flash';
 const configuredTextModel = process.env.GEMINI_TEXT_MODEL?.trim() || '';
 const TEXT_MODEL =
     configuredTextModel && !RETIRED_TEXT_MODELS.has(configuredTextModel)
@@ -1534,7 +1534,7 @@ app.post('/api/public/demo-translate', demoLimiter, async (req, res) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.2, maxOutputTokens: 200 },
+            generationConfig: { temperature: 0.2, maxOutputTokens: 512 },
           }),
           signal: AbortSignal.timeout(8000),
         });
