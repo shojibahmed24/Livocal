@@ -80,18 +80,39 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY?.trim() || '';
 const DEFAULT_MODEL =
     process.env.GEMINI_LIVE_MODEL?.trim() || 'models/gemini-3.5-live-translate-preview';
 const DEFAULT_VOICE = process.env.DEFAULT_VOICE?.trim() || 'Aoede';
-// Text translation model (chat messages). Override with GEMINI_TEXT_MODEL
-// when the default model is retired or a newer Flash model is preferred.
+// Text translation model (chat messages, call summaries, demos).
+// Google retires older Flash models for new keys, so a stale env value is
+// ignored instead of silently breaking every text feature.
+const RETIRED_TEXT_MODELS = new Set([
+  'gemini-1.0-pro',
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-8b',
+  'gemini-1.5-pro',
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-lite',
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-2.5-pro',
+]);
+const CURRENT_TEXT_MODEL = 'gemini-3.8-flash';
+const CURRENT_FALLBACK_TEXT_MODEL = 'gemini-3.5-flash';
+const configuredTextModel = process.env.GEMINI_TEXT_MODEL?.trim() || '';
 const TEXT_MODEL =
-    process.env.GEMINI_TEXT_MODEL?.trim() || 'gemini-2.5-flash';
+    configuredTextModel && !RETIRED_TEXT_MODELS.has(configuredTextModel)
+      ? configuredTextModel
+      : CURRENT_TEXT_MODEL;
 
 // Proposal writing: OpenRouter when configured, else Gemini.
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY?.trim() || '';
 const OPENROUTER_MODEL =
     process.env.OPENROUTER_MODEL?.trim() ||
     'nvidia/nemotron-3-ultra-550b-a55b:free';
+const configuredFallbackModel =
+    process.env.GEMINI_FALLBACK_TEXT_MODEL?.trim() || '';
 const GEMINI_FALLBACK_TEXT_MODEL =
-    process.env.GEMINI_FALLBACK_TEXT_MODEL?.trim() || 'gemini-2.0-flash';
+    configuredFallbackModel && !RETIRED_TEXT_MODELS.has(configuredFallbackModel)
+      ? configuredFallbackModel
+      : CURRENT_FALLBACK_TEXT_MODEL;
 
 const OPENROUTER_FALLBACK_MODEL =
     process.env.OPENROUTER_FALLBACK_MODEL?.trim() ||
@@ -1470,28 +1491,6 @@ async function allowDemoCall() {
   }
 }
 
-app.get('/api/public/demo-models', async (req, res) => {
-  if (!GEMINI_API_KEY) return res.status(503).json({ ok: false });
-  try {
-    const r = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`
-    );
-    const data = await r.json();
-    return res.json({
-      ok: r.ok,
-      status: r.status,
-      textModel: TEXT_MODEL,
-      models: (data.models || [])
-        .filter((m) => (m.supportedGenerationMethods || []).includes('generateContent'))
-        .map((m) => m.name)
-        .slice(0, 60),
-      raw: r.ok ? undefined : JSON.stringify(data).slice(0, 300),
-    });
-  } catch (err) {
-    return res.status(500).json({ ok: false, error: err.message });
-  }
-});
-
 app.post('/api/public/demo-translate', demoLimiter, async (req, res) => {
   const body = req.body || {};
   const text = String(body.text || '').trim().slice(0, 200);
@@ -1518,15 +1517,13 @@ app.post('/api/public/demo-translate', demoLimiter, async (req, res) => {
       new Set(
         [
           TEXT_MODEL,
-          'gemini-2.5-flash-lite',
-          GEMINI_FALLBACK_TEXT_MODEL,
-          'gemini-1.5-flash',
+          CURRENT_FALLBACK_TEXT_MODEL,
+          'gemini-3.8-flash-lite',
+          'gemini-3.6-flash',
         ].filter(Boolean)
       )
     );
     let lastStatus = 0;
-    let lastDetail = '';
-    const attempts = [];
     for (const model of models) {
       try {
         const url =
@@ -1544,8 +1541,6 @@ app.post('/api/public/demo-translate', demoLimiter, async (req, res) => {
         if (!apiRes.ok) {
           lastStatus = apiRes.status;
           const detail = await apiRes.text().catch(() => '');
-          lastDetail = detail.slice(0, 300);
-          attempts.push({ model, status: apiRes.status, detail: lastDetail.slice(0, 160) });
           console.warn('[Demo]', model, 'HTTP', apiRes.status, detail.slice(0, 160));
           continue;
         }
@@ -1566,15 +1561,12 @@ app.post('/api/public/demo-translate', demoLimiter, async (req, res) => {
         });
       } catch (err) {
         console.warn('[Demo]', model, 'failed:', err.name);
-        attempts.push({ model, status: 0, error: err.name });
         lastStatus = 0;
       }
     }
     return res.status(502).json({
       ok: false,
-      error: 'gemini_' + (lastStatus || 'timeout'),
-      detail: lastDetail,
-      attempts,
+      error: 'translate_failed',
     });
   } catch (err) {
     console.warn('[Demo] translate failed:', err.name, err.message);
