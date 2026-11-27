@@ -15,6 +15,7 @@ class ProfileHeader extends StatelessWidget {
   final VoidCallback onPreview;
   final VoidCallback onRegenerate;
   final VoidCallback onQr;
+  final VoidCallback onGuestCall;
   final VoidCallback onUpdated;
 
   const ProfileHeader({
@@ -29,6 +30,7 @@ class ProfileHeader extends StatelessWidget {
     required this.onPreview,
     required this.onRegenerate,
     required this.onQr,
+    required this.onGuestCall,
   });
 
   @override
@@ -53,6 +55,7 @@ class ProfileHeader extends StatelessWidget {
           onPreview: onPreview,
           onRegenerate: onRegenerate,
           onQr: onQr,
+          onGuestCall: onGuestCall,
         ),
         if (profile.ratingCount > 0) ...[
           const SizedBox(height: 10),

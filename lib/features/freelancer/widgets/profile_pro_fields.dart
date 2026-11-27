@@ -1,3 +1,4 @@
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -39,6 +40,41 @@ class _ProfileProFieldsState extends State<ProfileProFields> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(widget.t('cvFailed'))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _cvLoading = false);
+    }
+  }
+
+  /// Builds the CV PDF and stores it, so "Download CV" works from the public
+  /// page on any device. Storage is optional; a clear message is shown when it
+  /// is not provisioned yet.
+  Future<void> _uploadCv() async {
+    if (_cvLoading) return;
+    setState(() => _cvLoading = true);
+    try {
+      final file = await CvPdfService.build(widget.profile);
+      final ref = FirebaseStorage.instance.ref().child(
+            'documents/${widget.profile.ownerUid}/'
+            'cv_${DateTime.now().millisecondsSinceEpoch}.pdf',
+          );
+      await ref
+          .putFile(file, SettableMetadata(contentType: 'application/pdf'))
+          .timeout(const Duration(seconds: 30));
+      final url = await ref.getDownloadURL();
+      widget.mutate((p) => p.cvUrl = url);
+      _c['cvUrl']?.text = url;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(widget.t('cvUploaded'))),
+        );
+      }
+    } catch (e) {
+      debugPrint('[ProfileProFields] cv upload failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(widget.t('cvUploadFailed'))),
         );
       }
     } finally {
@@ -147,22 +183,38 @@ class _ProfileProFieldsState extends State<ProfileProFields> {
           ],
         ),
         const SizedBox(height: 6),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: _cvLoading ? null : _generateCv,
-            icon: _cvLoading
-                ? const SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.picture_as_pdf_outlined, size: 16),
-            label: Text(
-              widget.t('generateCv'),
-              style: const TextStyle(fontSize: 12),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _cvLoading ? null : _generateCv,
+                icon: _cvLoading
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.picture_as_pdf_outlined, size: 16),
+                label: Text(
+                  widget.t('generateCv'),
+                  style: const TextStyle(fontSize: 12),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ),
-          ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _cvLoading ? null : _uploadCv,
+                icon: const Icon(Icons.cloud_upload_outlined, size: 16),
+                label: Text(
+                  widget.t('uploadCv'),
+                  style: const TextStyle(fontSize: 12),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 10),
       ],

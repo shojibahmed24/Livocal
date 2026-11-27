@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { renderProfilePage, renderCvPage } from './pages/profile_page.js';
 import { renderBookingPage, bookingIcs } from './pages/booking_page.js';
 import { renderRoomPage } from './pages/room_page.js';
+import { renderAppHub } from './pages/app_page.js';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import crypto from 'crypto';
@@ -1001,15 +1002,95 @@ function verifyJoinToken(token) {
   return { roomId, role };
 }
 
-function createJoinRoom(hostName) {
+const JOIN_ROOM_TTL_MS = 2 * 60 * 60 * 1000;
+
+function memoryRoom(roomId, hostName, expires) {
+  let room = joinRooms.get(roomId);
+  if (!room) {
+    room = {
+      host: null,
+      guest: null,
+      hostName: hostName || 'Livocal',
+      expires: expires || Date.now() + JOIN_ROOM_TTL_MS,
+    };
+    joinRooms.set(roomId, room);
+  }
+  return room;
+}
+
+/**
+ * Reuses the host's live room when it is still open so a browser reload or a
+ * relay restart does not invalidate the guest link that was already shared.
+ */
+async function getOrCreateJoinRoom(slug, hostName) {
+  const name = hostName || 'Livocal';
+  const now = Date.now();
+  if (firestoreDb) {
+    try {
+      const snapshot = await firestoreDb
+        .collection('join_rooms')
+        .where('slug', '==', slug)
+        .limit(5)
+        .get();
+      let best = null;
+      snapshot.forEach((doc) => {
+        const data = doc.data() || {};
+        const exp = data.expiresAt?.toMillis
+          ? data.expiresAt.toMillis()
+          : Number(data.expiresAt) || 0;
+        if (exp > now && (!best || exp > best.expires)) {
+          best = { roomId: doc.id, exp, hostName: data.hostName || name };
+        }
+      });
+      if (best) {
+        memoryRoom(best.roomId, best.hostName, best.exp);
+        return {
+          roomId: best.roomId,
+          hostName: best.hostName,
+          expires: best.exp,
+        };
+      }
+      const roomId = crypto.randomBytes(9).toString('hex');
+      const expires = now + JOIN_ROOM_TTL_MS;
+      await firestoreDb
+        .collection('join_rooms')
+        .doc(roomId)
+        .set({
+          slug,
+          roomId,
+          hostName: name,
+          createdAt: FieldValue.serverTimestamp(),
+          expiresAt: Timestamp.fromMillis(expires),
+        });
+      memoryRoom(roomId, name, expires);
+      return { roomId, hostName: name, expires };
+    } catch (err) {
+      console.warn('[GuestRoom] registry unavailable:', err.message);
+    }
+  }
   const roomId = crypto.randomBytes(9).toString('hex');
-  joinRooms.set(roomId, {
-    host: null,
-    guest: null,
-    hostName: hostName || 'Livocal',
-    expires: Date.now() + 2 * 60 * 60 * 1000,
-  });
-  return roomId;
+  const expires = now + JOIN_ROOM_TTL_MS;
+  memoryRoom(roomId, name, expires);
+  return { roomId, hostName: name, expires };
+}
+
+async function loadJoinRoom(roomId) {
+  const cached = joinRooms.get(roomId);
+  if (cached) return cached;
+  if (!firestoreDb) return null;
+  try {
+    const doc = await firestoreDb.collection('join_rooms').doc(roomId).get();
+    if (!doc.exists) return null;
+    const data = doc.data() || {};
+    const exp = data.expiresAt?.toMillis
+      ? data.expiresAt.toMillis()
+      : Number(data.expiresAt) || 0;
+    if (exp < Date.now()) return null;
+    return memoryRoom(roomId, data.hostName, exp);
+  } catch (err) {
+    console.warn('[GuestRoom] room load failed:', err.message);
+    return null;
+  }
 }
 
 setInterval(() => {
@@ -1038,23 +1119,158 @@ app.get('/api/public/ice', apiLimiter, async (req, res) => {
   return res.json({ iceServers });
 });
 
+// ── Browser translation helper (F7.2 v1: spoken translation) ───────────────
+const guestTranslateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 25,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'rate_limited' },
+});
+
+const TRANSLATE_MAX_CHARS = 1400000; // ~700 KB of audio as base64
+
+app.post('/api/public/translate-audio', guestTranslateLimiter, async (req, res) => {
+  if (!GEMINI_API_KEY) {
+    return res.status(503).json({ error: 'translation_unavailable' });
+  }
+  const body = req.body || {};
+  const audio = typeof body.audio === 'string' ? body.audio : '';
+  const mimeType =
+    typeof body.mimeType === 'string' && body.mimeType
+      ? body.mimeType
+      : 'audio/wav';
+  const target = String(body.targetLanguage || 'English').slice(0, 40);
+  const source = String(body.sourceLanguage || '').slice(0, 40);
+  if (!audio) return res.status(400).json({ error: 'missing_audio' });
+  if (audio.length > TRANSLATE_MAX_CHARS) {
+    return res.status(413).json({ error: 'audio_too_large' });
+  }
+
+  const prompt =
+    'You are a live interpreter on a freelance client call. ' +
+    (source ? `The speaker is talking in ${source}. ` : '') +
+    `Translate what you hear into ${target}. ` +
+    'Return ONLY the translated sentence, nothing else. Keep names, numbers, ' +
+    'prices and dates exactly. If the audio has no clear speech, return an ' +
+    'empty string.';
+
+  try {
+    const url =
+      `https://generativelanguage.googleapis.com/v1beta/models/` +
+      `${TEXT_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+    const apiRes = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { text: prompt },
+              { inlineData: { mimeType, data: audio } },
+            ],
+          },
+        ],
+        generationConfig: { temperature: 0.2, maxOutputTokens: 220 },
+      }),
+    });
+    if (!apiRes.ok) {
+      console.warn('[Translate] Gemini HTTP', apiRes.status);
+      return res.status(502).json({ error: 'translate_failed' });
+    }
+    const data = await apiRes.json();
+    const text = (data.candidates?.[0]?.content?.parts || [])
+      .map((part) => part.text || '')
+      .join('')
+      .trim();
+    res.setHeader('Cache-Control', 'no-store');
+    return res.json({ ok: true, text });
+  } catch (err) {
+    console.error('[Translate] error:', err.message);
+    return res.status(500).json({ error: 'translate_error' });
+  }
+});
+
+// ── Installable web hub (no app install) ───────────────────────────────────
+app.use(
+  '/static',
+  express.static(path.join(__dirname, 'public', 'pwa'), { maxAge: '7d' })
+);
+
+app.get('/manifest.webmanifest', (req, res) => {
+  const slug = String(req.query.slug || '').replace(/[^a-z0-9_-]/gi, '');
+  const start = slug ? `/app/${slug}` : '/app';
+  res.setHeader('Content-Type', 'application/manifest+json; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=300');
+  return res.send(
+    JSON.stringify({
+      name: 'Livocal',
+      short_name: 'Livocal',
+      description: 'Live voice translation and booking for freelancers',
+      start_url: start,
+      scope: '/',
+      display: 'standalone',
+      background_color: '#04070d',
+      theme_color: '#04070d',
+      icons: [
+        {
+          src: '/static/icon-192.png',
+          sizes: '192x192',
+          type: 'image/png',
+          purpose: 'any',
+        },
+        {
+          src: '/static/icon-512.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'any maskable',
+        },
+      ],
+    })
+  );
+});
+
+app.get('/app/:slug', async (req, res) => {
+  if (!firestoreDb) return res.status(503).send('unavailable');
+  try {
+    const host = await loadHostBySlug(req.params.slug);
+    if (!host) return res.status(404).send('Not found');
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=120');
+    return res.send(
+      renderAppHub({
+        slug: req.params.slug,
+        displayName: host.profile.displayName,
+        headline: host.profile.headline,
+        avatarUrl: host.profile.avatarUrl,
+      })
+    );
+  } catch (err) {
+    console.error('[AppHub] error:', err.message);
+    return res.status(500).send('error');
+  }
+});
+
 app.get('/room/:slug', async (req, res) => {
   if (!firestoreDb) return res.status(503).send('unavailable');
   try {
     const host = await loadHostBySlug(req.params.slug);
     if (!host) return res.status(404).send('Not found');
-    const roomId = createJoinRoom(host.profile.displayName || 'Livocal');
-    const hostToken = signJoinToken(roomId, 'host');
-    const guestToken = signJoinToken(roomId, 'guest');
+    const room = await getOrCreateJoinRoom(
+      req.params.slug,
+      host.profile.displayName || 'Livocal'
+    );
+    const hostToken = signJoinToken(room.roomId, 'host');
+    const guestToken = signJoinToken(room.roomId, 'guest');
     const guestUrl = `https://${req.get('host')}/join/${guestToken}`;
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store');
     return res.send(
       renderRoomPage({
         role: 'host',
-        roomId,
+        roomId: room.roomId,
         token: hostToken,
-        peerName: host.profile.displayName || 'Livocal',
+        peerName: room.hostName || 'Livocal',
         guestUrl,
       })
     );
@@ -1064,10 +1280,38 @@ app.get('/room/:slug', async (req, res) => {
   }
 });
 
+// Mobile host screen: same room as the browser page, so the link works for
+// both the in-app WebView host and a desktop browser host.
+app.get('/api/public/room/:slug', apiLimiter, async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'unavailable' });
+  try {
+    const host = await loadHostBySlug(req.params.slug);
+    if (!host) return res.status(404).json({ error: 'not_found' });
+    const room = await getOrCreateJoinRoom(
+      req.params.slug,
+      host.profile.displayName || 'Livocal'
+    );
+    const guestToken = signJoinToken(room.roomId, 'guest');
+    res.setHeader('Cache-Control', 'no-store');
+    return res.json({
+      roomId: room.roomId,
+      hostName: room.hostName || 'Livocal',
+      hostUrl: `https://${req.get('host')}/room/${encodeURIComponent(
+        req.params.slug
+      )}`,
+      guestUrl: `https://${req.get('host')}/join/${guestToken}`,
+      expiresAt: new Date(room.expires).toISOString(),
+    });
+  } catch (err) {
+    console.error('[GuestRoom] room api error:', err.message);
+    return res.status(500).json({ error: 'failed' });
+  }
+});
+
 app.get('/join/:token', async (req, res) => {
   const info = verifyJoinToken(req.params.token);
   if (!info || info.role !== 'guest') return res.status(404).send('Room not found');
-  const room = joinRooms.get(info.roomId);
+  const room = await loadJoinRoom(info.roomId);
   if (!room) {
     return res.status(410).send('This room has expired. Ask the host for a new link.');
   }
@@ -5722,7 +5966,7 @@ const wss = new WebSocketServer({ server, path: '/ws/live-call' });
 
 // Browser guest-room signaling (F7.1)
 const roomWss = new WebSocketServer({ server, path: '/ws/room' });
-roomWss.on('connection', (socket, request) => {
+roomWss.on('connection', async (socket, request) => {
   try {
     const url = new URL(request.url || '', 'http://localhost');
     const info = verifyJoinToken(url.searchParams.get('token'));
@@ -5730,7 +5974,7 @@ roomWss.on('connection', (socket, request) => {
       socket.close(4001, 'invalid');
       return;
     }
-    const room = joinRooms.get(info.roomId);
+    const room = await loadJoinRoom(info.roomId);
     if (!room) {
       socket.send(JSON.stringify({ type: 'expired' }));
       socket.close(4004, 'expired');

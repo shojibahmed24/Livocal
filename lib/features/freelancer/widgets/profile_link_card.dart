@@ -12,6 +12,7 @@ class ProfileLinkCard extends StatelessWidget {
   final VoidCallback onPreview;
   final VoidCallback onRegenerate;
   final VoidCallback onQr;
+  final VoidCallback onGuestCall;
 
   const ProfileLinkCard({
     super.key,
@@ -23,6 +24,7 @@ class ProfileLinkCard extends StatelessWidget {
     required this.onPreview,
     required this.onRegenerate,
     required this.onQr,
+    required this.onGuestCall,
   });
 
   @override
@@ -102,6 +104,7 @@ class ProfileLinkCard extends StatelessWidget {
                 _action(Icons.copy_rounded, t('copyProfileLink'), onCopy),
                 _action(Icons.ios_share_rounded, t('shareLink'), onShare),
                 _action(Icons.open_in_new_rounded, t('previewPage'), onPreview),
+                _action(Icons.mic_none_rounded, t('guestCall'), onGuestCall),
               ],
             ),
           ],

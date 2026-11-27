@@ -72,6 +72,10 @@ class Message {
   final String? disappearingDuration;
   final ReplyToMessage? replyTo;
 
+  /// Links a message to a freelancer invoice (Firestore only, not stored in
+  /// the local Isar mirror). Used to open/verify an invoice from a chat bubble.
+  final String? invoiceId;
+
   Message({
     required this.id,
     required this.content,
@@ -84,6 +88,7 @@ class Message {
     this.expiresAt,
     this.disappearingDuration,
     this.replyTo,
+    this.invoiceId,
   });
 
   factory Message.fromMap(Map<String, dynamic> msgData) {
@@ -120,6 +125,7 @@ class Message {
               : null),
       disappearingDuration: msgData['disappearingDuration'] as String?,
       replyTo: parsedReplyTo,
+      invoiceId: msgData['invoiceId'] as String?,
     );
   }
 
@@ -135,6 +141,7 @@ class Message {
     Timestamp? expiresAt,
     String? disappearingDuration,
     ReplyToMessage? replyTo,
+    String? invoiceId,
   }) {
     return Message(
       id: id ?? this.id,
@@ -148,6 +155,7 @@ class Message {
       expiresAt: expiresAt ?? this.expiresAt,
       disappearingDuration: disappearingDuration ?? this.disappearingDuration,
       replyTo: replyTo ?? this.replyTo,
+      invoiceId: invoiceId ?? this.invoiceId,
     );
   }
 
@@ -167,6 +175,7 @@ class Message {
       if (expiresAt != null) 'expiresAt': expiresAt,
       if (disappearingDuration != null) 'disappearingDuration': disappearingDuration,
       if (replyTo != null) 'replyTo': replyTo!.toMap(),
+      if (invoiceId != null) 'invoiceId': invoiceId,
       "attachment": attachment?.toMap(),
       'isDeleted': isDeleted,
       'deletedForEveryone': isDeleted,

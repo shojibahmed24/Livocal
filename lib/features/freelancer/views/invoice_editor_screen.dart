@@ -4,10 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:livocal/features/chat/controllers/chat_controller.dart';
+import 'package:livocal/features/chat/models/attachement.dart';
 import 'package:livocal/features/chat/models/message.dart';
 import 'package:livocal/features/freelancer/models/invoice.dart';
 import 'package:livocal/features/freelancer/services/invoice_pdf_actions.dart';
+import 'package:livocal/features/freelancer/services/invoice_pdf_service.dart';
 import 'package:livocal/features/freelancer/services/invoice_service.dart';
+import 'package:livocal/features/freelancer/services/invoice_share_service.dart';
 import 'package:livocal/features/freelancer/widgets/invoice_actions_bar.dart';
 import 'package:livocal/features/freelancer/widgets/invoice_form.dart';
 import 'package:livocal/features/freelancer/widgets/invoice_line_tile.dart';
@@ -150,6 +153,39 @@ class _InvoiceEditorScreenState extends ConsumerState<InvoiceEditorScreen> {
     }
   }
 
+  /// Builds and uploads the invoice PDF. Returns null when Storage is not
+  /// available, in which case the chat message falls back to the web link.
+  Future<Attachment?> _pdfAttachment(Invoice invoice) async {
+    try {
+      final file = await InvoicePdfService.build(
+        invoice: invoice,
+        fromName: widget.user.name,
+        t: _t,
+      );
+      final fileName = '${invoice.number}.pdf';
+      final url = await InvoiceShareService.uploadPdf(
+        senderUid: widget.user.id,
+        receiverUid: widget.clientUid,
+        fileName: fileName,
+        file: file,
+      );
+      if (url == null) return null;
+      return Attachment(
+        type: AttachmentType.document,
+        url: url,
+        fileName: fileName,
+        fileSize: await file.length(),
+        fileExtension: 'pdf',
+        file: file,
+        uploadStatus: UploadStatus.uploaded,
+        autoDownload: true,
+      );
+    } catch (e) {
+      debugPrint('[InvoiceEditor] PDF attachment skipped: $e');
+      return null;
+    }
+  }
+
   Future<void> _send() async {
     if (_busy) return;
     setState(() => _busy = true);
@@ -163,10 +199,14 @@ class _InvoiceEditorScreenState extends ConsumerState<InvoiceEditorScreen> {
           ? _t('noDueDate')
           : Invoice.formatDate(invoice.dueDate!);
       final link = '${AppConfig.relayHttpBaseUrl}/i/$token';
-      final content = '📄 ${_t('invoice')} ${invoice.number}\n'
+      final summary = '📄 ${_t('invoice')} ${invoice.number}\n'
           '${_t('totalLabel')}: ${invoice.totalLabel}\n'
-          '${_t('dueDate')}: $due\n'
-          '${_t('previewInvoice')}: $link';
+          '${_t('dueDate')}: $due';
+      final content = '$summary\n${_t('previewInvoice')}: $link';
+
+      final attachment = await _pdfAttachment(invoice);
+      if (!mounted) return;
+
       ref.read(chatControllerProvider.notifier).sendMessageNoAttachments(
             Message(
               id: const Uuid().v4(),
@@ -175,9 +215,10 @@ class _InvoiceEditorScreenState extends ConsumerState<InvoiceEditorScreen> {
               senderId: widget.user.id,
               receiverId: widget.clientUid,
               timestamp: Timestamp.now(),
+              attachment: attachment,
+              invoiceId: invoice.id.toString(),
             ),
           );
-      if (!mounted) return;
       _snack(_t('invoiceSentMsg'));
     } finally {
       if (mounted) setState(() => _busy = false);

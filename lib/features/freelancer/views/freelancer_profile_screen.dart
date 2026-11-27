@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import 'package:livocal/features/freelancer/models/freelancer_profile.dart';
 import 'package:livocal/features/freelancer/services/freelancer_profile_service.dart';
+import 'package:livocal/features/freelancer/views/guest_call_screen.dart';
 import 'package:livocal/features/freelancer/widgets/profile_sections.dart';
 import 'package:livocal/features/freelancer/widgets/profile_form_fields.dart';
 import 'package:livocal/features/freelancer/widgets/profile_header.dart';
@@ -104,6 +105,21 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
       ProfileLinkActions.share(_profile!.publicUrl, _profile!.displayName);
 
   Future<void> _preview() => ProfileLinkActions.open(_profile!.publicUrl);
+
+  Future<void> _openGuestCall() async {
+    final profile = _profile;
+    if (profile == null) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => GuestCallScreen(
+          handle: profile.handle,
+          displayName: profile.displayName,
+          t: _t,
+        ),
+      ),
+    );
+  }
+
   Future<void> _togglePublish(bool value) async {
     if (value) {
       final confirmed = await showDialog<bool>(
@@ -199,6 +215,7 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
                     name: profile.displayName,
                     t: _t,
                   ),
+                  onGuestCall: _openGuestCall,
                 ),
                 const SizedBox(height: 18),
                 ProfileFormFields(
