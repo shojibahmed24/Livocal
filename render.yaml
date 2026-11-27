@@ -19,7 +19,7 @@ services:
       - key: GEMINI_LIVE_MODEL
         value: models/gemini-3.5-live-translate-preview
       - key: GEMINI_TEXT_MODEL
-        value: gemini-2.5-flash
+        value: gemini-3.8-flash
       - key: DEFAULT_VOICE
         value: Aoede
       - key: FIREBASE_SERVICE_ACCOUNT
