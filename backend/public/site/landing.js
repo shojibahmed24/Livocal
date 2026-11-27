@@ -61,12 +61,18 @@
 
   /* ── 3. Sticky nav ──────────────────────────────────────────────────── */
   var nav = document.getElementById('nav');
+  var progressEl = document.getElementById('progress');
   var ticking = false;
   function onScroll() {
     if (ticking) return;
     ticking = true;
     requestAnimationFrame(function () {
       if (nav) nav.classList.toggle('is-stuck', window.scrollY > 12);
+      if (progressEl) {
+        var max = document.documentElement.scrollHeight - window.innerHeight;
+        var ratio = max > 0 ? window.scrollY / max : 0;
+        progressEl.style.width = Math.min(100, Math.max(0, ratio * 100)) + '%';
+      }
       updateSteps();
       ticking = false;
     });
@@ -279,6 +285,17 @@
       });
     }
   );
+
+  /* ── 8. Cursor spotlight on cards (desktop pointers only) ───────────── */
+  if (!reduceMotion && window.matchMedia('(pointer: fine)').matches) {
+    Array.prototype.forEach.call(document.querySelectorAll('.card'), function (card) {
+      card.addEventListener('pointermove', function (event) {
+        var rect = card.getBoundingClientRect();
+        card.style.setProperty('--mx', (event.clientX - rect.left) + 'px');
+        card.style.setProperty('--my', (event.clientY - rect.top) + 'px');
+      });
+    });
+  }
 
   onScroll();
 })();

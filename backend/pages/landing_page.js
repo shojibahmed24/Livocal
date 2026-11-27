@@ -67,6 +67,7 @@ const COPY = {
       'Guest calls in the browser',
     ],
     problem: {
+      kicker: 'The gap',
       title: 'The deal is lost in translation',
       sub: 'Not because of your skill — because of the language barrier inside the call.',
       items: [
@@ -86,6 +87,7 @@ const COPY = {
       solution: 'Livocal fixes all three in one app',
     },
     features: {
+      kicker: 'The toolkit',
       title: 'Everything a freelancer needs, in one place',
       sub: 'Six tools that used to live in six different apps.',
       items: [
@@ -98,6 +100,7 @@ const COPY = {
       ],
     },
     how: {
+      kicker: 'Three steps',
       title: 'How it works',
       sub: 'Three steps, no setup calls.',
       steps: [
@@ -107,12 +110,14 @@ const COPY = {
       ],
     },
     client: {
+      kicker: 'Zero install',
       title: 'Your client never installs anything',
       body: 'They open a link, allow the microphone and talk. No store, no sign-up, no account.',
       bullets: ['Opens in any browser', 'One-time signed link', 'Microphone permission asked politely'],
       cta: 'See a live room',
     },
     proof: {
+      kicker: 'Live proof',
       title: 'A real Livocal profile',
       sub: 'Everything below is live — not a mockup.',
       stats: [
@@ -124,6 +129,7 @@ const COPY = {
       cta: 'Open the live profile',
     },
     pricing: {
+      kicker: 'Pricing',
       title: 'Simple pricing',
       sub: 'Free while we launch. No card, no trial countdown.',
       plans: [
@@ -146,6 +152,7 @@ const COPY = {
       ],
     },
     faq: {
+      kicker: 'Questions',
       title: 'Questions, answered',
       items: [
         { q: 'Is Livocal free?', a: 'Yes during launch. Premium will be $5/month later, and you will be told before anything changes.' },
@@ -219,6 +226,7 @@ const COPY = {
       'ব্রাউজারেই গেস্ট কল',
     ],
     problem: {
+      kicker: 'সমস্যা',
       title: 'ডিলটা নষ্ট হয় ভাষার কারণে',
       sub: 'আপনার দক্ষতার অভাবে না — কলের ভেতরের ভাষা-বাধার কারণে।',
       items: [
@@ -229,6 +237,7 @@ const COPY = {
       solution: 'Livocal তিনটাই এক অ্যাপে ঠিক করে',
     },
     features: {
+      kicker: 'টুলকিট',
       title: 'ফ্রিল্যান্সারের যা যা দরকার, এক জায়গায়',
       sub: 'যে ছয়টা কাজ আগে ছয়টা অ্যাপে হতো।',
       items: [
@@ -241,6 +250,7 @@ const COPY = {
       ],
     },
     how: {
+      kicker: 'তিন ধাপ',
       title: 'কীভাবে কাজ করে',
       sub: 'তিন ধাপ, কোনো সেটআপ কল নেই।',
       steps: [
@@ -250,12 +260,14 @@ const COPY = {
       ],
     },
     client: {
+      kicker: 'ইনস্টল ছাড়াই',
       title: 'ক্লায়েন্টকে কিছু ইনস্টল করতে হবে না',
       body: 'লিংক খুলবে, মাইকের অনুমতি দেবে, কথা বলবে। কোনো স্টোর নেই, সাইন-আপ নেই, অ্যাকাউন্ট নেই।',
       bullets: ['যেকোনো ব্রাউজারে খোলে', 'একবার ব্যবহারযোগ্য সাইনড লিংক', 'বিনয়ের সাথে মাইক পারমিশন চাওয়া হয়'],
       cta: 'লাইভ রুম দেখুন',
     },
     proof: {
+      kicker: 'লাইভ প্রমাণ',
       title: 'একটা আসল Livocal প্রোফাইল',
       sub: 'নিচের সবকিছু লাইভ — মকআপ না।',
       stats: [
@@ -267,6 +279,7 @@ const COPY = {
       cta: 'লাইভ প্রোফাইল খুলুন',
     },
     pricing: {
+      kicker: 'দাম',
       title: 'সহজ দাম',
       sub: 'লঞ্চ পর্যন্ত ফ্রি। কার্ড নেই, ট্রায়াল কাউন্টডাউন নেই।',
       plans: [
@@ -289,6 +302,7 @@ const COPY = {
       ],
     },
     faq: {
+      kicker: 'প্রশ্নোত্তর',
       title: 'প্রশ্নের উত্তর',
       items: [
         { q: 'Livocal কি ফ্রি?', a: 'লঞ্চের সময় হ্যাঁ। পরে Premium $5/মাস হবে, আর কিছু বদলানোর আগে আপনাকে জানানো হবে।' },
@@ -466,12 +480,14 @@ export function renderLanding({ lang, origin }) {
 <meta name="twitter:image" content="${base}/static/og-image.png">
 <link rel="icon" href="/static/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="/static/icon-192.png">
+<link rel="preload" href="/site/fonts/sora-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="manifest" href="/manifest.webmanifest">
 <style>:root{--bg:#04070D;--surface:#0B1422;--surface-2:#0F1B2D;--text:#F2F6FB;--muted:#8FA0B6;--accent:#34D399;--accent-ink:#04120C;--accent-2:#6366F1;--border:rgba(255,255,255,.08);--radius:18px;--ease:cubic-bezier(.2,.8,.2,1)}*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans Bengali',sans-serif;line-height:1.6;overflow-x:hidden}a{color:inherit}</style>
-<link rel="stylesheet" href="/site/landing.css?v=3">
+<link rel="stylesheet" href="/site/landing.css?v=4">
 <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
 </head>
 <body data-lang="${language}">
+<div class="progress" id="progress" aria-hidden="true"></div>
 <a class="skip" href="#main">${language === 'bn' ? 'মূল কনটেন্টে যান' : 'Skip to content'}</a>
 
 <header class="nav" id="nav">
@@ -545,6 +561,7 @@ export function renderLanding({ lang, origin }) {
   <section class="section" id="problem">
     <div class="wrap">
       <header class="section__head reveal">
+        <span class="kicker"><i>01</i> ${esc(c.problem.kicker)}</span>
         <h2>${esc(c.problem.title)}</h2>
         <p>${esc(c.problem.sub)}</p>
       </header>
@@ -556,16 +573,18 @@ export function renderLanding({ lang, origin }) {
   <section class="section section--alt" id="features">
     <div class="wrap">
       <header class="section__head reveal">
+        <span class="kicker"><i>02</i> ${esc(c.features.kicker)}</span>
         <h2>${esc(c.features.title)}</h2>
         <p>${esc(c.features.sub)}</p>
       </header>
-      <div class="grid grid--3">${featureCards}</div>
+      <div class="grid grid--3 features-grid">${featureCards}</div>
     </div>
   </section>
 
   <section class="section" id="how">
     <div class="wrap">
       <header class="section__head reveal">
+        <span class="kicker"><i>03</i> ${esc(c.how.kicker)}</span>
         <h2>${esc(c.how.title)}</h2>
         <p>${esc(c.how.sub)}</p>
       </header>
@@ -602,6 +621,7 @@ export function renderLanding({ lang, origin }) {
   <section class="section" id="proof">
     <div class="wrap">
       <header class="section__head reveal">
+        <span class="kicker"><i>05</i> ${esc(c.proof.kicker)}</span>
         <h2>${esc(c.proof.title)}</h2>
         <p>${esc(c.proof.sub)}</p>
       </header>
@@ -626,6 +646,7 @@ export function renderLanding({ lang, origin }) {
   <section class="section section--alt" id="pricing">
     <div class="wrap">
       <header class="section__head reveal">
+        <span class="kicker"><i>06</i> ${esc(c.pricing.kicker)}</span>
         <h2>${esc(c.pricing.title)}</h2>
         <p>${esc(c.pricing.sub)}</p>
       </header>
@@ -636,6 +657,7 @@ export function renderLanding({ lang, origin }) {
   <section class="section" id="faq">
     <div class="wrap wrap--narrow">
       <header class="section__head reveal">
+        <span class="kicker"><i>07</i> ${esc(c.faq.kicker)}</span>
         <h2>${esc(c.faq.title)}</h2>
       </header>
       <div class="faq">${faqItems}</div>
@@ -690,6 +712,7 @@ export function renderLanding({ lang, origin }) {
     <span>© ${new Date().getFullYear()} Livocal</span>
     <span>livocal.app</span>
   </div>
+  <div class="footer__mark" aria-hidden="true">Livocal</div>
 </footer>
 
 <script>window.__LV_COPY=${JSON.stringify({
@@ -704,7 +727,7 @@ export function renderLanding({ lang, origin }) {
     finalBtn: c.final.btn,
     finalBtnBusy: language === 'bn' ? 'পাঠানো হচ্ছে…' : 'Sending…',
   })};window.__LV_LANG=${JSON.stringify(language)};</script>
-<script src="/site/landing.js?v=3" defer></script>
+<script src="/site/landing.js?v=4" defer></script>
 </body>
 </html>`;
 }
