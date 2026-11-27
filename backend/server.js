@@ -1470,6 +1470,28 @@ async function allowDemoCall() {
   }
 }
 
+app.get('/api/public/demo-models', async (req, res) => {
+  if (!GEMINI_API_KEY) return res.status(503).json({ ok: false });
+  try {
+    const r = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`
+    );
+    const data = await r.json();
+    return res.json({
+      ok: r.ok,
+      status: r.status,
+      textModel: TEXT_MODEL,
+      models: (data.models || [])
+        .filter((m) => (m.supportedGenerationMethods || []).includes('generateContent'))
+        .map((m) => m.name)
+        .slice(0, 60),
+      raw: r.ok ? undefined : JSON.stringify(data).slice(0, 300),
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 app.post('/api/public/demo-translate', demoLimiter, async (req, res) => {
   const body = req.body || {};
   const text = String(body.text || '').trim().slice(0, 200);
