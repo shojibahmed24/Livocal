@@ -107,12 +107,27 @@
   var demoFrom = document.getElementById('demoFrom');
   var demoTo = document.getElementById('demoTo');
   var demoLabel = document.querySelector('.demo__label');
+  var demoPlay = document.getElementById('demoPlay');
   var demoBusy = false;
+  var lastText = '';
+  var lastTarget = 'en';
+
+  var SPEECH_LOCALE = {
+    en: 'en-US', bn: 'bn-BD', hi: 'hi-IN', ur: 'ur-PK', ar: 'ar-SA',
+    es: 'es-ES', fr: 'fr-FR', de: 'de-DE', pt: 'pt-BR', it: 'it-IT',
+    ru: 'ru-RU', tr: 'tr-TR', zh: 'zh-CN', ja: 'ja-JP', ko: 'ko-KR',
+    id: 'id-ID', vi: 'vi-VN', th: 'th-TH', ta: 'ta-IN', te: 'te-IN',
+    fil: 'fil-PH', sw: 'sw-KE', fa: 'fa-IR', nl: 'nl-NL', pl: 'pl-PL',
+  };
 
   function showSample(message) {
     if (!demoOut || !demoText) return;
     demoText.textContent = COPY.demoSample || '';
     demoOut.hidden = false;
+    if (demoPlay) {
+      demoPlay.hidden = true;
+      lastText = '';
+    }
     if (demoStatus && message) demoStatus.textContent = message;
   }
 
@@ -150,6 +165,9 @@
             demoLabel.textContent =
               demoTo.options[demoTo.selectedIndex].textContent;
           }
+          lastText = translated;
+          lastTarget = demoTo ? demoTo.value : 'en';
+          if (demoPlay) demoPlay.hidden = false;
           demoOut.hidden = false;
           if (demoStatus) demoStatus.textContent = '';
           track('demo');
@@ -167,6 +185,19 @@
   }
 
   if (demoBtn) demoBtn.addEventListener('click', translateDemo);
+  if (demoPlay) {
+    demoPlay.addEventListener('click', function () {
+      if (!lastText || !window.speechSynthesis) return;
+      try {
+        window.speechSynthesis.cancel();
+        var utterance = new SpeechSynthesisUtterance(lastText);
+        utterance.lang = SPEECH_LOCALE[lastTarget] || 'en-US';
+        utterance.rate = 0.95;
+        window.speechSynthesis.speak(utterance);
+        track('listen');
+      } catch (e) {}
+    });
+  }
   if (input) {
     input.addEventListener('keydown', function (event) {
       if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {

@@ -2,6 +2,14 @@
 
 import COPY, { LANGUAGES, RTL_LANGUAGES, pathFor } from './i18n/index.js';
 
+// Cache-buster: changes with every deploy so a stale landing.js can never
+// serve an old API contract again.
+const ASSET_VERSION = (
+  process.env.RENDER_GIT_COMMIT ||
+  process.env.GIT_COMMIT ||
+  'dev'
+).slice(0, 8);
+
 /** Marketing landing page for https://livocal.app (no framework, no build). */
 
 function esc(value) {
@@ -53,6 +61,8 @@ const ICONS = {  mic: '<path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-
     '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>',
   doc: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
   check: '<path d="M4 12.5l5 5L20 6.5"/>',
+  speaker:
+    '<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/>',
   arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
 };
 
@@ -315,7 +325,7 @@ ${LANGUAGES.map(
 ${language === 'bn' ? '<link rel="preload" href="/site/fonts/noto-bengali.woff2" as="font" type="font/woff2" crossorigin>' : ''}
 <link rel="manifest" href="/manifest.webmanifest">
 <style>:root{--bg:#04070D;--surface:#0B1422;--surface-2:#0F1B2D;--text:#F2F6FB;--muted:#8FA0B6;--accent:#34D399;--accent-ink:#04120C;--accent-2:#6366F1;--border:rgba(255,255,255,.08);--radius:18px;--ease:cubic-bezier(.2,.8,.2,1)}*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans Bengali',sans-serif;line-height:1.6;overflow-x:hidden}a{color:inherit}</style>
-<link rel="stylesheet" href="/site/landing.css?v=7">
+<link rel="stylesheet" href="/site/landing.css?v=${ASSET_VERSION}">
 <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
 </head>
 <body data-lang="${language}">
@@ -401,6 +411,9 @@ ${language === 'bn' ? '<link rel="preload" href="/site/fonts/noto-bengali.woff2"
         <div class="demo__out" id="demoOut" hidden>
           <span class="demo__label">${esc(c.hero.demoResult)}</span>
           <p id="demoText" class="demo__text"></p>
+          <button class="demo__play" id="demoPlay" type="button" aria-label="Play the translation" hidden>
+            ${icon('speaker', 'ico')}
+          </button>
         </div>
         <p class="demo__sample" id="demoSample">${esc(c.hero.sample)}</p>
         <div class="wave" aria-hidden="true">
@@ -583,7 +596,7 @@ ${tourSection}
     finalBtn: c.final.btn,
     finalBtnBusy: c.final.sending,
   })};window.__LV_LANG=${JSON.stringify(language)};</script>
-<script src="/site/landing.js?v=7" defer></script>
+<script src="/site/landing.js?v=${ASSET_VERSION}" defer></script>
 </body>
 </html>`;
 }

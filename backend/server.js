@@ -1664,7 +1664,7 @@ app.post('/api/public/waitlist', waitlistLimiter, async (req, res) => {
 
 app.post('/api/public/landing-event', eventLimiter, async (req, res) => {
   const type = String(req.body?.type || '');
-  if (!['view', 'cta', 'waitlist', 'demo'].includes(type)) {
+  if (!['view', 'cta', 'waitlist', 'demo', 'listen'].includes(type)) {
     return res.status(204).end();
   }
   if (firestoreDb) {
