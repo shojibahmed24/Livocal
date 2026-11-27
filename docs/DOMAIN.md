@@ -1,7 +1,15 @@
 # Custom domain — livocal.app
 
-Status: domain purchased 2026-11-28. Code is ready; DNS + Render settings
-still need one manual step each.
+Status: **DNS live, TLS issued, domain verified — 2026-11-28.**
+
+| Check | Result |
+|---|---|
+| `livocal.app` A | `216.24.57.16`, `216.24.57.18` (Render) |
+| `www` | CNAME → `livocal-relay.onrender.com`, Render 301 → apex |
+| `https://livocal.app/health` | 200 |
+| `/u`, `/book`, `/cv`, `/room`, `/app` | served on the custom domain |
+| Render env `PUBLIC_BASE_URL` | **still needs to be added** |
+| Latest code deployed | **no — Manual Deploy of `main` pending** |
 
 - Render service: `livocal-relay` → `https://livocal-relay.onrender.com`
 - Public domain: `https://livocal.app` (`www` → same service)
@@ -95,6 +103,24 @@ flutter run --dart-define=RELAY_URL=http://10.0.2.2:3000
 
 ## 7. What is still needed from the owner
 
-1. Registrar name (so the exact DNS screen can be written down).
-2. The A/CNAME values Render displays for the service.
-3. Confirm `www` should redirect to the apex (recommended).
+1. Set `PUBLIC_BASE_URL = https://livocal.app` in Render → Environment.
+2. **Manual Deploy** the latest `main` (auto-deploy is still broken: the
+   `RENDER_API_KEY` secret returns 401).
+3. Never disable the Render subdomain — the app uses it as an automatic
+   fallback when the domain fails a health check.
+4. (Later, before Play release) add `ANDROID_CERT_SHA256` with the release
+   keystore fingerprint — `/.well-known/assetlinks.json` starts answering and
+   `https://livocal.app/u/<name>` can open the app directly.
+
+## 8. SEO / sharing basics now served
+
+| Route | Purpose |
+|---|---|
+| `/robots.txt` | crawl rules + sitemap pointer |
+| `/sitemap.xml` | home, legal pages and every published profile |
+| `/favicon.ico` | 301 to the 192px icon |
+| `/static/og-image.png` | default 1200×630 social preview |
+| `/.well-known/assetlinks.json` | Android App Links (needs the SHA-256 env) |
+
+Profile and CV pages now emit **absolute** `canonical` / `og:url` / `og:image`
+values, so link previews resolve on every platform.
