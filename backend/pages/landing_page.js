@@ -371,7 +371,7 @@ ${language === 'bn' ? '<link rel="preload" href="/site/fonts/noto-bengali.woff2"
   <div class="wrap nav__inner">
     <a class="brand" href="/" aria-label="Livocal">
       <img src="/site/logo.svg" alt="" width="34" height="34">
-      <span>Livocal</span>
+      <span class="brand__word">Li<em>vocal</em></span>
     </a>
     <nav class="nav__links" aria-label="Primary">
       <a href="#features">${esc(c.nav.features)}</a>
@@ -609,7 +609,7 @@ ${videoSection}
   <div class="wrap footer__inner">
     <div class="footer__brand">
       <img src="/site/logo.svg" alt="" width="28" height="28">
-      <span>Livocal</span>
+      <span class="brand__word">Li<em>vocal</em></span>
       <p>${esc(c.footer.tagline)}</p>
     </div>
     <div class="footer__cols">
