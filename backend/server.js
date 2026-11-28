@@ -5889,6 +5889,44 @@ const ProposalSchema = z.object({
     .optional(),
 });
 
+const SummarySchema = z.object({
+  displayName: z.string().max(80).optional(),
+  headline: z.string().max(160).optional(),
+  skills: z.array(z.string().max(40)).max(20).optional(),
+  experience: z
+    .array(
+      z.object({
+        role: z.string().max(80).optional(),
+        company: z.string().max(80).optional(),
+        start: z.string().max(16).optional(),
+        end: z.string().max(16).optional(),
+        summary: z.string().max(400).optional(),
+      })
+    )
+    .max(8)
+    .optional(),
+  education: z
+    .array(
+      z.object({
+        school: z.string().max(120).optional(),
+        degree: z.string().max(120).optional(),
+      })
+    )
+    .max(5)
+    .optional(),
+  services: z.array(z.string().max(120)).max(8).optional(),
+  languages: z.array(z.string().max(40)).max(8).optional(),
+  yearsExperience: z.number().int().min(0).max(60).optional(),
+  rate: z
+    .object({
+      amount: z.number().min(0).max(1000000),
+      currency: z.string().max(8),
+      basis: z.string().max(16),
+    })
+    .optional(),
+  tone: z.enum(['professional', 'concise', 'friendly']).optional(),
+});
+
 function fallbackProposal(input) {
   const skills = (input.skills || []).slice(0, 6).join(', ') || 'your project';
   const price = input.rate && input.rate.amount > 0
@@ -6069,6 +6107,196 @@ function parseProposalJson(raw) {
   } catch (_) {
     return null;
   }
+}
+
+/**
+ * POST /api/ai/summary
+ * Writes a short English profile summary from real profile data only.
+ * Nothing is stored server-side.
+ */
+app.post(
+  '/api/ai/summary',
+  apiLimiter,
+  authenticateRequest,
+  translateLimiter,
+  validateBody(SummarySchema),
+  async (req, res) => {
+    const input = req.body || {};
+    const skills = Array.isArray(input.skills) ? input.skills.slice(0, 20) : [];
+    const experience = Array.isArray(input.experience)
+      ? input.experience.slice(0, 8)
+      : [];
+    const services = Array.isArray(input.services)
+      ? input.services.slice(0, 8)
+      : [];
+    const languages = Array.isArray(input.languages)
+      ? input.languages.slice(0, 8)
+      : [];
+    const tone = input.tone || 'professional';
+
+    const prompt = [
+      'You write the SUMMARY section of a freelancer CV.',
+      'Return ONLY the summary text: no quotes, no markdown, no headings.',
+      'English only. First person. 2-3 sentences, at most 55 words.',
+      `Tone: ${tone}.`,
+      'Use only the facts below. Never invent clients, projects, metrics, degrees, certifications or years of experience.',
+      'Mention the main stack, the kind of work, and availability or rate only when it is given.',
+      '',
+      `Name: ${input.displayName || 'Freelancer'}`,
+      `Headline: ${input.headline || ''}`,
+      `Skills: ${skills.join(', ')}`,
+      `Years of experience: ${Number(input.yearsExperience) > 0 ? input.yearsExperience : 'not stated'}`,
+      `Experience: ${experience
+        .map((item) =>
+          [item.role, item.company, item.start, item.end]
+            .filter(Boolean)
+            .join(' · ')
+        )
+        .join(' | ')}`,
+      `Education: ${(Array.isArray(input.education) ? input.education : [])
+        .map((item) => [item.school, item.degree].filter(Boolean).join(' · '))
+        .join(' | ')}`,
+      `Services: ${services.join(', ')}`,
+      `Languages: ${languages.join(', ')}`,
+      `Rate: ${
+        input.rate && input.rate.amount > 0
+          ? `${input.rate.currency} ${input.rate.amount} per ${input.rate.basis}`
+          : 'not stated'
+      }`,
+    ].join('\n');
+
+    let text = '';
+    let source = 'fallback';
+    let reason = '';
+
+    if (OPENROUTER_API_KEY) {
+      const models = [OPENROUTER_MODEL, OPENROUTER_FALLBACK_MODEL].filter(
+        (model, index, list) => model && list.indexOf(model) === index
+      );
+      for (const model of models) {
+        try {
+          const apiRes = await fetch(
+            'https://openrouter.ai/api/v1/chat/completions',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+                'HTTP-Referer': PUBLIC_BASE_URL || 'https://livocal.app',
+                'X-Title': 'Livocal',
+              },
+              signal: AbortSignal.timeout(30000),
+              body: JSON.stringify({
+                model,
+                temperature: 0.6,
+                max_tokens: 300,
+                messages: [
+                  {
+                    role: 'system',
+                    content:
+                      'You write a short English freelancer CV summary. Output plain text only.',
+                  },
+                  { role: 'user', content: prompt },
+                ],
+              }),
+            }
+          );
+          if (apiRes.ok) {
+            const data = await apiRes.json();
+            text = cleanSummary(data.choices?.[0]?.message?.content || '');
+            if (text) {
+              source = 'openrouter';
+              break;
+            }
+            reason = 'openrouter_parse';
+          } else {
+            reason = 'openrouter_http_' + apiRes.status;
+            console.error('[Summary] OpenRouter', model, 'HTTP', apiRes.status);
+            if (apiRes.status === 401 || apiRes.status === 402) break;
+          }
+        } catch (err) {
+          reason = 'openrouter_error';
+          console.error('[Summary] OpenRouter error:', err.message);
+        }
+      }
+    }
+
+    if (!text && GEMINI_API_KEY) {
+      const geminiModels = [TEXT_MODEL, GEMINI_FALLBACK_TEXT_MODEL].filter(
+        (model, index, list) => model && list.indexOf(model) === index
+      );
+      for (const model of geminiModels) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+          const apiRes = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { temperature: 0.6, maxOutputTokens: 300 },
+            }),
+          });
+          if (apiRes.ok) {
+            const data = await apiRes.json();
+            text = cleanSummary(
+              data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+            );
+            if (text) {
+              source = 'gemini';
+              break;
+            }
+            reason = 'gemini_parse';
+          } else {
+            reason = 'gemini_http_' + apiRes.status;
+            console.error('[Summary] Gemini', model, 'HTTP', apiRes.status);
+          }
+        } catch (err) {
+          reason = 'gemini_error';
+          console.error('[Summary] Gemini error:', err.message);
+        }
+      }
+    }
+
+    if (!text) {
+      if (!reason) reason = 'ai_not_configured';
+      text = fallbackSummary({ ...input, skills, tone });
+    }
+    return res.json({ text, source, reason });
+  }
+);
+
+function cleanSummary(raw) {
+  if (!raw) return '';
+  let text = String(raw)
+    .replace(/```[a-z]*/gi, '')
+    .replace(/```/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  text = text.replace(/^["'“”]+|["'“”]+$/g, '').trim();
+  if (text.length > 420) text = text.slice(0, 420).trim();
+  return text;
+}
+
+function fallbackSummary(input) {
+  const skills = (input.skills || []).slice(0, 5);
+  const role =
+    input.headline ||
+    (skills.length
+      ? `${skills.slice(0, 2).join(' & ')} freelancer`
+      : 'Freelance professional');
+  const years =
+    Number(input.yearsExperience) > 0
+      ? ` with ${input.yearsExperience} years of experience`
+      : '';
+  const stack = skills.length
+    ? ` I work mainly with ${skills.join(', ')}.`
+    : '';
+  const rate =
+    input.rate && input.rate.amount > 0
+      ? ` My rate is ${input.rate.currency} ${input.rate.amount} per ${input.rate.basis === 'project' ? 'project' : 'hour'}.`
+      : '';
+  const base = `${role}${years}.${stack}${rate} I focus on clear communication and on-time delivery.`;
+  return base.replace(/\s+/g, ' ').trim();
 }
 
 /**
