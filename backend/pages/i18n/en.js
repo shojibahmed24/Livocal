@@ -150,6 +150,13 @@ export default {
     invStatus: 'Sent to client',
     invLink: 'livocal.app/i/•••',
   },
+  video: {
+    kicker: 'Real call',
+    title: 'This is a real Livocal call',
+    sub: 'No edits, no cuts, no script. Two phones, one conversation.',
+    play: 'Play the call',
+    note: 'Recorded live in the app',
+  },
   final: {
     title: 'Be first when we open',
     sub: 'Leave an email or a phone number. We send one message when your account is ready.',

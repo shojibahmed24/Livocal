@@ -150,6 +150,13 @@ export default {
     invStatus: 'Enviada al cliente',
     invLink: 'livocal.app/i/•••',
   },
+  video: {
+    kicker: 'Llamada real',
+    title: 'Esta es una llamada real de Livocal',
+    sub: 'Sin edición, sin cortes, sin guion. Dos teléfonos, una conversación.',
+    play: 'Reproducir la llamada',
+    note: 'Grabada en directo en la app',
+  },
   final: {
     title: 'Sé el primero cuando abramos',
     sub: 'Deja un correo o un teléfono. Enviamos un mensaje cuando tu cuenta esté lista.',

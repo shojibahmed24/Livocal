@@ -390,7 +390,29 @@
     }
   }
 
-  /* ── 9. Cursor spotlight on cards (desktop pointers only) ───────────── */
+  /* ── 9. Real call video ─────────────────────────────────────────────── */
+  var callVideo = document.getElementById('callVideo');
+  var callPlay = document.getElementById('callPlay');
+  if (callVideo && callPlay) {
+    var hideOverlay = function () {
+      callPlay.classList.add('is-hidden');
+    };
+    var showOverlay = function () {
+      callPlay.classList.remove('is-hidden');
+    };
+    callPlay.addEventListener('click', function () {
+      hideOverlay();
+      var attempt = callVideo.play();
+      if (attempt && typeof attempt.catch === 'function') {
+        attempt.catch(showOverlay);
+      }
+    });
+    callVideo.addEventListener('pause', showOverlay);
+    callVideo.addEventListener('play', hideOverlay);
+    callVideo.addEventListener('ended', showOverlay);
+  }
+
+  /* ── 10. Cursor spotlight on cards (desktop pointers only) ──────────── */
   if (!reduceMotion && window.matchMedia('(pointer: fine)').matches) {
     Array.prototype.forEach.call(document.querySelectorAll('.card'), function (card) {
       card.addEventListener('pointermove', function (event) {
