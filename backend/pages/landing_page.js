@@ -411,60 +411,44 @@ ${language === 'bn' ? '<link rel="preload" href="/site/fonts/noto-bengali.woff2"
         <p class="hero__sub reveal" data-delay="240">${esc(c.hero.sub)}</p>
         <div class="hero__cta reveal" data-delay="320">
           <a class="btn btn--primary" href="#access">${esc(c.hero.cta1)}</a>
-          <a class="btn btn--ghost" href="#demo">${esc(c.hero.cta2)}</a>
+          <a class="btn btn--ghost" href="#tour">${esc(c.hero.cta2)}</a>
         </div>
         <p class="hero__micro reveal" data-delay="380">${esc(c.hero.micro)}</p>
       </div>
 
-      <div class="demo reveal" id="demo" data-delay="260">
-        <div class="demo__head">
+      <div class="callsim reveal" id="demo" data-delay="260">
+        <div class="callsim__head">
           <span class="dot" aria-hidden="true"></span>
           <strong>${esc(c.hero.demoTitle)}</strong>
-          <span class="demo__badge">LIVE</span>
+          <span class="callsim__badge">PREVIEW</span>
         </div>
-        <p class="demo__hint">${esc(c.hero.demoHint)}</p>
-        <div class="demo__langs">
-          <label class="sr-only" for="demoFrom">${esc(a11y.demo)}</label>
-          <select id="demoFrom" aria-label="From">
-            ${DEMO_LANGS.map(
-              ([code, name]) =>
-                `<option value="${code}"${
-                  code === demoFromDefault ? ' selected' : ''
-                }>${esc(name)}</option>`
-            ).join('')}
-          </select>
-          <span aria-hidden="true">→</span>
-          <label class="sr-only" for="demoTo">To</label>
-          <select id="demoTo" aria-label="To">
-            ${DEMO_LANGS.filter(([code]) => code !== 'auto')
-              .map(
-                ([code, name]) =>
-                  `<option value="${code}"${
-                    code === demoToDefault ? ' selected' : ''
-                  }>${esc(name)}</option>`
-              )
-              .join('')}
-          </select>
+        <div class="callsim__stage">
+          <div class="callsim__state callsim__state--incoming is-on" data-state="incoming">
+            <div class="callsim__avatar" aria-hidden="true">A</div>
+            <p class="callsim__name">Alex · Client</p>
+            <p class="callsim__sub">${esc(c.callSim.incoming)}</p>
+            <div class="callsim__actions" aria-hidden="true">
+              <span class="callsim__btn callsim__btn--decline"></span>
+              <span class="callsim__btn callsim__btn--accept"></span>
+            </div>
+          </div>
+          <div class="callsim__state callsim__state--live" data-state="live">
+            <div class="callsim__top">
+              <span class="callsim__timer" aria-hidden="true">00:04</span>
+              <span class="callsim__chip">${esc(c.hero.demoResult)}</span>
+            </div>
+            <div class="callsim__bubbles">
+              <div class="callsim__b callsim__b--in">${esc(c.clientDemo.client[0])}</div>
+              <div class="callsim__b callsim__b--out">${esc(c.clientDemo.you[0])}</div>
+            </div>
+            <div class="callsim__wave" aria-hidden="true">
+              ${Array.from({ length: 20 })
+                .map((_, i) => `<span style="--i:${i}"></span>`)
+                .join('')}
+            </div>
+          </div>
         </div>
-        <label class="sr-only" for="demoInput">${esc(a11y.demo)}</label>
-        <textarea id="demoInput" class="demo__input" rows="2" maxlength="200" placeholder="${esc(c.hero.demoPlaceholder)}"></textarea>
-        <div class="demo__row">
-          <button class="btn btn--primary btn--sm" id="demoBtn" type="button">${esc(c.hero.demoBtn)}</button>
-          <span class="demo__status" id="demoStatus" role="status" aria-live="polite"></span>
-        </div>
-        <div class="demo__out" id="demoOut" hidden>
-          <span class="demo__label">${esc(COPY[demoToDefault].label)}</span>
-          <p id="demoText" class="demo__text"></p>
-          <button class="demo__play" id="demoPlay" type="button" aria-label="Play the translation" hidden>
-            ${icon('speaker', 'ico')}
-          </button>
-        </div>
-        <p class="demo__sample" id="demoSample">${esc(c.hero.sample)}</p>
-        <div class="wave" aria-hidden="true">
-          ${Array.from({ length: 22 })
-            .map((_, i) => `<span style="--i:${i}"></span>`)
-            .join('')}
-        </div>
+        <p class="callsim__hint">${esc(c.callSim.hint)}</p>
       </div>
     </div>
   </section>

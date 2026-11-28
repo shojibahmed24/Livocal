@@ -15,7 +15,7 @@ export default {
     title2: 'Dein Kunde hört es in seiner Sprache.',
     sub: 'Live-Sprachübersetzung, Buchung, Rechnungen und ein öffentliches Profil — ein Arbeitsbereich für Freelancer, die über Sprachen hinweg arbeiten.',
     cta1: 'Früher Zugang',
-    cta2: 'Übersetzer testen',
+    cta2: 'So funktioniert’s',
     micro: 'Kostenlos bis zum Start · Keine Karte · 70+ Sprachen',
     demoTitle: 'Jetzt testen',
     demoHint: 'Schreibe einen Satz und erhalte sofort die Übersetzung.',
@@ -26,6 +26,10 @@ export default {
     demoFail: 'Die Demo ist gerade ausgelastet — hier ein Beispiel.',
     demoResult: 'Englisch',
     sample: 'I can start work next week.',
+  },
+  callSim: {
+    incoming: 'Übersetzter Anruf eingeht',
+    hint: 'Vorschau — dies ist eine Simulation, kein echter Anruf',
   },
   trust: [
     'Made in Bangladesch',
