@@ -150,7 +150,12 @@ export class AzureTranslationSession {
   sendAudio(buffer) {
     if (!this.ready || this.closed || !this.pushStream) return;
     try {
-      this.pushStream.write(buffer);
+      // The Azure push stream expects an ArrayBuffer; a Node Buffer is a view.
+      const arrayBuffer = buffer.buffer.slice(
+        buffer.byteOffset,
+        buffer.byteOffset + buffer.byteLength
+      );
+      this.pushStream.write(arrayBuffer);
     } catch (err) {
       this.onError({ code: 'AZURE_WRITE_FAILED', message: err.message });
     }
