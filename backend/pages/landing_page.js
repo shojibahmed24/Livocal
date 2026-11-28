@@ -312,7 +312,7 @@ export function renderLanding({ lang, origin }) {
   <section class="section section--alt" id="real-call">
     <div class="wrap">
       <header class="section__head reveal">
-        <span class="kicker"><i>04</i> ${esc(c.video.kicker)}</span>
+        <span class="kicker"><i>05</i> ${esc(c.video.kicker)}</span>
         <h2>${esc(c.video.title)}</h2>
         <p>${esc(c.video.sub)}</p>
       </header>
@@ -539,7 +539,7 @@ ${videoSection}
   <section class="section" id="proof">
     <div class="wrap">
       <header class="section__head reveal">
-        <span class="kicker"><i>05</i> ${esc(c.proof.kicker)}</span>
+        <span class="kicker"><i>06</i> ${esc(c.proof.kicker)}</span>
         <h2>${esc(c.proof.title)}</h2>
         <p>${esc(c.proof.sub)}</p>
       </header>
@@ -560,7 +560,7 @@ ${videoSection}
   <section class="section section--alt" id="pricing">
     <div class="wrap">
       <header class="section__head reveal">
-        <span class="kicker"><i>06</i> ${esc(c.pricing.kicker)}</span>
+        <span class="kicker"><i>07</i> ${esc(c.pricing.kicker)}</span>
         <h2>${esc(c.pricing.title)}</h2>
         <p>${esc(c.pricing.sub)}</p>
       </header>
@@ -571,7 +571,7 @@ ${videoSection}
   <section class="section" id="faq">
     <div class="wrap wrap--narrow">
       <header class="section__head reveal">
-        <span class="kicker"><i>07</i> ${esc(c.faq.kicker)}</span>
+        <span class="kicker"><i>08</i> ${esc(c.faq.kicker)}</span>
         <h2>${esc(c.faq.title)}</h2>
       </header>
       <div class="faq">${faqItems}</div>
