@@ -719,7 +719,13 @@ button, input, textarea { font: inherit; color: inherit; }
   .cta__form .btn { width: 100%; }
   .nav__lang { display: none; }
   .footer__cols { gap: 28px; }
-  .footer__bottom { flex-direction: column; gap: 6px; }
+  .footer__bottom {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+  }
   .hero__title { font-size: clamp(2rem, 8vw, 2.6rem); }
   .marquee__track { animation-duration: 24s; }
 }

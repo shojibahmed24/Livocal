@@ -1,4 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40" role="img" aria-label="Livocal">
-  <path d="M5.5 14.5A6.5 6.5 0 0 1 12 8h16a6.5 6.5 0 0 1 6.5 6.5v7A6.5 6.5 0 0 1 28 28h-8.2l-6.6 5.2c-.7.5-1.7 0-1.7-.9V28H12a6.5 6.5 0 0 1-6.5-6.5z" fill="#34D399"/>
-  <path d="M14.5 15.5v5M20 12.5v11M25.5 15.5v5" stroke="#04120C" stroke-width="2.4" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Livocal">
+  <defs>
+    <linearGradient id="lv-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4ADE80"/>
+      <stop offset="0.55" stop-color="#34D399"/>
+      <stop offset="1" stop-color="#0EA47A"/>
+    </linearGradient>
+    <linearGradient id="lv-sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.35"/>
+      <stop offset="0.45" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="lv-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="16" flood-color="#000000" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+
+  <rect x="16" y="16" width="480" height="480" rx="116" fill="url(#lv-bg)"/>
+  <rect x="16" y="16" width="480" height="480" rx="116" fill="url(#lv-sheen)"/>
+
+  <g filter="url(#lv-shadow)">
+    <path d="M132 148c0-24 19.4-43 43.4-43h161.2c24 0 43.4 19.3 43.4 43v118.5c0 23.8-19.4 43.1-43.4 43.1H262l-62.6 45.7c-6.6 4.9-16 0.2-16-8.1v-37.6h-8c-24 0-43.4-19.3-43.4-43.1z" fill="#0B1422"/>
+    <rect x="196" y="170" width="22" height="72" rx="11" fill="url(#lv-bg)"/>
+    <rect x="245" y="146" width="22" height="120" rx="11" fill="url(#lv-bg)"/>
+    <rect x="294" y="170" width="22" height="72" rx="11" fill="url(#lv-bg)"/>
+  </g>
 </svg>
