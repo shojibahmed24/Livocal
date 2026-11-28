@@ -354,11 +354,12 @@ ${LANGUAGES.map(
 <meta property="og:image" content="${base}/static/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="${base}/static/og-image.png">
-<link rel="icon" href="/static/icon-192.png" type="image/png">
-<link rel="apple-touch-icon" href="/static/icon-192.png">
+<link rel="icon" type="image/svg+xml" href="/site/favicon.svg?v=${ASSET_VERSION}">
+<link rel="icon" href="/static/icon-192.png?v=${ASSET_VERSION}" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/static/icon-192.png?v=${ASSET_VERSION}">
 <link rel="preload" href="/site/fonts/sora-latin.woff2" as="font" type="font/woff2" crossorigin>
 ${language === 'bn' ? '<link rel="preload" href="/site/fonts/noto-bengali.woff2" as="font" type="font/woff2" crossorigin>' : ''}
-<link rel="manifest" href="/manifest.webmanifest">
+<link rel="manifest" href="/manifest.webmanifest?v=${ASSET_VERSION}">
 <style>:root{--bg:#04070D;--surface:#0B1422;--surface-2:#0F1B2D;--text:#F2F6FB;--muted:#8FA0B6;--accent:#34D399;--accent-ink:#04120C;--accent-2:#6366F1;--border:rgba(255,255,255,.08);--radius:18px;--ease:cubic-bezier(.2,.8,.2,1)}*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans Bengali',sans-serif;line-height:1.6;overflow-x:hidden}a{color:inherit}</style>
 <link rel="stylesheet" href="/site/landing.css?v=${ASSET_VERSION}">
 <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
@@ -370,7 +371,7 @@ ${language === 'bn' ? '<link rel="preload" href="/site/fonts/noto-bengali.woff2"
 <header class="nav" id="nav">
   <div class="wrap nav__inner">
     <a class="brand" href="/" aria-label="Livocal">
-      <img src="/site/logo.svg" alt="" width="34" height="34">
+      <img src="/site/logo.svg?v=${ASSET_VERSION}" alt="" width="34" height="34">
       <span class="brand__word">Li<em>vocal</em></span>
     </a>
     <nav class="nav__links" aria-label="Primary">
@@ -608,7 +609,7 @@ ${videoSection}
 <footer class="footer">
   <div class="wrap footer__inner">
     <div class="footer__brand">
-      <img src="/site/logo.svg" alt="" width="28" height="28">
+      <img src="/site/logo.svg?v=${ASSET_VERSION}" alt="" width="28" height="28">
       <span class="brand__word">Li<em>vocal</em></span>
       <p>${esc(c.footer.tagline)}</p>
     </div>
