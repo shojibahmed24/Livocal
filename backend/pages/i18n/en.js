@@ -15,7 +15,7 @@ export default {
     title2: 'Your client hears it in theirs.',
     sub: 'Live voice translation, booking, invoices and a public profile — one workspace for freelancers who work across languages.',
     cta1: 'Get early access',
-    cta2: 'Try the translator',
+    cta2: 'See how it works',
     micro: 'Free while we launch · No card required · 70+ languages',
     demoTitle: 'Try it now',
     demoHint: 'Type a sentence, get it translated instantly.',
@@ -26,6 +26,10 @@ export default {
     demoFail: 'The demo is busy right now — here is a sample.',
     demoResult: 'English',
     sample: 'আমি পরের সপ্তাহে কাজ শুরু করতে পারব',
+  },
+  callSim: {
+    incoming: 'Incoming translated call',
+    hint: 'Preview — this is a simulation, not a real call',
   },
   trust: [
     'Made in Bangladesh',

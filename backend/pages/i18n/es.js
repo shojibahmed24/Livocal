@@ -15,7 +15,7 @@ export default {
     title2: 'Tu cliente lo escucha en la suya.',
     sub: 'Traducción de voz en vivo, reservas, facturas y un perfil público: un solo lugar para freelancers que trabajan en varios idiomas.',
     cta1: 'Consigue acceso anticipado',
-    cta2: 'Prueba el traductor',
+    cta2: 'Ver cómo funciona',
     micro: 'Gratis hasta el lanzamiento · Sin tarjeta · Más de 70 idiomas',
     demoTitle: 'Pruébalo ahora',
     demoHint: 'Escribe una frase y recibe la traducción al instante.',
@@ -26,6 +26,10 @@ export default {
     demoFail: 'La demo está ocupada: aquí tienes un ejemplo.',
     demoResult: 'Inglés',
     sample: 'I can start work next week.',
+  },
+  callSim: {
+    incoming: 'Llamada traducida entrante',
+    hint: 'Vista previa: es una simulación, no una llamada real',
   },
   trust: [
     'Hecho en Bangladés',

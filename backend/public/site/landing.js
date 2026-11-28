@@ -98,112 +98,69 @@
   }
   updateSteps();
 
-  /* ── 5. Demo translator ─────────────────────────────────────────────── */
-  var input = document.getElementById('demoInput');
-  var demoBtn = document.getElementById('demoBtn');
-  var demoStatus = document.getElementById('demoStatus');
-  var demoOut = document.getElementById('demoOut');
-  var demoText = document.getElementById('demoText');
-  var demoFrom = document.getElementById('demoFrom');
-  var demoTo = document.getElementById('demoTo');
-  var demoLabel = document.querySelector('.demo__label');
-  var demoPlay = document.getElementById('demoPlay');
-  var demoBusy = false;
-  var lastText = '';
-  var lastTarget = 'en';
+  /* ── 5. Hero call simulation ────────────────────────────────────────── */
+  var sim = document.querySelector('.callsim');
+  if (sim) {
+    var simStates = sim.querySelectorAll('.callsim__state');
+    var simTimer = sim.querySelector('.callsim__timer');
+    var simStep = 0;
+    var simTimerId = null;
+    var simClockId = null;
+    var simSeconds = 0;
 
-  var SPEECH_LOCALE = {
-    en: 'en-US', bn: 'bn-BD', hi: 'hi-IN', ur: 'ur-PK', ar: 'ar-SA',
-    es: 'es-ES', fr: 'fr-FR', de: 'de-DE', pt: 'pt-BR', it: 'it-IT',
-    ru: 'ru-RU', tr: 'tr-TR', zh: 'zh-CN', ja: 'ja-JP', ko: 'ko-KR',
-    id: 'id-ID', vi: 'vi-VN', th: 'th-TH', ta: 'ta-IN', te: 'te-IN',
-    fil: 'fil-PH', sw: 'sw-KE', fa: 'fa-IR', nl: 'nl-NL', pl: 'pl-PL',
-  };
-
-  function showSample(message) {
-    if (!demoOut || !demoText) return;
-    demoText.textContent = COPY.demoSample || '';
-    demoOut.hidden = false;
-    if (demoPlay) {
-      demoPlay.hidden = true;
-      lastText = '';
-    }
-    if (demoStatus && message) demoStatus.textContent = message;
-  }
-
-  function translateDemo() {
-    if (demoBusy || !input) return;
-    var text = input.value.trim();
-    if (!text) {
-      if (demoStatus) demoStatus.textContent = COPY.demoEmpty || '';
-      return;
-    }
-    demoBusy = true;
-    if (demoBtn) demoBtn.disabled = true;
-    if (demoStatus) demoStatus.textContent = COPY.demoLoading || '';
-
-    fetch('/api/public/demo-translate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text: text.slice(0, 200),
-        from: demoFrom ? demoFrom.value : LANG,
-        to: demoTo ? demoTo.value : 'en',
-      }),
-    })
-      .then(function (res) {
-        return res.json().then(function (data) {
-          return { ok: res.ok, status: res.status, data: data };
-        });
-      })
-      .then(function (result) {
-        var data = result.data || {};
-        var translated = data.ok && data.text ? String(data.text).trim() : '';
-        if (translated) {
-          demoText.textContent = translated;
-          if (demoLabel && demoTo) {
-            demoLabel.textContent =
-              demoTo.options[demoTo.selectedIndex].textContent;
-          }
-          lastText = translated;
-          lastTarget = demoTo ? demoTo.value : 'en';
-          if (demoPlay) demoPlay.hidden = false;
-          demoOut.hidden = false;
-          if (demoStatus) demoStatus.textContent = '';
-          track('demo');
-        } else {
-          showSample(COPY.demoFail);
-        }
-      })
-      .catch(function () {
-        showSample(COPY.demoFail);
-      })
-      .then(function () {
-        demoBusy = false;
-        if (demoBtn) demoBtn.disabled = false;
+    var showState = function (name) {
+      Array.prototype.forEach.call(simStates, function (state) {
+        state.classList.toggle('is-on', state.getAttribute('data-state') === name);
       });
-  }
+    };
 
-  if (demoBtn) demoBtn.addEventListener('click', translateDemo);
-  if (demoPlay) {
-    demoPlay.addEventListener('click', function () {
-      if (!lastText || !window.speechSynthesis) return;
-      try {
-        window.speechSynthesis.cancel();
-        var utterance = new SpeechSynthesisUtterance(lastText);
-        utterance.lang = SPEECH_LOCALE[lastTarget] || 'en-US';
-        utterance.rate = 0.95;
-        window.speechSynthesis.speak(utterance);
-        track('listen');
-      } catch (e) {}
-    });
-  }
-  if (input) {
-    input.addEventListener('keydown', function (event) {
-      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
-        translateDemo();
+    var stopClock = function () {
+      if (simClockId) {
+        clearInterval(simClockId);
+        simClockId = null;
       }
-    });
+    };
+
+    var startClock = function () {
+      simSeconds = 4;
+      if (simTimer) simTimer.textContent = '00:04';
+      stopClock();
+      simClockId = setInterval(function () {
+        simSeconds += 1;
+        if (simTimer) {
+          simTimer.textContent =
+            '00:' + (simSeconds < 10 ? '0' + simSeconds : simSeconds);
+        }
+      }, 1000);
+    };
+
+    var runSim = function () {
+      if (reduceMotion) {
+        showState('live');
+        if (simTimer) simTimer.textContent = '00:04';
+        return;
+      }
+      showState('incoming');
+      stopClock();
+      clearTimeout(simTimerId);
+      simTimerId = setTimeout(function () {
+        showState('live');
+        startClock();
+        simTimerId = setTimeout(function () {
+          stopClock();
+          runSim();
+        }, 6000);
+      }, 2600);
+    };
+
+    // QA hook: /?sim=incoming or /?sim=live holds one state.
+    var forced = new URLSearchParams(location.search).get('sim');
+    if (forced === 'incoming' || forced === 'live') {
+      showState(forced);
+      if (forced === 'live' && simTimer) simTimer.textContent = '00:04';
+    } else {
+      runSim();
+    }
   }
 
   /* ── 6. Waitlist ────────────────────────────────────────────────────── */
