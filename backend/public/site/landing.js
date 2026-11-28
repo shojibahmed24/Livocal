@@ -101,65 +101,213 @@
   /* ── 5. Hero call simulation ────────────────────────────────────────── */
   var sim = document.querySelector('.callsim');
   if (sim) {
-    var simStates = sim.querySelectorAll('.callsim__state');
-    var simTimer = sim.querySelector('.callsim__timer');
-    var simStep = 0;
-    var simTimerId = null;
-    var simClockId = null;
+    var simRoot = sim.querySelector('[data-sim-root]');
+    var simPanes = sim.querySelectorAll('.callsim__pane');
+    var simLines = sim.querySelector('[data-sim-lines]');
+    var simTimerEl = sim.querySelector('[data-sim-timer]');
+    var simWave = sim.querySelector('[data-sim-wave]');
+    var simBars = simWave ? simWave.querySelectorAll('span') : [];
+    var simScript = Array.isArray(window.__LV_SIM) ? window.__LV_SIM : [];
+    var simTimers = [];
+    var simClock = null;
     var simSeconds = 0;
+    var simRaf = null;
+    var simPaused = false;
+    var simRunning = false;
 
-    var showState = function (name) {
-      Array.prototype.forEach.call(simStates, function (state) {
-        state.classList.toggle('is-on', state.getAttribute('data-state') === name);
+    var later = function (fn, ms) {
+      simTimers.push(setTimeout(fn, ms));
+    };
+    var clearLater = function () {
+      simTimers.forEach(clearTimeout);
+      simTimers = [];
+    };
+
+    var showPane = function (name) {
+      Array.prototype.forEach.call(simPanes, function (pane) {
+        pane.classList.toggle(
+          'is-on',
+          pane.getAttribute('data-pane') === name
+        );
       });
     };
 
-    var stopClock = function () {
-      if (simClockId) {
-        clearInterval(simClockId);
-        simClockId = null;
-      }
+    var setTimer = function (text) {
+      if (simTimerEl) simTimerEl.textContent = text;
     };
 
     var startClock = function () {
-      simSeconds = 4;
-      if (simTimer) simTimer.textContent = '00:04';
-      stopClock();
-      simClockId = setInterval(function () {
+      simSeconds = 0;
+      setTimer('00:00');
+      if (simClock) clearInterval(simClock);
+      simClock = setInterval(function () {
         simSeconds += 1;
-        if (simTimer) {
-          simTimer.textContent =
-            '00:' + (simSeconds < 10 ? '0' + simSeconds : simSeconds);
-        }
+        setTimer(
+          '0' +
+            Math.floor(simSeconds / 60) +
+            ':' +
+            (simSeconds % 60 < 10
+              ? '0' + (simSeconds % 60)
+              : simSeconds % 60)
+        );
       }, 1000);
     };
 
-    var runSim = function () {
-      if (reduceMotion) {
-        showState('live');
-        if (simTimer) simTimer.textContent = '00:04';
+    var stopClock = function () {
+      if (simClock) {
+        clearInterval(simClock);
+        simClock = null;
+      }
+    };
+
+    var startWave = function () {
+      if (!simBars.length || simRaf) return;
+      var t = 0;
+      var tick = function () {
+        t += 0.09;
+        Array.prototype.forEach.call(simBars, function (bar, i) {
+          var v =
+            0.25 +
+            0.6 *
+              Math.abs(Math.sin(t + i * 0.6)) *
+              (0.6 + 0.4 * Math.sin(t * 0.7 + i));
+          bar.style.transform = 'scaleY(' + v.toFixed(2) + ')';
+        });
+        simRaf = requestAnimationFrame(tick);
+      };
+      simRaf = requestAnimationFrame(tick);
+    };
+
+    var stopWave = function () {
+      if (simRaf) {
+        cancelAnimationFrame(simRaf);
+        simRaf = null;
+      }
+      Array.prototype.forEach.call(simBars, function (bar) {
+        bar.style.transform = 'scaleY(0.18)';
+      });
+    };
+
+    var prune = function () {
+      if (!simLines) return;
+      while (simLines.children.length > 4) {
+        simLines.removeChild(simLines.firstChild);
+      }
+    };
+
+    var addMessage = function (line, animate) {
+      if (!simLines) return null;
+      var bubble = document.createElement('div');
+      bubble.className =
+        'callsim__msg callsim__msg--' + (line.who === 'client' ? 'in' : 'out');
+      var text = document.createElement('span');
+      bubble.appendChild(text);
+      simLines.appendChild(bubble);
+      prune();
+      if (animate) {
+        var i = 0;
+        var typing = setInterval(function () {
+          i += 2;
+          text.textContent = line.text.slice(0, i);
+          if (i >= line.text.length) {
+            clearInterval(typing);
+            text.textContent = line.text;
+            var tr = document.createElement('small');
+            tr.textContent = line.tr;
+            bubble.appendChild(tr);
+          }
+        }, 26);
+      } else {
+        text.textContent = line.text;
+        var small = document.createElement('small');
+        small.textContent = line.tr;
+        bubble.appendChild(small);
+      }
+      return bubble;
+    };
+
+    var playLine = function (index) {
+      if (simPaused) return;
+      if (index >= simScript.length) {
+        later(endCall, 900);
         return;
       }
-      showState('incoming');
+      addMessage(simScript[index], true);
+      later(function () {
+        playLine(index + 1);
+      }, 2400);
+    };
+
+    var endCall = function () {
       stopClock();
-      clearTimeout(simTimerId);
-      simTimerId = setTimeout(function () {
-        showState('live');
-        startClock();
-        simTimerId = setTimeout(function () {
-          stopClock();
-          runSim();
-        }, 6000);
+      stopWave();
+      showPane('ended');
+      setTimer('01:12');
+      later(function () {
+        startSim();
       }, 2600);
     };
 
-    // QA hook: /?sim=incoming or /?sim=live holds one state.
+    var startSim = function () {
+      if (simPaused) return;
+      clearLater();
+      stopClock();
+      stopWave();
+      simRunning = true;
+      if (simLines) simLines.innerHTML = '';
+      setTimer('--:--');
+      showPane('ringing');
+      later(function () {
+        showPane('connecting');
+        later(function () {
+          showPane('live');
+          startClock();
+          startWave();
+          playLine(0);
+        }, 900);
+      }, 2400);
+    };
+
+    var renderStatic = function () {
+      if (simLines) simLines.innerHTML = '';
+      (simScript || []).forEach(function (line) {
+        addMessage(line, false);
+      });
+      showPane('live');
+      setTimer('00:14');
+      stopWave();
+    };
+
+    // QA hooks: ?sim=ringing|live|ended (win even under reduced motion)
     var forced = new URLSearchParams(location.search).get('sim');
-    if (forced === 'incoming' || forced === 'live') {
-      showState(forced);
-      if (forced === 'live' && simTimer) simTimer.textContent = '00:04';
+    if (forced === 'live') {
+      renderStatic();
+    } else if (forced === 'ringing' || forced === 'ended') {
+      showPane(forced);
+      if (forced === 'ended') setTimer('01:12');
+    } else if (reduceMotion) {
+      renderStatic();
     } else {
-      runSim();
+      startSim();
+    }
+
+    // Pause while the card is off-screen.
+    if ('IntersectionObserver' in window) {
+      var simObserver = new IntersectionObserver(
+        function (entries) {
+          var entry = entries[0];
+          simPaused = !entry.isIntersecting;
+          if (simPaused) {
+            clearLater();
+            stopClock();
+            stopWave();
+          } else if (simRunning && !forced && !reduceMotion) {
+            startSim();
+          }
+        },
+        { threshold: 0.15 }
+      );
+      simObserver.observe(sim);
     }
   }
 
