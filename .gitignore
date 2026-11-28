@@ -61,3 +61,5 @@ releases/
 
 #
 ios/build
+# Local test artefacts (Azure/Gemini proof clips)
+backend/tmp/
