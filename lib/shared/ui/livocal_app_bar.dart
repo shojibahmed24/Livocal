@@ -51,7 +51,7 @@ AppBar livocalAppBar(
   );
 }
 
-/// "Livocal" wordmark: Livo (foreground) + cal (aqua), plus the AI pill.
+/// "Livocal" wordmark: Li (foreground) + vocal (accent), plus the AI pill.
 class LivocalWordmark extends StatelessWidget {
   final double fontSize;
   final bool showAiPill;
@@ -100,9 +100,9 @@ class LivocalWordmark extends StatelessWidget {
               letterSpacing: -0.5,
             ),
             children: [
-              TextSpan(text: 'Livo', style: TextStyle(color: foreground)),
+              TextSpan(text: 'Li', style: TextStyle(color: foreground)),
               const TextSpan(
-                text: 'cal',
+                text: 'vocal',
                 style: TextStyle(color: AppColors.accent),
               ),
             ],
