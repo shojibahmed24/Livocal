@@ -99,6 +99,28 @@ export function renderLanding({ lang, origin }) {
   const demoToDefault = language === 'en' ? 'bn' : 'en';
   const hasCallDemo = fs.existsSync(CALL_DEMO_FILE);
   const hasPoster = fs.existsSync(CALL_DEMO_POSTER);
+
+  // Scripted call: the client always opens in English, the freelancer answers
+  // in the interface language. On the English page the roles flip so the
+  // translation is still visible.
+  const PARTNER_LINES = [
+    'Can you start next week?',
+    "What's your rate per hour?",
+    'Deal. Send the invoice today.',
+  ];
+  const curScript = c.callScript;
+  const bnScript = COPY.bn.callScript;
+  const enScript = COPY.en.callScript;
+  const exchanges = [];
+  for (let i = 0; i < PARTNER_LINES.length; i += 1) {
+    if (language === 'en') {
+      exchanges.push({ who: 'client', text: bnScript.t[i], tr: PARTNER_LINES[i] });
+      exchanges.push({ who: 'you', text: enScript.y[i], tr: bnScript.y[i] });
+    } else {
+      exchanges.push({ who: 'client', text: PARTNER_LINES[i], tr: curScript.t[i] });
+      exchanges.push({ who: 'you', text: curScript.y[i], tr: enScript.y[i] });
+    }
+  }
   const base = origin || 'https://livocal.app';
   const canonical = `${base}${pathFor(language)}`;
   const sampleUser = 'shojibahmed';
@@ -422,33 +444,67 @@ ${language === 'bn' ? '<link rel="preload" href="/site/fonts/noto-bengali.woff2"
           <strong>${esc(c.hero.demoTitle)}</strong>
           <span class="callsim__badge">PREVIEW</span>
         </div>
-        <div class="callsim__stage">
-          <div class="callsim__state callsim__state--incoming is-on" data-state="incoming">
-            <div class="callsim__avatar" aria-hidden="true">A</div>
-            <p class="callsim__name">Alex · Client</p>
-            <p class="callsim__sub">${esc(c.callSim.incoming)}</p>
-            <div class="callsim__actions" aria-hidden="true">
-              <span class="callsim__btn callsim__btn--decline"></span>
-              <span class="callsim__btn callsim__btn--accept"></span>
+
+        <div class="callsim__device">
+          <div class="callsim__notch" aria-hidden="true"></div>
+          <div class="callsim__screen" data-sim-root>
+            <div class="callsim__status">
+              <span class="callsim__timer" data-sim-timer aria-hidden="true">--:--</span>
+              <span class="callsim__chip">${esc(c.callScript.pairLabel)}</span>
             </div>
-          </div>
-          <div class="callsim__state callsim__state--live" data-state="live">
-            <div class="callsim__top">
-              <span class="callsim__timer" aria-hidden="true">00:04</span>
-              <span class="callsim__chip">${esc(c.hero.demoResult)}</span>
+
+            <div class="callsim__panes" aria-hidden="true">
+              <div class="callsim__pane is-on" data-pane="ringing">
+                <span class="callsim__avatar">A</span>
+                <p class="callsim__name">Alex · Client</p>
+                <p class="callsim__sub">${esc(c.callSim.incoming)}</p>
+                <div class="callsim__actions">
+                  <span class="callsim__btn callsim__btn--decline"></span>
+                  <span class="callsim__btn callsim__btn--accept"></span>
+                </div>
+              </div>
+
+              <div class="callsim__pane" data-pane="connecting">
+                <span class="callsim__dots"><i></i><i></i><i></i></span>
+              </div>
+
+              <div class="callsim__pane" data-pane="live">
+                <div class="callsim__lines" data-sim-lines></div>
+              </div>
+
+              <div class="callsim__pane" data-pane="ended">
+                <span class="callsim__check" aria-hidden="true">✓</span>
+                <p class="callsim__ended">${esc(c.callScript.ended)}</p>
+              </div>
             </div>
-            <div class="callsim__bubbles">
-              <div class="callsim__b callsim__b--in">${esc(c.clientDemo.client[0])}</div>
-              <div class="callsim__b callsim__b--out">${esc(c.clientDemo.you[0])}</div>
-            </div>
-            <div class="callsim__wave" aria-hidden="true">
-              ${Array.from({ length: 20 })
+
+            <div class="callsim__wave" data-sim-wave aria-hidden="true">
+              ${Array.from({ length: 22 })
                 .map((_, i) => `<span style="--i:${i}"></span>`)
                 .join('')}
             </div>
+
+            <div class="callsim__controls" aria-hidden="true">
+              <span class="callsim__ctl">🎤</span>
+              <span class="callsim__ctl">🔊</span>
+              <span class="callsim__ctl callsim__ctl--end"></span>
+            </div>
           </div>
         </div>
+
         <p class="callsim__hint">${esc(c.callSim.hint)}</p>
+        <div class="sr-only">
+          <ol>
+            ${exchanges
+              .map(
+                (line) =>
+                  `<li><b>${esc(line.who === 'client' ? 'Alex' : 'You')}</b> ${esc(
+                    line.text
+                  )} <em>${esc(line.tr)}</em></li>`
+              )
+              .join('')}
+          </ol>
+        </div>
       </div>
     </div>
   </section>
@@ -624,7 +680,9 @@ ${videoSection}
     finalBusy: c.final.busy,
     finalBtn: c.final.btn,
     finalBtnBusy: c.final.sending,
-  })};window.__LV_LANG=${JSON.stringify(language)};</script>
+  })};window.__LV_LANG=${JSON.stringify(language)};window.__LV_SIM=${JSON.stringify(
+    exchanges
+  )};</script>
 <script src="/site/landing.js?v=${ASSET_VERSION}" defer></script>
 </body>
 </html>`;

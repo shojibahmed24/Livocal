@@ -154,6 +154,20 @@ export default {
     invStatus: 'Envoyée au client',
     invLink: 'livocal.app/i/•••',
   },
+  callScript: {
+    pairLabel: 'FR ↔ EN',
+    ended: 'Appel terminé · résumé enregistré',
+    y: [
+      'Oui, je peux commencer lundi.',
+      '20 dollars de l’heure.',
+      'Je l’envoie aujourd’hui.',
+    ],
+    t: [
+      'Pouvez-vous commencer la semaine prochaine ?',
+      'Quel est votre tarif horaire ?',
+      'Marché conclu. Envoyez la facture aujourd’hui.',
+    ],
+  },
   video: {
     kicker: 'Appel réel',
     title: 'Ceci est un véritable appel Livocal',

@@ -154,6 +154,20 @@ export default {
     invStatus: 'Sent to client',
     invLink: 'livocal.app/i/•••',
   },
+  callScript: {
+    pairLabel: 'EN ↔ বাংলা',
+    ended: 'Call ended · summary saved',
+    y: [
+      'Yes, I can start on Monday.',
+      '$20 per hour.',
+      'Sending it today.',
+    ],
+    t: [
+      'Can you start next week?',
+      "What's your rate per hour?",
+      'Deal. Send the invoice today.',
+    ],
+  },
   video: {
     kicker: 'Real call',
     title: 'This is a real Livocal call',
