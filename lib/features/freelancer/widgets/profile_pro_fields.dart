@@ -26,6 +26,20 @@ class ProfileProFields extends StatefulWidget {
 class _ProfileProFieldsState extends State<ProfileProFields> {
   bool _cvLoading = false;
 
+  /// Only preview the photo when the user is not editing the URL, otherwise
+  /// every keystroke would fire a new image request.
+  final FocusNode _photoFocus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _photoFocus.addListener(_onPhotoFocus);
+  }
+
+  void _onPhotoFocus() {
+    if (mounted) setState(() {});
+  }
+
   Future<void> _generateCv() async {
     if (_cvLoading) return;
     setState(() => _cvLoading = true);
@@ -109,6 +123,8 @@ class _ProfileProFieldsState extends State<ProfileProFields> {
 
   @override
   void dispose() {
+    _photoFocus.removeListener(_onPhotoFocus);
+    _photoFocus.dispose();
     for (final controller in _c.values) {
       controller.dispose();
     }
@@ -229,6 +245,7 @@ class _ProfileProFieldsState extends State<ProfileProFields> {
   /// storage support; until then a public image URL can be pasted here.
   Widget _photoField(Color color) {
     final url = _c['avatarUrl']!.text.trim();
+    final showPreview = url.startsWith('http') && !_photoFocus.hasFocus;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -238,7 +255,7 @@ class _ProfileProFieldsState extends State<ProfileProFields> {
             child: SizedBox(
               width: 44,
               height: 44,
-              child: url.startsWith('http')
+              child: showPreview
                   ? Image.network(
                       url,
                       fit: BoxFit.cover,
@@ -257,6 +274,7 @@ class _ProfileProFieldsState extends State<ProfileProFields> {
               action: TextInputAction.next,
               hint: 'https://',
               helper: widget.t('photoUrlHint'),
+              focusNode: _photoFocus,
             ),
           ),
         ],
@@ -287,7 +305,7 @@ class _ProfileProFieldsState extends State<ProfileProFields> {
         color: color,
         url: url,
         number: number,
-        action: number ? TextInputAction.next : TextInputAction.next,
+        action: TextInputAction.next,
       ),
     );
   }
@@ -301,10 +319,12 @@ class _ProfileProFieldsState extends State<ProfileProFields> {
     bool number = false,
     String? hint,
     String? helper,
+    FocusNode? focusNode,
   }) {
     return TextField(
       key: ValueKey('profilePro-$key'),
       controller: _c[key],
+      focusNode: focusNode,
       keyboardType: number
           ? const TextInputType.numberWithOptions(decimal: false)
           : (url ? TextInputType.url : TextInputType.text),
