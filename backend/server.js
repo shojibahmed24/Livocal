@@ -3388,6 +3388,112 @@ const authenticateUserOrAdmin = async (req, res, next) => {
   return authenticateRequest(req, res, next);
 };
 
+// ── Waitlist inbox (admin) ─────────────────────────────────────────────────
+app.get('/api/admin/waitlist', authenticateAdmin, async (req, res) => {
+  if (!firestoreDb) return res.status(503).json({ error: 'unavailable' });
+  try {
+    const snapshot = await firestoreDb
+      .collection('waitlist')
+      .orderBy('createdAt', 'desc')
+      .limit(500)
+      .get();
+    const rows = snapshot.docs.map((doc) => {
+      const data = doc.data() || {};
+      const created = data.createdAt;
+      return {
+        contact: String(data.contact || ''),
+        locale: String(data.locale || ''),
+        source: String(data.source || ''),
+        createdAt: created?.toDate
+          ? created.toDate().toISOString()
+          : null,
+      };
+    });
+    return res.json({ count: rows.length, rows });
+  } catch (err) {
+    console.error('[Waitlist] admin list failed:', err.message);
+    return res.status(500).json({ error: 'failed' });
+  }
+});
+
+app.get('/admin/waitlist', adminUiAuth, (req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store');
+  return res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waitlist · Livocal admin</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#04070d;color:#e7eef7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px}
+  h1{font-size:20px;margin:0 0 4px}
+  .sub{color:#8fa0b6;font-size:12.5px;margin-bottom:18px}
+  .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  button{padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#e7eef7;font-size:12.5px;font-weight:700;cursor:pointer}
+  button:hover{background:rgba(255,255,255,.09)}
+  .count{color:#34d399;font-weight:800;font-size:12.5px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.07)}
+  th{color:#8fa0b6;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em}
+  td.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px}
+  .empty{padding:30px;color:#8fa0b6;text-align:center}
+  a{color:#34d399}
+</style>
+</head>
+<body>
+  <h1>Waitlist</h1>
+  <p class="sub">Everyone who asked for early access on <a href="/">livocal.app</a>. Newest first.</p>
+  <div class="bar">
+    <span class="count" id="count">loading…</span>
+    <button id="reload" type="button">Reload</button>
+    <button id="csv" type="button">Download CSV</button>
+    <button id="copy" type="button">Copy emails</button>
+  </div>
+  <div id="table"></div>
+<script>
+  var rows = [];
+  function esc(v){return String(v==null?'':v).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function render(){
+    var el = document.getElementById('table');
+    document.getElementById('count').textContent = rows.length + ' entries';
+    if(!rows.length){ el.innerHTML = '<div class="empty">No signups yet.</div>'; return; }
+    var html = '<table><thead><tr><th>Contact</th><th>Language</th><th>Source</th><th>Joined</th></tr></thead><tbody>';
+    rows.forEach(function(r){
+      html += '<tr><td class="mono">'+esc(r.contact)+'</td><td>'+esc(r.locale)+'</td><td>'+esc(r.source)+'</td><td>'+esc(r.createdAt ? new Date(r.createdAt).toLocaleString() : '')+'</td></tr>';
+    });
+    el.innerHTML = html + '</tbody></table>';
+  }
+  function load(){
+    fetch('/api/admin/waitlist', {credentials:'same-origin'})
+      .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function(d){ rows = d.rows || []; render(); })
+      .catch(function(e){ document.getElementById('count').textContent = 'error ' + e.message; });
+  }
+  function csv(){
+    var out = 'contact,locale,source,createdAt\\n' + rows.map(function(r){
+      return [r.contact,r.locale,r.source,r.createdAt].map(function(v){ return '"'+String(v||'').replace(/"/g,'""')+'"'; }).join(',');
+    }).join('\\n');
+    var blob = new Blob([out], {type:'text/csv'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'livocal-waitlist.csv'; a.click();
+  }
+  document.getElementById('reload').addEventListener('click', load);
+  document.getElementById('csv').addEventListener('click', csv);
+  document.getElementById('copy').addEventListener('click', function(){
+    var text = rows.map(function(r){ return r.contact; }).join('\\n');
+    navigator.clipboard.writeText(text).then(function(){
+      document.getElementById('copy').textContent = 'Copied';
+      setTimeout(function(){ document.getElementById('copy').textContent = 'Copy emails'; }, 1500);
+    });
+  });
+  load();
+</script>
+</body>
+</html>`);
+});
+
 // Direct client wallet crediting is STRICTLY BLOCKED for P0 security.
 // Only authenticated Admin or verified payment callback can invoke this endpoint directly.
 app.post('/api/wallet/recharge', authenticateAdmin, async (req, res) => {
