@@ -11,6 +11,6 @@
   </defs>
   <rect x="16" y="16" width="480" height="480" rx="116" fill="url(#lv-badge)"/>
   <rect x="16" y="16" width="480" height="480" rx="116" fill="url(#lv-sheen)"/>
-  <path d="M208 178V322H316" fill="none" stroke="#07120F" stroke-width="46"
+  <path d="M176 128V348H352" fill="none" stroke="#07120F" stroke-width="72"
         stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

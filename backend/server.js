@@ -1269,13 +1269,17 @@ app.get('/manifest.webmanifest', (req, res) => {
       theme_color: '#04070d',
       icons: [
         {
-          src: '/static/icon-192.png',
+          src: `/static/icon-192.png?v=${(
+            process.env.RENDER_GIT_COMMIT || 'dev'
+          ).slice(0, 8)}`,
           sizes: '192x192',
           type: 'image/png',
           purpose: 'any',
         },
         {
-          src: '/static/icon-512.png',
+          src: `/static/icon-512.png?v=${(
+            process.env.RENDER_GIT_COMMIT || 'dev'
+          ).slice(0, 8)}`,
           sizes: '512x512',
           type: 'image/png',
           purpose: 'any maskable',
