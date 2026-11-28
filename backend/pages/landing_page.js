@@ -2,6 +2,15 @@
 
 import COPY, { LANGUAGES, RTL_LANGUAGES, pathFor } from './i18n/index.js';
 
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const MEDIA_DIR = path.join(__dirname, '..', 'public', 'site', 'media');
+const CALL_DEMO_FILE = path.join(MEDIA_DIR, 'call-demo.mp4');
+const CALL_DEMO_POSTER = path.join(MEDIA_DIR, 'call-demo-poster.jpg');
+
 // Cache-buster: changes with every deploy so a stale landing.js can never
 // serve an old API contract again.
 const ASSET_VERSION = (
@@ -88,6 +97,8 @@ export function renderLanding({ lang, origin }) {
   const a11y = A11Y[language] || A11Y.en;
   const demoFromDefault = language;
   const demoToDefault = language === 'en' ? 'bn' : 'en';
+  const hasCallDemo = fs.existsSync(CALL_DEMO_FILE);
+  const hasPoster = fs.existsSync(CALL_DEMO_POSTER);
   const base = origin || 'https://livocal.app';
   const canonical = `${base}${pathFor(language)}`;
   const sampleUser = 'shojibahmed';
@@ -296,6 +307,39 @@ export function renderLanding({ lang, origin }) {
   </section>
 `;
 
+  const videoSection = hasCallDemo
+    ? `
+  <section class="section section--alt" id="real-call">
+    <div class="wrap">
+      <header class="section__head reveal">
+        <span class="kicker"><i>04</i> ${esc(c.video.kicker)}</span>
+        <h2>${esc(c.video.title)}</h2>
+        <p>${esc(c.video.sub)}</p>
+      </header>
+      <figure class="callvideo reveal">
+        <video
+          id="callVideo"
+          class="callvideo__player"
+          preload="none"
+          playsinline
+          controls
+          poster="${hasPoster ? '/site/media/call-demo-poster.jpg' : '/static/og-image.png'}"
+        >
+          <source src="/site/media/call-demo.mp4" type="video/mp4">
+        </video>
+        <button class="callvideo__play" id="callPlay" type="button" aria-label="${esc(
+          c.video.play
+        )}">
+          <span class="callvideo__playicon" aria-hidden="true"></span>
+          <span>${esc(c.video.play)}</span>
+        </button>
+        <figcaption class="callvideo__note">${esc(c.video.note)}</figcaption>
+      </figure>
+    </div>
+  </section>
+`
+    : '';
+
   return `<!DOCTYPE html>
 <html lang="${language}" dir="${dir}" class="no-js">
 <head>
@@ -490,6 +534,7 @@ ${language === 'bn' ? '<link rel="preload" href="/site/fonts/noto-bengali.woff2"
   </section>
 
 ${tourSection}
+${videoSection}
 
   <section class="section" id="proof">
     <div class="wrap">

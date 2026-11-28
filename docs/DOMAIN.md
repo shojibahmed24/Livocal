@@ -8,8 +8,8 @@ Status: **DNS live, TLS issued, domain verified — 2026-11-28.**
 | `www` | CNAME → `livocal-relay.onrender.com`, Render 301 → apex |
 | `https://livocal.app/health` | 200 |
 | `/u`, `/book`, `/cv`, `/room`, `/app` | served on the custom domain |
-| Render env `PUBLIC_BASE_URL` | **still needs to be added** |
-| Latest code deployed | **no — Manual Deploy of `main` pending** |
+| Render env `PUBLIC_BASE_URL` | optional — the code now defaults to `https://livocal.app` |
+| Auto-deploy | **working via `RENDER_DEPLOY_HOOK_URL`** (verified 2026-11-28 03:02) |
 
 - Render service: `livocal-relay` → `https://livocal-relay.onrender.com`
 - Public domain: `https://livocal.app` (`www` → same service)
@@ -103,14 +103,19 @@ flutter run --dart-define=RELAY_URL=http://10.0.2.2:3000
 
 ## 7. What is still needed from the owner
 
-1. Set `PUBLIC_BASE_URL = https://livocal.app` in Render → Environment.
-2. **Manual Deploy** the latest `main` (auto-deploy is still broken: the
-   `RENDER_API_KEY` secret returns 401).
-3. Never disable the Render subdomain — the app uses it as an automatic
-   fallback when the domain fails a health check.
-4. (Later, before Play release) add `ANDROID_CERT_SHA256` with the release
+1. Nothing for the domain — it is live and auto-deploys now.
+2. Never disable the Render subdomain — the app uses it as an automatic
+   fallback when the domain fails a health check (API and WebSocket routes on
+   `*.onrender.com` are never redirected).
+3. (Later, before Play release) add `ANDROID_CERT_SHA256` with the release
    keystore fingerprint — `/.well-known/assetlinks.json` starts answering and
    `https://livocal.app/u/<name>` can open the app directly.
+
+## 8. Auto-deploy
+
+Push to `main` → `Deploy Firestore Rules & Trigger Live Sync` →
+`RENDER_DEPLOY_HOOK_URL` → Render builds in ~1–3 minutes.
+Verified end to end on 2026-11-28; `RENDER_API_KEY` is no longer used.
 
 ## 8. SEO / sharing basics now served
 
