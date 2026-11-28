@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:livocal/theme/app_colors.dart';
+import 'package:livocal/features/freelancer/widgets/editable_entry_tile.dart';
 
 /// Generic editor list (education, certifications, FAQ).
 class ExtrasSection extends StatelessWidget {
@@ -8,11 +9,13 @@ class ExtrasSection extends StatelessWidget {
   final String addKey;
   final String primaryKey;
   final String secondaryKey;
+  final String trailingKey;
   final List<Map<String, String>> entries;
   final String Function(String key) t;
   final Color textColor;
   final Color muted;
   final VoidCallback onAdd;
+  final void Function(int index) onEdit;
   final void Function(int index) onRemove;
 
   const ExtrasSection({
@@ -26,7 +29,9 @@ class ExtrasSection extends StatelessWidget {
     required this.textColor,
     required this.muted,
     required this.onAdd,
+    required this.onEdit,
     required this.onRemove,
+    this.trailingKey = '',
   });
 
   @override
@@ -55,39 +60,27 @@ class ExtrasSection extends StatelessWidget {
             ),
           ],
         ),
+        if (entries.isEmpty)
+          Text(
+            t('sectionEmpty'),
+            style: TextStyle(fontSize: 11.5, color: muted),
+          ),
         ...entries.asMap().entries.map(
-              (entry) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: [
-                    const Icon(Icons.circle, size: 7, color: AppColors.primary),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            entry.value[primaryKey] ?? '',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 12.5, color: textColor),
-                          ),
-                          if ((entry.value[secondaryKey] ?? '').isNotEmpty)
-                            Text(
-                              entry.value[secondaryKey]!,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 10.5, color: muted),
-                            ),
-                        ],
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () => onRemove(entry.key),
-                      child: Icon(Icons.close_rounded, size: 16, color: muted),
-                    ),
-                  ],
+              (entry) => EditableEntryTile(
+                leading: const Icon(
+                  Icons.circle,
+                  size: 7,
+                  color: AppColors.primary,
                 ),
+                title: entry.value[primaryKey] ?? '',
+                subtitle: entry.value[secondaryKey] ?? '',
+                trailing:
+                    trailingKey.isEmpty ? '' : entry.value[trailingKey] ?? '',
+                t: t,
+                textColor: textColor,
+                muted: muted,
+                onEdit: () => onEdit(entry.key),
+                onDelete: () => onRemove(entry.key),
               ),
             ),
         const SizedBox(height: 10),

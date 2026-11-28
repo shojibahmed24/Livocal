@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 
 import 'package:livocal/theme/app_colors.dart';
+import 'package:livocal/features/freelancer/widgets/editable_entry_tile.dart';
 
-/// Portfolio link list with an add button.
+/// Portfolio link list with add/edit/remove.
 class PortfolioSection extends StatelessWidget {
   final List<Map<String, String>> entries;
   final String Function(String key) t;
   final Color textColor;
   final Color muted;
   final VoidCallback onAdd;
+  final void Function(int index) onEdit;
   final void Function(int index) onRemove;
 
   const PortfolioSection({
@@ -18,6 +20,7 @@ class PortfolioSection extends StatelessWidget {
     required this.textColor,
     required this.muted,
     required this.onAdd,
+    required this.onEdit,
     required this.onRemove,
   });
 
@@ -47,31 +50,25 @@ class PortfolioSection extends StatelessWidget {
             ),
           ],
         ),
+        if (entries.isEmpty)
+          Text(
+            t('sectionEmpty'),
+            style: TextStyle(fontSize: 11.5, color: muted),
+          ),
         ...entries.asMap().entries.map(
-              (entry) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.link_rounded,
-                      size: 15,
-                      color: AppColors.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        entry.value['label'] ?? '',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 12.5, color: textColor),
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () => onRemove(entry.key),
-                      child: Icon(Icons.close_rounded, size: 16, color: muted),
-                    ),
-                  ],
+              (entry) => EditableEntryTile(
+                leading: const Icon(
+                  Icons.link_rounded,
+                  size: 15,
+                  color: AppColors.primary,
                 ),
+                title: entry.value['label'] ?? '',
+                subtitle: entry.value['url'] ?? '',
+                t: t,
+                textColor: textColor,
+                muted: muted,
+                onEdit: () => onEdit(entry.key),
+                onDelete: () => onRemove(entry.key),
               ),
             ),
         const SizedBox(height: 12),

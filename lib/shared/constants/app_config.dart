@@ -80,6 +80,8 @@ class AppConfig {
 
   static String get proposalUrl => '$relayHttpBaseUrl/api/ai/proposal';
 
+  static String get aiSummaryUrl => '$relayHttpBaseUrl/api/ai/summary';
+
   static String get changeUsernameUrl =>
       '$relayHttpBaseUrl/api/profile/username';
 

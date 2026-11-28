@@ -83,6 +83,7 @@ class _ProfileProFieldsState extends State<ProfileProFields> {
   }
 
   late final Map<String, TextEditingController> _c = {
+    'avatarUrl': TextEditingController(text: widget.profile.avatarUrl),
     'coverUrl': TextEditingController(text: widget.profile.coverUrl),
     'responseTime': TextEditingController(text: widget.profile.responseTime),
     'githubUrl': TextEditingController(text: widget.profile.githubUrl),
@@ -117,6 +118,8 @@ class _ProfileProFieldsState extends State<ProfileProFields> {
   void _set(String key, String value) {
     widget.mutate((p) {
       switch (key) {
+        case 'avatarUrl':
+          p.avatarUrl = value.trim();
         case 'coverUrl':
           p.coverUrl = value.trim();
         case 'responseTime':
@@ -157,12 +160,13 @@ class _ProfileProFieldsState extends State<ProfileProFields> {
           ),
         ),
         const SizedBox(height: 8),
+        _photoField(textColor),
         CoverImageField(
           profile: widget.profile,
           t: widget.t,
           mutate: widget.mutate,
         ),
-        _field('responseTime', 'responseTime', textColor),
+        _field('responseTime', 'responseTime', textColor, url: false),
         _field('githubUrl', 'githubUrl', textColor),
         _field('linkedinUrl', 'linkedinUrl', textColor),
         _field('websiteUrl', 'websiteUrl', textColor),
@@ -221,22 +225,103 @@ class _ProfileProFieldsState extends State<ProfileProFields> {
     );
   }
 
-  Widget _field(String key, String label, Color color, {bool number = false}) {
+  /// Profile photo used by the public page and the CV. Uploads arrive with
+  /// storage support; until then a public image URL can be pasted here.
+  Widget _photoField(Color color) {
+    final url = _c['avatarUrl']!.text.trim();
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: TextField(
-        controller: _c[key],
-        keyboardType: number
-            ? const TextInputType.numberWithOptions(decimal: false)
-            : TextInputType.url,
-        style: TextStyle(fontSize: 12.5, color: color),
-        decoration: InputDecoration(
-          isDense: true,
-          labelText: widget.t(label),
-          border: const OutlineInputBorder(),
-        ),
-        onChanged: (value) => _set(key, value),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          ClipOval(
+            child: SizedBox(
+              width: 44,
+              height: 44,
+              child: url.startsWith('http')
+                  ? Image.network(
+                      url,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _photoFallback(),
+                    )
+                  : _photoFallback(),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _textField(
+              key: 'avatarUrl',
+              label: 'photoUrl',
+              color: color,
+              url: true,
+              action: TextInputAction.next,
+              hint: 'https://',
+              helper: widget.t('photoUrlHint'),
+            ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _photoFallback() {
+    return Container(
+      color: const Color(0xFFE2E8F0),
+      alignment: Alignment.center,
+      child: const Icon(Icons.person_outline_rounded, size: 22),
+    );
+  }
+
+  Widget _field(
+    String key,
+    String label,
+    Color color, {
+    bool number = false,
+    bool url = true,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: _textField(
+        key: key,
+        label: label,
+        color: color,
+        url: url,
+        number: number,
+        action: number ? TextInputAction.next : TextInputAction.next,
+      ),
+    );
+  }
+
+  Widget _textField({
+    required String key,
+    required String label,
+    required Color color,
+    required TextInputAction action,
+    bool url = false,
+    bool number = false,
+    String? hint,
+    String? helper,
+  }) {
+    return TextField(
+      key: ValueKey('profilePro-$key'),
+      controller: _c[key],
+      keyboardType: number
+          ? const TextInputType.numberWithOptions(decimal: false)
+          : (url ? TextInputType.url : TextInputType.text),
+      textInputAction: action,
+      autocorrect: !url && !number,
+      scrollPadding: const EdgeInsets.only(bottom: 140),
+      onSubmitted: (_) => FocusScope.of(context).nextFocus(),
+      style: TextStyle(fontSize: 12.5, color: color),
+      decoration: InputDecoration(
+        isDense: true,
+        labelText: widget.t(label),
+        hintText: hint,
+        helperText: helper,
+        helperMaxLines: 2,
+        border: const OutlineInputBorder(),
+      ),
+      onChanged: (value) => _set(key, value),
     );
   }
 }

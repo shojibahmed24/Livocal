@@ -58,7 +58,8 @@ Future<Map<String, String>?> showCaseStudyDialog(
         }
 
         return AlertDialog(
-          title: Text(t('addCaseStudy')),
+          title:
+              Text(existing == null ? t('addCaseStudy') : t('editCaseStudy')),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,

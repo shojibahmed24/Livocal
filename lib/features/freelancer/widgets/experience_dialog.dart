@@ -29,7 +29,7 @@ Future<Map<String, String>?> showExperienceDialog(
   return showDialog<Map<String, String>>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: Text(t('addExperience')),
+      title: Text(existing == null ? t('addExperience') : t('editExperience')),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,

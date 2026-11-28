@@ -577,7 +577,9 @@ export function renderCvPage({ profile, username, origin }) {
   const p = profile || {};
   const name = p.displayName || 'Freelancer';
   const rate = rateLine(p.rate);
-  const skills = (Array.isArray(p.skills) ? p.skills : []).join(' · ');
+  const skills = (Array.isArray(p.skills) ? p.skills : [])
+    .map((skill) => `<span class="chip">${esc(skill)}</span>`)
+    .join('');
   const languages = (Array.isArray(p.languages) ? p.languages : [])
     .map((l) => `${l.code || l}${l.level ? ` (${l.level})` : ''}`)
     .join(' · ');
@@ -589,33 +591,68 @@ export function renderCvPage({ profile, username, origin }) {
 
   const experienceHtml = (Array.isArray(p.experience) ? p.experience : [])
     .map((item) => `<div class="row">
-      <div><strong>${esc(item.role || '')}</strong>${item.company ? ` — ${esc(item.company)}` : ''}</div>
-      <div class="when">${esc(item.start || '')}${item.start && item.end ? ' – ' : ''}${esc(item.end || (item.start ? 'Present' : ''))}</div>
-      ${item.summary ? `<p>${esc(item.summary)}</p>` : ''}
+      <div>
+        <div class="role">${esc(item.role || '')}</div>
+        ${item.company ? `<div class="sub">${esc(item.company)}</div>` : ''}
+        ${item.summary ? `<p>${esc(item.summary)}</p>` : ''}
+      </div>
+      <div class="when">${esc(item.start || '')}${item.start ? ' – ' : ''}${esc(item.end || (item.start ? 'Present' : ''))}</div>
     </div>`)
     .join('');
 
   const educationHtml = (Array.isArray(p.education) ? p.education : [])
     .map((item) => `<div class="row">
-      <div><strong>${esc(item.school || '')}</strong>${item.degree ? ` — ${esc(item.degree)}` : ''}</div>
+      <div>
+        <div class="role">${esc(item.school || '')}</div>
+        ${item.degree ? `<div class="sub">${esc(item.degree)}</div>` : ''}
+      </div>
       <div class="when">${esc(item.start || '')}${item.start && item.end ? ' – ' : ''}${esc(item.end || '')}</div>
     </div>`)
     .join('');
 
   const certHtml = (Array.isArray(p.certifications) ? p.certifications : [])
-    .map((item) => `<li>${esc(item.name || '')}${item.issuer ? ` — ${esc(item.issuer)}` : ''}${item.year ? ` (${esc(item.year)})` : ''}</li>`)
+    .map((item) => `<div class="row">
+      <div>
+        <div class="role">${esc(item.name || '')}</div>
+        ${item.issuer ? `<div class="sub">${esc(item.issuer)}</div>` : ''}
+      </div>
+      <div class="when">${esc(item.year || '')}</div>
+    </div>`)
     .join('');
 
   const workHtml = (Array.isArray(p.caseStudies) ? p.caseStudies : [])
     .map((item) => `<div class="row">
-      <div><strong>${esc(item.title || '')}</strong>${item.client ? ` — ${esc(item.client)}` : ''}</div>
-      ${item.result ? `<p>${esc(item.result)}</p>` : ''}
+      <div>
+        <div class="role">${esc(item.title || '')}</div>
+        ${item.client ? `<div class="sub">${esc(item.client)}</div>` : ''}
+        ${item.result ? `<p>${esc(item.result)}</p>` : ''}
+      </div>
     </div>`)
     .join('');
 
   const links = (Array.isArray(p.portfolio) ? p.portfolio : [])
-    .map((item) => `${esc(item.label || '')}${item.url ? ` — ${esc(item.url)}` : ''}`)
-    .join('<br>');
+    .map((item) => `<li>${esc(item.label || '')}${item.url ? ` — ${esc(item.url)}` : ''}</li>`)
+    .join('');
+
+  const contactLinks = [
+    p.githubUrl ? `GitHub — ${esc(p.githubUrl)}` : '',
+    p.linkedinUrl ? `LinkedIn — ${esc(p.linkedinUrl)}` : '',
+    p.websiteUrl ? `Website — ${esc(p.websiteUrl)}` : '',
+  ].filter(Boolean);
+
+  const photo = p.avatarUrl
+    ? `<img class="photo" src="${esc(p.avatarUrl)}" alt="${esc(name)}">`
+    : `<div class="photo photo-fallback">${esc(initial(name))}</div>`;
+
+  const metaLine = [
+    esc(`livocal.app/u/${username}`),
+    rate,
+    p.responseTime
+      ? esc(`Replies ${String(p.responseTime).toLowerCase()}`)
+      : '',
+  ]
+    .filter(Boolean)
+    .join(' <span class="dot">·</span> ');
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -633,25 +670,35 @@ export function renderCvPage({ profile, username, origin }) {
 <meta property="og:image" content="${esc(`${origin || ''}/static/og-image.png`)}">
 <style>
   *{box-sizing:border-box}
-  body{margin:0;background:#eef2f7;color:#0b1220;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans Bengali',sans-serif;line-height:1.55}
-  .sheet{max-width:820px;margin:24px auto;background:#fff;border-radius:14px;padding:36px;box-shadow:0 12px 40px rgba(15,40,70,.12)}
-  header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;border-bottom:2px solid #0f766e;padding-bottom:14px}
-  h1{font-size:30px;margin:0;letter-spacing:-.5px}
-  .headline{color:#0f766e;font-weight:700;font-size:13px;margin:2px 0 0}
-  .meta{color:#64748b;font-size:11.5px;text-align:right}
-  section{margin-top:18px}
-  h2{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#0f766e;margin:0 0 8px;border-bottom:1px solid #e2e8f0;padding-bottom:4px}
-  p{margin:4px 0 0;font-size:12px}
-  .row{margin-bottom:10px}
-  .row strong{font-size:13px}
-  .when{color:#64748b;font-size:11px}
-  ul{margin:0;padding-left:16px;font-size:12px}
-  .skills{font-size:12px}
-  .actions{display:flex;gap:10px;margin-bottom:8px}
+  body{margin:0;background:#eef2f7;color:#0b1220;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans Bengali',sans-serif;line-height:1.55;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .sheet{max-width:820px;margin:28px auto;background:#fff;border-radius:16px;padding:46px 52px;box-shadow:0 18px 60px rgba(15,40,70,.14)}
+  header{display:flex;justify-content:space-between;gap:24px;align-items:flex-start}
+  h1{font-size:31px;margin:0;letter-spacing:-.6px;text-transform:uppercase;line-height:1.15}
+  .headline{color:#0f9d76;font-weight:700;font-size:13px;margin:4px 0 0}
+  .meta{color:#64748b;font-size:10.5px;margin-top:8px}
+  .meta .dot{color:#cbd5e1}
+  .rule{height:2px;background:#0f9d76;margin-top:18px}
+  .photo{width:86px;height:86px;border-radius:12px;object-fit:cover;background:#e2e8f0;flex:none}
+  .photo-fallback{display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;color:#0f9d76}
+  section{margin-top:20px;break-inside:avoid}
+  h2{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#0f9d76;font-weight:800;margin:0 0 4px;padding-bottom:4px;border-bottom:1px solid #e2e8f0}
+  p{margin:0;font-size:12.5px;color:#334155;line-height:1.6}
+  .chips{display:flex;flex-wrap:wrap;gap:5px}
+  .chip{background:#ecfdf5;color:#0b1220;font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:5px}
+  .row{display:flex;justify-content:space-between;gap:16px;padding:7px 0;break-inside:avoid}
+  .row+.row{border-top:1px solid #f1f5f9}
+  .row .role{font-size:12.5px;font-weight:700;color:#0b1220}
+  .row .sub{font-size:11px;color:#64748b;font-weight:600}
+  .row .when{font-size:10.5px;color:#64748b;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .row p{font-size:11.5px;margin-top:3px;color:#475569}
+  ul.links{margin:0;padding:0;list-style:none;font-size:11.5px}
+  ul.links li{padding:2px 0;color:#334155;word-break:break-all}
+  .actions{display:flex;gap:10px;margin-bottom:18px}
   .btn{border:0;background:#0f9d76;color:#fff;border-radius:10px;padding:10px 16px;font-weight:800;font-size:12.5px;cursor:pointer;text-decoration:none}
-  footer{margin-top:22px;text-align:center;color:#94a3b8;font-size:10.5px}
-  @media(max-width:600px){.sheet{margin:10px;padding:20px}header{flex-direction:column}.meta{text-align:left}h1{font-size:24px}}
-  @media print{body{background:#fff}.sheet{box-shadow:none;margin:0;border-radius:0;padding:0}.actions{display:none}}
+  footer{margin-top:26px;padding-top:10px;border-top:1px solid #e2e8f0;text-align:center;color:#94a3b8;font-size:10px}
+  @page{size:A4;margin:14mm}
+  @media(max-width:640px){.sheet{margin:10px;padding:24px;border-radius:12px}header{flex-direction:column-reverse}.photo{width:64px;height:64px}h1{font-size:24px}.actions{display:none}}
+  @media print{body{background:#fff}.sheet{box-shadow:none;margin:0;border-radius:0;padding:0;max-width:none}.actions{display:none}section{margin-top:16px}}
 </style>
 </head>
 <body>
@@ -663,25 +710,21 @@ export function renderCvPage({ profile, username, origin }) {
   <header>
     <div>
       <h1>${esc(name)}</h1>
-      <p class="headline">${esc(p.headline || '')}</p>
+      ${p.headline ? `<p class="headline">${esc(p.headline)}</p>` : ''}
+      <div class="meta">${metaLine}</div>
     </div>
-    <div class="meta">
-      ${esc(`livocal.app/u/${username}`)}<br>
-      ${rate ? `${esc(rate)}<br>` : ''}
-      ${p.githubUrl ? `${esc(p.githubUrl)}<br>` : ''}
-      ${p.linkedinUrl ? `${esc(p.linkedinUrl)}<br>` : ''}
-      ${p.websiteUrl ? esc(p.websiteUrl) : ''}
-    </div>
+    ${photo}
   </header>
+  <div class="rule"></div>
 
   ${block('Summary', p.bio ? `<p>${esc(p.bio)}</p>` : '')}
-  ${block('Skills', skills ? `<p class="skills">${esc(skills)}</p>` : '')}
+  ${block('Core skills', skills ? `<div class="chips">${skills}</div>` : '')}
   ${block('Experience', experienceHtml)}
   ${block('Education', educationHtml)}
-  ${block('Certifications', certHtml ? `<ul>${certHtml}</ul>` : '')}
+  ${block('Certifications', certHtml)}
   ${block('Selected work', workHtml)}
-  ${block('Links', links ? `<p>${links}</p>` : '')}
   ${block('Languages', languages ? `<p>${esc(languages)}</p>` : '')}
+  ${block('Links', (contactLinks.length || links) ? `<ul class="links">${contactLinks.map((line) => `<li>${line}</li>`).join('')}${links}</ul>` : '')}
 
   <footer>Generated from Livocal · livocal.app/u/${esc(username)}</footer>
 </div>

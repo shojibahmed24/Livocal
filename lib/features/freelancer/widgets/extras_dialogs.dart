@@ -36,7 +36,7 @@ Future<Map<String, String>?> showEducationDialog(
   return showDialog<Map<String, String>>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: Text(t('addEducation')),
+      title: Text(existing == null ? t('addEducation') : t('editEducation')),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -87,7 +87,9 @@ Future<Map<String, String>?> showCertificationDialog(
   return showDialog<Map<String, String>>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: Text(t('addCertification')),
+      title: Text(
+        existing == null ? t('addCertification') : t('editCertification'),
+      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -130,7 +132,7 @@ Future<Map<String, String>?> showFaqDialog(
   return showDialog<Map<String, String>>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: Text(t('addFaq')),
+      title: Text(existing == null ? t('addFaq') : t('editFaq')),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

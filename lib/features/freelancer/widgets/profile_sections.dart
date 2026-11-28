@@ -16,6 +16,25 @@ import 'package:livocal/features/freelancer/widgets/section_order_sheet.dart';
 import 'package:livocal/features/freelancer/widgets/service_dialog.dart';
 import 'package:livocal/features/freelancer/widgets/services_section.dart';
 
+/// One repeatable profile section: how to edit, read and write it.
+class _Section {
+  final List<String> Function(FreelancerProfile p) raw;
+  final List<Map<String, String>> Function(FreelancerProfile p) entries;
+  final void Function(FreelancerProfile p, List<String> value) write;
+  final Future<Map<String, String>?> Function(
+    BuildContext context,
+    FreelancerProfile p,
+    Map<String, String>? existing,
+  ) edit;
+
+  const _Section({
+    required this.raw,
+    required this.entries,
+    required this.write,
+    required this.edit,
+  });
+}
+
 /// Portfolio and CV editors (self-contained dialogs and mutations).
 class ProfileSections extends StatelessWidget {
   final FreelancerProfile profile;
@@ -33,76 +52,108 @@ class ProfileSections extends StatelessWidget {
     required this.mutate,
   });
 
-  Future<void> _addPortfolio(BuildContext context) async {
-    final result =
-        await showPortfolioDialog(context, ownerUid: profile.ownerUid);
+  static final _Section _experience = _Section(
+    raw: (p) => p.experience,
+    entries: (p) => p.experienceEntries,
+    write: (p, value) => p.experience = value,
+    edit: (context, p, existing) =>
+        showExperienceDialog(context, existing: existing),
+  );
+
+  static final _Section _education = _Section(
+    raw: (p) => p.education,
+    entries: (p) => p.educationEntries,
+    write: (p, value) => p.education = value,
+    edit: (context, p, existing) =>
+        showEducationDialog(context, existing: existing),
+  );
+
+  static final _Section _certifications = _Section(
+    raw: (p) => p.certifications,
+    entries: (p) => p.certificationEntries,
+    write: (p, value) => p.certifications = value,
+    edit: (context, p, existing) =>
+        showCertificationDialog(context, existing: existing),
+  );
+
+  static final _Section _faq = _Section(
+    raw: (p) => p.faq,
+    entries: (p) => p.faqEntries,
+    write: (p, value) => p.faq = value,
+    edit: (context, p, existing) => showFaqDialog(context, existing: existing),
+  );
+
+  static final _Section _cases = _Section(
+    raw: (p) => p.caseStudies,
+    entries: (p) => p.caseEntries,
+    write: (p, value) => p.caseStudies = value,
+    edit: (context, p, existing) => showCaseStudyDialog(
+      context,
+      ownerUid: p.ownerUid,
+      existing: existing,
+    ),
+  );
+
+  static final _Section _services = _Section(
+    raw: (p) => p.services,
+    entries: (p) => p.serviceEntries,
+    write: (p, value) => p.services = value,
+    edit: (context, p, existing) =>
+        showServiceDialog(context, existing: existing),
+  );
+
+  static final _Section _portfolio = _Section(
+    raw: (p) => p.portfolio,
+    entries: (p) => p.portfolioEntries,
+    write: (p, value) => p.portfolio = value,
+    edit: (context, p, existing) => showPortfolioDialog(
+      context,
+      ownerUid: p.ownerUid,
+      existing: existing,
+    ),
+  );
+
+  Future<void> _add(BuildContext context, _Section section) async {
+    final result = await section.edit(context, profile, null);
     if (result == null) return;
-    mutate((p) => p.portfolio = [...p.portfolio, jsonEncode(result)]);
+    mutate((p) => section.write(p, [...section.raw(p), jsonEncode(result)]));
   }
 
-  void _removePortfolio(int index) {
-    mutate((p) => p.portfolio = [...p.portfolio]..removeAt(index));
-  }
-
-  Future<void> _addExperience(BuildContext context) async {
-    final result = await showExperienceDialog(context);
+  Future<void> _edit(
+    BuildContext context,
+    _Section section,
+    int index,
+  ) async {
+    final current = section.entries(profile);
+    if (index >= current.length) return;
+    final result = await section.edit(context, profile, current[index]);
     if (result == null) return;
-    mutate((p) => p.experience = [...p.experience, jsonEncode(result)]);
+    mutate((p) {
+      final next = [...section.raw(p)];
+      if (index < next.length) next[index] = jsonEncode(result);
+      section.write(p, next);
+    });
   }
 
-  void _removeExperience(int index) {
-    mutate((p) => p.experience = [...p.experience]..removeAt(index));
-  }
-
-  Future<void> _addEducation(BuildContext context) async {
-    final result = await showEducationDialog(context);
-    if (result == null) return;
-    mutate((p) => p.education = [...p.education, jsonEncode(result)]);
-  }
-
-  void _removeEducation(int index) {
-    mutate((p) => p.education = [...p.education]..removeAt(index));
-  }
-
-  Future<void> _addCertification(BuildContext context) async {
-    final result = await showCertificationDialog(context);
-    if (result == null) return;
-    mutate((p) => p.certifications = [...p.certifications, jsonEncode(result)]);
-  }
-
-  void _removeCertification(int index) {
-    mutate((p) => p.certifications = [...p.certifications]..removeAt(index));
-  }
-
-  Future<void> _addFaq(BuildContext context) async {
-    final result = await showFaqDialog(context);
-    if (result == null) return;
-    mutate((p) => p.faq = [...p.faq, jsonEncode(result)]);
-  }
-
-  void _removeFaq(int index) {
-    mutate((p) => p.faq = [...p.faq]..removeAt(index));
-  }
-
-  Future<void> _addCase(BuildContext context) async {
-    final result =
-        await showCaseStudyDialog(context, ownerUid: profile.ownerUid);
-    if (result == null) return;
-    mutate((p) => p.caseStudies = [...p.caseStudies, jsonEncode(result)]);
-  }
-
-  void _removeCase(int index) {
-    mutate((p) => p.caseStudies = [...p.caseStudies]..removeAt(index));
-  }
-
-  Future<void> _addService(BuildContext context) async {
-    final result = await showServiceDialog(context);
-    if (result == null) return;
-    mutate((p) => p.services = [...p.services, jsonEncode(result)]);
-  }
-
-  void _removeService(int index) {
-    mutate((p) => p.services = [...p.services]..removeAt(index));
+  void _remove(BuildContext context, _Section section, int index) {
+    final raw = section.raw(profile);
+    if (index >= raw.length) return;
+    final removed = raw[index];
+    mutate((p) => section.write(p, [...section.raw(p)]..removeAt(index)));
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(t('itemDeleted')),
+        action: SnackBarAction(
+          label: t('undo'),
+          onPressed: () => mutate((p) {
+            final next = [...section.raw(p)];
+            final at = index > next.length ? next.length : index;
+            section.write(p, next..insert(at, removed));
+          }),
+        ),
+      ),
+    );
   }
 
   Future<void> _arrangeSections(BuildContext context) async {
@@ -127,32 +178,37 @@ class ProfileSections extends StatelessWidget {
           t: t,
           textColor: textColor,
           muted: muted,
-          onAdd: () => _addExperience(context),
-          onRemove: _removeExperience,
+          onAdd: () => _add(context, _experience),
+          onEdit: (index) => _edit(context, _experience, index),
+          onRemove: (index) => _remove(context, _experience, index),
         ),
         ExtrasSection(
           labelKey: 'educationLabel',
           addKey: 'addEducation',
           primaryKey: 'school',
           secondaryKey: 'degree',
+          trailingKey: 'start',
           entries: profile.educationEntries,
           t: t,
           textColor: textColor,
           muted: muted,
-          onAdd: () => _addEducation(context),
-          onRemove: _removeEducation,
+          onAdd: () => _add(context, _education),
+          onEdit: (index) => _edit(context, _education, index),
+          onRemove: (index) => _remove(context, _education, index),
         ),
         ExtrasSection(
           labelKey: 'certificationsLabel',
           addKey: 'addCertification',
           primaryKey: 'name',
           secondaryKey: 'issuer',
+          trailingKey: 'year',
           entries: profile.certificationEntries,
           t: t,
           textColor: textColor,
           muted: muted,
-          onAdd: () => _addCertification(context),
-          onRemove: _removeCertification,
+          onAdd: () => _add(context, _certifications),
+          onEdit: (index) => _edit(context, _certifications, index),
+          onRemove: (index) => _remove(context, _certifications, index),
         ),
         ExtrasSection(
           labelKey: 'faqLabel',
@@ -163,16 +219,18 @@ class ProfileSections extends StatelessWidget {
           t: t,
           textColor: textColor,
           muted: muted,
-          onAdd: () => _addFaq(context),
-          onRemove: _removeFaq,
+          onAdd: () => _add(context, _faq),
+          onEdit: (index) => _edit(context, _faq, index),
+          onRemove: (index) => _remove(context, _faq, index),
         ),
         CaseStudiesSection(
           entries: profile.caseEntries,
           t: t,
           textColor: textColor,
           muted: muted,
-          onAdd: () => _addCase(context),
-          onRemove: _removeCase,
+          onAdd: () => _add(context, _cases),
+          onEdit: (index) => _edit(context, _cases, index),
+          onRemove: (index) => _remove(context, _cases, index),
         ),
         ServicesSection(
           entries: profile.serviceEntries,
@@ -180,16 +238,18 @@ class ProfileSections extends StatelessWidget {
           textColor: textColor,
           muted: muted,
           currency: profile.rateCurrency,
-          onAdd: () => _addService(context),
-          onRemove: _removeService,
+          onAdd: () => _add(context, _services),
+          onEdit: (index) => _edit(context, _services, index),
+          onRemove: (index) => _remove(context, _services, index),
         ),
         PortfolioSection(
           entries: profile.portfolioEntries,
           t: t,
           textColor: textColor,
           muted: muted,
-          onAdd: () => _addPortfolio(context),
-          onRemove: _removePortfolio,
+          onAdd: () => _add(context, _portfolio),
+          onEdit: (index) => _edit(context, _portfolio, index),
+          onRemove: (index) => _remove(context, _portfolio, index),
         ),
         AccentPicker(
           selected: profile.accentColor,

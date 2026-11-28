@@ -100,7 +100,9 @@ flutter:
     - assets/images/chat_bg.png
     - assets/images/logo.png
     - assets/fonts/NotoSansBengali-Regular.ttf
+    - assets/fonts/NotoSansBengali-Bold.ttf
     - assets/fonts/NotoSans-Regular.ttf
+    - assets/fonts/NotoSans-Bold.ttf
     - assets/images/avatar.png
 
   fonts:

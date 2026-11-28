@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'package:livocal/theme/app_colors.dart';
+import 'package:livocal/features/freelancer/widgets/editable_entry_tile.dart';
 
-/// Services list (title + starting price) with add/remove.
+/// Services list (title + starting price) with add/edit/remove.
 class ServicesSection extends StatelessWidget {
   final List<Map<String, String>> entries;
   final String Function(String key) t;
@@ -10,6 +11,7 @@ class ServicesSection extends StatelessWidget {
   final Color muted;
   final String currency;
   final VoidCallback onAdd;
+  final void Function(int index) onEdit;
   final void Function(int index) onRemove;
 
   const ServicesSection({
@@ -20,6 +22,7 @@ class ServicesSection extends StatelessWidget {
     required this.muted,
     required this.currency,
     required this.onAdd,
+    required this.onEdit,
     required this.onRemove,
   });
 
@@ -49,34 +52,27 @@ class ServicesSection extends StatelessWidget {
             ),
           ],
         ),
+        if (entries.isEmpty)
+          Text(
+            t('sectionEmpty'),
+            style: TextStyle(fontSize: 11.5, color: muted),
+          ),
         ...entries.asMap().entries.map(
-              (entry) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: [
-                    const Icon(Icons.design_services_outlined,
-                        size: 15, color: AppColors.primary),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        entry.value['title'] ?? '',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 12.5, color: textColor),
-                      ),
-                    ),
-                    if ((entry.value['from'] ?? '').isNotEmpty)
-                      Text(
-                        '$currency ${entry.value['from']}',
-                        style: TextStyle(fontSize: 10.5, color: muted),
-                      ),
-                    const SizedBox(width: 6),
-                    InkWell(
-                      onTap: () => onRemove(entry.key),
-                      child: Icon(Icons.close_rounded, size: 16, color: muted),
-                    ),
-                  ],
+              (entry) => EditableEntryTile(
+                leading: const Icon(
+                  Icons.design_services_outlined,
+                  size: 15,
+                  color: AppColors.primary,
                 ),
+                title: entry.value['title'] ?? '',
+                trailing: (entry.value['from'] ?? '').isEmpty
+                    ? ''
+                    : '$currency ${entry.value['from']}',
+                t: t,
+                textColor: textColor,
+                muted: muted,
+                onEdit: () => onEdit(entry.key),
+                onDelete: () => onRemove(entry.key),
               ),
             ),
         const SizedBox(height: 10),

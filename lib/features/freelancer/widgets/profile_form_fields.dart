@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:livocal/features/freelancer/models/freelancer_profile.dart';
 import 'package:livocal/features/freelancer/services/freelancer_profile_service.dart';
+import 'package:livocal/features/freelancer/widgets/summary_sheet.dart';
 import 'package:livocal/features/freelancer/widgets/tag_input_field.dart';
 import 'package:livocal/theme/app_colors.dart';
 
@@ -50,6 +51,9 @@ class ProfileFormFields extends StatelessWidget {
         TextField(
           controller: displayNameCtrl,
           maxLength: 60,
+          textInputAction: TextInputAction.next,
+          scrollPadding: const EdgeInsets.only(bottom: 140),
+          onSubmitted: (_) => FocusScope.of(context).nextFocus(),
           decoration: const InputDecoration(
             isDense: true,
             border: OutlineInputBorder(),
@@ -66,6 +70,9 @@ class ProfileFormFields extends StatelessWidget {
         TextField(
           controller: headlineCtrl,
           maxLength: 80,
+          textInputAction: TextInputAction.next,
+          scrollPadding: const EdgeInsets.only(bottom: 140),
+          onSubmitted: (_) => FocusScope.of(context).nextFocus(),
           decoration: const InputDecoration(
             isDense: true,
             border: OutlineInputBorder(),
@@ -75,11 +82,29 @@ class ProfileFormFields extends StatelessWidget {
           onChanged: (value) => mutate((p) => p.headline = value.trim()),
         ),
         const SizedBox(height: 14),
-        _label(t('bioLabel'), muted),
+        Row(
+          children: [
+            Expanded(child: _label(t('bioLabel'), muted)),
+            TextButton.icon(
+              onPressed: () => _writeSummary(context),
+              icon: const Icon(Icons.auto_awesome_outlined, size: 15),
+              label: Text(
+                t('summaryAi'),
+                style: const TextStyle(fontSize: 11.5),
+              ),
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                foregroundColor: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
         TextField(
           controller: bioCtrl,
           maxLines: 4,
           maxLength: 600,
+          scrollPadding: const EdgeInsets.only(bottom: 180),
           decoration: const InputDecoration(
             isDense: true,
             border: OutlineInputBorder(),
@@ -121,6 +146,8 @@ class ProfileFormFields extends StatelessWidget {
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
+                textInputAction: TextInputAction.done,
+                scrollPadding: const EdgeInsets.only(bottom: 160),
                 decoration: const InputDecoration(
                   isDense: true,
                   border: OutlineInputBorder(),
@@ -182,6 +209,23 @@ class ProfileFormFields extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _writeSummary(BuildContext context) async {
+    if (profile.headline.trim().isEmpty && profile.skills.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t('summaryEmpty'))),
+      );
+      return;
+    }
+    final text = await showSummarySheet(
+      context: context,
+      profile: profile,
+      t: t,
+    );
+    if (text == null) return;
+    bioCtrl.text = text;
+    mutate((p) => p.bio = text);
   }
 
   Widget _label(String text, Color color) {

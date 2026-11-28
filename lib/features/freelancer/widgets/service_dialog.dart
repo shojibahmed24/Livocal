@@ -14,7 +14,12 @@ Future<Map<String, String>?> showServiceDialog(
   return showDialog<Map<String, String>>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: Text(AppStrings.get('addService', lang)),
+      title: Text(
+        AppStrings.get(
+          existing == null ? 'addService' : 'editService',
+          lang,
+        ),
+      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

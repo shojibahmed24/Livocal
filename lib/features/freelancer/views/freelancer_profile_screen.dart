@@ -36,7 +36,10 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
 
   FreelancerProfile? _profile;
   Timer? _saveTimer;
-  bool _savedRecently = false;
+
+  /// Kept outside setState: the form must not rebuild on autosave, otherwise
+  /// the focused field would be recreated and the keyboard would close.
+  final ValueNotifier<bool> _saved = ValueNotifier<bool>(false);
 
   @override
   void initState() {
@@ -46,7 +49,10 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
 
   @override
   void dispose() {
+    final pendingSave = _saveTimer?.isActive ?? false;
     _saveTimer?.cancel();
+    if (pendingSave) unawaited(_persist());
+    _saved.dispose();
     _displayNameCtrl.dispose();
     _headlineCtrl.dispose();
     _bioCtrl.dispose();
@@ -91,11 +97,16 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
   Future<void> _persist() async {
     final profile = _profile;
     if (profile == null) return;
-    await FreelancerProfileService.save(profile);
+    try {
+      await FreelancerProfileService.save(profile);
+    } catch (e) {
+      debugPrint('[FreelancerProfile] save failed: $e');
+      return;
+    }
     if (!mounted) return;
-    setState(() => _savedRecently = true);
+    _saved.value = true;
     await Future<void>.delayed(const Duration(milliseconds: 1400));
-    if (mounted) setState(() => _savedRecently = false);
+    if (mounted) _saved.value = false;
   }
 
   Future<void> _copyLink() =>
@@ -165,34 +176,40 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
       appBar: AppBar(
         title: Text(_t('freelancerProfile')),
         actions: [
-          if (_savedRecently)
-            Padding(
-              padding: const EdgeInsets.only(right: 14),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.check_circle_rounded,
-                    size: 15,
-                    color: AppColors.primary,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    _t('saved'),
-                    style: const TextStyle(
-                      fontSize: 11.5,
+          ValueListenableBuilder<bool>(
+            valueListenable: _saved,
+            builder: (context, saved, _) {
+              if (!saved) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(right: 14),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.check_circle_rounded,
+                      size: 15,
                       color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
                     ),
-                  ),
-                ],
-              ),
-            ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _t('saved'),
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ],
       ),
       body: profile == null
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               children: [
                 Text(
                   _t('freelancerProfileSub'),
@@ -228,8 +245,9 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
                   mutate: _mutate,
                 ),
                 const SizedBox(height: 16),
+                // No ValueKey here: autosave changes updatedAt on every save,
+                // and a changing key would recreate the fields (keyboard closes).
                 ProfileProFields(
-                  key: ValueKey(profile.updatedAt.millisecondsSinceEpoch),
                   profile: profile,
                   t: _t,
                   mutate: _mutate,

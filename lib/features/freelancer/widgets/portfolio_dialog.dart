@@ -70,7 +70,8 @@ class _PortfolioDialogState extends State<_PortfolioDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(_t('addPortfolio')),
+      title:
+          Text(_t(widget.existing == null ? 'addPortfolio' : 'editPortfolio')),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
