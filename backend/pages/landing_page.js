@@ -30,35 +30,6 @@ function esc(value) {
     .replace(/'/g, '&#39;');
 }
 
-/** Languages offered in the hero demo. Any pair works — the model does the rest. */
-const DEMO_LANGS = [
-  ['auto', 'Auto-detect'],
-  ['bn', 'বাংলা'],
-  ['en', 'English'],
-  ['hi', 'हिन्दी'],
-  ['ur', 'اردو'],
-  ['ar', 'العربية'],
-  ['es', 'Español'],
-  ['fr', 'Français'],
-  ['de', 'Deutsch'],
-  ['pt', 'Português'],
-  ['it', 'Italiano'],
-  ['ru', 'Русский'],
-  ['tr', 'Türkçe'],
-  ['zh', '中文'],
-  ['ja', '日本語'],
-  ['ko', '한국어'],
-  ['id', 'Indonesia'],
-  ['vi', 'Tiếng Việt'],
-  ['th', 'ไทย'],
-  ['ta', 'தமிழ்'],
-  ['te', 'తెలుగు'],
-  ['fil', 'Filipino'],
-  ['sw', 'Kiswahili'],
-  ['fa', 'فارسی'],
-  ['nl', 'Nederlands'],
-  ['pl', 'Polski'],
-];
 
 const ICONS = {  mic: '<path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
   user: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>',
@@ -95,8 +66,6 @@ export function renderLanding({ lang, origin }) {
   const c = COPY[language];
   const dir = RTL_LANGUAGES.includes(language) ? 'rtl' : 'ltr';
   const a11y = A11Y[language] || A11Y.en;
-  const demoFromDefault = language;
-  const demoToDefault = language === 'en' ? 'bn' : 'en';
   const hasCallDemo = fs.existsSync(CALL_DEMO_FILE);
   const hasPoster = fs.existsSync(CALL_DEMO_POSTER);
 
@@ -670,11 +639,6 @@ ${videoSection}
 </footer>
 
 <script>window.__LV_COPY=${JSON.stringify({
-    demoLoading: c.hero.demoLoading,
-    demoEmpty: c.hero.demoEmpty,
-    demoFail: c.hero.demoFail,
-    demoResult: c.hero.demoResult,
-    demoSample: c.hero.sample,
     finalSuccess: c.final.success,
     finalError: c.final.error,
     finalBusy: c.final.busy,
